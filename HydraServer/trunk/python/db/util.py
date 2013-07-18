@@ -26,7 +26,6 @@ def load_csv(cnx, cursor, filepath):
 
 		params['time'] = dt
 
-		print params	
 		cursor.execute(sql, params)
 		cnx.commit()
 		cursor.close()

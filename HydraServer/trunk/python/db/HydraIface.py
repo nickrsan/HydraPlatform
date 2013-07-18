@@ -1,39 +1,59 @@
 import util
+import logging
 
 global CNX
 CNX = None
+global cursor
+cursor = None
 
 class IfaceBase(object):
-	def __init__(self, table_name):
+	def __init__(self, class_name):
+		logging.info("Initialising")
 		global CNX
+		global cursor
 		if CNX is None:
 			CNX = util.connect()
-		self.db = IfaceDB(table_name)
+			cursor = CNX.cursor()
+		self.db = IfaceDB(class_name)
+
+		self.in_db = False
 
 	def load(self):
-		pass
+		self.db.load()
 
 	def commit(self):
-		pass
+		CNX.commit()
 
 	def save(self):
-		pass
+
+		if self.in_db == True:
+			if self.has_changed == True:
+				self.db.update()
+			else:
+				logging.debug("No changes to %s, not continuing", self.db.table_name)
+		else:
+			self.db.insert()
+			self.load()
 
 class IfaceDB(object):
 
-	def __init__(self, table_name):
+	def __init__(self, class_name):
 		self.db_attrs = []
 		self.pk_attrs = []
 		self.nullable_attrs = []
 		self.attr_types = {}
 
-		self.table_name = table_name
-		cursor = CNX.cursor()
-		cursor.execute('desc %s' % table_name)
+		#This indicates whether any values in this table have changed.
+		self.has_changed = False
+
+		#this turns 'Project' into 'tProject' so it can identify the table
+		self.table_name = "t%s"%class_name
+
+		cursor.execute('desc %s' % self.table_name)
 
 		table_desc = cursor.fetchall()
 
-		print table_desc
+		logging.debug("Table desc: %s", table_desc)
 
 		for col_desc in table_desc:
 			col_name = col_desc[0]
@@ -49,44 +69,81 @@ class IfaceDB(object):
 			if col_desc[3] == 'PRI':
 				self.pk_attrs.append(col_name)
 
-		self.update()
-	
+			if col_desc[5] == 'auto_increment':
+				self.seq = col_name
+
+	def __setattr__(self, name, value):
+
+		if name != 'db_attrs' and name in self.db_attrs:
+			self.haschanged = True
+
+		super(IfaceDB, self).__setattr__(name, value)
+
+
 	def insert(self):
 		#A function to return 'null' if the inputted value is None. Otherwise return the inputted value.
-		v = lambda x: getattr(self, x) if getattr(self, x) is not None else 'null'
-
-		base_insert = "insert into %(table)s %(cols)s values %(vals)s;"
+		base_insert = "insert into %(table)s (%(cols)s) values (%(vals)s);"
 		complete_insert = base_insert % dict(
 			table = self.table_name,
 			cols  = ",".join([n for n in self.db_attrs]),
-			vals  = ",".join([v(n) for n in self.db_attrs]),
+			vals  = ",".join([self.get_val(n) for n in self.db_attrs]),
 		)
 
-		print complete_insert
-		#CNX.cursor.execute(complete_insert)
-	
+		logging.debug("Running insert: %s", complete_insert)
+		old_seq = cursor.lastrowid
+		
+		cursor.execute(complete_insert)
+		
+		if old_seq is None or old_seq != cursor.lastrowid:
+			setattr(self, self.seq, cursor.lastrowid)
+
+		logging.debug("PRIMARY KEY = %s : %s", self.seq, getattr(self, self.seq))
+
 	def update(self):
 		#A function to return 'null' if the inputted value is None. Otherwise return the inputted value.
-		v = lambda x: getattr(self, x) if getattr(self, x) is not None else 'null'
 
 		base_update = "update %(table)s set %(sets)s where %(pk)s;"
 		complete_update = base_update % dict(
 			table = self.table_name,
-			sets  = ",".join(["%s = %s"%(n, v(n)) for n in self.db_attrs]),
-			pk    = ",".join(["%s = %s"%(n, v(n)) for n in self.pk_attrs]),
+			sets  = ",".join(["%s = %s"%(n, self.get_val(n)) for n in self.db_attrs]),
+			pk    = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
 		)
 
-		print complete_update
-		#CNX.cursor.execute(complete_update)
+		cursor.execute(complete_update)
+	
+	def load(self):
 
+		for pk in self.pk_attrs:
+			if getattr(self, pk) is None:
+				logging.info("Primary key is not set. Cannot load row from DB.")
+				return None
+
+		base_load = "select * from %(table_name)s where %(pk)s;"
+		complete_load = base_load % dict(
+			table_name = self.table_name,
+			pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
+		)
+		cursor.execute(complete_load)
+		cursor.fetchall()
+
+	def delete(self):
+		base_load = "delete from %(table_name)s where %(pk)s;"
+		complete_delete = base_load % dict(
+			table_name = self.table_name,
+			pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
+		)
+		cursor.execute(complete_delete)
+	
+	def get_val(self, attr):
+		val = getattr(self, attr)
+		if val is None:
+			return 'null'
+		else:
+			if self.attr_types[attr].find('varchar') >= 0:
+				return "\'%s\'"%val
+			else:
+				return val
+	
 class Project(IfaceBase):
 	def __init__(self):
-		IfaceBase.__init__(self, 't%s'%self.__class__.__name__)
-		print dir(self.db)
-
-	def insert(self):
-		pass
-
-	def update(self):
-		pass
-
+		IfaceBase.__init__(self, self.__class__.__name__)
