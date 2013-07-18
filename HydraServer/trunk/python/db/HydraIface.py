@@ -1,5 +1,6 @@
 import util
 import logging
+from HydraLib.HydraException import DBException
 
 global CNX
 CNX = None
@@ -23,17 +24,21 @@ class IfaceBase(object):
 
 	def commit(self):
 		CNX.commit()
+	
+	def delete(self):
+		if self.in_db:
+			self.db.delete()
 
 	def save(self):
 
-		if self.in_db == True:
-			if self.has_changed == True:
+		if self.in_db is True:
+			if self.db.has_changed is True:
 				self.db.update()
 			else:
 				logging.debug("No changes to %s, not continuing", self.db.table_name)
 		else:
 			self.db.insert()
-			self.load()
+			self.in_db = True
 
 class IfaceDB(object):
 
@@ -73,12 +78,10 @@ class IfaceDB(object):
 				self.seq = col_name
 
 	def __setattr__(self, name, value):
-
 		if name != 'db_attrs' and name in self.db_attrs:
-			self.haschanged = True
+			self.has_changed = True
 
-		super(IfaceDB, self).__setattr__(name, value)
-
+		super(IfaceDB, self).__setattr__(name, value
 
 	def insert(self):
 		#A function to return 'null' if the inputted value is None. Otherwise return the inputted value.
@@ -97,8 +100,6 @@ class IfaceDB(object):
 		if old_seq is None or old_seq != cursor.lastrowid:
 			setattr(self, self.seq, cursor.lastrowid)
 
-		logging.debug("PRIMARY KEY = %s : %s", self.seq, getattr(self, self.seq))
-
 	def update(self):
 		#A function to return 'null' if the inputted value is None. Otherwise return the inputted value.
 
@@ -108,9 +109,9 @@ class IfaceDB(object):
 			sets  = ",".join(["%s = %s"%(n, self.get_val(n)) for n in self.db_attrs]),
 			pk    = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
 		)
-
+		logging.debug("Running update: %s", complete_update)
 		cursor.execute(complete_update)
-	
+
 	def load(self):
 
 		for pk in self.pk_attrs:
@@ -123,8 +124,11 @@ class IfaceDB(object):
 			table_name = self.table_name,
 			pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
 		)
+		logging.debug("Running load: %s", complete_load)
 		cursor.execute(complete_load)
-		cursor.fetchall()
+		result_row = cursor.fetchall()
+		if len(result_row) == 0:
+			raise DBException("No entry found for table")
 
 	def delete(self):
 		base_load = "delete from %(table_name)s where %(pk)s;"
@@ -132,6 +136,7 @@ class IfaceDB(object):
 			table_name = self.table_name,
 			pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
 		)
+		logging.debug("Running delete: %s", complete_delete)
 		cursor.execute(complete_delete)
 	
 	def get_val(self, attr):
@@ -142,7 +147,7 @@ class IfaceDB(object):
 			if self.attr_types[attr].find('varchar') >= 0:
 				return "\'%s\'"%val
 			else:
-				return val
+				return str(val)
 	
 class Project(IfaceBase):
 	def __init__(self):

@@ -1,6 +1,5 @@
 from db import HydraIface
 from HydraLib import hydra_logging
-import logging
 
 if __name__ == '__main__':
 	hydra_logging.init(level='DEBUG')
@@ -10,5 +9,14 @@ if __name__ == '__main__':
 	x.save()
 	x.commit()
 
-	logging.shutdown()
-	print "\033[0;mFinished\033[0;m"
+	x.db.project_name = "test_new"
+	x.save()
+	x.commit()
+	x.load()
+
+	x.delete()
+	x.save()
+	x.commit()
+	x.load()
+
+	hydra_logging.shutdown()
