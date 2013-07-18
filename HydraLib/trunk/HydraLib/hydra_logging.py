@@ -8,4 +8,7 @@ def init(level="DEBUG"):
 	logging.addLevelName( logging.ERROR, "\033[0;31m%s\033[0;31m" % logging.getLevelName(logging.ERROR))
 	logging.addLevelName( logging.CRITICAL, "\033[0;35m%s\033[0;35m" % logging.getLevelName(logging.CRITICAL))
 
-	logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=level)
+	logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s\033[0m', level=level)
+
+def shutdown():
+	logging.shutdown()
