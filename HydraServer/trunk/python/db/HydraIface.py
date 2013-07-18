@@ -92,9 +92,9 @@ class IfaceDB(object):
 
         logging.debug("Running insert: %s", complete_insert)
         old_seq = self.cursor.lastrowid
-        
+
         self.cursor.execute(complete_insert)
-        
+
         if old_seq is None or old_seq != self.cursor.lastrowid:
             setattr(self, self.seq, self.cursor.lastrowid)
 
@@ -124,10 +124,10 @@ class IfaceDB(object):
         )
         logging.debug("Running load: %s", complete_load)
         self.cursor.execute(complete_load)
-        
+
         row_columns  = self.cursor.column_names
         row_data = self.cursor.fetchall()[0]#there should only be one entry
-        
+
         if len(row_data) == 0:
             raise DBException("No entry found for table")
 
@@ -143,7 +143,7 @@ class IfaceDB(object):
         )
         logging.debug("Running delete: %s", complete_delete)
         self.cursor.execute(complete_delete)
-    
+
     def get_val(self, attr):
         val = getattr(self, attr)
         if val is None:
@@ -153,10 +153,25 @@ class IfaceDB(object):
                 return "\'%s\'"%val
             else:
                 return str(val)
-    
+
 class Project(IfaceBase):
     def __init__(self, project_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
 
         if project_id is not None:
             self.db.project_id = project_id
+
+
+class Network(IfaceBase):
+    def __init__(self):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+
+class Node(IfaceBase):
+    def __init__(self):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+
+class Link(IfaceBase):
+    def __init__(self):
+        IfaceBase.__init__(self, self.__class__.__name__)
