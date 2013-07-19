@@ -155,23 +155,345 @@ class IfaceDB(object):
                 return str(val)
 
 class Project(IfaceBase):
+    """
+        A logical container for a piece of work. 
+        Contains networks and scenarios.
+    """
     def __init__(self, project_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
 
+        self.db.project_id = project_id
         if project_id is not None:
-            self.db.project_id = project_id
+            self.load()
+
+class Scenario(IfaceBase):
+    """
+        A set of nodes and links
+    """
+    def __init__(self, scenario_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+        
+        self.db.scenario_id = scenario_id
+        if scenario_id is not None:
+            self.load()
 
 
 class Network(IfaceBase):
-    def __init__(self):
+    """
+        A set of nodes and links
+    """
+    def __init__(self, network_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
-
+        
+        self.db.network_id = network_id
+        if network_id is not None:
+            self.load()
 
 class Node(IfaceBase):
-    def __init__(self):
+    """
+        Representation of a resource.
+    """
+    def __init__(self, node_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
 
+        self.db.node_id = node_id
+        if node_id is not None:
+            self.load()
 
 class Link(IfaceBase):
-    def __init__(self):
+    """
+        Representation of a connection between nodes.
+    """
+    def __init__(self, link_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.link_id = link_id
+        if link_id is not None:
+            self.load()
+
+class Attr(IfaceBase):
+    """
+        An attribute is a piece of data, with a name and a dimension.
+        For example, an attribute might be 'volume' and 'metres-cubed'
+        A piece of information is associated with a resource using a resource
+        attribute.
+    """
+    def __init__(self, attr_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.attr_id = attr_id
+
+        if attr_id is not None:
+            self.load()
+
+class AttrMap(IfaceBase):
+    """
+       Defines equality between attributes ('volume' is equivalent to 'vol')
+    """
+    def __init__(self, attr_id_a = None, attr_id_b = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.attr_id_a = attr_id_a
+        self.db.attr_id_b = attr_id_b
+
+        if attr_id_a is not None and attr_id_b is not None:
+            self.load()
+
+class ResourceAttr(IfaceBase):
+    """
+        A 'resource' can be either a node, link or network.
+        A resource attribute is a instance of an attribute for
+        a given resource.
+    """
+    def __init__(self, resource_attr_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+        
+        self.db.resource_attr_id = resource_attr_id
+
+        if resource_attr_id is not None:
+            self.load()
+
+class ResourceTemplate(IfaceBase):
+    """
+        A resource template is a grouping of attributes which define 
+        a resource. For example, a "reservoir" template may have "volume",
+        "discharge" and "daily throughput".
+    """
+    def __init__(self, template_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.template_id = template_id        
+
+        if template_id is not None:
+            self.load()
+
+class ResourceTemplateItem(IfaceBase):
+    """
+        A resource template item is a link between a resource template
+        and attributes.
+    """
+    def __init__(self, attr_id = None, template_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.attr_id = attr_id
+        self.db.template_id = template_id
+
+        if attr_id is not None and template_id is not None:
+            self.load()
+
+class ResourceTemplateGroup(IfaceBase):
+    """
+        A resource template group is a set of templates, usually categorised
+        by the plugin which they were defined for.
+    """
+    def __init__(self, group_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+        
+        self.db.group_id = None
+        if group_id is not None:
+            self.load()
+
+class ResourceScenario(IfaceBase):
+    """
+        A resource scenario is what links the actual piece of data
+        with a resource -- the data per resource will change per scenario.
+    """
+    def __init__(self, data_id = None, scenario_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.data_id = data_id
+        self.db.scenario_id = scenario_id
+
+        if data_id is not None and scenario_id is not None:
+            self.load()
+
+class ScenarioData(IfaceBase):
+    """
+        A table recording all pieces of data, including the
+        type, units, name and dimension. The actual data value is stored
+        in another table, which is identified based on the type.
+    """
+    def __init__(self, data_id = None, data_type = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.data_id = data_id
+        self.db.data_type = data_type
+
+        if data_id is not None and data_type is not None:
+            self.load()
+
+class DataAttr(IfaceBase):
+    """
+        Holds additional information on data. 
+    """
+    def __init__(self, d_attr_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.d_attr_id = d_attr_id
+        
+        if d_attr_id is not None:
+            self.load()
+
+class Descriptor(IfaceBase):
+    """
+        A non numeric data value
+    """
+    def __init__(self, data_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.data_id = data_id
+        if data_id is not None:
+            self.load()
+
+class TimeSeries(IfaceBase):
+    """
+        Non-equally spaced time series data
+        In other words: a value and a timestamp.
+    """
+    def __init__(self, data_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.data_id = data_id
+        if data_id is not None:
+            self.load()
+
+class EquallySpacedTimeSeries(IfaceBase):
+    """
+        Equally spaced time series data
+        -- a start time, frequency and an associated array.
+    """
+    def __init__(self, data_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.data_id = data_id
+        if data_id is not None:
+            self.load()
+
+class TimeSeriesArray(IfaceBase):
+    """
+        The values contained in an equally spaced time series.
+    """
+    def __init__(self, ts_array_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.ts_array_id = ts_array_id
+        if ts_array_id is not None:
+            self.load()
+
+class Scalar(IfaceBase):
+    """
+        The values contained in an equally spaced time series.
+    """
+    def __init__(self, data_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.data_id = data_id
+        if data_id is not None:
+            self.load()
+
+class Array(IfaceBase):
+    """
+        List of values, stored as a BLOB.
+    """
+    def __init__(self, data_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.data_id = data_id
+        if data_id is not None:
+            self.load()
+
+class Constraint(IfaceBase):
+    """
+        A constraint or rule placed on a network, perhaps
+        to ensure mutual exclusion of certain resources..
+    """
+    def __init__(self, constraint_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.constraint_id = constraint_id
+        if constraint_id is not None:
+            self.load()
+
+class ConstraintGroup(IfaceBase):
+    """
+        a connector class for constraints. Used for grouping constraints
+        into logical sections, not unlike parentheses in a mathematical equation.
+    """
+    def __init__(self, group_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.group_id = group_id
+        if group_id is not None:
+            self.load()
+
+class ConstraintItem(IfaceBase):
+    """
+        The link to the resource, upon which the constraint is being applied.
+    """
+    def __init__(self, item_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.item_id = item_id
+        if item_id is not None:
+            self.load()
+
+class User(IfaceBase):
+    """
+        Users of the hydra
+    """
+    def __init__(self, user_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.user_id = user_id
+        if user_id is not None:
+            self.load()
+
+class Role(IfaceBase):
+    """
+        Roles for hydra users
+    """
+    def __init__(self, role_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.role_id = role_id
+        if role_id is not None:
+            self.load()
+
+
+class Perm(IfaceBase):
+    """
+        Hydra Permissions
+    """
+    def __init__(self, perm_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.perm_id = perm_id
+        if perm_id is not None:
+            self.load()
+ 
+class RoleUser(IfaceBase):
+    """
+        Roles for hydra users
+    """
+    def __init__(self, user_id = None, role_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.user_id = user_id
+        self.db.role_id = role_id
+        if user_id is not None and role_id is not None:
+            self.load()
+
+class RolePerm(IfaceBase):
+    """
+        Permissions for hydra Roles
+    """
+    def __init__(self, perm_id = None, role_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.perm_id = perm_id
+        self.db.role_id = role_id
+        if perm_id is not None and role_id is not None:
+            self.load()
+
+
+
