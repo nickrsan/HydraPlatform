@@ -1,6 +1,5 @@
 from HydraLib import util
 import logging
-from HydraLib.HydraException import DBException
 
 global CNX
 CNX = None
@@ -19,6 +18,9 @@ class IfaceBase(object):
         return self.db.load()
 
     def commit(self):
+        """
+            Commit any inserts or updates to the DB. No going back from here...
+        """
         CNX.commit()
 
     def delete(self):
@@ -26,7 +28,10 @@ class IfaceBase(object):
             self.db.delete()
 
     def save(self):
-
+        """
+            Call the appropriate insert or update function, depending on 
+            whether the object is already in the DB or not
+        """
         if self.in_db is True:
             if self.db.has_changed is True:
                 self.db.update()
@@ -82,7 +87,10 @@ class IfaceDB(object):
         super(IfaceDB, self).__setattr__(name, value)
 
     def insert(self):
-        #A function to return 'null' if the inputted value is None. Otherwise return the inputted value.
+        """
+            If this object has not been stored in the DB as yet, then insert it.
+            Generates an insert statement and runs it.
+        """
         base_insert = "insert into %(table)s (%(cols)s) values (%(vals)s);"
         complete_insert = base_insert % dict(
             table = self.table_name,
@@ -99,7 +107,10 @@ class IfaceDB(object):
             setattr(self, self.seq, self.cursor.lastrowid)
 
     def update(self):
-        #A function to return 'null' if the inputted value is None. Otherwise return the inputted value.
+        """
+            Updates all the values for a table in the DB.. 
+            Generates an update statement and runs it.
+        """
 
         base_update = "update %(table)s set %(sets)s where %(pk)s;"
         complete_update = base_update % dict(
@@ -111,7 +122,10 @@ class IfaceDB(object):
         self.cursor.execute(complete_update)
 
     def load(self):
-
+        """
+            Loads a row from the DB and assigns the values as attributes
+            to this object.
+        """
         for pk in self.pk_attrs:
             if getattr(self, pk) is None:
                 logging.info("Primary key is not set. Cannot load row from DB.")
@@ -141,6 +155,9 @@ class IfaceDB(object):
         return True
 
     def delete(self):
+        """
+            Deletes this object's row from the DB.
+        """
         base_load = "delete from %(table_name)s where %(pk)s;"
         complete_delete = base_load % dict(
             table_name = self.table_name,
