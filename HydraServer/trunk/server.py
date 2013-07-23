@@ -1,6 +1,6 @@
 from db import HydraIface
 from HydraLib import hydra_logging
-from HydraLib.HydraException import DBException
+
 import logging
  
 def test_insert():

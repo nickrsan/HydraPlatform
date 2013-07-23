@@ -1,4 +1,4 @@
-import util
+from HydraLib import util
 import logging
 from HydraLib.HydraException import DBException
 
@@ -16,7 +16,7 @@ class IfaceBase(object):
         self.in_db = False
 
     def load(self):
-        self.db.load()
+        return self.db.load()
 
     def commit(self):
         CNX.commit()
@@ -115,7 +115,7 @@ class IfaceDB(object):
         for pk in self.pk_attrs:
             if getattr(self, pk) is None:
                 logging.info("Primary key is not set. Cannot load row from DB.")
-                return None
+                return False
 
         base_load = "select * from %(table_name)s where %(pk)s;"
         complete_load = base_load % dict(
@@ -126,14 +126,19 @@ class IfaceDB(object):
         self.cursor.execute(complete_load)
 
         row_columns  = self.cursor.column_names
-        row_data = self.cursor.fetchall()[0]#there should only be one entry
+        row_data = self.cursor.fetchall()#there should only be one entry
 
         if len(row_data) == 0:
-            raise DBException("No entry found for table")
+            logging.warning("No entry found for table")
+            return False 
+        else:
+            row_data = row_data[0]
 
         for idx, column_name in enumerate(row_columns):
             logging.debug("Setting column %s to %s", column_name, row_data[idx])
             setattr(self, column_name, row_data[idx])
+
+        return True
 
     def delete(self):
         base_load = "delete from %(table_name)s where %(pk)s;"
