@@ -178,7 +178,7 @@ class IfaceDB(object):
 
         #Create a skeleton query
         base_load = "select * from %(table_name)s where %(pk)s;"
-
+        
         #Fill in the query with the appropriate table name and PK values.
         complete_load = base_load % dict(
             table_name = self.table_name,
