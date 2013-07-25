@@ -15,6 +15,9 @@ class IfaceBase(object):
 
         self.in_db = False
 
+        #Indicates that the 'delete' function has been called on this object
+        self.deleted = False
+
     def load(self):
         self.in_db = self.db.load()
         return self.in_db
@@ -24,16 +27,22 @@ class IfaceBase(object):
             Commit any inserts or updates to the DB. No going back from here...
         """
         CNX.commit()
+        if self.deleted == True:
+            self.in_db = False
 
     def delete(self):
         if self.in_db:
             self.db.delete()
+        self.deleted = True
 
     def save(self):
         """
             Call the appropriate insert or update function, depending on 
             whether the object is already in the DB or not
         """
+        if self.deleted == True:
+            return
+
         if self.in_db is True:
             if self.db.has_changed is True:
                 self.db.update()
@@ -211,10 +220,14 @@ class IfaceDB(object):
 
     def get_val(self, attr):
         val = self.__getattr__(attr)
+        db_type = self.attr_types[attr]
+
         if val is None:
             return 'null'
+        elif db_type.find('varchar') != -1 or db_type in ('blob', 'datetime') :
+            return "'%s'"%val
         else:
-            return "'%s'"%str(val)
+            return str(val)
 
 class Project(IfaceBase):
     """
@@ -434,10 +447,12 @@ class EquallySpacedTimeSeries(IfaceBase):
             self.load()
 
     def load(self):
-        self.db.load()
+        loaded = self.db.load()
 
         ts_array = TimeSeriesArray(ts_array_id = self.db.ts_array_id)
         self.ts_array = ts_array
+
+        return loaded
 
     def save(self):
         self.ts_array.save()
@@ -448,11 +463,14 @@ class EquallySpacedTimeSeries(IfaceBase):
 
         IfaceBase.save(self)
         
-
     def commit(self):
         IfaceBase.commit(self)
         
         self.ts_array.commit()
+
+    def delete(self):
+        IfaceBase.delete(self)
+        self.ts_array.delete()
 
     def add_ts_array(self, array):
         ts_array = TimeSeriesArray(ts_array_id = self.db.ts_array_id)

@@ -1,27 +1,12 @@
 import unittest
+import logging
 from db import HydraIface
-from HydraLib import util, hydra_logging
+import test_HydraIface
 from decimal import Decimal
 import datetime
 
-class ScenarioDataTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = util.connect()
-        hydra_logging.init(level='DEBUG')
+class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
  
-    def tearDown(self):
-        hydra_logging.shutdown()
-        util.disconnect(self.connection)
-
-    def test_load(self):
-        cursor = self.connection.cursor()
-        cursor.execute("select min(data_id) as data_id, data_type from tScenarioData group by data_type")
-        row = cursor.fetchall() 
-        data_id = row[0][0]
-        data_type = row[0][1]
-        x = HydraIface.ScenarioData(data_id=data_id, data_type=data_type)
-        assert x.load() == True, "Load did not work correctly"
-
     def test_create(self):
 
         data = HydraIface.Scalar()
@@ -32,14 +17,14 @@ class ScenarioDataTest(unittest.TestCase):
 
         sd = HydraIface.ScenarioData()
         sd.db.data_id = data.db.data_id
-        sd.db.data_type = 'scalar'
+        sd.db.data_type  = 'scalar'
         sd.db.data_units = 'metres-cubes'
         sd.db.data_name  = 'volume'
-        sd.db.data_dime  = 'metres-cubed'
+        sd.db.data_dimen = 'metres-cubed'
         sd.save()
         sd.commit()
 
-        assert sd.db.load() == True, "ScenarioData did not create correctly"
+        assert sd.load() == True, "ScenarioData did not create correctly"
  
     def test_update(self):
 
@@ -51,17 +36,17 @@ class ScenarioDataTest(unittest.TestCase):
 
         sd = HydraIface.ScenarioData()
         sd.db.data_id = data.db.data_id
-        sd.db.data_type = 'scalar'
+        sd.db.data_type  = 'scalar'
         sd.db.data_units = 'metres-cubes'
         sd.db.data_name  = 'volume'
-        sd.db.data_dime  = 'metres-cubed'
+        sd.db.data_dimen = 'metres-cubed'
         sd.save()
         sd.commit()
 
-        sd.db.data_type = 'scalar_updated'
+        sd.db.data_type  = 'scalar_updated'
         sd.db.data_units = 'metres-cubes_updated'
         sd.db.data_name  = 'volume_updated'
-        sd.db.data_dime  = 'metres-cubed_updated'
+        sd.db.data_dimen = 'metres-cubed_updated'
         sd.save()
         sd.commit()
         sd.load()
@@ -79,6 +64,10 @@ class ScenarioDataTest(unittest.TestCase):
         sd = HydraIface.ScenarioData()
         sd.db.data_id = data.db.data_id
         sd.db.data_type = 'scalar'
+        sd.db.data_units = 'metres-cubes'
+        sd.db.data_name  = 'volume'
+        sd.db.data_dimen = 'metres-cubed'
+
         sd.save()
         sd.commit()
 
@@ -86,23 +75,19 @@ class ScenarioDataTest(unittest.TestCase):
         sd.save()
         sd.commit()
 
-        assert sd.db.load() == False, "ScenarioData did not delete correctly"
-
-class ScalarTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = util.connect()
-        hydra_logging.init(level='DEBUG')
- 
-    def tearDown(self):
-        hydra_logging.shutdown()
-        util.disconnect(self.connection)
+        assert sd.load() == False, "ScenarioData did not delete correctly"
 
     def test_load(self):
         cursor = self.connection.cursor()
-        cursor.execute("select min(data_id) as data_id from tScalar")
-        data_id = cursor.fetchall()[0][0]
-        x = HydraIface.Scalar(data_id=data_id)
+        cursor.execute("select min(data_id) as data_id, data_type from tScenarioData group by data_type")
+        row = cursor.fetchall() 
+        data_id = row[0][0]
+        data_type = row[0][1]
+        x = HydraIface.ScenarioData(data_id=data_id, data_type=data_type)
         assert x.load() == True, "Load did not work correctly"
+
+
+class ScalarTest(test_HydraIface.HydraIfaceTest):
 
     def test_update(self):
         x = HydraIface.Scalar()
@@ -126,23 +111,16 @@ class ScalarTest(unittest.TestCase):
         x.delete()
         assert x.load() == False, "Delete did not work correctly."
 
-class TimeSeriesTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = util.connect()
-        hydra_logging.init(level='DEBUG')
- 
-    def tearDown(self):
-        hydra_logging.shutdown()
-        util.disconnect(self.connection)
-
     def test_load(self):
         cursor = self.connection.cursor()
-        cursor.execute("select min(data_id) as data_id from tTimeSeries")
-        row = cursor.fetchall()[0]
-        data_id = row[0]
-        x = HydraIface.TimeSeries(data_id=data_id)
+        cursor.execute("select min(data_id) as data_id from tScalar")
+        data_id = cursor.fetchall()[0][0]
+        x = HydraIface.Scalar(data_id=data_id)
         assert x.load() == True, "Load did not work correctly"
 
+
+class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
+ 
     def test_update(self):
         x = HydraIface.TimeSeries()
         x.db.ts_time = datetime.datetime.now()
@@ -167,14 +145,16 @@ class TimeSeriesTest(unittest.TestCase):
         x.delete()
         assert x.load() == False, "Delete did not work correctly."
 
-class EquallySpacedTimeSeriesTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = util.connect()
-        hydra_logging.init(level='DEBUG')
- 
-    def tearDown(self):
-        hydra_logging.shutdown()
-        util.disconnect(self.connection)
+    def test_load(self):
+        cursor = self.connection.cursor()
+        cursor.execute("select min(data_id) as data_id from tTimeSeries")
+        row = cursor.fetchall()[0]
+        data_id = row[0]
+        x = HydraIface.TimeSeries(data_id=data_id)
+        assert x.load() == True, "Load did not work correctly"
+
+
+class EquallySpacedTimeSeriesTest(test_HydraIface.HydraIfaceTest):
 
     def test_update(self):
         x = HydraIface.EquallySpacedTimeSeries()
@@ -202,8 +182,10 @@ class EquallySpacedTimeSeriesTest(unittest.TestCase):
         x.db.frequency = 1
         x.save()
         x.commit()
-
+        
         x.delete()
+        x.commit()
+
         assert x.load() == False, "Delete did not work correctly."
 
     def test_load(self):
@@ -212,7 +194,7 @@ class EquallySpacedTimeSeriesTest(unittest.TestCase):
         row = cursor.fetchall()[0]
         data_id = row[0]
         x = HydraIface.EquallySpacedTimeSeries(data_id=data_id)
-        assert x.load() == True and x.data_array.load() == True, "Load did not work correctly"
+        assert x.load() == True and x.ts_array.load() == True, "Load did not work correctly"
 
 
 
