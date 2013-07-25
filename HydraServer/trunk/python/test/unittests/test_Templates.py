@@ -1,23 +1,7 @@
-import unittest
+import test_HydraIface
 from db import HydraIface
-from HydraLib import util, hydra_logging
 
-class ResourceTemplateGroupIfaceTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = util.connect()
-        hydra_logging.init(level='DEBUG')
- 
-    def tearDown(self):
-        hydra_logging.shutdown()
-        util.disconnect(self.connection)
-
-    def test_load(self):
-        cursor = self.connection.cursor()
-        cursor.execute("select min(group_id) as group_id from tResourceTemplateGroup")
-        group_id = cursor.fetchall()[0][0]
-        x = HydraIface.ResourceTemplateGroup(group_id=group_id)
-        assert x.load() == True, "Load did not work correctly"
-
+class ResourceTemplateGroupTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         x = HydraIface.ResourceTemplateGroup()
         x.db.group_name = "test"
@@ -39,22 +23,17 @@ class ResourceTemplateGroupIfaceTest(unittest.TestCase):
         x.delete()
         assert x.load() == False, "Delete did not work correctly."
 
-class ResourceTemplateIfaceTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = util.connect()
-        hydra_logging.init(level='DEBUG')
- 
-    def tearDown(self):
-        hydra_logging.shutdown()
-        util.disconnect(self.connection)
-
     def test_load(self):
-        cursor = self.connection.cursor()
-        cursor.execute("select min(template_id) as template_id from tResourceTemplate")
-        template_id = cursor.fetchall()[0][0]
-        x = HydraIface.ResourceTemplate(template_id=template_id)
-        assert x.load() == True, "Load did not work correctly"
+        x = HydraIface.ResourceTemplateGroup()
+        x.db.group_name = "test"
+        x.save()
+        x.commit()
+        x.load()
+        y = HydraIface.ResourceTemplateGroup(group_id=x.db.group_id)
+        assert y.load() == True, "Load did not work correctly"
 
+
+class ResourceTemplateTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         x = HydraIface.ResourceTemplate()
         x.db.template_name = "test"
@@ -104,5 +83,15 @@ class ResourceTemplateIfaceTest(unittest.TestCase):
 
         self.assertRaises(Exception, y.save)
 
+    def test_load(self):
+        x = HydraIface.ResourceTemplate()
+        x.db.template_name = "test"
+        x.save()
+        x.commit()
+        x.load()
+        y = HydraIface.ResourceTemplate(template_id=x.db.template_id)
+        assert y.load() == True, "Load did not work correctly"
+
+
 if __name__ == "__main__":
-    unittest.main() # run all tests
+    test_HydraIface.run() # run all tests

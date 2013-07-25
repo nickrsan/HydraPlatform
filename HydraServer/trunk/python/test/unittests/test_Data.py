@@ -1,7 +1,5 @@
-import unittest
-import logging
-from db import HydraIface
 import test_HydraIface
+from db import HydraIface
 from decimal import Decimal
 import datetime
 
@@ -78,13 +76,25 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         assert sd.load() == False, "ScenarioData did not delete correctly"
 
     def test_load(self):
-        cursor = self.connection.cursor()
-        cursor.execute("select min(data_id) as data_id, data_type from tScenarioData group by data_type")
-        row = cursor.fetchall() 
-        data_id = row[0][0]
-        data_type = row[0][1]
-        x = HydraIface.ScenarioData(data_id=data_id, data_type=data_type)
-        assert x.load() == True, "Load did not work correctly"
+
+        data = HydraIface.Scalar()
+        data.db.param_value = Decimal("1.01")
+        data.save()
+        data.commit()
+        data.load()
+
+        sd = HydraIface.ScenarioData()
+        sd.db.data_id = data.db.data_id
+        sd.db.data_type  = 'scalar'
+        sd.db.data_units = 'metres-cubes'
+        sd.db.data_name  = 'volume'
+        sd.db.data_dimen = 'metres-cubed'
+        sd.save()
+        sd.commit()
+        sd.load()
+
+        y = HydraIface.ScenarioData(data_id=sd.db.data_id, data_type=sd.db.data_type)
+        assert y.load() == True, "Load did not work correctly"
 
 
 class ScalarTest(test_HydraIface.HydraIfaceTest):
@@ -112,11 +122,14 @@ class ScalarTest(test_HydraIface.HydraIfaceTest):
         assert x.load() == False, "Delete did not work correctly."
 
     def test_load(self):
-        cursor = self.connection.cursor()
-        cursor.execute("select min(data_id) as data_id from tScalar")
-        data_id = cursor.fetchall()[0][0]
-        x = HydraIface.Scalar(data_id=data_id)
-        assert x.load() == True, "Load did not work correctly"
+        x = HydraIface.Scalar()
+        x.db.param_value = Decimal("1.01")
+        x.save()
+        x.commit()
+        x.load()
+
+        y = HydraIface.Scalar(data_id=x.db.data_id)
+        assert y.load() == True, "Load did not work correctly"
 
 
 class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
@@ -146,12 +159,15 @@ class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
         assert x.load() == False, "Delete did not work correctly."
 
     def test_load(self):
-        cursor = self.connection.cursor()
-        cursor.execute("select min(data_id) as data_id from tTimeSeries")
-        row = cursor.fetchall()[0]
-        data_id = row[0]
-        x = HydraIface.TimeSeries(data_id=data_id)
-        assert x.load() == True, "Load did not work correctly"
+        x = HydraIface.TimeSeries()
+        x.db.ts_time = datetime.datetime.now()
+        x.db.ts_value = 1.01
+        x.save()
+        x.commit()
+        x.load()
+
+        y = HydraIface.TimeSeries(data_id=x.db.data_id)
+        assert y.load() == True, "Load did not work correctly"
 
 
 class EquallySpacedTimeSeriesTest(test_HydraIface.HydraIfaceTest):
@@ -189,15 +205,74 @@ class EquallySpacedTimeSeriesTest(test_HydraIface.HydraIfaceTest):
         assert x.load() == False, "Delete did not work correctly."
 
     def test_load(self):
-        cursor = self.connection.cursor()
-        cursor.execute("select min(data_id) as data_id from tEquallySpacedTimeSeries")
-        row = cursor.fetchall()[0]
-        data_id = row[0]
-        x = HydraIface.EquallySpacedTimeSeries(data_id=data_id)
-        assert x.load() == True and x.ts_array.load() == True, "Load did not work correctly"
+        x = HydraIface.EquallySpacedTimeSeries()
 
+        x.add_ts_array([1, 2, 3, 4, 5])
 
+        x.db.start_time = datetime.datetime.now()
+        x.db.frequency = 1
+        x.save()
+        x.commit()
 
+        y = HydraIface.EquallySpacedTimeSeries(data_id=x.db.data_id)
+        assert y.load() == True and x.ts_array.load() == True, "Load did not work correctly"
+
+class ArrayTest(test_HydraIface.HydraIfaceTest):
+
+    def test_update(self):
+        x = HydraIface.Array()
+
+        x.db.arr_data = [1, 2, 3, 4, 5]
+        x.db.arr_x_dim = 1
+        x.db.arr_y_dim = 2
+        x.db.arr_z_dim = 3
+        x.db.arr_precision = "really precise"
+        x.db.arr_endianness = "totally endian."
+
+        x.save()
+        x.commit()
+
+        x.db.arr_data = [1, 2, 3, 4]
+        x.save()
+        x.commit()
+        x.load()
+
+        assert x.db.arr_data == [1, 2, 3, 4], "tArray did not update correctly"
+
+    def test_delete(self):
+        x = HydraIface.Array()
+
+        x.db.arr_data = [1, 2, 3, 4, 5]
+        x.db.arr_x_dim = 1
+        x.db.arr_y_dim = 2
+        x.db.arr_z_dim = 3
+        x.db.arr_precision = "really precise"
+        x.db.arr_endianness = "totally endian."
+
+        x.save()
+        x.commit()
+        
+        x.delete()
+        x.commit()
+
+        assert x.load() == False, "Delete did not work correctly."
+
+    def test_load(self):
+        x = HydraIface.Array()
+
+        x.db.arr_data = [1, 2, 3, 4, 5]
+        x.db.arr_x_dim = 1
+        x.db.arr_y_dim = 2
+        x.db.arr_z_dim = 3
+        x.db.arr_precision = "really precise"
+        x.db.arr_endianness = "totally endian."
+
+        x.save()
+        x.commit()
+        x.db.load()
+
+        x = HydraIface.Array(data_id=x.db.data_id)
+        assert x.load() == True, "Load did not work correctly"
 
 if __name__ == "__main__":
-    unittest.main() # run all tests
+    test_HydraIface.run() # run all tests

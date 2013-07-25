@@ -1,22 +1,8 @@
-import unittest
+import test_HydraIface
 from db import HydraIface
 from HydraLib import util, hydra_logging
 
-class HydraIfaceTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = util.connect()
-        hydra_logging.init(level='DEBUG')
- 
-    def tearDown(self):
-        hydra_logging.shutdown()
-        util.disconnect(self.connection)
-
-    def test_load(self):
-        cursor = self.connection.cursor()
-        cursor.execute("select min(constraint_id) as constraint_id from tConstraint")
-        constraint_id = cursor.fetchall()[0][0]
-        x = HydraIface.Constraint(constraint_id=constraint_id)
-        assert x.load() == True, "Load did not work correctly"
+class HydraIfaceTest(test_HydraIface.HydraIfaceTest):
 
     def test_update(self):
         x = HydraIface.Constraint()
@@ -41,5 +27,15 @@ class HydraIfaceTest(unittest.TestCase):
         x.delete()
         assert x.load() == False, "Delete did not work correctly."
 
+    def test_load(self):
+        x = HydraIface.Constraint()
+        x.db.constraint_name = "test"
+        x.db.constraint_description = "test description"
+        x.save()
+        x.commit()
+        x.load()
+        y = HydraIface.Constraint(constraint_id=x.db.constraint_id)
+        assert y.load() == True, "Load did not work correctly"
+
 if __name__ == "__main__":
-    unittest.main() # run all tests
+    test_HydraIface.run() # run all tests

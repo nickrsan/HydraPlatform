@@ -1,22 +1,7 @@
-import unittest
+import test_HydraIface
 from db import HydraIface
-from HydraLib import util, hydra_logging
 
-class HydraIfaceTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = util.connect()
-        hydra_logging.init(level='DEBUG')
- 
-    def tearDown(self):
-        hydra_logging.shutdown()
-        util.disconnect(self.connection)
-
-    def test_load(self):
-        cursor = self.connection.cursor()
-        cursor.execute("select min(scenario_id) as scenario_id from tScenario")
-        scenario_id = cursor.fetchall()[0][0]
-        x = HydraIface.Scenario(scenario_id=scenario_id)
-        assert x.load() == True, "Load did not work correctly"
+class ScenarioTest(test_HydraIface.HydraIfaceTest):
 
     def test_update(self):
         x = HydraIface.Scenario()
@@ -41,5 +26,15 @@ class HydraIfaceTest(unittest.TestCase):
         x.delete()
         assert x.load() == False, "Delete did not work correctly."
 
+    def test_load(self):
+        x = HydraIface.Scenario()
+        x.db.scenario_name = "test"
+        x.db.scenario_description = "test description"
+        x.save()
+        x.commit()
+        x.save()
+        y = HydraIface.Scenario(scenario_id=x.db.scenario_id)
+        assert y.load() == True, "Load did not work correctly"
+
 if __name__ == "__main__":
-    unittest.main() # run all tests
+    test_HydraIface.run() # run all tests

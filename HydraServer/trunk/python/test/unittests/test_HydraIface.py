@@ -1,14 +1,19 @@
-import unittest
+import unittest 
 from HydraLib import util, hydra_logging
+import logging
 
 class HydraIfaceTest(unittest.TestCase):
     def setUp(self):
-        self.connection = util.connect()
         hydra_logging.init(level='DEBUG')
+        self.connection = util.connect()
  
     def tearDown(self):
+        logging.debug("Tearing down")
+        util.disconnect()
         hydra_logging.shutdown()
-        util.disconnect(self.connection)
+
+def run():
+    unittest.main()
 
 if __name__ == "__main__":
-    unittest.main() # run all tests
+    run() # run all tests

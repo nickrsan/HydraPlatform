@@ -1,22 +1,7 @@
-import unittest
+import test_HydraIface
 from db import HydraIface
-from HydraLib import util, hydra_logging
 
-class HydraIfaceTest(unittest.TestCase):
-    def setUp(self):
-        self.connection = util.connect()
-        hydra_logging.init(level='DEBUG')
- 
-    def tearDown(self):
-        hydra_logging.shutdown()
-        util.disconnect(self.connection)
-
-    def test_load(self):
-        cursor = self.connection.cursor()
-        cursor.execute("select min(attr_id) as attr_id from tAttr")
-        attr_id = cursor.fetchall()[0][0]
-        x = HydraIface.Attr(attr_id=attr_id)
-        assert x.load() == True, "Load did not work correctly"
+class AttributeTest(test_HydraIface.HydraIfaceTest):
 
     def test_update(self):
         x = HydraIface.Attr()
@@ -41,5 +26,16 @@ class HydraIfaceTest(unittest.TestCase):
         x.delete()
         assert x.load() == False, "Delete did not work correctly."
 
+    def test_load(self):
+        x = HydraIface.Attr()
+        x.db.attr_name = "test"
+        x.db.attr_description = "test description"
+        x.save()
+        x.commit()
+        x.load()
+
+        y = HydraIface.Attr(attr_id=x.db.attr_id)
+        assert y.load() == True, "Load did not work correctly"
+
 if __name__ == "__main__":
-    unittest.main() # run all tests
+    test_HydraIface.run() # run all tests
