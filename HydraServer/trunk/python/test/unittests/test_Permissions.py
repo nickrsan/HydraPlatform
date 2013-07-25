@@ -68,5 +68,39 @@ class RoleTest(test_HydraIface.HydraIfaceTest):
         assert y.load() == True, "Load did not work correctly"
 
 
+class PermTest(test_HydraIface.HydraIfaceTest):
+ 
+    def test_update(self):
+        x = HydraIface.Perm()
+        x.db.perm_name = "Unimportant permission"
+        x.save()
+        x.commit()
+
+        x.db.perm_name = "Important permission"
+        x.save()
+        x.commit()
+        x.load()
+        assert x.db.perm_name == "Important permission", "Perm did not update correctly"
+
+    def test_delete(self):
+        x = HydraIface.Perm()
+        x.db.perm_name = "Unimportant permission"
+        x.save()
+        x.commit()
+
+        x.delete()
+        assert x.load() == False, "Delete did not work correctly."
+
+    def test_load(self):
+        x = HydraIface.Perm()
+        x.db.perm_name = "Unimportant users"
+        x.save()
+        x.commit()
+        x.load()
+
+        y = HydraIface.Perm(perm_id=x.db.perm_id)
+        assert y.load() == True, "Load did not work correctly"
+
+
 if __name__ == "__main__":
     test_HydraIface.run() # run all tests
