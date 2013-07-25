@@ -1,13 +1,27 @@
 import datetime
 import mysql.connector
+import logging
 
+global CNX
+CNX = None
 
 def connect(user='root', password='', db_name='hydra_initial'):
-    cnx = mysql.connector.connect(user=user, password=password, database=db_name)
-    return cnx
+    logging.debug("CONNECTING")
+    global CNX
+    if CNX is None:
+        cnx = mysql.connector.connect(user=user, password=password, database=db_name)
+        CNX = cnx
+    return CNX
 
-def disconnect(cnx):
-    cnx.disconnect()
+def disconnect():
+    logging.debug("DIS - CONNECTING")
+    global CNX
+    if CNX is not None:
+        CNX.disconnect()
+    CNX = None
+
+def get_connection():
+    return CNX
 
 def load_csv(cnx, cursor, filepath):
 

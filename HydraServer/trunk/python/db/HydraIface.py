@@ -2,15 +2,9 @@ from HydraLib import util
 import logging
 from decimal import Decimal
 
-global CNX
-CNX = None
-
 class IfaceBase(object):
     def __init__(self, class_name):
-        logging.info("Initialising")
-        global CNX
-        if CNX is None:
-            CNX = util.connect()
+        logging.info("Initialising %s", class_name)
         self.db = IfaceDB(class_name)
 
         self.in_db = False
@@ -26,7 +20,7 @@ class IfaceBase(object):
         """
             Commit any inserts or updates to the DB. No going back from here...
         """
-        CNX.commit()
+        self.db.connection.commit()
         if self.deleted == True:
             self.in_db = False
 
@@ -63,7 +57,10 @@ class IfaceDB(object):
         self.attr_types = {}
         self.seq = None
 
-        self.cursor = CNX.cursor()
+
+        self.connection = util.get_connection()
+
+        self.cursor = self.connection.cursor()
 
         #This indicates whether any values in this table have changed.
         self.has_changed = False
@@ -189,6 +186,7 @@ class IfaceDB(object):
         )
 
         logging.debug("Running load: %s", complete_load)
+        logging.debug(self.cursor)
         self.cursor.execute(complete_load)
 
         row_columns  = self.cursor.column_names
@@ -470,6 +468,7 @@ class EquallySpacedTimeSeries(IfaceBase):
 
     def delete(self):
         IfaceBase.delete(self)
+        
         self.ts_array.delete()
 
     def add_ts_array(self, array):
