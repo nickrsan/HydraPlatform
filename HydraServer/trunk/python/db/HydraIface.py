@@ -1,5 +1,6 @@
 from HydraLib import util
 import logging
+from decimal import Decimal
 
 global CNX
 CNX = None
@@ -15,7 +16,8 @@ class IfaceBase(object):
         self.in_db = False
 
     def load(self):
-        return self.db.load()
+        self.in_db = self.db.load()
+        return self.in_db
 
     def commit(self):
         """
@@ -44,10 +46,13 @@ class IfaceBase(object):
 class IfaceDB(object):
 
     def __init__(self, class_name):
+
         self.db_attrs = []
         self.pk_attrs = []
+        self.db_data  = {}
         self.nullable_attrs = []
         self.attr_types = {}
+        self.seq = None
 
         self.cursor = CNX.cursor()
 
@@ -66,8 +71,8 @@ class IfaceDB(object):
         for col_desc in table_desc:
             col_name = col_desc[0]
 
-            setattr(self, col_name, col_desc[4])
             self.db_attrs.append(col_name)
+            self.db_data[col_name] = None
 
             self.attr_types[col_name] = col_desc[1]
 
@@ -80,17 +85,48 @@ class IfaceDB(object):
             if col_desc[5] == 'auto_increment':
                 self.seq = col_name
 
+    def __getattr__(self, name):
+        """
+            Return the value containe id db_data if it exists as
+            a key in this dictionary. Return the value as the appropriate
+            type, based on the type specified in the table
+        """
+        db_type = self.attr_types[name]
+
+        if name in self.db_attrs:
+
+            #Don't do a cast if there is no value to cast...
+            if self.db_data[name] is None:
+                return None
+            
+            val = str(self.db_data[name])
+
+            #Cast the value to the correct DB data type
+            if db_type == "double":
+                return Decimal(val)
+            elif db_type.find('int') != -1:
+                return int(val)
+            elif db_type == 'blob':
+                return eval(val)
+
+            return val 
+        
+        else:
+            raise AttributeError("Attribute %s not set."%name)
+
     def __setattr__(self, name, value):
         if name != 'db_attrs' and name in self.db_attrs:
+            self.db_data[name] = value
             self.has_changed = True
-
-        super(IfaceDB, self).__setattr__(name, value)
+        else: 
+            super(IfaceDB, self).__setattr__(name, value)
 
     def insert(self):
         """
             If this object has not been stored in the DB as yet, then insert it.
             Generates an insert statement and runs it.
         """
+        
         base_insert = "insert into %(table)s (%(cols)s) values (%(vals)s);"
         complete_insert = base_insert % dict(
             table = self.table_name,
@@ -103,8 +139,9 @@ class IfaceDB(object):
 
         self.cursor.execute(complete_insert)
 
-        if old_seq is None or old_seq != self.cursor.lastrowid:
-            setattr(self, self.seq, self.cursor.lastrowid)
+        if self.seq is not None:
+            if old_seq is None or old_seq != self.cursor.lastrowid:
+                setattr(self, self.seq, self.cursor.lastrowid)
 
     def update(self):
         """
@@ -123,19 +160,25 @@ class IfaceDB(object):
 
     def load(self):
         """
-            Loads a row from the DB and assigns the values as attributes
-            to this object.
+            Loads a row from the DB and assigns the values as entries to
+            the self.db_data dictionary. These are accessible direcly from
+            the object, without any need to look in the db_data dictionary.
         """
+        #Idenitfy the primary key, which is used to get a single row in the db.
         for pk in self.pk_attrs:
-            if getattr(self, pk) is None:
-                logging.info("Primary key is not set. Cannot load row from DB.")
+            if self.__getattr__(pk) is None:
+                logging.warning("Primary key is not set. Cannot load row from DB.")
                 return False
 
+        #Create a skeleton query
         base_load = "select * from %(table_name)s where %(pk)s;"
+
+        #Fill in the query with the appropriate table name and PK values.
         complete_load = base_load % dict(
             table_name = self.table_name,
             pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
         )
+
         logging.debug("Running load: %s", complete_load)
         self.cursor.execute(complete_load)
 
@@ -150,7 +193,7 @@ class IfaceDB(object):
 
         for idx, column_name in enumerate(row_columns):
             logging.debug("Setting column %s to %s", column_name, row_data[idx])
-            setattr(self, column_name, row_data[idx])
+            self.db_data[column_name] = row_data[idx]
 
         return True
 
@@ -167,14 +210,11 @@ class IfaceDB(object):
         self.cursor.execute(complete_delete)
 
     def get_val(self, attr):
-        val = getattr(self, attr)
+        val = self.__getattr__(attr)
         if val is None:
             return 'null'
         else:
-            if self.attr_types[attr].find('varchar') >= 0:
-                return "\'%s\'"%val
-            else:
-                return str(val)
+            return "'%s'"%str(val)
 
 class Project(IfaceBase):
     """
@@ -311,7 +351,7 @@ class ResourceTemplateGroup(IfaceBase):
     def __init__(self, group_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
         
-        self.db.group_id = None
+        self.db.group_id = group_id
         if group_id is not None:
             self.load()
 
@@ -387,9 +427,41 @@ class EquallySpacedTimeSeries(IfaceBase):
     def __init__(self, data_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
 
+        self.ts_array = None
         self.db.data_id = data_id
+ 
         if data_id is not None:
             self.load()
+
+    def load(self):
+        self.db.load()
+
+        ts_array = TimeSeriesArray(ts_array_id = self.db.ts_array_id)
+        self.ts_array = ts_array
+
+    def save(self):
+        self.ts_array.save()
+
+        if self.in_db is False:
+            self.ts_array.load()        
+            self.db.ts_array_id = self.ts_array.db.ts_array_id
+
+        IfaceBase.save(self)
+        
+
+    def commit(self):
+        IfaceBase.commit(self)
+        
+        self.ts_array.commit()
+
+    def add_ts_array(self, array):
+        ts_array = TimeSeriesArray(ts_array_id = self.db.ts_array_id)
+        ts_array.db.ts_array_data = array
+        self.ts_array = ts_array
+
+    def get_ts_array(self):
+       return self.ts_array.db.ts_array_data
+
 
 class TimeSeriesArray(IfaceBase):
     """
@@ -400,7 +472,7 @@ class TimeSeriesArray(IfaceBase):
 
         self.db.ts_array_id = ts_array_id
         if ts_array_id is not None:
-            self.load()
+            self.load() 
 
 class Scalar(IfaceBase):
     """
