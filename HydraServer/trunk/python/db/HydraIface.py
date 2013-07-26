@@ -67,18 +67,23 @@ class IfaceDB(object):
 
         #this turns 'Project' into 'tProject' so it can identify the table
         self.table_name = "t%s"%class_name
-
+        
         self.cursor.execute('desc %s' % self.table_name)
 
         table_desc = self.cursor.fetchall()
 
         logging.debug("Table desc: %s", table_desc)
 
+        """
+            The table description from MySql looks like:
+            [...,(col_name, col_type, nullable, key ('PRI' or 'MUL'), default, auto_increment),...]
+        """
+
         for col_desc in table_desc:
             col_name = col_desc[0]
 
             self.db_attrs.append(col_name)
-            self.db_data[col_name] = None
+            self.db_data[col_name] = col_desc[4]
 
             self.attr_types[col_name] = col_desc[1]
 
@@ -90,6 +95,32 @@ class IfaceDB(object):
 
             if col_desc[5] == 'auto_increment':
                 self.seq = col_name
+            
+        self.get_children()
+
+    def get_children(self):
+        schema_qry    = """
+                            select
+                                referenced_table_name,
+                                referenced_column_name
+                            from
+                                key_column_usage
+                            where 
+                                table_name = '%s'    
+                            and constraint_name != 'PRIMARY'
+                        """%(self.table_name)
+        schema_cnx    = util.connect_tmp(db_name='information_schema')
+        schema_cursor = schema_cnx.cursor()
+        schema_cursor.execute(schema_qry)
+
+        result =  schema_cursor.fetchall()
+        
+        schema_cnx.disconnect()
+
+        logging.debug("Children for %s are: %s", self.table_name, result)
+
+        return result
+
 
     def __getattr__(self, name):
         """
@@ -272,6 +303,64 @@ class Node(IfaceBase):
         self.db.node_id = node_id
         if node_id is not None:
             self.load()
+        self.attributes = self.get_attributes()
+
+    def get_attributes(self):
+        if self.db.node_id is None:
+            return []
+        attributes = []
+        cursor = self.db.connection.cursor()
+        cursor.execute("""
+                    select
+                        attr_id
+                    from
+                        tResourceAttr
+                    where
+                        ref_id = %s
+                    and ref_key = 'NODE'
+                      """%self.db.node_id)
+        
+        for att in cursor.fetchall():
+            a = Attr(attr_id=int(att[0]))
+            a.load()
+            attributes.append(a)
+
+        return attributes
+
+    def add_attribute(self,scenario_id, attr_id, val):
+        attr = ResourceAttr()
+        attr.db.attr_id = attr_id
+        attr.db.ref_key = 'NODE'
+        attr.db.ref_id  = self.db.node_id
+        attr.save()
+        attr.commit()
+        attr.load()
+        self.attributes.append(attr)
+
+        data = Scalar()
+        data.db.param_value = val
+        data.save()
+        data.commit()
+        data.load()
+
+        sd = ScenarioData()
+        sd.db.data_id = data.db.data_id
+        sd.db.data_type = "double"
+        sd.db.data_units = "metres cubed"
+        sd.db.data_name  = "output"
+        sd.db.data_dimen = "metres cubed"
+        sd.save()
+        sd.commit()
+
+        rs = ResourceScenario()
+        rs.db.scenario_id = scenario_id
+        rs.db.data_id     = data.db.data_id
+        rs.db.resource_attr_id = attr.db.resource_attr_id
+        rs.save()
+        rs.commit() 
+
+        return attr
+        
 
 class Link(IfaceBase):
     """
@@ -524,6 +613,7 @@ class Constraint(IfaceBase):
         self.db.constraint_id = constraint_id
         if constraint_id is not None:
             self.load()
+
 
 class ConstraintGroup(IfaceBase):
     """

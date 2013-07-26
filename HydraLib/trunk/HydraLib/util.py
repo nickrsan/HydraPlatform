@@ -13,6 +13,10 @@ def connect(user='root', password='', db_name='hydra_initial'):
         CNX = cnx
     return CNX
 
+def connect_tmp(user='root', password='', db_name='hydra_initial'):
+    logging.debug("CONNECTING")
+    return mysql.connector.connect(user=user, password=password, database=db_name)
+
 def disconnect():
     logging.debug("DIS - CONNECTING")
     global CNX

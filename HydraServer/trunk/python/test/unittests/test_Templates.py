@@ -1,4 +1,5 @@
 import test_HydraIface
+import mysql.connector
 from db import HydraIface
 
 class ResourceTemplateGroupTest(test_HydraIface.HydraIfaceTest):
@@ -81,7 +82,7 @@ class ResourceTemplateTest(test_HydraIface.HydraIfaceTest):
         y.db.template_name = 'test_fk'
         y.db.group_id      = x.db.group_id + 1
 
-        self.assertRaises(Exception, y.save)
+        self.assertRaises(mysql.connector.IntegrityError, y.save)
 
     def test_load(self):
         x = HydraIface.ResourceTemplate()
@@ -142,10 +143,10 @@ class ResourceTemplateItemTest(test_HydraIface.HydraIfaceTest):
         t = self.create_template("template1")
 
         x = HydraIface.ResourceTemplateItem(attr_id=a.db.attr_id, template_id=0)
-        self.assertRaises(Exception, x.save)
+        self.assertRaises(mysql.connector.IntegrityError, x.save)
 
         y = HydraIface.ResourceTemplateItem(attr_id=0, template_id=t.db.template_id)
-        self.assertRaises(Exception, y.save)
+        self.assertRaises(mysql.connector.IntegrityError, y.save)
 
     def test_load(self):
         a = self.create_attribute("attr1")

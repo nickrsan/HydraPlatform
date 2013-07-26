@@ -4,9 +4,12 @@ from db import HydraIface
 class ScenarioTest(test_HydraIface.HydraIfaceTest):
 
     def test_update(self):
+        proj = self.create_project("Test Proj)")
+        net = self.create_network("Test Net", proj.db.project_id)
         x = HydraIface.Scenario()
         x.db.scenario_name = "test"
         x.db.scenario_description = "test description"
+        x.db.network_id = net.db.network_id
         x.save()
         x.commit()
 
@@ -17,9 +20,12 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
         assert x.db.scenario_name == "test_new", "Scenario did not update correctly"
 
     def test_delete(self):
+        proj = self.create_project("Test Proj)")
+        net = self.create_network("Test Net", proj.db.project_id)
         x = HydraIface.Scenario()
         x.db.scenario_name = "test"
         x.db.scenario_description = "test description"
+        x.db.network_id = net.db.network_id
         x.save()
         x.commit()
 
@@ -27,9 +33,12 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
         assert x.load() == False, "Delete did not work correctly."
 
     def test_load(self):
+        proj = self.create_project("Test Proj)")
+        net = self.create_network("Test Net", proj.db.project_id)
         x = HydraIface.Scenario()
         x.db.scenario_name = "test"
         x.db.scenario_description = "test description"
+        x.db.network_id = net.db.network_id
         x.save()
         x.commit()
         x.save()

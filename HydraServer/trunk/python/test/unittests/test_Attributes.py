@@ -1,5 +1,6 @@
 import test_HydraIface
 from db import HydraIface
+import mysql.connector
 
 class AttributeTest(test_HydraIface.HydraIfaceTest):
 
@@ -102,9 +103,81 @@ class AttrMapTest(test_HydraIface.HydraIfaceTest):
         a2 = self.create_attribute("Attr2")
 
         am1 = HydraIface.AttrMap(attr_id_a = a1.db.attr_id, attr_id_b=0)
-        self.assertRaises(Exception, am1.save)
+        self.assertRaises(mysql.connector.IntegrityError, am1.save)
         am2 = HydraIface.AttrMap(attr_id_a = 0, attr_id_b=a2.db.attr_id)
-        self.assertRaises(Exception, am2.save)
+        self.assertRaises(mysql.connector.IntegrityError, am2.save)
+
+class ResourceAttrTest(test_HydraIface.HydraIfaceTest):
+
+    def create_node(self, name):
+        x = HydraIface.Node()
+        x.db.node_name = name
+        x.save()
+        x.commit()
+        x.load()
+        return x
+
+    def create_attribute(self, name):
+        x = HydraIface.Attr()
+        x.db.attr_name = name
+        x.db.attr_description = "test description"
+        x.save()
+        x.commit()
+        x.load()
+        return x
+
+    def test_create(self):
+        n1 = self.create_node("Node1")
+        a1 = self.create_attribute("Attr1")
+
+        ra = HydraIface.ResourceAttr()
+        ra.db.attr_id = a1.db.attr_id
+        ra.db.ref_key = 'NODE'
+        ra.db.ref_id  = n1.db.node_id
+
+        ra.save()
+        ra.commit()
+
+        assert ra.load() == True, "AttrMap did not update correctly"
+
+    def test_delete(self):
+        n1 = self.create_node("Node1")
+        a1 = self.create_attribute("Attr1")
+
+        ra = HydraIface.ResourceAttr()
+        ra.db.attr_id = a1.db.attr_id
+        ra.db.ref_key = 'NODE'
+        ra.db.ref_id  = n1.db.node_id
+
+        ra.save()
+        ra.commit()
+
+        ra.delete()
+        assert ra.load() == False, "AttrMap did not delete correctly"
+
+    def test_load(self):
+        n1 = self.create_node("Node1")
+        a1 = self.create_attribute("Attr1")
+
+        ra1 = HydraIface.ResourceAttr()
+        ra1.db.attr_id = a1.db.attr_id
+        ra1.db.ref_key = 'NODE'
+        ra1.db.ref_id  = n1.db.node_id
+
+        ra1.save()
+        ra1.commit()
+        ra2 = HydraIface.ResourceAttr(resource_attr_id=ra1.db.resource_attr_id)
+        assert ra2.load() == True, "ResourceAttr did not load correctly"
+
+    def test_fk(self):
+        n1 = self.create_node("Node1")
+
+        ra = HydraIface.ResourceAttr()
+        ra.db.attr_id = 0
+        ra.db.ref_key = 'NODE'
+        ra.db.ref_id  = n1.db.node_id
+        self.assertRaises(mysql.connector.IntegrityError, ra.save)
+
 
 if __name__ == "__main__":
     test_HydraIface.run() # run all tests
