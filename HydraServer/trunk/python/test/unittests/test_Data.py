@@ -274,5 +274,68 @@ class ArrayTest(test_HydraIface.HydraIfaceTest):
         x = HydraIface.Array(data_id=x.db.data_id)
         assert x.load() == True, "Load did not work correctly"
 
+class DataAttrTest(test_HydraIface.HydraIfaceTest):
+
+    def test_update(self):
+        data = HydraIface.Scalar()
+        data.db.param_value = Decimal("1.01")
+        data.save()
+        data.commit()
+        data.load()
+        
+        dattr = HydraIface.DataAttr()
+        dattr.db.data_id = data.db.data_id
+        dattr.db.data_type = "Scalar"
+        dattr.db.d_attr_name = "test attribute"
+        dattr.db.d_attr_val  = 100.1
+        dattr.save()
+        dattr.commit()
+        dattr.load()
+        
+        dattr.db.d_attr_val = 100.2
+        dattr.save()
+        dattr.commit()
+        dattr.load()
+
+        assert dattr.db.d_attr_val == Decimal("100.2"), "Data attr did not update correctly"
+
+    def test_delete(self):
+        data = HydraIface.Scalar()
+        data.db.param_value = Decimal("1.01")
+        data.save()
+        data.commit()
+        data.load()
+        
+        dattr = HydraIface.DataAttr()
+        dattr.db.data_id = data.db.data_id
+        dattr.db.data_type = "Scalar"
+        dattr.db.d_attr_name = "test attribute"
+        dattr.db.d_attr_val  = 100.1
+        dattr.save()
+        dattr.commit()
+        dattr.load()
+        
+        dattr.delete()
+        assert dattr.load() == False, "Delete did not work correctly."
+
+    def test_load(self):
+        data = HydraIface.Scalar()
+        data.db.param_value = Decimal("1.01")
+        data.save()
+        data.commit()
+        data.load()
+        
+        dattr = HydraIface.DataAttr()
+        dattr.db.data_id = data.db.data_id
+        dattr.db.data_type = "Scalar"
+        dattr.db.d_attr_name = "test attribute"
+        dattr.db.d_attr_val  = 100.1
+        dattr.save()
+        dattr.commit()
+        dattr.load()
+        
+        dattr1 = HydraIface.DataAttr(d_attr_id=dattr.db.d_attr_id)
+        assert dattr1.load() == True, "Load did not work correctly"
+
 if __name__ == "__main__":
     test_HydraIface.run() # run all tests
