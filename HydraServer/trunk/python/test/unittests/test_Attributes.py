@@ -103,9 +103,9 @@ class AttrMapTest(test_HydraIface.HydraIfaceTest):
         a2 = self.create_attribute("Attr2")
 
         am1 = HydraIface.AttrMap(attr_id_a = a1.db.attr_id, attr_id_b=0)
-        self.assertRaises(mysql.connector.IntegrityError, am1.save)
+        self.assertRaises(mysql.connector.DatabaseError, am1.save)
         am2 = HydraIface.AttrMap(attr_id_a = 0, attr_id_b=a2.db.attr_id)
-        self.assertRaises(mysql.connector.IntegrityError, am2.save)
+        self.assertRaises(mysql.connector.DatabaseError, am2.save)
 
 class ResourceAttrTest(test_HydraIface.HydraIfaceTest):
 
@@ -176,7 +176,7 @@ class ResourceAttrTest(test_HydraIface.HydraIfaceTest):
         ra.db.attr_id = 0
         ra.db.ref_key = 'NODE'
         ra.db.ref_id  = n1.db.node_id
-        self.assertRaises(mysql.connector.IntegrityError, ra.save)
+        self.assertRaises(mysql.connector.DatabaseError, ra.save)
 
 
 if __name__ == "__main__":
