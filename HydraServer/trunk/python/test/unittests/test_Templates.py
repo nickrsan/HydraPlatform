@@ -81,7 +81,6 @@ class ResourceTemplateTest(test_HydraIface.HydraIfaceTest):
         y = HydraIface.ResourceTemplate()
         y.db.template_name = 'test_fk'
         y.db.group_id      = x.db.group_id + 1
-
         self.assertRaises(mysql.connector.DatabaseError, y.save)
 
     def test_load(self):

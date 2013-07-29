@@ -12,8 +12,27 @@ class IfaceBase(object):
         #Indicates that the 'delete' function has been called on this object
         self.deleted = False
 
+        self.children = {}
+
     def load(self):
         self.in_db = self.db.load()
+
+        children = self.db.get_children()
+        for name, rows in children.items():
+            name = name.lower()
+            #turn 'link' into 'links'
+            attr_name              = name[1:] + 's'
+               
+            child_objs = []
+            for row in rows:
+                child_obj = db_hierarchy[name]['obj']()
+                for col, val in row.items():
+                    child_obj.db.__setattr__(col, val)
+                child_objs.append(child_obj)
+
+            self.__setattr__(attr_name, child_objs)
+            self.children[name] = self.__getattribute__(attr_name)
+
         return self.in_db
 
     def commit(self):
@@ -23,6 +42,7 @@ class IfaceBase(object):
         self.db.connection.commit()
         if self.deleted == True:
             self.in_db = False
+        self.load()
 
     def delete(self):
         if self.in_db:
@@ -96,17 +116,21 @@ class IfaceDB(object):
             if col_desc[5] == 'auto_increment':
                 self.seq = col_name
             
-        self.get_children()
-
     def get_children(self):
+        """
+            Find all the things that reference me in the db. They are tentatively
+            called 'children'
+        """
+
         schema_qry    = """
                             select
-                                referenced_table_name,
+                                table_name,
+                                column_name,
                                 referenced_column_name
                             from
                                 key_column_usage
                             where 
-                                table_name = '%s'    
+                                referenced_table_name = '%s'    
                             and constraint_name != 'PRIMARY'
                         """%(self.table_name)
         schema_cnx    = util.connect_tmp(db_name='information_schema')
@@ -119,8 +143,40 @@ class IfaceDB(object):
 
         logging.debug("Children for %s are: %s", self.table_name, result)
 
-        return result
+        #select all of my children out of the DB.
+        child_dict = {}
+        for child in result:
+            logging.info("Loading child %s", child[0])
 
+            base_child_sql = """
+                select
+                    *
+                from
+                    %(table)s
+                where 
+                 %(fk_col)s = %(fk_val)s 
+            """
+
+            complete_child_sql = base_child_sql % dict(
+                 table = child[0],
+                 fk_col = child[1],
+                 fk_val = self.__getattr__(child[2])
+            )
+            self.cursor.execute(complete_child_sql)
+
+            #TODO turn this into a built-in library -- pass in
+            #tuple and list of tuples and return a lookuplist.
+            resultset = []
+            col_names = self.cursor.column_names
+            data      = self.cursor.fetchall()
+            for row in data:
+                data_dict = {}
+                for index, col_name in enumerate(col_names):
+                    data_dict[col_name] = row[index]
+                resultset.append(data_dict)
+            child_dict[child[0]] = resultset
+
+        return child_dict
 
     def __getattr__(self, name):
         """
@@ -253,7 +309,7 @@ class IfaceDB(object):
 
         if val is None:
             return 'null'
-        elif db_type.find('varchar') != -1 or db_type in ('blob', 'datetime') :
+        elif db_type.find('varchar') != -1 or db_type in ('blob', 'datetime', 'timestamp') :
             return "'%s'"%val
         else:
             return str(val)
@@ -327,9 +383,10 @@ class Node(IfaceBase):
 
         return attributes
 
-    def add_attribute(self,scenario_id, attr_id, val):
+    def add_attribute(self, attr_id, attr_is_var='N'):
         attr = ResourceAttr()
         attr.db.attr_id = attr_id
+        attr.db.attr_is_var = attr_is_var
         attr.db.ref_key = 'NODE'
         attr.db.ref_id  = self.db.node_id
         attr.save()
@@ -337,29 +394,32 @@ class Node(IfaceBase):
         attr.load()
         self.attributes.append(attr)
 
-        data = Scalar()
-        data.db.param_value = val
-        data.save()
-        data.commit()
-        data.load()
+        return attr
+    
+    def assign_value(self, scenario_id, resource_attr_id, data_type, val,
+                     units, name, dimension):
+        attr = ResourceAttr(resource_attr_id = resource_attr_id)
 
         sd = ScenarioData()
-        sd.db.data_id = data.db.data_id
-        sd.db.data_type = "double"
-        sd.db.data_units = "metres cubed"
-        sd.db.data_name  = "output"
-        sd.db.data_dimen = "metres cubed"
+        sd.set_val(data_type, val)
+        
+        sd.db.data_type  = data_type
+        sd.db.data_units = units
+        sd.db.data_name  = name
+        sd.db.data_dimen = dimension
         sd.save()
         sd.commit()
+        sd.db.load()
 
         rs = ResourceScenario()
-        rs.db.scenario_id = scenario_id
-        rs.db.data_id     = data.db.data_id
+
+        rs.db.scenario_id      = scenario_id
+        rs.db.dataset_id       = sd.db.dataset_id
         rs.db.resource_attr_id = attr.db.resource_attr_id
         rs.save()
         rs.commit() 
 
-        return attr
+        return rs 
         
 
 class Link(IfaceBase):
@@ -460,13 +520,13 @@ class ResourceScenario(IfaceBase):
         A resource scenario is what links the actual piece of data
         with a resource -- the data per resource will change per scenario.
     """
-    def __init__(self, data_id = None, scenario_id = None):
+    def __init__(self, scenario_id = None, resource_attr_id=None):
         IfaceBase.__init__(self, self.__class__.__name__)
 
-        self.db.data_id = data_id
         self.db.scenario_id = scenario_id
+        self.db.resource_attr_id = resource_attr_id
 
-        if data_id is not None and scenario_id is not None:
+        if scenario_id is not None and resource_attr_id is not None:
             self.load()
 
 class ScenarioData(IfaceBase):
@@ -475,14 +535,62 @@ class ScenarioData(IfaceBase):
         type, units, name and dimension. The actual data value is stored
         in another table, which is identified based on the type.
     """
-    def __init__(self, data_id = None, data_type = None):
+    def __init__(self, dataset_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
 
-        self.db.data_id = data_id
-        self.db.data_type = data_type
+        self.db.dataset_id = dataset_id
 
-        if data_id is not None and data_type is not None:
+        if dataset_id is not None:
             self.load()
+
+    def get_val(self):
+        val = None
+        if self.db.data_type == 'descriptor':
+            d = Descriptor(data_id = self.db.data_id)
+            val = d.desc_val
+        elif self.db.data_type == 'timeseries':
+            ts = TimeSeries(data_id=self.db.data_id)
+            val = ts.db.ts_value
+        elif self.db.data_type == 'eqtimeseries':
+            eqts = EquallySpacedTimeSeries(data_id = self.db.data_id)
+            val  = eqts.db.arr_data
+        elif self.db.data_type == 'scalar':
+            s = Scalar(data_id = self.db.data_id)
+            val = s.db.param_value
+        elif self.db.data_type == 'array':
+            a = Array(data_id = self.db.data_id)
+            val = a.db.arr_data
+        
+        logging.debug("VALUE IS: %s", val)
+        return val
+
+    def set_val(self, data_type, val):
+        data = None
+        if data_type == 'descriptor':
+            data = Descriptor()
+            data.desc_val = val
+        elif data_type == 'timeseries':
+            data = TimeSeries(data_id=self.db.data_id)
+            data.db.ts_time  = val[0]
+            data.db.ts_value = val[1]
+        elif data_type == 'eqtimeseries':
+            data = EquallySpacedTimeSeries(data_id = self.db.data_id)
+            data.db.start_time = val[0]
+            data.db.frequency  = val[1]
+            data.db.arr_data = val[2]
+        elif data_type == 'scalar':
+            data = Scalar(data_id = self.db.data_id)
+            data.db.param_value = val
+        elif data_type == 'array':
+            data = Array(data_id = self.db.data_id)
+            data.db.arr_data = val
+        data.save()
+        data.commit()
+        data.load()
+        self.db.data_id = data.db.data_id
+        return data
+
+
 
 class DataAttr(IfaceBase):
     """
@@ -527,58 +635,10 @@ class EquallySpacedTimeSeries(IfaceBase):
     def __init__(self, data_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
 
-        self.ts_array = None
         self.db.data_id = data_id
  
         if data_id is not None:
             self.load()
-
-    def load(self):
-        loaded = self.db.load()
-
-        ts_array = TimeSeriesArray(ts_array_id = self.db.ts_array_id)
-        self.ts_array = ts_array
-
-        return loaded
-
-    def save(self):
-        self.ts_array.save()
-
-        if self.in_db is False:
-            self.ts_array.load()        
-            self.db.ts_array_id = self.ts_array.db.ts_array_id
-
-        IfaceBase.save(self)
-        
-    def commit(self):
-        IfaceBase.commit(self)
-        
-        self.ts_array.commit()
-
-    def delete(self):
-        IfaceBase.delete(self)
-        
-        self.ts_array.delete()
-
-    def add_ts_array(self, array):
-        ts_array = TimeSeriesArray(ts_array_id = self.db.ts_array_id)
-        ts_array.db.ts_array_data = array
-        self.ts_array = ts_array
-
-    def get_ts_array(self):
-       return self.ts_array.db.ts_array_data
-
-
-class TimeSeriesArray(IfaceBase):
-    """
-        The values contained in an equally spaced time series.
-    """
-    def __init__(self, ts_array_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
-
-        self.db.ts_array_id = ts_array_id
-        if ts_array_id is not None:
-            self.load() 
 
 class Scalar(IfaceBase):
     """
@@ -607,12 +667,20 @@ class Constraint(IfaceBase):
         A constraint or rule placed on a network, perhaps
         to ensure mutual exclusion of certain resources..
     """
-    def __init__(self, constraint_id = None):
+    def __init__(self, scenario=None, constraint_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
 
+        self.scenario=scenario
         self.db.constraint_id = constraint_id
         if constraint_id is not None:
             self.load()
+
+    def eval_condition(self):
+        grp_1 = ConstraintGroup(constraint=self, group_id = self.db.group_id)
+
+        condition_string = "%s %s %s"%(grp_1.eval_group(), self.db.op, self.db.constant)
+
+        return condition_string
 
 
 class ConstraintGroup(IfaceBase):
@@ -620,12 +688,50 @@ class ConstraintGroup(IfaceBase):
         a connector class for constraints. Used for grouping constraints
         into logical sections, not unlike parentheses in a mathematical equation.
     """
-    def __init__(self, group_id = None):
+    def __init__(self, constraint=None, group_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
 
+        self.constraint = constraint
         self.db.group_id = group_id
         if group_id is not None:
             self.load()
+
+    def eval_group(self):
+
+        str_1 = None
+        str_2 = None
+
+        if self.db.ref_key_1 == 'GRP':
+            group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_1)
+            str_1 = group.eval_group()
+        elif self.db.ref_key_1 == 'ITEM':
+            item = ConstraintItem(item_id=self.db.ref_id_1)
+
+            r = ResourceScenario(
+                    scenario_id      = self.constraint.db.scenario_id, 
+                    resource_attr_id = item.db.resource_attr_id
+            )
+
+            d = ScenarioData(dataset_id=r.db.dataset_id)
+            str_1 = d.get_val()
+
+        if self.db.ref_key_2 == 'GRP':
+            group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_2)
+            str_2 = group.eval_group()
+        elif self.db.ref_key_2 == 'ITEM':
+            item = ConstraintItem(item_id=self.db.ref_id_2)
+
+            r = ResourceScenario(
+                    scenario_id      = self.constraint.db.scenario_id, 
+                    resource_attr_id = item.db.resource_attr_id
+            )
+
+            d = ScenarioData(dataset_id=r.db.dataset_id)
+            str_2 = d.get_val()
+
+
+        return "%s %s %s"%(str_1, self.db.op, str_2)
+            
 
 class ConstraintItem(IfaceBase):
     """
@@ -697,4 +803,109 @@ class RolePerm(IfaceBase):
             self.load()
 
 
-
+db_hierarchy = dict(
+    tproject  = dict(
+        obj   = Project,
+        name  = 'project',
+    ),
+    tnetwork  = dict(
+        obj   = Network,
+        name  = 'network',
+    ),
+    tnode  = dict(
+        obj   = Node,
+        name  = 'node',
+    ),
+    tlink  = dict(
+        obj   = Link,
+        name  = 'link',
+    ),
+    tscenario  = dict(
+        obj   = Scenario,
+        name  = 'scenario',
+    ),
+    tattr  = dict(
+        obj   = Attr,
+        name  = 'attr',
+    ),
+    tattrmap  = dict(
+        obj   = AttrMap,
+        name  = 'attrmap',
+    ),
+    tresourceattr  = dict(
+        obj   = ResourceAttr,
+        name  = 'resourceattr',
+    ),
+    tresourcetemplate  = dict(
+        obj   = ResourceTemplate,
+        name  = 'resourcetemplate',
+    ),
+    tresourcetemplateitem  = dict(
+        obj   = ResourceTemplateItem,
+        name  = 'resourcetemplateitem',
+    ),
+    tresourcetemplategroup  = dict(
+        obj   = ResourceTemplateGroup,
+        name  = 'resourcetemplategroup',
+    ),
+    tresourcescenario  = dict(
+        obj   = ResourceScenario,
+        name  = 'resourcescenario',
+    ),
+    tscenariodata  = dict(
+        obj   = ScenarioData,
+        name  = 'scenariodata',
+    ),
+    tdataattr  = dict(
+        obj   = DataAttr,
+        name  = 'dataattr',
+    ),
+    tdescriptor  = dict(
+        obj   = Descriptor,
+        name  = 'descriptor',
+    ),
+    ttimeseries  = dict(
+        obj   = TimeSeries,
+        name  = 'timeseries',
+    ),
+    tequallyspacedtimeseries  = dict(
+        obj   = EquallySpacedTimeSeries,
+        name  = 'equallyspacedtimeseries',
+    ),
+    tscalar  = dict(
+        obj   = Scalar,
+        name  = 'scalar',
+    ),
+    tarray  = dict(
+        obj   = Array,
+        name  = 'array',
+    ),
+    tconstraint  = dict(
+        obj   = Constraint,
+        name  = 'constraint',
+    ),
+    tconstraintgroup  = dict(
+        obj   = ConstraintGroup,
+        name  = 'constraintgroup',
+    ),
+    tconstraintitem  = dict(
+        obj   = ConstraintItem,
+        name  = 'constraintitem',
+    ),
+    tuser  = dict(
+        obj   = User,
+        name  = 'user',
+    ),
+    trole  = dict(
+        obj   = Role,
+        name  = 'role',
+    ),
+    troleuser  = dict(
+        obj   = RoleUser,
+        name  = 'roleuser',
+    ),
+    troleperm  = dict(
+        obj   = RolePerm,
+        name  = 'roleperm',
+    )
+)

@@ -18,10 +18,7 @@ class HydraIfaceTest(unittest.TestCase):
         x.db.project_name = name
         x.save()
         x.commit()
-        x.load()
         return x
-
-
 
     def create_network(self, name, project_id):
         x = HydraIface.Network()
@@ -29,7 +26,6 @@ class HydraIfaceTest(unittest.TestCase):
         x.db.project_id = project_id
         x.save()
         x.commit()
-        x.load()
         return x
 
     def create_scenario(self, network_id, name):
@@ -38,7 +34,6 @@ class HydraIfaceTest(unittest.TestCase):
         x.db.network_id    = network_id
         x.save()
         x.commit()
-        x.load()
         return x
 
     def create_node(self, name):
@@ -46,7 +41,6 @@ class HydraIfaceTest(unittest.TestCase):
         x.db.node_name = name
         x.save()
         x.commit()
-        x.load()
         return x
 
     def create_link(self, name, network_id, node_x_id, node_y_id):
@@ -57,7 +51,6 @@ class HydraIfaceTest(unittest.TestCase):
         x.db.node_2_id = node_y_id
         x.save()
         x.commit()
-        x.load()
         return x
 
     def create_attribute(self, name):
@@ -66,7 +59,6 @@ class HydraIfaceTest(unittest.TestCase):
         x.db.attr_description = "test description"
         x.save()
         x.commit()
-        x.load()
         return x
 
     def create_scenario_data(self, data_id):
@@ -78,7 +70,6 @@ class HydraIfaceTest(unittest.TestCase):
         x.db.data_dim   = "metres cubed"
         x.save()
         x.commit()
-        x.load()
         return x
 
 

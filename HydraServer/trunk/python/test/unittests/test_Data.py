@@ -93,7 +93,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         sd.commit()
         sd.load()
 
-        y = HydraIface.ScenarioData(data_id=sd.db.data_id, data_type=sd.db.data_type)
+        y = HydraIface.ScenarioData(dataset_id=sd.db.dataset_id)
         assert y.load() == True, "Load did not work correctly"
 
 
@@ -175,24 +175,24 @@ class EquallySpacedTimeSeriesTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         x = HydraIface.EquallySpacedTimeSeries()
 
-        x.add_ts_array([1, 2, 3, 4, 5])
+        x.db.arr_data = [1, 2, 3, 4, 5]
 
         x.db.start_time = datetime.datetime.now()
         x.db.frequency = 1
         x.save()
         x.commit()
 
-        x.add_ts_array([1, 2, 3, 4])
+        x.db.arr_data = [1, 2, 3, 4]
         x.save()
         x.commit()
         x.load()
 
-        assert x.get_ts_array() == [1, 2, 3, 4], "tEquallySpacedTimeSeries did not update correctly"
+        assert x.db.arr_data == [1, 2, 3, 4], "tEquallySpacedTimeSeries did not update correctly"
 
     def test_delete(self):
         x = HydraIface.EquallySpacedTimeSeries()
 
-        x.add_ts_array([1, 2, 3, 4, 5])
+        x.db.arr_data = [1, 2, 3, 4, 5]
 
         x.db.start_time = datetime.datetime.now()
         x.db.frequency = 1
@@ -207,7 +207,7 @@ class EquallySpacedTimeSeriesTest(test_HydraIface.HydraIfaceTest):
     def test_load(self):
         x = HydraIface.EquallySpacedTimeSeries()
 
-        x.add_ts_array([1, 2, 3, 4, 5])
+        x.db.arr_data = [1, 2, 3, 4, 5]
 
         x.db.start_time = datetime.datetime.now()
         x.db.frequency = 1
@@ -215,7 +215,7 @@ class EquallySpacedTimeSeriesTest(test_HydraIface.HydraIfaceTest):
         x.commit()
 
         y = HydraIface.EquallySpacedTimeSeries(data_id=x.db.data_id)
-        assert y.load() == True and x.ts_array.load() == True, "Load did not work correctly"
+        assert y.load() == True, "Load did not work correctly"
 
 class ArrayTest(test_HydraIface.HydraIfaceTest):
 

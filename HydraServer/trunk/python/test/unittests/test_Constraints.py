@@ -6,8 +6,8 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
     def test_create(self):
         """
             Creating a condition on three nodes, whereby
-            'output' attribute of nodes a and b must be greater or equal
-            to that of the 'output' of node c.
+            'flow' attribute of nodes a and b must be greater or equal
+            to that of the 'flow' of node c.
         """
         project = self.create_project("Project A")
         network = self.create_network("Network A", project.db.project_id)
@@ -17,18 +17,23 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         node_b = self.create_node("Node B")
         node_c = self.create_node("Node C")
 
-        attr_a = self.create_attribute("Output")
+        attr_a = self.create_attribute("Flow")
 
-        ra = node_a.add_attribute(scenario.db.scenario_id, attr_a.db.attr_id, 1)
-        rb = node_b.add_attribute(scenario.db.scenario_id, attr_a.db.attr_id, 2)
-        rc = node_c.add_attribute(scenario.db.scenario_id, attr_a.db.attr_id, 3)
+        ra = node_a.add_attribute(attr_a.db.attr_id)
+        rb = node_b.add_attribute(attr_a.db.attr_id)
+        rc = node_c.add_attribute(attr_a.db.attr_id)
+
+        rsa = node_a.assign_value(scenario.db.scenario_id, ra.db.resource_attr_id, 'scalar' ,1, 'm3', 'flow', 'int')
+        rsb = node_a.assign_value(scenario.db.scenario_id, rb.db.resource_attr_id, 'scalar' ,2, 'm3', 'flow', 'int')
+        rsc = node_a.assign_value(scenario.db.scenario_id, rc.db.resource_attr_id, 'scalar' ,3, 'm3', 'flow', 'int')
+
 
         con = HydraIface.Constraint()
         con.db.constraint_name = "Comparative resource allocation"
         con.db.constraint_description = "AB must be >= C"
         con.db.scenario_id            = scenario.db.scenario_id
         con.db.constant               = 0
-        con.db.op                     = "="
+        con.db.op                     = "=="
         con.save()
         con.commit()
         con.load()
@@ -71,7 +76,7 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         grp_b.db.ref_key_1 = 'GRP'
         grp_b.db.ref_id_1  = grp_a.db.group_id
         grp_b.db.ref_key_2 = 'ITEM'
-        grp_b.db.ref_id_2  = item_b.db.item_id
+        grp_b.db.ref_id_2  = item_c.db.item_id
         grp_b.db.op        = '-'
         grp_b.save()
         grp_b.commit()
@@ -80,6 +85,10 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         con.db.group_id = grp_b.db.group_id
         con.save()
         con.commit()
+
+        condition_string = con.eval_condition()
+        assert eval(condition_string) == True, \
+                    "Condition %s did not evaluate"%condition_string
 
 if __name__ == "__main__":
     test_HydraIface.run() # run all tests
