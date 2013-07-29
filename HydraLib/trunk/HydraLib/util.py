@@ -5,7 +5,7 @@ import logging
 global CNX
 CNX = None
 
-def connect(user='root', password='', db_name='hydra_initial'):
+def connect(user='phm', password='', db_name='hydra_initial'):
     logging.debug("CONNECTING")
     global CNX
     if CNX is None:
@@ -13,7 +13,7 @@ def connect(user='root', password='', db_name='hydra_initial'):
         CNX = cnx
     return CNX
 
-def connect_tmp(user='root', password='', db_name='hydra_initial'):
+def connect_tmp(user='phm', password='', db_name='hydra_initial'):
     logging.debug("CONNECTING")
     return mysql.connector.connect(user=user, password=password, database=db_name)
 
