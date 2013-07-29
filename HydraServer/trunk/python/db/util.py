@@ -3,7 +3,7 @@ import mysql.connector
 
 
 def connect(db_name='hydra_initial'):
-    cnx = mysql.connector.connect(user='phm', database=db_name)
+    cnx = mysql.connector.connect(user='root', database=db_name)
     return cnx
 
 
