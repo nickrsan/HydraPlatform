@@ -231,17 +231,17 @@ if __name__ == '__main__':
 
     hydra_logging.init(level='DEBUG')
     # Load the structure file
-    filename = '../../data/Gatineau_system.ods'
+    filename = '../../data/gatineau/Gatineau_system.ods'
     gatineau_res_data = importReservoirData(filename)
     res_ids = gatineau_res_data.getid()
 
     # Load additional time series (daily time series).
-    inflow_filenames = ['../../data/1008.csv',
-                        '../../data/1009.csv',
-                        '../../data/1056.csv',
-                        '../../data/1077.csv',
-                        '../../data/1078.csv',
-                        '../../data/7030.csv']
+    inflow_filenames = ['../../data/gatineau/1008.csv',
+                        '../../data/gatineau/1009.csv',
+                        '../../data/gatineau/1056.csv',
+                        '../../data/gatineau/1077.csv',
+                        '../../data/gatineau/1078.csv',
+                        '../../data/gatineau/7030.csv']
 
     daily_ts_data = dict()
     n = 0

@@ -1,21 +1,49 @@
 import datetime
 import mysql.connector
 import logging
+import os
+import glob
+import ConfigParser
 
 global CNX
 CNX = None
 
-def connect(user='root', password='', db_name='hydra_initial'):
+
+def connect(user=None, password=None, db_name=None):
+    config = load_config()
     logging.debug("CONNECTING")
+    if user is None:
+        user = config.get('mysqld', 'user')
+    if password is None:
+        password = config.get('mysqld', 'password')
+    if db_name is None:
+        db_name = config.get('mysqld', 'db_name')
+
     global CNX
+
     if CNX is None:
-        cnx = mysql.connector.connect(user=user, password=password, database=db_name)
+        cnx = mysql.connector.connect(user=user,
+                                      password=password,
+                                      database=db_name)
         CNX = cnx
     return CNX
 
-def connect_tmp(user='root', password='', db_name='hydra_initial'):
+
+def connect_tmp(user=None, password=None, db_name=None):
+    config = load_config()
     logging.debug("CONNECTING")
-    return mysql.connector.connect(user=user, password=password, database=db_name)
+
+    if user is None:
+        user = config.get('mysqld', 'user')
+    if password is None:
+        password = config.get('mysqld', 'password')
+    if db_name is None:
+        db_name = config.get('mysqld', 'db_name')
+
+    return mysql.connector.connect(user=user,
+                                   password=password,
+                                   database=db_name)
+
 
 def disconnect():
     logging.debug("DIS - CONNECTING")
@@ -24,8 +52,10 @@ def disconnect():
         CNX.disconnect()
     CNX = None
 
+
 def get_connection():
     return CNX
+
 
 def load_csv(cnx, cursor, filepath):
 
@@ -53,3 +83,46 @@ def load_csv(cnx, cursor, filepath):
         cnx.commit()
         cursor.close()
         cnx.close()
+
+
+def load_config():
+    """Load a config file. This function looks for a config (*.ini) file in the
+    following order::
+
+        (1) ~/.config/hydra/
+        (2) /etc/hydra
+        (3) [...]/HYDRA/HydraLib/trunk/../../config/
+
+    (1) will override (2) will override (3). Parameter not defined in (1) will
+    be taken from (2). Parameters not defined in (2) will be taken from (3).
+    (3) is the config folder that will be checked out from the svn repository.
+    (2) Will be be provided as soon as an installable distribution is
+    available. (1) will usually be written individually by every user."""
+    #TODO: Check for the operating system we are running, provide search paths
+    #      for Windows machines.
+    modulepath = os.path.dirname(os.path.abspath(__file__))
+
+    userfiles = glob.glob(os.path.expanduser('~') + '/.config/hydra/*.ini')
+    sysfiles = glob.glob('/etc/hydra/*.ini')
+    repofiles = glob.glob(modulepath + '/../../../config/*.ini')
+
+    config = ConfigParser.RawConfigParser(allow_no_value=True)
+
+    logging.debug('LOADING CONFIG FILES: ' +
+                  ', '.join([', '.join(repofiles),
+                             ', '.join(sysfiles),
+                             ', '.join(userfiles)]))
+
+    for ini_file in repofiles:
+        config.read(ini_file)
+    for ini_file in sysfiles:
+        config.read(ini_file)
+    for ini_file in userfiles:
+        config.read(ini_file)
+
+    return config
+
+
+if __name__ == '__main__':
+    config = load_config()
+    print config.get('mysqld', 'user')
