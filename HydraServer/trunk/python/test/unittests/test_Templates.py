@@ -37,6 +37,7 @@ class ResourceTemplateGroupTest(test_HydraIface.HydraIfaceTest):
 class ResourceTemplateTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         x = HydraIface.ResourceTemplate()
+
         x.db.template_name = "test"
         x.save()
         x.commit()
@@ -156,7 +157,6 @@ class ResourceTemplateItemTest(test_HydraIface.HydraIfaceTest):
         x.commit()
         x.load()
        
-
         y = HydraIface.ResourceTemplateItem(attr_id = x.db.attr_id, template_id=x.db.template_id)
 
         assert y.load() == True, "Load did not work correctly"

@@ -1,16 +1,16 @@
 import unittest
 from db import HydraIface
-from HydraLib import util, hydra_logging
+from HydraLib import hydra_logging, hdb
 import logging
 
 class HydraIfaceTest(unittest.TestCase):
     def setUp(self):
         hydra_logging.init(level='DEBUG')
-        self.connection = util.connect()
+        self.connection = hdb.connect()
  
     def tearDown(self):
         logging.debug("Tearing down")
-        util.disconnect()
+        hdb.disconnect()
         hydra_logging.shutdown()
 
     def create_project(self, name):

@@ -132,6 +132,40 @@ class ScalarTest(test_HydraIface.HydraIfaceTest):
         assert y.load() == True, "Load did not work correctly"
 
 
+class DescriptorTest(test_HydraIface.HydraIfaceTest):
+
+    def test_update(self):
+        x = HydraIface.Descriptor()
+        x.db.desc_val = "I am a descriptor"
+        x.save()
+        x.commit()
+
+        x.db.desc_val = "I am a new descriptor"
+        x.save()
+        x.commit()
+        x.load()
+
+        assert x.db.desc_val == "I am a new descriptor", "Scalar did not update correctly"
+
+    def test_delete(self):
+        x = HydraIface.Descriptor()
+        x.db.desc_val = "I am a descriptor"
+        x.save()
+        x.commit()
+
+        x.delete()
+        assert x.load() == False, "Delete did not work correctly."
+
+    def test_load(self):
+        x = HydraIface.Descriptor()
+        x.db.desc_val = "I am a descriptor"
+        x.save()
+        x.commit()
+        x.load()
+
+        y = HydraIface.Descriptor(data_id=x.db.data_id)
+        assert y.load() == True, "Load did not work correctly"
+
 class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
  
     def test_update(self):

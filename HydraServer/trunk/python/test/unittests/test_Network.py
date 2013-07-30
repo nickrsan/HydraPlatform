@@ -143,11 +143,15 @@ class NodeTest(test_HydraIface.HydraIfaceTest):
         y = HydraIface.Node(node_id=x.db.node_id)
         assert y.load() == True, "Load did not work correctly"
 
-class ChildrenTest(test_HydraIface.HydraIfaceTest):
+#class ChildrenTest(test_HydraIface.HydraIfaceTest):
+#
+#    def test_load(self):
+#        x = HydraIface.Network(network_id=4)
+#        x.load()
+#        
+#        l = x.links[0]
+#        l.load()
 
-    def test_load(self):
-        x = HydraIface.Network(network_id=11)
-        x.load()
 
 
 if __name__ == "__main__":

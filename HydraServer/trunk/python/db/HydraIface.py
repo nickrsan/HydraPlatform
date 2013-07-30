@@ -1,4 +1,5 @@
-from HydraLib import util
+from HydraLib import hdb
+from HydraLib.hdb import HydraMySqlCursor
 import logging
 from decimal import Decimal
 
@@ -7,31 +8,22 @@ class IfaceBase(object):
         logging.info("Initialising %s", class_name)
         self.db = IfaceDB(class_name)
 
+        self.name = class_name
+
         self.in_db = False
 
         #Indicates that the 'delete' function has been called on this object
         self.deleted = False
 
         self.children = {}
+        self.parent = None
 
     def load(self):
         self.in_db = self.db.load()
-
-        children = self.db.get_children()
-        for name, rows in children.items():
-            name = name.lower()
-            #turn 'link' into 'links'
-            attr_name              = name[1:] + 's'
-               
-            child_objs = []
-            for row in rows:
-                child_obj = db_hierarchy[name]['obj']()
-                for col, val in row.items():
-                    child_obj.db.__setattr__(col, val)
-                child_objs.append(child_obj)
-
-            self.__setattr__(attr_name, child_objs)
-            self.children[name] = self.__getattribute__(attr_name)
+        
+        if self.in_db:
+            self.get_children()
+            self.get_parent()
 
         return self.in_db
 
@@ -66,21 +58,51 @@ class IfaceBase(object):
             self.db.insert()
             self.in_db = True
 
+    def get_children(self):
+        children = self.db.get_children()
+        for name, rows in children.items():
+            #turn 'link' into 'links'
+            attr_name              = name[1:].lower() + 's'
+               
+            child_objs = []
+            for row in rows:
+                row = row.get_as_dict()
+                child_obj = eval(name[1:])()
+
+                child_obj.parent = self
+                child_obj.__setattr__(self.name.lower(), self) 
+
+                for col, val in row.items():
+                    child_obj.db.__setattr__(col, val)
+
+                child_objs.append(child_obj)
+
+            self.__setattr__(attr_name, child_objs)
+            self.children[name.lower()] = self.__getattribute__(attr_name)
+
+    def get_parent(self):
+        if self.parent is None and self.in_db:
+            parent = self.db.get_parent()
+            parent_name = parent.__class__.__name__.lower()
+            logging.debug("Parent Name: %s", parent_name)
+            logging.debug("Parent: %s", parent)
+            self.parent = parent
+            self.__setattr__(parent_name, parent)
+
 class IfaceDB(object):
 
     def __init__(self, class_name):
 
         self.db_attrs = []
-        self.pk_attrs = []
+        self.pk_attrs = db_hierarchy['t'+class_name.lower()]['pk']
         self.db_data  = {}
         self.nullable_attrs = []
         self.attr_types = {}
         self.seq = None
+        
+        self.connection = hdb.get_connection()
 
-
-        self.connection = util.get_connection()
-
-        self.cursor = self.connection.cursor()
+        self.cursor = self.connection.cursor(cursor_class=HydraMySqlCursor)
 
         #This indicates whether any values in this table have changed.
         self.has_changed = False
@@ -111,7 +133,8 @@ class IfaceDB(object):
                 self.nullable_attrs.append(col_name)
 
             if col_desc[3] == 'PRI':
-                self.pk_attrs.append(col_name)
+                pass
+                #self.pk_attrs.append(col_name)
 
             if col_desc[5] == 'auto_increment':
                 self.seq = col_name
@@ -119,7 +142,8 @@ class IfaceDB(object):
     def get_children(self):
         """
             Find all the things that reference me in the db. They are tentatively
-            called 'children'
+            called 'children'. A dictionary is returned, keyed on the name
+            of the child table and valued with a list of HydraRSRows
         """
 
         schema_qry    = """
@@ -133,20 +157,19 @@ class IfaceDB(object):
                                 referenced_table_name = '%s'    
                             and constraint_name != 'PRIMARY'
                         """%(self.table_name)
-        schema_cnx    = util.connect_tmp(db_name='information_schema')
-        schema_cursor = schema_cnx.cursor()
-        schema_cursor.execute(schema_qry)
+        schema_cnx    = hdb.connect_tmp(db_name='information_schema')
+        schema_cursor = schema_cnx.cursor(cursor_class=HydraMySqlCursor)
 
-        result =  schema_cursor.fetchall()
-        
+        rs = schema_cursor.execute_sql(schema_qry)
+
         schema_cnx.disconnect()
 
-        logging.debug("Children for %s are: %s", self.table_name, result)
+        logging.debug("Children for %s are: %s", self.table_name, [r.table_name for r in rs])
 
         #select all of my children out of the DB.
         child_dict = {}
-        for child in result:
-            logging.info("Loading child %s", child[0])
+        for r in rs:
+            logging.info("Loading child %s", r.table_name)
 
             base_child_sql = """
                 select
@@ -157,26 +180,69 @@ class IfaceDB(object):
                  %(fk_col)s = %(fk_val)s 
             """
 
-            complete_child_sql = base_child_sql % dict(
-                 table = child[0],
-                 fk_col = child[1],
-                 fk_val = self.__getattr__(child[2])
-            )
-            self.cursor.execute(complete_child_sql)
+            if self.__getattr__(r.referenced_column_name) is None:
+                continue
 
-            #TODO turn this into a built-in library -- pass in
-            #tuple and list of tuples and return a lookuplist.
-            resultset = []
-            col_names = self.cursor.column_names
-            data      = self.cursor.fetchall()
-            for row in data:
-                data_dict = {}
-                for index, col_name in enumerate(col_names):
-                    data_dict[col_name] = row[index]
-                resultset.append(data_dict)
-            child_dict[child[0]] = resultset
+            complete_child_sql = base_child_sql % dict(
+                 table = r.table_name,
+                 fk_col = r.column_name,
+                 fk_val = self.__getattr__(r.referenced_column_name)
+            )
+            
+            rs = self.cursor.execute_sql(complete_child_sql)
+
+            child_dict[r.table_name] = rs
 
         return child_dict
+
+    def get_parent(self):
+        
+        parent = db_hierarchy[self.table_name.lower()]['parent'] 
+        
+        if parent is None:
+            return None
+        
+        logging.debug("PARENT: %s", parent)
+
+        parent_class = db_hierarchy[parent]['obj']
+        parent_pk    = db_hierarchy[parent]['pk']
+
+        for k in parent_pk:
+            if self.__getattr__(k) is None:
+                logging.debug("Cannot load parent. %s is None", k)
+                return
+
+        logging.info("Loading parent %s", self.table_name)
+
+        base_parent_sql = """
+            select
+                *
+            from
+                %(table)s
+            where 
+                %(pk)s 
+        """
+
+        complete_parent_sql = base_parent_sql % dict(
+                table = parent,
+                pk    = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in parent_pk]),
+        ) 
+
+        rs = self.cursor.execute_sql(complete_parent_sql)
+
+        if len(rs) == 0:
+            logging.info("Object %s has no parent with pk: %s", self.table_name, parent_pk)
+            return None
+
+        parent_obj = parent_class()
+        logging.debug(rs[0].get_as_dict())
+        for k, v in rs[0].get_as_dict().items():
+            parent_obj.db.__setattr__(k, v)
+        
+
+        parent_obj.load()
+
+        return parent_obj 
 
     def __getattr__(self, name):
         """
@@ -257,6 +323,7 @@ class IfaceDB(object):
             the self.db_data dictionary. These are accessible direcly from
             the object, without any need to look in the db_data dictionary.
         """
+
         #Idenitfy the primary key, which is used to get a single row in the db.
         for pk in self.pk_attrs:
             if self.__getattr__(pk) is None:
@@ -274,20 +341,17 @@ class IfaceDB(object):
 
         logging.debug("Running load: %s", complete_load)
         logging.debug(self.cursor)
-        self.cursor.execute(complete_load)
+        rs = self.cursor.execute_sql(complete_load)
 
-        row_columns  = self.cursor.column_names
-        row_data = self.cursor.fetchall()#there should only be one entry
-
-        if len(row_data) == 0:
+        if len(rs) == 0:
             logging.warning("No entry found for table")
             return False 
-        else:
-            row_data = row_data[0]
 
-        for idx, column_name in enumerate(row_columns):
-            logging.debug("Setting column %s to %s", column_name, row_data[idx])
-            self.db_data[column_name] = row_data[idx]
+        for r in rs:
+            for k, v in r.get_as_dict().items():
+                logging.debug("Setting column %s to %s", k, v)
+                self.db_data[k] = v
+
 
         return True
 
@@ -365,7 +429,7 @@ class Node(IfaceBase):
         if self.db.node_id is None:
             return []
         attributes = []
-        cursor = self.db.connection.cursor()
+        cursor = self.db.connection.cursor(cursor_class=HydraMySqlCursor)
         cursor.execute("""
                     select
                         attr_id
@@ -806,106 +870,164 @@ class RolePerm(IfaceBase):
 db_hierarchy = dict(
     tproject  = dict(
         obj   = Project,
-        name  = 'project',
+        name  = 'Project',
+        parent = None,
+        pk     = ['project_id']
     ),
     tnetwork  = dict(
         obj   = Network,
         name  = 'network',
+        parent = 'tproject',
+        pk     = ['network_id']
     ),
     tnode  = dict(
         obj   = Node,
         name  = 'node',
-    ),
+        parent = None,
+        pk     = ['node_id']
+   ),
     tlink  = dict(
         obj   = Link,
-        name  = 'link',
+        name  = 'link',   
+        parent = 'tnetwork',
+        pk     = ['link_id']
     ),
     tscenario  = dict(
-        obj   = Scenario,
-        name  = 'scenario',
+        obj    = Scenario,
+        name   = 'scenario',
+        parent = 'tnetwork',
+        pk     = ['scenario_id']
     ),
     tattr  = dict(
         obj   = Attr,
         name  = 'attr',
+        parent = None,
+        pk     = ['attr_id']
     ),
     tattrmap  = dict(
         obj   = AttrMap,
         name  = 'attrmap',
+        parent = None,
+        pk     = ['attr_id_a', 'attr_id_b']
     ),
     tresourceattr  = dict(
         obj   = ResourceAttr,
         name  = 'resourceattr',
+        parent = None,
+        pk     = ['resource_attr_id']
     ),
     tresourcetemplate  = dict(
         obj   = ResourceTemplate,
         name  = 'resourcetemplate',
+        parent = 'tresourcetemplategroup',
+        pk     = ['template_id']
     ),
     tresourcetemplateitem  = dict(
         obj   = ResourceTemplateItem,
         name  = 'resourcetemplateitem',
+        parent = 'tresourcetemplate',
+        pk     = ['attr_id', 'template_id'],
     ),
     tresourcetemplategroup  = dict(
         obj   = ResourceTemplateGroup,
         name  = 'resourcetemplategroup',
+        parent = None,
+        pk     = ['group_id']
     ),
     tresourcescenario  = dict(
         obj   = ResourceScenario,
         name  = 'resourcescenario',
+        parent = 'tscenario',
+        pk     = ['resource_attr_id', 'scenario_id']
     ),
     tscenariodata  = dict(
         obj   = ScenarioData,
         name  = 'scenariodata',
+        parent = None,
+        pk     = ['dataset_id']
     ),
     tdataattr  = dict(
         obj   = DataAttr,
         name  = 'dataattr',
+        parent = None,
+        pk     = ['d_attr_id'],
     ),
     tdescriptor  = dict(
         obj   = Descriptor,
         name  = 'descriptor',
+        parent = None,
+        pk     = ['data_id']
     ),
     ttimeseries  = dict(
         obj   = TimeSeries,
         name  = 'timeseries',
+        parent = None,
+        pk     = ['data_id']
     ),
     tequallyspacedtimeseries  = dict(
         obj   = EquallySpacedTimeSeries,
         name  = 'equallyspacedtimeseries',
+        parent = None,
+        pk     = ['data_id']
     ),
     tscalar  = dict(
         obj   = Scalar,
         name  = 'scalar',
+        parent = None,
+        pk     = ['data_id']
     ),
     tarray  = dict(
         obj   = Array,
         name  = 'array',
+        parent = None,
+        pk     = ['data_id']
     ),
     tconstraint  = dict(
         obj   = Constraint,
         name  = 'constraint',
+        parent = 'tscenario',
+        pk     = ['constraint_id']
     ),
     tconstraintgroup  = dict(
         obj   = ConstraintGroup,
         name  = 'constraintgroup',
+        parent = 'tconstraint',
+        pk     = ['group_id']
     ),
     tconstraintitem  = dict(
         obj   = ConstraintItem,
         name  = 'constraintitem',
+        parent = 'tconstraint',
+        pk     = ['item_id']
     ),
     tuser  = dict(
         obj   = User,
         name  = 'user',
+        parent = None,
+        pk     = ['user_id']
     ),
     trole  = dict(
         obj   = Role,
         name  = 'role',
+        parent = None,
+        pk     = ['role_id']
+    ),
+    tperm  = dict(
+        obj   = Perm,
+        name  = 'perm',
+        parent = None,
+        pk     = ['perm_id']
     ),
     troleuser  = dict(
         obj   = RoleUser,
         name  = 'roleuser',
+        parent = 'trole',
+        pk     = ['user_id', 'role_id']
     ),
     troleperm  = dict(
         obj   = RolePerm,
         name  = 'roleperm',
+        parent = 'trole',
+        pk     = ['perm_id', 'role_id']
     )
 )
