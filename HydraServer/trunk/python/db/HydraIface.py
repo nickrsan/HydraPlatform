@@ -258,7 +258,6 @@ class IfaceDB(object):
         for k, v in rs[0].get_as_dict().items():
             parent_obj.db.__setattr__(k, v)
 
-
         parent_obj.load()
 
         return parent_obj
@@ -449,9 +448,10 @@ class Node(IfaceBase):
             return []
         attributes = []
         cursor = self.db.connection.cursor(cursor_class=HydraMySqlCursor)
-        cursor.execute("""
+        rs = cursor.execute_sql("""
                     select
-                        attr_id
+                        attr_id,
+                        resource_attr_id
                     from
                         tResourceAttr
                     where
@@ -459,10 +459,10 @@ class Node(IfaceBase):
                     and ref_key = 'NODE'
                       """%self.db.node_id)
 
-        for att in cursor.fetchall():
-            a = Attr(attr_id=int(att[0]))
-            a.load()
-            attributes.append(a)
+        for r in rs:
+            ra = ResourceAttr(resource_attr_id=r.resource_attr_id)
+            ra.load()
+            attributes.append(ra)
 
         return attributes
 
@@ -1003,7 +1003,7 @@ db_hierarchy = dict(
     tResourceAttr  = dict(
         obj   = ResourceAttr,
         name  = 'resourceattr',
-        parent = None,
+        parent = 'tAttr',
         pk     = ['resource_attr_id']
     ),
     tResourceTemplate  = dict(
