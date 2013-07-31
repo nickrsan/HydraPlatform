@@ -204,8 +204,8 @@ class IfaceDB(object):
 
         logging.debug("PARENT: %s", parent)
 
-        parent_class = db_hierarchy[parent]['obj']
-        parent_pk    = db_hierarchy[parent]['pk']
+        parent_class = db_hierarchy[parent.lower()]['obj']
+        parent_pk    = db_hierarchy[parent.lower()]['pk']
 
         for k in parent_pk:
             if self.__getattr__(k) is None:
@@ -878,7 +878,7 @@ db_hierarchy = dict(
     tnetwork  = dict(
         obj   = Network,
         name  = 'network',
-        parent = 'tproject',
+        parent = 'tProject',
         pk     = ['network_id']
     ),
     tnode  = dict(
@@ -890,13 +890,13 @@ db_hierarchy = dict(
     tlink  = dict(
         obj   = Link,
         name  = 'link',
-        parent = 'tnetwork',
+        parent = 'tNetwork',
         pk     = ['link_id']
     ),
     tscenario  = dict(
         obj    = Scenario,
         name   = 'scenario',
-        parent = 'tnetwork',
+        parent = 'tNetwork',
         pk     = ['scenario_id']
     ),
     tattr  = dict(
@@ -920,13 +920,13 @@ db_hierarchy = dict(
     tresourcetemplate  = dict(
         obj   = ResourceTemplate,
         name  = 'resourcetemplate',
-        parent = 'tresourcetemplategroup',
+        parent = 'tResourceTemplateGroup',
         pk     = ['template_id']
     ),
     tresourcetemplateitem  = dict(
         obj   = ResourceTemplateItem,
         name  = 'resourcetemplateitem',
-        parent = 'tresourcetemplate',
+        parent = 'tResourceTemplate',
         pk     = ['attr_id', 'template_id'],
     ),
     tresourcetemplategroup  = dict(
@@ -938,7 +938,7 @@ db_hierarchy = dict(
     tresourcescenario  = dict(
         obj   = ResourceScenario,
         name  = 'resourcescenario',
-        parent = 'tscenario',
+        parent = 'tScenario',
         pk     = ['resource_attr_id', 'scenario_id']
     ),
     tscenariodata  = dict(
@@ -986,19 +986,19 @@ db_hierarchy = dict(
     tconstraint  = dict(
         obj   = Constraint,
         name  = 'constraint',
-        parent = 'tscenario',
+        parent = 'tScenario',
         pk     = ['constraint_id']
     ),
     tconstraintgroup  = dict(
         obj   = ConstraintGroup,
         name  = 'constraintgroup',
-        parent = 'tconstraint',
+        parent = 'tConstraint',
         pk     = ['group_id']
     ),
     tconstraintitem  = dict(
         obj   = ConstraintItem,
         name  = 'constraintitem',
-        parent = 'tconstraint',
+        parent = 'tConstraint',
         pk     = ['item_id']
     ),
     tuser  = dict(
@@ -1022,13 +1022,13 @@ db_hierarchy = dict(
     troleuser  = dict(
         obj   = RoleUser,
         name  = 'roleuser',
-        parent = 'trole',
+        parent = 'tRole',
         pk     = ['user_id', 'role_id']
     ),
     troleperm  = dict(
         obj   = RolePerm,
         name  = 'roleperm',
-        parent = 'trole',
+        parent = 'tRole',
         pk     = ['perm_id', 'role_id']
     )
 )

@@ -23,7 +23,7 @@ from datetime import datetime
 
 from db import HydraIface
 from HydraLib import hydra_logging
-from HydraLib import util
+from HydraLib import hdb
 
 
 def extract_attributes(res_data, res_id):
@@ -364,7 +364,7 @@ if __name__ == '__main__':
         nodes.append(tmp_node)
 
     # Write the data to the database
-    util.connect()
+    hdb.connect()
 
     project = create_project('Test example',
                              'Example project to test database schema.')
@@ -445,4 +445,4 @@ if __name__ == '__main__':
     # Create a scenario
 
     # Disconnect from db
-    util.disconnect()
+    hdb.disconnect()
