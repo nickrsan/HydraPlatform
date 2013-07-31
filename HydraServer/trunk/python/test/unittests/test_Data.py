@@ -328,6 +328,17 @@ class ArrayTest(test_HydraIface.HydraIfaceTest):
 
 class DataAttrTest(test_HydraIface.HydraIfaceTest):
 
+    def create_scenariodata(self, data_id):
+        sd = HydraIface.ScenarioData()
+        sd.db.data_id    = data_id
+        sd.db.data_type  = 'scalar'
+        sd.db.data_units = 'metres-cubes'
+        sd.db.data_name  = 'volume'
+        sd.db.data_dimen = 'metres-cubed'
+        sd.save()
+        sd.commit()
+        return sd
+
     def test_update(self):
         data = HydraIface.Scalar()
         data.db.param_value = Decimal("1.01")
@@ -335,7 +346,10 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
         
+        sd = self.create_scenariodata(data.db.data_id)
+
         dattr = HydraIface.DataAttr()
+        dattr.db.dataset_id = sd.db.dataset_id
         dattr.db.data_id = data.db.data_id
         dattr.db.data_type = "Scalar"
         dattr.db.d_attr_name = "test attribute"
@@ -358,7 +372,10 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
         
+        sd = self.create_scenariodata(data.db.data_id)
+
         dattr = HydraIface.DataAttr()
+        dattr.db.dataset_id = sd.db.dataset_id
         dattr.db.data_id = data.db.data_id
         dattr.db.data_type = "Scalar"
         dattr.db.d_attr_name = "test attribute"
@@ -377,7 +394,10 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
         
+        sd = self.create_scenariodata(data.db.data_id)
+
         dattr = HydraIface.DataAttr()
+        dattr.db.dataset_id = sd.db.dataset_id
         dattr.db.data_id = data.db.data_id
         dattr.db.data_type = "Scalar"
         dattr.db.d_attr_name = "test attribute"
