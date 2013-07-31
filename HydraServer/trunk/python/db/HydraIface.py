@@ -15,14 +15,15 @@ class IfaceBase(object):
         #Indicates that the 'delete' function has been called on this object
         self.deleted = False
 
-        self.children = {}
+        self.child_info = self.get_children()
+        self.children   = {}
         self.parent = None
 
     def load(self):
         self.in_db = self.db.load()
 
         if self.in_db:
-            self.get_children()
+            self.load_children()
             self.get_parent()
 
         return self.in_db
@@ -59,11 +60,19 @@ class IfaceBase(object):
             self.in_db = True
 
     def get_children(self):
-        children = self.db.get_children()
+        children = self.db.get_child_info()
         for name, rows in children.items():
             #turn 'link' into 'links'
             attr_name              = name[1:].lower() + 's'
+            self.__setattr__(attr_name, [])
+        return children
 
+    def load_children(self):
+       child_rs = self.db.load_children(self.child_info)
+       for name, rows in child_rs.items():
+            #turn 'link' into 'links'
+            attr_name              = name[1:].lower() + 's'
+               
             child_objs = []
             for row in rows:
                 row = row.get_as_dict()
@@ -94,7 +103,7 @@ class IfaceDB(object):
     def __init__(self, class_name):
 
         self.db_attrs = []
-        self.pk_attrs = db_hierarchy['t'+class_name.lower()]['pk']
+        self.pk_attrs = db_hierarchy['t'+class_name]['pk']
         self.db_data  = {}
         self.nullable_attrs = []
         self.attr_types = {}
@@ -139,7 +148,7 @@ class IfaceDB(object):
             if col_desc[5] == 'auto_increment':
                 self.seq = col_name
 
-    def get_children(self):
+    def get_child_info(self):
         """
             Find all the things that reference me in the db. They are tentatively
             called 'children'. A dictionary is returned, keyed on the name
@@ -169,6 +178,17 @@ class IfaceDB(object):
         #select all of my children out of the DB.
         child_dict = {}
         for r in rs:
+            child_dict[r.table_name]  = (
+                    r.column_name,
+                    self.__getattr__(r.referenced_column_name)
+                )
+
+        return child_dict
+
+    def load_children(self, child_dict):
+        child_dict = {}
+        for table_name, v in child_dict.items():
+            column_name, referenced_column_name = v
             logging.info("Loading child %s", r.table_name)
 
             base_child_sql = """
@@ -176,36 +196,35 @@ class IfaceDB(object):
                     *
                 from
                     %(table)s
-                where
-                 %(fk_col)s = %(fk_val)s
+                where 
+                %(fk_col)s = %(fk_val)s 
             """
 
-            if self.__getattr__(r.referenced_column_name) is None:
+            if self.__getattr__(referenced_column_name) is None:
                 continue
 
             complete_child_sql = base_child_sql % dict(
-                 table = r.table_name,
-                 fk_col = r.column_name,
-                 fk_val = self.__getattr__(r.referenced_column_name)
+                table  = table_name,
+                fk_col = column_name,
+                fk_val = self.__getattr__(referenced_column_name)
             )
 
             rs = self.cursor.execute_sql(complete_child_sql)
 
-            child_dict[r.table_name] = rs
+            child_dict[table_name] = rs
 
         return child_dict
 
     def get_parent(self):
-
-        parent = db_hierarchy[self.table_name.lower()]['parent']
-
+        parent = db_hierarchy[self.table_name]['parent'] 
+        
         if parent is None:
             return None
 
         logging.debug("PARENT: %s", parent)
 
-        parent_class = db_hierarchy[parent.lower()]['obj']
-        parent_pk    = db_hierarchy[parent.lower()]['pk']
+        parent_class = db_hierarchy[parent]['obj']
+        parent_pk    = db_hierarchy[parent]['pk']
 
         for k in parent_pk:
             if self.__getattr__(k) is None:
@@ -683,6 +702,74 @@ class Descriptor(IfaceBase):
 class TimeSeries(IfaceBase):
     """
         Non-equally spaced time series data
+		Links to multiple entries in time series data, which 
+		actually stores the info.
+    """
+    def __init__(self, data_id = None):
+        IfaceBase.__init__(self, self.__class__.__name__)
+
+        self.db.data_id = data_id
+        if data_id is not None:
+            self.load()
+
+    def set_ts_value(self, time, value):
+        """
+            Adds a single timeseries value to the timeseries.
+            This consists of a timestamp and a value
+        """
+        for ts in self.timeseriesdatas:
+            if ts.db.data_id == self.db.data_id and ts.db.ts_time == str(time):
+                ts.db.ts_value = value
+                return
+        else:
+            ts_val = TimeSeriesData()
+            ts_val.db.data_id = self.db.data_id
+            ts_val.db.ts_time = time
+            ts_val.db.ts_value = value
+
+            self.timeseriesdatas.append(ts_val)
+
+    def set_ts_values(self, values):
+        """
+            Adds multiple timeseries values to a timeseries.
+            This is takes a list of tuples as an argument, as follows:
+            [(time_1, value_1), (time_2, value_2), ...(time_n, value_n)]
+        """
+
+        for time, value in values:
+            self.set_ts_value(time, value)
+
+    def get_ts_value(self, time):
+        """
+            returns the value at a given time for a timeseries
+        """
+        for ts_data in self.timeseriesdatas:
+            logging.debug("%s vs %s", ts_data.db.ts_time, time)
+            if ts_data.db.ts_time == str(time):
+                return ts_data.db.ts_value
+        logging.info("No value found at %s for data_id %s", time, self.db.data_id)        
+        return None
+
+    def delete(self):
+        for ts_data in self.timeseriesdatas:
+            ts_data.delete()
+        super(TimeSeries, self).delete()
+
+    def save(self):
+        super(TimeSeries, self).save()
+        
+        for ts_data in self.timeseriesdatas:
+            ts_data.db.data_id = self.db.data_id
+            ts_data.save()
+
+    def commit(self):
+        super(TimeSeries, self).commit()
+        for ts_data in self.timeseriesdatas:
+            ts_data.commit()
+
+class TimeSeriesData(IfaceBase):
+    """
+        Non-equally spaced time series data
         In other words: a value and a timestamp.
     """
     def __init__(self, data_id = None):
@@ -691,6 +778,8 @@ class TimeSeries(IfaceBase):
         self.db.data_id = data_id
         if data_id is not None:
             self.load()
+    
+
 
 class EquallySpacedTimeSeries(IfaceBase):
     """
@@ -869,163 +958,169 @@ class RolePerm(IfaceBase):
 
 
 db_hierarchy = dict(
-    tproject  = dict(
+    tProject  = dict(
         obj   = Project,
         name  = 'Project',
         parent = None,
         pk     = ['project_id']
     ),
-    tnetwork  = dict(
+    tNetwork  = dict(
         obj   = Network,
         name  = 'network',
         parent = 'tProject',
         pk     = ['network_id']
     ),
-    tnode  = dict(
+    tNode  = dict(
         obj   = Node,
         name  = 'node',
         parent = None,
         pk     = ['node_id']
    ),
-    tlink  = dict(
+    tLink  = dict(
         obj   = Link,
         name  = 'link',
         parent = 'tNetwork',
         pk     = ['link_id']
     ),
-    tscenario  = dict(
+    tScenario  = dict(
         obj    = Scenario,
         name   = 'scenario',
         parent = 'tNetwork',
         pk     = ['scenario_id']
     ),
-    tattr  = dict(
+    tAttr  = dict(
         obj   = Attr,
         name  = 'attr',
         parent = None,
         pk     = ['attr_id']
     ),
-    tattrmap  = dict(
+    tAttrMap  = dict(
         obj   = AttrMap,
         name  = 'attrmap',
         parent = None,
         pk     = ['attr_id_a', 'attr_id_b']
     ),
-    tresourceattr  = dict(
+    tResourceAttr  = dict(
         obj   = ResourceAttr,
         name  = 'resourceattr',
         parent = None,
         pk     = ['resource_attr_id']
     ),
-    tresourcetemplate  = dict(
+    tResourceTemplate  = dict(
         obj   = ResourceTemplate,
         name  = 'resourcetemplate',
         parent = 'tResourceTemplateGroup',
         pk     = ['template_id']
     ),
-    tresourcetemplateitem  = dict(
+    tResourceTemplateItem  = dict(
         obj   = ResourceTemplateItem,
         name  = 'resourcetemplateitem',
         parent = 'tResourceTemplate',
         pk     = ['attr_id', 'template_id'],
     ),
-    tresourcetemplategroup  = dict(
+    tResourceTemplateGroup  = dict(
         obj   = ResourceTemplateGroup,
         name  = 'resourcetemplategroup',
         parent = None,
         pk     = ['group_id']
     ),
-    tresourcescenario  = dict(
+    tResourceScenario  = dict(
         obj   = ResourceScenario,
         name  = 'resourcescenario',
         parent = 'tScenario',
         pk     = ['resource_attr_id', 'scenario_id']
     ),
-    tscenariodata  = dict(
+    tScenarioData  = dict(
         obj   = ScenarioData,
         name  = 'scenariodata',
         parent = None,
         pk     = ['dataset_id']
     ),
-    tdataattr  = dict(
+    tDataAttr  = dict(
         obj   = DataAttr,
         name  = 'dataattr',
         parent = None,
         pk     = ['d_attr_id'],
     ),
-    tdescriptor  = dict(
+    tDescriptor  = dict(
         obj   = Descriptor,
-        name  = 'descriptor',
+        name  = 'Descriptor',
         parent = None,
         pk     = ['data_id']
     ),
-    ttimeseries  = dict(
+    tTimeSeries  = dict(
         obj   = TimeSeries,
         name  = 'timeseries',
         parent = None,
         pk     = ['data_id']
     ),
-    tequallyspacedtimeseries  = dict(
+    tTimeSeriesData  = dict(
+        obj   = TimeSeriesData,
+        name  = 'timeseriesdata',
+        parent = 'tTimeSeries',
+        pk     = ['data_id', 'ts_time']
+    ),
+    tEquallySpacedTimeSeries  = dict(
         obj   = EquallySpacedTimeSeries,
         name  = 'equallyspacedtimeseries',
         parent = None,
         pk     = ['data_id']
     ),
-    tscalar  = dict(
+    tScalar  = dict(
         obj   = Scalar,
         name  = 'scalar',
         parent = None,
         pk     = ['data_id']
     ),
-    tarray  = dict(
+    tArray  = dict(
         obj   = Array,
         name  = 'array',
         parent = None,
         pk     = ['data_id']
     ),
-    tconstraint  = dict(
+    tConstraint  = dict(
         obj   = Constraint,
         name  = 'constraint',
         parent = 'tScenario',
         pk     = ['constraint_id']
     ),
-    tconstraintgroup  = dict(
+    tConstraintGroup  = dict(
         obj   = ConstraintGroup,
         name  = 'constraintgroup',
         parent = 'tConstraint',
         pk     = ['group_id']
     ),
-    tconstraintitem  = dict(
+    tConstraintItem  = dict(
         obj   = ConstraintItem,
         name  = 'constraintitem',
         parent = 'tConstraint',
         pk     = ['item_id']
     ),
-    tuser  = dict(
+    tUser  = dict(
         obj   = User,
         name  = 'user',
         parent = None,
         pk     = ['user_id']
     ),
-    trole  = dict(
+    tRole  = dict(
         obj   = Role,
         name  = 'role',
         parent = None,
         pk     = ['role_id']
     ),
-    tperm  = dict(
+    tPerm  = dict(
         obj   = Perm,
         name  = 'perm',
         parent = None,
         pk     = ['perm_id']
     ),
-    troleuser  = dict(
+    tRoleUser  = dict(
         obj   = RoleUser,
         name  = 'roleuser',
         parent = 'tRole',
         pk     = ['user_id', 'role_id']
     ),
-    troleperm  = dict(
+    tRolePerm  = dict(
         obj   = RolePerm,
         name  = 'roleperm',
         parent = 'tRole',

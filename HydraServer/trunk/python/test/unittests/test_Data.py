@@ -170,22 +170,33 @@ class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
  
     def test_update(self):
         x = HydraIface.TimeSeries()
-        x.db.ts_time = datetime.datetime.now()
-        x.db.ts_value = 1.01
+
+        ts_values = [
+            (datetime.datetime(2013, 07, 31, 9, 00, 00), 1),
+            (datetime.datetime(2013, 07, 31, 9, 01, 00), 2),
+            (datetime.datetime(2013, 07, 31, 9, 02, 00), 3),
+        ]
+
+        x.set_ts_values(ts_values)
         x.save()
         x.commit()
 
-        x.db.ts_value = 2.02
+        x.set_ts_value(datetime.datetime(2013, 07, 31, 9, 00, 00), 4)
         x.save()
         x.commit()
-        x.load()
 
-        assert x.db.ts_value == Decimal("2.02"), "TimeSeries did not update correctly"
+        assert x.get_ts_value(datetime.datetime(2013, 07, 31, 9, 00, 00)) == Decimal("4"), "TimeSeries did not update correctly"
 
     def test_delete(self):
         x = HydraIface.TimeSeries()
-        x.db.ts_time = datetime.datetime.now()
-        x.db.ts_value = 1.01
+
+        ts_values = [
+            (datetime.datetime(2013, 07, 31, 9, 00, 00), 1),
+            (datetime.datetime(2013, 07, 31, 9, 01, 00), 2),
+            (datetime.datetime(2013, 07, 31, 9, 02, 00), 3),
+        ]
+
+        x.set_ts_values(ts_values)
         x.save()
         x.commit()
 
@@ -194,8 +205,15 @@ class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
 
     def test_load(self):
         x = HydraIface.TimeSeries()
-        x.db.ts_time = datetime.datetime.now()
-        x.db.ts_value = 1.01
+
+        ts_values = [
+            (datetime.datetime(2013, 07, 31, 9, 00, 00), 1),
+            (datetime.datetime(2013, 07, 31, 9, 01, 00), 2),
+            (datetime.datetime(2013, 07, 31, 9, 02, 00), 3),
+        ]
+
+        x.set_ts_values(ts_values)
+
         x.save()
         x.commit()
         x.load()
