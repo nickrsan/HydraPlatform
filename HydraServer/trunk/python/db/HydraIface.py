@@ -632,7 +632,7 @@ class ScenarioData(IfaceBase):
         data = None
         if data_type == 'descriptor':
             data = Descriptor(data_id=self.db.data_id)
-            data.desc_val = val
+            data.db.desc_val = val
         elif data_type == 'timeseries':
             data = TimeSeries(data_id=self.db.data_id)
             data.db.ts_time  = val[0]
