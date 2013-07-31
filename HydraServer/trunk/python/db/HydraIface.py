@@ -20,7 +20,7 @@ class IfaceBase(object):
 
     def load(self):
         self.in_db = self.db.load()
-        
+
         if self.in_db:
             self.get_children()
             self.get_parent()
@@ -43,7 +43,7 @@ class IfaceBase(object):
 
     def save(self):
         """
-            Call the appropriate insert or update function, depending on 
+            Call the appropriate insert or update function, depending on
             whether the object is already in the DB or not
         """
         if self.deleted == True:
@@ -63,14 +63,14 @@ class IfaceBase(object):
         for name, rows in children.items():
             #turn 'link' into 'links'
             attr_name              = name[1:].lower() + 's'
-               
+
             child_objs = []
             for row in rows:
                 row = row.get_as_dict()
                 child_obj = eval(name[1:])()
 
                 child_obj.parent = self
-                child_obj.__setattr__(self.name.lower(), self) 
+                child_obj.__setattr__(self.name.lower(), self)
 
                 for col, val in row.items():
                     child_obj.db.__setattr__(col, val)
@@ -99,7 +99,7 @@ class IfaceDB(object):
         self.nullable_attrs = []
         self.attr_types = {}
         self.seq = None
-        
+
         self.connection = hdb.get_connection()
 
         self.cursor = self.connection.cursor(cursor_class=HydraMySqlCursor)
@@ -109,7 +109,7 @@ class IfaceDB(object):
 
         #this turns 'Project' into 'tProject' so it can identify the table
         self.table_name = "t%s"%class_name
-        
+
         self.cursor.execute('desc %s' % self.table_name)
 
         table_desc = self.cursor.fetchall()
@@ -138,7 +138,7 @@ class IfaceDB(object):
 
             if col_desc[5] == 'auto_increment':
                 self.seq = col_name
-            
+
     def get_children(self):
         """
             Find all the things that reference me in the db. They are tentatively
@@ -153,8 +153,8 @@ class IfaceDB(object):
                                 referenced_column_name
                             from
                                 key_column_usage
-                            where 
-                                referenced_table_name = '%s'    
+                            where
+                                referenced_table_name = '%s'
                             and constraint_name != 'PRIMARY'
                         """%(self.table_name)
         schema_cnx    = hdb.connect_tmp(db_name='information_schema')
@@ -176,8 +176,8 @@ class IfaceDB(object):
                     *
                 from
                     %(table)s
-                where 
-                 %(fk_col)s = %(fk_val)s 
+                where
+                 %(fk_col)s = %(fk_val)s
             """
 
             if self.__getattr__(r.referenced_column_name) is None:
@@ -188,7 +188,7 @@ class IfaceDB(object):
                  fk_col = r.column_name,
                  fk_val = self.__getattr__(r.referenced_column_name)
             )
-            
+
             rs = self.cursor.execute_sql(complete_child_sql)
 
             child_dict[r.table_name] = rs
@@ -196,12 +196,12 @@ class IfaceDB(object):
         return child_dict
 
     def get_parent(self):
-        
-        parent = db_hierarchy[self.table_name.lower()]['parent'] 
-        
+
+        parent = db_hierarchy[self.table_name.lower()]['parent']
+
         if parent is None:
             return None
-        
+
         logging.debug("PARENT: %s", parent)
 
         parent_class = db_hierarchy[parent]['obj']
@@ -219,14 +219,14 @@ class IfaceDB(object):
                 *
             from
                 %(table)s
-            where 
-                %(pk)s 
+            where
+                %(pk)s
         """
 
         complete_parent_sql = base_parent_sql % dict(
                 table = parent,
                 pk    = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in parent_pk]),
-        ) 
+        )
 
         rs = self.cursor.execute_sql(complete_parent_sql)
 
@@ -238,11 +238,11 @@ class IfaceDB(object):
         logging.debug(rs[0].get_as_dict())
         for k, v in rs[0].get_as_dict().items():
             parent_obj.db.__setattr__(k, v)
-        
+
 
         parent_obj.load()
 
-        return parent_obj 
+        return parent_obj
 
     def __getattr__(self, name):
         """
@@ -257,7 +257,7 @@ class IfaceDB(object):
             #Don't do a cast if there is no value to cast...
             if self.db_data[name] is None:
                 return None
-            
+
             val = str(self.db_data[name])
 
             #Cast the value to the correct DB data type
@@ -268,8 +268,8 @@ class IfaceDB(object):
             elif db_type == 'blob':
                 return eval(val)
 
-            return val 
-        
+            return val
+
         else:
             raise AttributeError("Attribute %s not set."%name)
 
@@ -277,7 +277,7 @@ class IfaceDB(object):
         if name != 'db_attrs' and name in self.db_attrs:
             self.db_data[name] = value
             self.has_changed = True
-        else: 
+        else:
             super(IfaceDB, self).__setattr__(name, value)
 
     def insert(self):
@@ -285,7 +285,7 @@ class IfaceDB(object):
             If this object has not been stored in the DB as yet, then insert it.
             Generates an insert statement and runs it.
         """
-        
+
         base_insert = "insert into %(table)s (%(cols)s) values (%(vals)s);"
         complete_insert = base_insert % dict(
             table = self.table_name,
@@ -304,7 +304,7 @@ class IfaceDB(object):
 
     def update(self):
         """
-            Updates all the values for a table in the DB.. 
+            Updates all the values for a table in the DB..
             Generates an update statement and runs it.
         """
 
@@ -332,7 +332,7 @@ class IfaceDB(object):
 
         #Create a skeleton query
         base_load = "select * from %(table_name)s where %(pk)s;"
-        
+
         #Fill in the query with the appropriate table name and PK values.
         complete_load = base_load % dict(
             table_name = self.table_name,
@@ -345,7 +345,7 @@ class IfaceDB(object):
 
         if len(rs) == 0:
             logging.warning("No entry found for table")
-            return False 
+            return False
 
         for r in rs:
             for k, v in r.get_as_dict().items():
@@ -380,7 +380,7 @@ class IfaceDB(object):
 
 class Project(IfaceBase):
     """
-        A logical container for a piece of work. 
+        A logical container for a piece of work.
         Contains networks and scenarios.
     """
     def __init__(self, project_id = None):
@@ -396,7 +396,7 @@ class Scenario(IfaceBase):
     """
     def __init__(self, scenario_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
-        
+
         self.db.scenario_id = scenario_id
         if scenario_id is not None:
             self.load()
@@ -408,7 +408,7 @@ class Network(IfaceBase):
     """
     def __init__(self, network_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
-        
+
         self.db.network_id = network_id
         if network_id is not None:
             self.load()
@@ -439,7 +439,7 @@ class Node(IfaceBase):
                         ref_id = %s
                     and ref_key = 'NODE'
                       """%self.db.node_id)
-        
+
         for att in cursor.fetchall():
             a = Attr(attr_id=int(att[0]))
             a.load()
@@ -459,14 +459,14 @@ class Node(IfaceBase):
         self.attributes.append(attr)
 
         return attr
-    
+
     def assign_value(self, scenario_id, resource_attr_id, data_type, val,
                      units, name, dimension):
         attr = ResourceAttr(resource_attr_id = resource_attr_id)
 
         sd = ScenarioData()
         sd.set_val(data_type, val)
-        
+
         sd.db.data_type  = data_type
         sd.db.data_units = units
         sd.db.data_name  = name
@@ -481,10 +481,10 @@ class Node(IfaceBase):
         rs.db.dataset_id       = sd.db.dataset_id
         rs.db.resource_attr_id = attr.db.resource_attr_id
         rs.save()
-        rs.commit() 
+        rs.commit()
 
-        return rs 
-        
+        return rs
+
 
 class Link(IfaceBase):
     """
@@ -533,7 +533,7 @@ class ResourceAttr(IfaceBase):
     """
     def __init__(self, resource_attr_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
-        
+
         self.db.resource_attr_id = resource_attr_id
 
         if resource_attr_id is not None:
@@ -541,14 +541,14 @@ class ResourceAttr(IfaceBase):
 
 class ResourceTemplate(IfaceBase):
     """
-        A resource template is a grouping of attributes which define 
+        A resource template is a grouping of attributes which define
         a resource. For example, a "reservoir" template may have "volume",
         "discharge" and "daily throughput".
     """
     def __init__(self, template_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
 
-        self.db.template_id = template_id        
+        self.db.template_id = template_id
 
         if template_id is not None:
             self.load()
@@ -574,7 +574,7 @@ class ResourceTemplateGroup(IfaceBase):
     """
     def __init__(self, group_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
-        
+
         self.db.group_id = group_id
         if group_id is not None:
             self.load()
@@ -624,14 +624,14 @@ class ScenarioData(IfaceBase):
         elif self.db.data_type == 'array':
             a = Array(data_id = self.db.data_id)
             val = a.db.arr_data
-        
+
         logging.debug("VALUE IS: %s", val)
         return val
 
     def set_val(self, data_type, val):
         data = None
         if data_type == 'descriptor':
-            data = Descriptor()
+            data = Descriptor(data_id=self.db.data_id)
             data.desc_val = val
         elif data_type == 'timeseries':
             data = TimeSeries(data_id=self.db.data_id)
@@ -651,6 +651,7 @@ class ScenarioData(IfaceBase):
         data.save()
         data.commit()
         data.load()
+        self.db.data_type = data_type
         self.db.data_id = data.db.data_id
         return data
 
@@ -658,13 +659,13 @@ class ScenarioData(IfaceBase):
 
 class DataAttr(IfaceBase):
     """
-        Holds additional information on data. 
+        Holds additional information on data.
     """
     def __init__(self, d_attr_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
 
         self.db.d_attr_id = d_attr_id
-        
+
         if d_attr_id is not None:
             self.load()
 
@@ -700,7 +701,7 @@ class EquallySpacedTimeSeries(IfaceBase):
         IfaceBase.__init__(self, self.__class__.__name__)
 
         self.db.data_id = data_id
- 
+
         if data_id is not None:
             self.load()
 
@@ -772,7 +773,7 @@ class ConstraintGroup(IfaceBase):
             item = ConstraintItem(item_id=self.db.ref_id_1)
 
             r = ResourceScenario(
-                    scenario_id      = self.constraint.db.scenario_id, 
+                    scenario_id      = self.constraint.db.scenario_id,
                     resource_attr_id = item.db.resource_attr_id
             )
 
@@ -786,7 +787,7 @@ class ConstraintGroup(IfaceBase):
             item = ConstraintItem(item_id=self.db.ref_id_2)
 
             r = ResourceScenario(
-                    scenario_id      = self.constraint.db.scenario_id, 
+                    scenario_id      = self.constraint.db.scenario_id,
                     resource_attr_id = item.db.resource_attr_id
             )
 
@@ -795,7 +796,7 @@ class ConstraintGroup(IfaceBase):
 
 
         return "%s %s %s"%(str_1, self.db.op, str_2)
-            
+
 
 class ConstraintItem(IfaceBase):
     """
@@ -841,7 +842,7 @@ class Perm(IfaceBase):
         self.db.perm_id = perm_id
         if perm_id is not None:
             self.load()
- 
+
 class RoleUser(IfaceBase):
     """
         Roles for hydra users
@@ -888,7 +889,7 @@ db_hierarchy = dict(
    ),
     tlink  = dict(
         obj   = Link,
-        name  = 'link',   
+        name  = 'link',
         parent = 'tnetwork',
         pk     = ['link_id']
     ),
