@@ -15,7 +15,7 @@ __version__ = ""
 __status__ = ""
 
 from hydrolopy.optim import importReservoirData
-from hydrolopy.optim import reservoirData
+#from hydrolopy.optim import reservoirData
 from hydrolopy.TS import TimeSeries
 from hydrolopy.data import importCSV
 
@@ -23,19 +23,7 @@ from datetime import datetime
 
 from db import HydraIface
 from HydraLib import hydra_logging
-
-
-class HydraReservoirData(reservoirData):
-
-    def __init__(self, reservoir_data):
-        reservoirData.__init__(self)
-        self = reservoir_data
-
-    def get_attributes(self):
-        attributes = []
-        for par in self.parameter:
-            attributes.append(par.keys())
-        return attributes
+from HydraLib import util
 
 
 def extract_attributes(res_data, res_id):
@@ -84,8 +72,8 @@ def extract_parameters(res_data, attributes):
             tmp_param = {}
             tmp_param['value'] = res_data.getParameter(i, attr[0])
             tmp_param['name'] = attr[0] + '_' + res_data.getname(i)
-            tmp_param['units'] = None
-            tmp_param['dimen'] = None
+            tmp_param['units'] = '-'
+            tmp_param['dimen'] = '-'
             try:
                 float(tmp_param['value'])
                 scalars.append(tmp_param)
@@ -164,8 +152,8 @@ def create_example_ts(res_data, attributes):
         for i in res_ids:
             tmp_ts = {}
             tmp_ts['name'] = attr[0] + '_' + res_data.getname(i)
-            tmp_ts['units'] = None
-            tmp_ts['dimen'] = None
+            tmp_ts['units'] = '-'
+            tmp_ts['dimen'] = '-'
             tmp_ts['time_series'] = convert_ts_to_hydra_ts(
                 extract_time_series_data(res_data, 1, attr[0]))
             ex_ts.append(tmp_ts)
@@ -178,7 +166,6 @@ def create_project(name, description):
     project = HydraIface.Project()
     project.db.project_name = name
     project.db.project_description = description
-
     project.save()
     project.commit()
 
@@ -224,8 +211,96 @@ def create_link(name, from_node_id, to_node_id, link_type, network):
     return link
 
 
-def create_dataset(data, name, type, units, dimension):
-    pass
+def create_attribute(name, dimen):
+    'Add attribute to DB.'
+    attr = HydraIface.Attr()
+    attr.db.attr_name = name
+    attr.db.attr_dimen = dimen
+    attr.save()
+    attr.commit()
+
+    return attr
+
+
+def create_template_group(name):
+    'Create a resource template group.'
+    tgroup = HydraIface.ResourceTemplateGroup()
+    tgroup.db.group_name = name
+    tgroup.save()
+    tgroup.commit()
+
+    return tgroup
+
+
+def create_node_template(name, group):
+    'Create a node template.'
+    template = HydraIface.ResourceTemplate()
+    template.db.template_name = name
+    template.db.group_id = group.db.group_id
+    template.save()
+    template.commit()
+
+    return template
+
+
+def add_attribute_to_template(attr, template):
+    'Add an attribute to a template.'
+    templ_item = HydraIface.ResourceTemplateItem()
+    templ_item.db.attr_id = attr.db.attr_id
+    templ_item.db.template_id = template.db.template_id
+    templ_item.save()
+    templ_item.commit()
+
+    return templ_item
+
+
+def add_attr_from_template(node, template):
+    'Add all attributed defined by `template` to a node.'
+    template.load()
+    node.load()
+
+    for t in template.resourcetemplateitems:
+        node.add_attribute(t.db.attr_id)
+
+    node.save()
+    node.commit()
+
+
+def create_scalar(s):
+    dataset = HydraIface.ScenarioData()
+
+    dataset.set_val('scalar', s['value'])
+    dataset.db.data_units = s['units']
+    dataset.db.data_name = s['name']
+    dataset.db.data_dimen = s['dimen']
+    dataset.save()
+    dataset.commit()
+
+    return dataset
+
+
+def create_descriptor(d):
+    dataset = HydraIface.ScenarioData()
+
+    dataset.set_val('descriptor', d['value'])
+    dataset.db.data_units = d['units']
+    dataset.db.data_name = d['name']
+    dataset.db.data_dimen = d['dimen']
+    dataset.save()
+    dataset.commit()
+
+    return dataset
+
+
+def create_ts(ts):
+    dataset = HydraIface.ScenarioData()
+
+
+def create_eq_ts(ts):
+    dataset = HydraIface.ScenarioData()
+
+    dataset.set_val('eqtimeseries', )
+
 
 if __name__ == '__main__':
 
@@ -288,23 +363,29 @@ if __name__ == '__main__':
         tmp_node['y'] = res_y[i]
         nodes.append(tmp_node)
 
-    # Crate links (with start node and end node)
-    #TODO: Finish this stuff
-    #links = []
-    #for i in res_ids:
-    #    tmp_link = {}
-    #    spills_to = gatineau_res_data.getParameter(i, 'Spill to')
-    #    tmp_link['name'] = gatineau_res_data.getname(i) + ' - ' + \
-    #        gatineau_res_data.getname(spills_to)
-    #    tmp_link['startnode']
-
     # Write the data to the database
+    util.connect()
 
     project = create_project('Test example',
                              'Example project to test database schema.')
 
-    # Write network data
+    # Create a node template 'Reservoir node'
+    template_group = create_template_group('Gatineau system')
+    node_template = create_node_template('Reservoir node', template_group)
 
+    # Add attributes
+    attribute_list = []
+    for n in nodes:
+        for attr_type in attributes.keys():
+            for attr in attributes[attr_type]:
+                attribute = create_attribute(attr[0], attr[1])
+                attribute_list.append(attribute)
+
+    # Add attributes to node template
+    for attr in attribute_list:
+        add_attribute_to_template(attr, node_template)
+
+    # Write network data
     network = create_network('Gatineau River',
                              'Gatineau river basin network', project)
 
@@ -312,6 +393,10 @@ if __name__ == '__main__':
     for n in nodes:
         node = create_node(n['name'], n['x'], n['y'], n['type'])
         node_list.append(node)
+        # Add attributes
+        #for attr in attribute_list:
+        #    node.add_attribute(attr.db.attr_id)
+        add_attr_from_template(node, node_template)
 
     # Map local node ids to the node_ids in the DB
     id_map = {}
@@ -335,10 +420,29 @@ if __name__ == '__main__':
     # Write data
     # Write scalars
 
+    dataset_list = []
+    for s in scalars:
+        scalar = create_scalar(s)
+        dataset_list.append(scalar)
+
     # Write descriptors
 
+    for d in descriptors:
+        if d['value'] is not None:
+            descriptor = create_descriptor(d)
+            dataset_list.append(descriptor)
+
     # Write equally spaced time series
+    for ts in eq_ts:
+        eq_timeseries = create_eq_ts(ts)
+        dataset_list.append(eq_timeseries)
 
     # Write ordinary (=unequally spaced) time series
+    #print monthly_ts
 
     # Write arrays
+
+    # Create a scenario
+
+    # Disconnect from db
+    util.disconnect()

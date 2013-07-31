@@ -40,7 +40,7 @@ def load_config():
         (2) /etc/hydra
         (3) [...]/HYDRA/HydraLib/trunk/../../config/
 
-    (1) will override (2) will override (3). Parameter not defined in (1) will
+    (1) will override (2) will override (3). Parameters not defined in (1) will
     be taken from (2). Parameters not defined in (2) will be taken from (3).
     (3) is the config folder that will be checked out from the svn repository.
     (2) Will be be provided as soon as an installable distribution is
@@ -69,7 +69,5 @@ def load_config():
 
     return config
 
-
 if __name__ == '__main__':
-    config = load_config()
-    print config.get('mysqld', 'user')
+    pass
