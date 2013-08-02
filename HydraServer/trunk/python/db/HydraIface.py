@@ -68,6 +68,7 @@ class IfaceBase(object):
         return children
 
     def load_children(self):
+       
        child_rs = self.db.load_children(self.child_info)
        for name, rows in child_rs.items():
             #turn 'link' into 'links'
@@ -85,7 +86,6 @@ class IfaceBase(object):
                     child_obj.db.__setattr__(col, val)
 
                 child_objs.append(child_obj)
-
             self.__setattr__(attr_name, child_objs)
             self.children[name.lower()] = self.__getattribute__(attr_name)
 
@@ -176,20 +176,19 @@ class IfaceDB(object):
         logging.debug("Children for %s are: %s", self.table_name, [r.table_name for r in rs])
 
         #select all of my children out of the DB.
-        child_dict = {}
+        child_info_dict = {}
         for r in rs:
-            child_dict[r.table_name]  = (
+            child_info_dict[r.table_name]  = (
                     r.column_name,
-                    self.__getattr__(r.referenced_column_name)
+                    r.referenced_column_name,
                 )
+        return child_info_dict
 
-        return child_dict
-
-    def load_children(self, child_dict):
+    def load_children(self, child_info_dict):
         child_dict = {}
-        for table_name, v in child_dict.items():
+        for table_name, v in child_info_dict.items():
             column_name, referenced_column_name = v
-            logging.info("Loading child %s", r.table_name)
+            logging.info("Loading child %s", table_name)
 
             base_child_sql = """
                 select
@@ -396,73 +395,51 @@ class IfaceDB(object):
         else:
             return str(val)
 
-class Project(IfaceBase):
-    """
-        A logical container for a piece of work.
-        Contains networks and scenarios.
-    """
-    def __init__(self, project_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+class GenericResource(IfaceBase):
+    def __init__(self, class_name, ref_key, ref_id=None):
+        IfaceBase.__init__(self, class_name)
 
-        self.db.project_id = project_id
-        if project_id is not None:
-            self.load()
+        self.ref_key = ref_key
+        self.ref_id  = ref_id
 
-class Scenario(IfaceBase):
-    """
-        A set of nodes and links
-    """
-    def __init__(self, scenario_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
-
-        self.db.scenario_id = scenario_id
-        if scenario_id is not None:
-            self.load()
-
-
-class Network(IfaceBase):
-    """
-        A set of nodes and links
-    """
-    def __init__(self, network_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
-
-        self.db.network_id = network_id
-        if network_id is not None:
-            self.load()
-
-class Node(IfaceBase):
-    """
-        Representation of a resource.
-    """
-    def __init__(self, node_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
-
-        self.db.node_id = node_id
-        if node_id is not None:
-            self.load()
         self.attributes = self.get_attributes()
 
+    def save(self):
+        super(GenericResource, self).save()
+        pk = self.db.__getattr__(self.db.pk_attrs[0])
+        self.ref_id = pk
+
+    def load(self):
+        result = super(GenericResource, self).load()
+
+        pk = self.db.__getattr__(self.db.pk_attrs[0])
+        self.ref_id = pk
+
+        return result
+
     def get_attributes(self):
-        if self.db.node_id is None:
+        if self.ref_id is None:
             return []
         attributes = []
         cursor = self.db.connection.cursor(cursor_class=HydraMySqlCursor)
-        rs = cursor.execute_sql("""
+        sql = """
                     select
                         attr_id,
                         resource_attr_id
                     from
                         tResourceAttr
                     where
-                        ref_id = %s
-                    and ref_key = 'NODE'
-                      """%self.db.node_id)
+                        ref_id = %(ref_id)s
+                    and ref_key = '%(ref_key)s'
+            """
+        rs = cursor.execute_sql(sql%dict(ref_key = self.ref_key, ref_id = self.ref_id))
 
         for r in rs:
             ra = ResourceAttr(resource_attr_id=r.resource_attr_id)
             ra.load()
             attributes.append(ra)
+
+        self.attributes = attributes
 
         return attributes
 
@@ -470,8 +447,8 @@ class Node(IfaceBase):
         attr = ResourceAttr()
         attr.db.attr_id = attr_id
         attr.db.attr_is_var = attr_is_var
-        attr.db.ref_key = 'NODE'
-        attr.db.ref_id  = self.db.node_id
+        attr.db.ref_key = self.ref_key
+        attr.db.ref_id  = self.ref_id
         attr.save()
         attr.commit()
         attr.load()
@@ -492,7 +469,6 @@ class Node(IfaceBase):
         sd.db.data_dimen = dimension
         sd.save()
         sd.commit()
-        sd.db.load()
 
         rs = ResourceScenario()
 
@@ -505,12 +481,58 @@ class Node(IfaceBase):
         return rs
 
 
-class Link(IfaceBase):
+class Project(GenericResource):
+    """
+        A logical container for a piece of work.
+        Contains networks and scenarios.
+    """
+    def __init__(self, project_id = None):
+        GenericResource.__init__(self, self.__class__.__name__, 'PROJECT', ref_id=project_id)
+
+        self.db.project_id = project_id
+        if project_id is not None:
+            self.load()
+
+class Scenario(GenericResource):
+    """
+        A set of nodes and links
+    """
+    def __init__(self, scenario_id = None):
+        GenericResource.__init__(self, self.__class__.__name__, 'SCENARIO', ref_id=scenario_id)
+
+        self.db.scenario_id = scenario_id
+        if scenario_id is not None:
+            self.load()
+
+
+class Network(GenericResource):
+    """
+        A set of nodes and links
+    """
+    def __init__(self, network_id = None):
+        GenericResource.__init__(self, self.__class__.__name__, 'NETWORK', ref_id=network_id)
+
+        self.db.network_id = network_id
+        if network_id is not None:
+            self.load()
+
+class Node(GenericResource):
+    """
+        Representation of a resource.
+    """
+    def __init__(self, node_id = None):
+        GenericResource.__init__(self, self.__class__.__name__, 'NODE', ref_id=node_id)
+
+        self.db.node_id = node_id
+        if node_id is not None:
+            self.load()
+
+class Link(GenericResource):
     """
         Representation of a connection between nodes.
     """
     def __init__(self, link_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        GenericResource.__init__(self, self.__class__.__name__, 'LINK', ref_id=link_id)
 
         self.db.link_id = link_id
         if link_id is not None:
@@ -702,8 +724,8 @@ class Descriptor(IfaceBase):
 class TimeSeries(IfaceBase):
     """
         Non-equally spaced time series data
-		Links to multiple entries in time series data, which 
-		actually stores the info.
+        Links to multiple entries in time series data, which 
+        actually stores the info.
     """
     def __init__(self, data_id = None):
         IfaceBase.__init__(self, self.__class__.__name__)
