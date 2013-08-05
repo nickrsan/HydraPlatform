@@ -1,58 +1,17 @@
-from db import HydraIface
-from HydraLib import hydra_logging
-
-import logging
- 
-def test_insert():
-    x = HydraIface.Project()
-    x.db.project_name = "test"
-    x.db.project_description = "test description"
-    x.save()
-    x.commit()
-
-    hydra_logging.shutdown()
-
-def test_update():
-    x = HydraIface.Project()
-    x.db.project_name = "test"
-    x.db.project_description = "test description"
-    x.save()
-    x.commit()
-
-    x.db.project_name = "test_new"
-    x.save()
-    x.commit()
-    x.load()
-    logging.debug(x.db.project_name)
-
-    hydra_logging.shutdown()
-
-def test_delete():
-    x = HydraIface.Project()
-    x.db.project_name = "test"
-    x.db.project_description = "test description"
-    x.save()
-    x.commit()
-
-    x.db.project_name = "test_new"
-    x.save()
-    x.delete()
-    x.load()
-    logging.debug(x.db.project_name)
-
-    hydra_logging.shutdown()
-
-def test_load():
-    x = HydraIface.Project(project_id=10)
-    x.load()
-
-    logging.debug(x.db.project_name)
-
-    hydra_logging.shutdown()
+#from soap_server.network import *
+#from soap_server.project import *
 
 
-if __name__ == '__main__':
-    hydra_logging.init(level='DEBUG')
-    test_load()
-    hydra_logging.shutdown()
+def hello():
+    return "Hello, world"
 
+def echo(*args):
+    return args
+
+def average(*args):
+    sum = 0
+    for i in args: sum += i
+    return sum / len(args)
+
+from ZSI import dispatch
+dispatch.AsCGI()

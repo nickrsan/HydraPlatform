@@ -166,6 +166,7 @@ class IfaceDB(object):
                                 referenced_table_name = '%s'
                             and constraint_name != 'PRIMARY'
                         """%(self.table_name)
+
         schema_cnx    = hdb.connect_tmp(db_name='information_schema')
         schema_cursor = schema_cnx.cursor(cursor_class=HydraMySqlCursor)
 
