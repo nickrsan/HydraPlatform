@@ -452,7 +452,6 @@ class GenericResource(IfaceBase):
         attr.db.ref_id  = self.ref_id
         attr.save()
         attr.commit()
-        attr.load()
         self.attributes.append(attr)
 
         return attr
@@ -516,6 +515,21 @@ class Network(GenericResource):
         self.db.network_id = network_id
         if network_id is not None:
             self.load()
+    
+    def add_link(self, name, desc, node_1_id, node_2_id):
+        """
+            Add a link to a network. Links are what effectively
+            define the network topology, by associating two already
+            existing nodes.
+        """
+        l = Link()
+        l.db.link_name = name
+        l.db.link_description = desc
+        l.db.node_1_id = node_1_id
+        l.db.node_2_id = node_2_id
+        l.db.network_id = self.db.network_id
+        self.links.append(l)
+        return l
 
 class Node(GenericResource):
     """

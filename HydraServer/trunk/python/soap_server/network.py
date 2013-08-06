@@ -1,30 +1,109 @@
-from db import HydraIface
+from spyne.service import ServiceBase
 import logging
+from HydraLib.HydraException import HydraError
+from spyne.model.primitive import Integer, Boolean
+from spyne.decorator import rpc
+from hydra_struct import Network, Node
+from db import HydraIface
 
-def add_network(req):
-    pass
+class NetworkService(ServiceBase):
 
-def update_network(req):
-    pass
+    @rpc(Network, _returns=Network) 
+    def add_network(ctx, network):
+        x = HydraIface.Network()
+        logging.debug(network)
+        x.db.project_id          = network.project_id
+        x.db.network_name        = network.network_name
+        x.db.network_description = network.network_description
+        x.save()
+        x.commit()
+        network.network_id = x.db.network_id
 
-def save_network(req):
-    pass
+        for link in network.links:
+            l = x.add_link(link.link_name, link.link_description, link.node_1_id, link.node_2_id)
+            l.save()
+            l.commit()
+            link.link_id = l.db.link_id
 
-def add_node(req):
-    pass
+        return network
+        
+    @rpc(Network, _returns=Network) 
+    def update_network(ctx, network):
+        x = HydraIface.Network(network_id = network.network_id)
+        x.db.project_id          = network.project_id
+        x.db.network_name        = network.network_name
+        x.db.network_description = network.network_description
 
-def update_node(req):
-    pass
+        for link in network.links:
+            l = x.get_link(link.link_id)
+            if l is None:
+                l = x.add_link(link.link_name, link.link_description, link.node_1_id, link.node_2_id)
+                l.save()
+                l.commit()
+                link.link_id = l.db.link_id
+            else:
+                l.db.link_name = link.link_name
+                l.db.link_description = link.link_description
+            l.save()
+            l.commit()
+            link.link_id = l.db.link_id
 
-def delete_node(req):
-    pass
+        x.save()
+        x.commit()
+        network.network_id = x.db.network_id
+        return network
 
-def add_link(req):
-    pass
+    #TODO Return the network in the correct format
+    @rpc(Integer, _returns=Boolean) 
+    def delete_network(ctx, network_id):
+        success = True
+        try:
+            x = HydraIface.Network(network_id = network_id)
+            x.db.status = 'X'
+            x.save()
+            x.commit()
+        except HydraError, e:
+            logging.critical(e)
+            success = False
 
-def update_link(req):
-    pass
+        return success
 
-def delete_link(req):
-    pass
+    @rpc(Node, _returns=Node) 
+    def add_node(ctx, node):
+        x = HydraIface.Node()
+        x.db.node_name = node.node_name
+        x.db.node_x    = node.node_x
+        x.db.node_y    = node.node_y
+        x.db.node_description = node.node_description
+        x.save()
+        x.commit()
+        node.node_id = x.db.node_id
+        return node
+
+    @rpc(Node, _returns=Node) 
+    def update_node(ctx, node):
+        x = HydraIface.Node(node_id = node.node_id)
+        x.db.node_name = node.node_name
+        x.db.node_x    = node.node_x
+        x.db.node_y    = node.node_y
+        x.db.node_description = node.node_description
+        x.save()
+        x.commit()
+        return node
+
+    @rpc(Integer, _returns=Node) 
+    def delete_node(ctx, node_id):
+        x = HydraIface.Node(node_id = node_id)
+        x.db.status =  'X'
+        x.save()
+        x.commit()
+        return True
+
+    @rpc(Integer, _returns=Node) 
+    def purge_node(ctx, node_id):
+        x = HydraIface.Node(node_id = node_id)
+        x.delete()
+        x.save()
+        x.commit()
+        return x.load()
 

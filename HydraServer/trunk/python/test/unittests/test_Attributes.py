@@ -151,7 +151,7 @@ class ResourceAttrTest(test_HydraIface.HydraIfaceTest):
         ra1.save()
         ra1.commit()
         ra2 = HydraIface.ResourceAttr(resource_attr_id=ra1.db.resource_attr_id)
-        
+  
         n1.load()
         n1.get_attributes()
 
