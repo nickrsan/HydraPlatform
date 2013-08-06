@@ -409,7 +409,7 @@ def scenario_assign_data(scenario, resource, attribute, dataset):
 
 if __name__ == '__main__':
 #def main():
-    hydra_logging.init(level='INFO')
+    #hydra_logging.init(level='INFO')
     # Load the structure file
     filename = '../../data/gatineau/Gatineau_system.ods'
     gatineau_res_data = importReservoirData(filename)
@@ -580,8 +580,8 @@ if __name__ == '__main__':
                 if dataset.db.data_name.find(node.db.node_name) >= 0 and \
                         dataset.db.data_name.find(attribute.db.attr_name) >= 0:
                     scenario_assign_data(scenario, node, attribute, dataset)
-                    #print n, dataset.db.data_name, node.db.node_name, \
-                    #    attribute.db.attr_name
+                    print n, dataset.db.data_name, node.db.node_name, \
+                        attribute.db.attr_name
                     n += 1
 
     # Disconnect from db
