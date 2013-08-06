@@ -139,7 +139,6 @@ class NodeTest(test_HydraIface.HydraIfaceTest):
         x.db.node_description = "test description"
         x.save()
         x.commit()
-        x.load()
         y = HydraIface.Node(node_id=x.db.node_id)
         assert y.load() == True, "Load did not work correctly"
 

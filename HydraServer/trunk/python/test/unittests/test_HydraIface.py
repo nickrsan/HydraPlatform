@@ -5,9 +5,9 @@ import logging
 
 class HydraIfaceTest(unittest.TestCase):
     def setUp(self):
+        HydraIface.init(hdb.connect())
         hydra_logging.init(level='DEBUG')
-        self.connection = hdb.connect()
- 
+
     def tearDown(self):
         logging.debug("Tearing down")
         hdb.disconnect()
@@ -75,7 +75,11 @@ class HydraIfaceTest(unittest.TestCase):
 
 
 def run():
+   # hydra_logging.init(level='DEBUG')
+   # HydraIface.init(hdb.connect())
     unittest.main()
+   # hdb.disconnect()
+   # hydra_logging.shutdown()
 
 if __name__ == "__main__":
     run() # run all tests

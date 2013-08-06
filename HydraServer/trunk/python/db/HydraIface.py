@@ -1,7 +1,77 @@
-from HydraLib import hdb
+from HydraLib import util
 from HydraLib.hdb import HydraMySqlCursor
 import logging
 from decimal import Decimal
+
+global DB_STRUCT
+DB_STRUCT = {}
+
+global CONNECTION
+CONNECTION = None
+
+def init(cnx):
+    config = util.load_config()
+
+    global CONNECTION
+    global DB_STRUCT
+
+    CONNECTION = cnx
+
+    sql = """
+        select
+            table_name,
+            column_name,
+            column_default,
+            is_nullable,
+            column_type,
+            column_key,
+            extra 
+        from
+            information_schema.columns
+        where
+            table_schema = '%s'
+    """%(config.get('mysqld', 'db_name'),)
+
+    cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
+    rs = cursor.execute_sql(sql)
+    #Table desc gives us:
+    #[...,(col_name, col_type, nullable, key ('PRI' or 'MUL'), default, auto_increment),...]
+    logging.debug(len(rs))
+    for r in rs:
+
+        col_info    = {}
+
+        col_info['default']        = r.column_default
+        col_info['nullable']       = True if r.is_nullable == 'YES' else False
+        col_info['type']           = r.column_type
+        col_info['primary_key']    = True if r.column_key == 'PRI' else False
+        col_info['auto_increment'] = True if r.extra == 'auto_increment' else False
+ 
+        tab_info = DB_STRUCT.get(r.table_name, {'columns' : {}})
+        tab_info['columns'][r.column_name] = col_info
+        tab_info['child_info'] = {}
+        DB_STRUCT[r.table_name] = tab_info
+
+    fk_qry    = """
+        select
+            table_name,
+            column_name,
+            referenced_table_name,
+            referenced_column_name
+        from
+            information_schema.key_column_usage
+        where
+        table_schema  = '%s'
+        and constraint_name != 'PRIMARY'
+    """%(config.get('mysqld', 'db_name'),)
+
+    rs = cursor.execute_sql(fk_qry)
+    for r in rs:
+        child_dict = {}
+
+        child_dict['column_name'] = r.column_name
+        child_dict['referenced_column_name'] = r.referenced_column_name
+        DB_STRUCT[r.referenced_table_name]['child_info'][r.table_name] = child_dict
 
 class IfaceBase(object):
     def __init__(self, class_name):
@@ -32,7 +102,7 @@ class IfaceBase(object):
         """
             Commit any inserts or updates to the DB. No going back from here...
         """
-        self.db.connection.commit()
+        CONNECTION.commit()
         if self.deleted == True:
             self.in_db = False
         self.load()
@@ -60,7 +130,7 @@ class IfaceBase(object):
             self.in_db = True
 
     def get_children(self):
-        children = self.db.get_child_info()
+        children = DB_STRUCT[self.db.table_name]['child_info']
         for name, rows in children.items():
             #turn 'link' into 'links'
             attr_name              = name[1:].lower() + 's'
@@ -69,8 +139,8 @@ class IfaceBase(object):
 
     def load_children(self):
 
-       child_rs = self.db.load_children(self.child_info)
-       for name, rows in child_rs.items():
+        child_rs = self.db.load_children(self.child_info)
+        for name, rows in child_rs.items():
             #turn 'link' into 'links'
             attr_name              = name[1:].lower() + 's'
 
@@ -103,15 +173,11 @@ class IfaceDB(object):
     def __init__(self, class_name):
 
         self.db_attrs = []
-        self.pk_attrs = db_hierarchy['t'+class_name]['pk']
+        self.pk_attrs = []#db_hierarchy['t'+class_name]['pk']
         self.db_data  = {}
         self.nullable_attrs = []
         self.attr_types = {}
         self.seq = None
-
-        self.connection = hdb.get_connection()
-
-        self.cursor = self.connection.cursor(cursor_class=HydraMySqlCursor)
 
         #This indicates whether any values in this table have changed.
         self.has_changed = False
@@ -119,76 +185,33 @@ class IfaceDB(object):
         #this turns 'Project' into 'tProject' so it can identify the table
         self.table_name = "t%s"%class_name
 
-        self.cursor.execute('desc %s' % self.table_name)
-
-        table_desc = self.cursor.fetchall()
-
-        logging.debug("Table desc: %s", table_desc)
-
-        """
-            The table description from MySql looks like:
-            [...,(col_name, col_type, nullable, key ('PRI' or 'MUL'), default, auto_increment),...]
-        """
-
-        for col_desc in table_desc:
-            col_name = col_desc[0]
+        col_dict = DB_STRUCT[self.table_name]['columns']
+        
+        for col_name, col_data in col_dict.items():
 
             self.db_attrs.append(col_name)
-            self.db_data[col_name] = col_desc[4]
+            
+            #[...,(col_name, col_type, nullable, key ('PRI' or 'MUL'), default, auto_increment),...]
 
-            self.attr_types[col_name] = col_desc[1]
+            self.db_data[col_name] = col_data['default']
 
-            if col_desc[2] == 'YES':
+            self.attr_types[col_name] = col_data['type']
+
+            if col_data['nullable'] is True:
                 self.nullable_attrs.append(col_name)
 
-            if col_desc[3] == 'PRI':
-                pass
-                #self.pk_attrs.append(col_name)
+            if col_data['primary_key'] is True: 
+                self.pk_attrs.append(col_name)
 
-            if col_desc[5] == 'auto_increment':
+            if col_data['auto_increment'] is True:
                 self.seq = col_name
-
-    def get_child_info(self):
-        """
-            Find all the things that reference me in the db. They are tentatively
-            called 'children'. A dictionary is returned, keyed on the name
-            of the child table and valued with a list of HydraRSRows
-        """
-
-        schema_qry    = """
-                            select
-                                table_name,
-                                column_name,
-                                referenced_column_name
-                            from
-                                key_column_usage
-                            where
-                                referenced_table_name = '%s'
-                            and constraint_name != 'PRIMARY'
-                        """%(self.table_name)
-
-        schema_cnx    = hdb.connect_tmp(db_name='information_schema')
-        schema_cursor = schema_cnx.cursor(cursor_class=HydraMySqlCursor)
-
-        rs = schema_cursor.execute_sql(schema_qry)
-
-        schema_cnx.disconnect()
-
-        logging.debug("Children for %s are: %s", self.table_name, [r.table_name for r in rs])
-
-        #select all of my children out of the DB.
-        child_info_dict = {}
-        for r in rs:
-            child_info_dict[r.table_name]  = (
-                    r.column_name,
-                    r.referenced_column_name,
-                )
-        return child_info_dict
 
     def load_children(self, child_info_dict):
         child_dict = {}
-        for table_name, v in child_info_dict.items():
-            column_name, referenced_column_name = v
+        for table_name, ref_cols in child_info_dict.items():
+            column_name = ref_cols['column_name']
+            referenced_column_name = ref_cols['referenced_column_name']
+
             logging.info("Loading child %s", table_name)
 
             base_child_sql = """
@@ -209,7 +232,8 @@ class IfaceDB(object):
                 fk_val = self.__getattr__(referenced_column_name)
             )
 
-            rs = self.cursor.execute_sql(complete_child_sql)
+            cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
+            rs = cursor.execute_sql(complete_child_sql)
 
             child_dict[table_name] = rs
 
@@ -247,7 +271,8 @@ class IfaceDB(object):
                 pk    = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in parent_pk]),
         )
 
-        rs = self.cursor.execute_sql(complete_parent_sql)
+        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
+        rs = cursor.execute_sql(complete_parent_sql)
 
         if len(rs) == 0:
             logging.info("Object %s has no parent with pk: %s", self.table_name, parent_pk)
@@ -304,6 +329,7 @@ class IfaceDB(object):
             Generates an insert statement and runs it.
         """
 
+        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         base_insert = "insert into %(table)s (%(cols)s) values (%(vals)s);"
         complete_insert = base_insert % dict(
             table = self.table_name,
@@ -312,13 +338,13 @@ class IfaceDB(object):
         )
 
         logging.debug("Running insert: %s", complete_insert)
-        old_seq = self.cursor.lastrowid
+        old_seq = cursor.lastrowid
 
-        self.cursor.execute(complete_insert)
+        cursor.execute(complete_insert)
 
         if self.seq is not None:
-            if old_seq is None or old_seq != self.cursor.lastrowid:
-                setattr(self, self.seq, self.cursor.lastrowid)
+            if old_seq is None or old_seq != cursor.lastrowid:
+                setattr(self, self.seq, cursor.lastrowid)
 
     def update(self):
         """
@@ -333,7 +359,8 @@ class IfaceDB(object):
             pk    = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
         )
         logging.debug("Running update: %s", complete_update)
-        self.cursor.execute(complete_update)
+        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
+        cursor.execute(complete_update)
 
     def load(self):
         """
@@ -358,8 +385,9 @@ class IfaceDB(object):
         )
 
         logging.debug("Running load: %s", complete_load)
-        logging.debug(self.cursor)
-        rs = self.cursor.execute_sql(complete_load)
+
+        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
+        rs = cursor.execute_sql(complete_load)
 
         if len(rs) == 0:
             logging.warning("No entry found for table")
@@ -383,7 +411,8 @@ class IfaceDB(object):
             pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
         )
         logging.debug("Running delete: %s", complete_delete)
-        self.cursor.execute(complete_delete)
+        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
+        cursor.execute(complete_delete)
 
     def get_val(self, attr):
         val = self.__getattr__(attr)
@@ -422,7 +451,6 @@ class GenericResource(IfaceBase):
         if self.ref_id is None:
             return []
         attributes = []
-        cursor = self.db.connection.cursor(cursor_class=HydraMySqlCursor)
         sql = """
                     select
                         attr_id,
@@ -433,6 +461,7 @@ class GenericResource(IfaceBase):
                         ref_id = %(ref_id)s
                     and ref_key = '%(ref_key)s'
             """
+        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         rs = cursor.execute_sql(sql%dict(ref_key = self.ref_key, ref_id = self.ref_id))
 
         for r in rs:
