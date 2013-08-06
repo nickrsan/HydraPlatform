@@ -102,10 +102,9 @@ class IfaceBase(object):
         """
             Commit any inserts or updates to the DB. No going back from here...
         """
-        CONNECTION.commit()
+        #CONNECTION.commit()
         if self.deleted == True:
             self.in_db = False
-        self.load()
 
     def delete(self):
         if self.in_db:

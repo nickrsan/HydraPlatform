@@ -36,29 +36,24 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         con.db.op                     = "=="
         con.save()
         con.commit()
-        con.load()
 
         item_a = HydraIface.ConstraintItem()
         item_a.db.constraint_id = con.db.constraint_id
         item_a.db.resource_attr_id = ra.db.resource_attr_id
         item_a.save()
         item_a.commit()
-        item_a.load()
 
         item_b = HydraIface.ConstraintItem()
         item_b.db.constraint_id = con.db.constraint_id
         item_b.db.resource_attr_id = rb.db.resource_attr_id
         item_b.save()
         item_b.commit()
-        item_b.load()
 
         item_c = HydraIface.ConstraintItem()
         item_c.db.constraint_id = con.db.constraint_id
         item_c.db.resource_attr_id = rc.db.resource_attr_id
         item_c.save()
         item_c.commit()
-        item_c.load()
-
 
         grp_a = HydraIface.ConstraintGroup()
         grp_a.db.constraint_id = con.db.constraint_id
@@ -69,7 +64,6 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         grp_a.db.op        = "+"
         grp_a.save()
         grp_a.commit()
-        grp_a.load()
 
         grp_b = HydraIface.ConstraintGroup()
         grp_b.db.constraint_id = con.db.constraint_id
@@ -80,7 +74,6 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         grp_b.db.op        = '-'
         grp_b.save()
         grp_b.commit()
-        grp_b.load()
 
         con.db.group_id = grp_b.db.group_id
         con.save()

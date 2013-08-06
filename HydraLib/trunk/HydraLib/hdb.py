@@ -48,22 +48,8 @@ def connect(user=None, password=None, db_name=None):
         CNX = cnx
     return CNX
 
-
-def connect_tmp(user=None, password=None, db_name=None):
-    config = util.load_config()
-    logging.debug("CONNECTING")
-
-    if user is None:
-        user = config.get('mysqld', 'user')
-    if password is None:
-        password = config.get('mysqld', 'password')
-    if db_name is None:
-        db_name = config.get('mysqld', 'db_name')
-
-    return mysql.connector.connect(user=user,
-                                   password=password,
-                                   database=db_name)
-
+def commit():
+    CNX.commit()
 
 def disconnect():
     logging.debug("DIS - CONNECTING")

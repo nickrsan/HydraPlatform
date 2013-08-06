@@ -8,7 +8,9 @@ class HydraIfaceTest(unittest.TestCase):
         HydraIface.init(hdb.connect())
         hydra_logging.init(level='DEBUG')
 
+
     def tearDown(self):
+        hdb.commit()
         logging.debug("Tearing down")
         hdb.disconnect()
         hydra_logging.shutdown()
