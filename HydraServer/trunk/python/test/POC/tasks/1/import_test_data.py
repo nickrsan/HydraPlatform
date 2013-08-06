@@ -152,7 +152,10 @@ def convert_ts_to_hydra_ts(time_series):
             timestamp = datetime(ts_date.year()[0], ts_date.month()[0],
                                  ts_date.day()[0])
 
-        hydra_ts.append((timestamp, time_series.getData(ts_date)))
+        tsdata = time_series.getData(ts_date)
+        if len(tsdata) == 1:
+            tsdata = tsdata[0]
+        hydra_ts.append((timestamp, tsdata))
 
     return hydra_ts
 
@@ -164,8 +167,8 @@ def create_example_ts(res_data, attributes):
         for i in res_ids:
             tmp_ts = {}
             tmp_ts['name'] = attr[0] + '_' + res_data.getname(i)
-            tmp_ts['units'] = '-'
-            tmp_ts['dimen'] = '-'
+            tmp_ts['units'] = 'm^3 s^{-1}'
+            tmp_ts['dimen'] = 'L^3 T^{-1}'
             tmp_ts['time_series'] = convert_ts_to_hydra_ts(
                 extract_time_series_data(res_data, 1, attr[0]))
             ex_ts.append(tmp_ts)
@@ -319,6 +322,13 @@ def create_descriptor(d):
 def create_ts(ts):
     dataset = HydraIface.ScenarioData()
 
+    dataset.set_val('timeseries', ts['time_series'])
+    dataset.db.data_units = ts['units']
+    dataset.db.data_dimen = ts['dimen']
+    dataset.db.data_name = ts['name']
+    dataset.save()
+    dataset.commit()
+
     return dataset
 
 
@@ -394,53 +404,11 @@ def scenario_assign_data(scenario, resource, attribute, dataset):
             res_scenario.save()
             res_scenario.commit()
 
-    # An alternative if we have significantly more attributes than nodes.
-    #resourcetype = resource.__class__.__name__.upper()
-    #if resourcetype == 'NODE':
-    #    for resourceattr in attribute.resourceattrs:
-    #        if resourceattr.db.ref_id == resource.db.node_id and \
-    #                resourceattr.db.ref_key == resourcetype:
-    #            res_scenario.db.dataset_id = dataset.db.dataset_id
-    #            res_scenario.db.scenario_id = scenario.db.scenario_id
-    #            res_scenario.db.resource_attr_id = \
-    #                resourceattr.db.resource_attr_id
-    #            res_scenario.save()
-    #            res_scenario.commit()
-    #if resourcetype == 'LINK':
-    #    for resourceattr in attribute.resourceattrs:
-    #        if resourceattr.db.ref_id == resource.db.node_id and \
-    #                resourceattr.db.ref_key == resourcetype:
-    #            res_scenario.db.dataset_id = dataset.db.dataset_id
-    #            res_scenario.db.scenario_id = scenario.db.scenario_id
-    #            res_scenario.db.resource_attr_id = \
-    #                resourceattr.db.resource_attr_id
-    #            res_scenario.save()
-    #            res_scenario.commit()
-    #if resourcetype == 'NETWORK':
-    #    for resourceattr in attribute.resourceattrs:
-    #        if resourceattr.db.ref_id == resource.db.node_id and \
-    #                resourceattr.db.ref_key == resourcetype:
-    #            res_scenario.db.dataset_id = dataset.db.dataset_id
-    #            res_scenario.db.scenario_id = scenario.db.scenario_id
-    #            res_scenario.db.resource_attr_id = \
-    #                resourceattr.db.resource_attr_id
-    #            res_scenario.save()
-    #            res_scenario.commit()
-    #if resourcetype == 'PROJECT':
-    #    for resourceattr in attribute.resourceattrs:
-    #        if resourceattr.db.ref_id == resource.db.node_id and \
-    #                resourceattr.db.ref_key == resourcetype:
-    #            res_scenario.db.dataset_id = dataset.db.dataset_id
-    #            res_scenario.db.scenario_id = scenario.db.scenario_id
-    #            res_scenario.db.resource_attr_id = \
-    #                resourceattr.db.resource_attr_id
-    #            res_scenario.save()
-    #            res_scenario.commit()
-
     return res_scenario
 
 
-def main():
+if __name__ == '__main__':
+#def main():
     hydra_logging.init(level='INFO')
     # Load the structure file
     filename = '../../data/gatineau/Gatineau_system.ods'
@@ -580,6 +548,10 @@ def main():
 
     # Write ordinary (=unequally spaced) time series
 
+    for ts in monthly_ts:
+        timeseries = create_ts(ts)
+        dataset_list.append(timeseries)
+
     # Write arrays (reservoir geometry)
 
     for resname in geometry.keys():
@@ -616,10 +588,11 @@ def main():
     hdb.disconnect()
 
 
-if __name__ == '__main__':
-    import cProfile
-    import pstats
-
-    cProfile.run('main()', 'stats')
-    pr = pstats.Stats('stats')
-    pr.strip_dirs().sort_stats('time').print_stats(20)
+#if __name__ == '__main__':
+#    import cProfile
+#    import pstats
+#
+#    cProfile.run('main()', 'stats')
+#    pr = pstats.Stats('stats')
+#    #pr.strip_dirs().sort_stats('time').print_stats(20)
+#    pr.strip_dirs().sort_stats('cumulative').print_stats(30)

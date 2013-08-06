@@ -68,12 +68,12 @@ class IfaceBase(object):
         return children
 
     def load_children(self):
-       
+
        child_rs = self.db.load_children(self.child_info)
        for name, rows in child_rs.items():
             #turn 'link' into 'links'
             attr_name              = name[1:].lower() + 's'
-               
+
             child_objs = []
             for row in rows:
                 row = row.get_as_dict()
@@ -196,8 +196,8 @@ class IfaceDB(object):
                     *
                 from
                     %(table)s
-                where 
-                %(fk_col)s = %(fk_val)s 
+                where
+                %(fk_col)s = %(fk_val)s
             """
 
             if self.__getattr__(referenced_column_name) is None:
@@ -216,8 +216,8 @@ class IfaceDB(object):
         return child_dict
 
     def get_parent(self):
-        parent = db_hierarchy[self.table_name]['parent'] 
-        
+        parent = db_hierarchy[self.table_name]['parent']
+
         if parent is None:
             return None
 
@@ -656,9 +656,10 @@ class ScenarioData(IfaceBase):
             val = d.desc_val
         elif self.db.data_type == 'timeseries':
             ts = TimeSeries(data_id=self.db.data_id)
+            #TODO: Use TimeSeries.get_ts_val() function
             val = ts.db.ts_value
         elif self.db.data_type == 'eqtimeseries':
-            eqts = EquallySpacedTimeSeries(data_id = self.db.data_id)
+            eqts = EqTimeSeries(data_id = self.db.data_id)
             val  = eqts.db.arr_data
         elif self.db.data_type == 'scalar':
             s = Scalar(data_id = self.db.data_id)
@@ -677,10 +678,11 @@ class ScenarioData(IfaceBase):
             data.db.desc_val = val
         elif data_type == 'timeseries':
             data = TimeSeries(data_id=self.db.data_id)
-            data.db.ts_time  = val[0]
-            data.db.ts_value = val[1]
+            data.set_ts_values(val)
+            #data.db.ts_time  = val[0]
+            #data.db.ts_value = val[1]
         elif data_type == 'eqtimeseries':
-            data = EquallySpacedTimeSeries(data_id = self.db.data_id)
+            data = EqTimeSeries(data_id = self.db.data_id)
             data.db.start_time = val[0]
             data.db.frequency  = val[1]
             data.db.arr_data = val[2]
@@ -725,7 +727,7 @@ class Descriptor(IfaceBase):
 class TimeSeries(IfaceBase):
     """
         Non-equally spaced time series data
-        Links to multiple entries in time series data, which 
+        Links to multiple entries in time series data, which
         actually stores the info.
     """
     def __init__(self, data_id = None):
@@ -740,17 +742,18 @@ class TimeSeries(IfaceBase):
             Adds a single timeseries value to the timeseries.
             This consists of a timestamp and a value
         """
+
         for ts in self.timeseriesdatas:
             if ts.db.data_id == self.db.data_id and ts.db.ts_time == str(time):
                 ts.db.ts_value = value
                 return
-        else:
-            ts_val = TimeSeriesData()
-            ts_val.db.data_id = self.db.data_id
-            ts_val.db.ts_time = time
-            ts_val.db.ts_value = value
+        #else:
+        ts_val = TimeSeriesData()
+        ts_val.db.data_id = self.db.data_id
+        ts_val.db.ts_time = time
+        ts_val.db.ts_value = value
 
-            self.timeseriesdatas.append(ts_val)
+        self.timeseriesdatas.append(ts_val)
 
     def set_ts_values(self, values):
         """
@@ -770,7 +773,7 @@ class TimeSeries(IfaceBase):
             logging.debug("%s vs %s", ts_data.db.ts_time, time)
             if ts_data.db.ts_time == str(time):
                 return ts_data.db.ts_value
-        logging.info("No value found at %s for data_id %s", time, self.db.data_id)        
+        logging.info("No value found at %s for data_id %s", time, self.db.data_id)
         return None
 
     def delete(self):
@@ -780,7 +783,7 @@ class TimeSeries(IfaceBase):
 
     def save(self):
         super(TimeSeries, self).save()
-        
+
         for ts_data in self.timeseriesdatas:
             ts_data.db.data_id = self.db.data_id
             ts_data.save()
@@ -801,10 +804,10 @@ class TimeSeriesData(IfaceBase):
         self.db.data_id = data_id
         if data_id is not None:
             self.load()
-    
 
 
-class EquallySpacedTimeSeries(IfaceBase):
+
+class EqTimeSeries(IfaceBase):
     """
         Equally spaced time series data
         -- a start time, frequency and an associated array.
@@ -1083,9 +1086,9 @@ db_hierarchy = dict(
         parent = 'tTimeSeries',
         pk     = ['data_id', 'ts_time']
     ),
-    tEquallySpacedTimeSeries  = dict(
-        obj   = EquallySpacedTimeSeries,
-        name  = 'equallyspacedtimeseries',
+    tEqTimeSeries  = dict(
+        obj   = EqTimeSeries,
+        name  = 'eqtimeseries',
         parent = None,
         pk     = ['data_id']
     ),

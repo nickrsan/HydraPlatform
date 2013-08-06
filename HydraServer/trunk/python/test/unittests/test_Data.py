@@ -4,7 +4,7 @@ from decimal import Decimal
 import datetime
 
 class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
- 
+
     def test_create(self):
 
         data = HydraIface.Scalar()
@@ -23,7 +23,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         sd.commit()
 
         assert sd.load() == True, "ScenarioData did not create correctly"
- 
+
     def test_update(self):
 
         data = HydraIface.Scalar()
@@ -167,7 +167,7 @@ class DescriptorTest(test_HydraIface.HydraIfaceTest):
         assert y.load() == True, "Load did not work correctly"
 
 class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
- 
+
     def test_update(self):
         x = HydraIface.TimeSeries()
 
@@ -222,10 +222,10 @@ class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
         assert y.load() == True, "Load did not work correctly"
 
 
-class EquallySpacedTimeSeriesTest(test_HydraIface.HydraIfaceTest):
+class EqTimeSeriesTest(test_HydraIface.HydraIfaceTest):
 
     def test_update(self):
-        x = HydraIface.EquallySpacedTimeSeries()
+        x = HydraIface.EqTimeSeries()
 
         x.db.arr_data = [1, 2, 3, 4, 5]
 
@@ -239,10 +239,10 @@ class EquallySpacedTimeSeriesTest(test_HydraIface.HydraIfaceTest):
         x.commit()
         x.load()
 
-        assert x.db.arr_data == [1, 2, 3, 4], "tEquallySpacedTimeSeries did not update correctly"
+        assert x.db.arr_data == [1, 2, 3, 4], "tEqTimeSeries did not update correctly"
 
     def test_delete(self):
-        x = HydraIface.EquallySpacedTimeSeries()
+        x = HydraIface.EqTimeSeries()
 
         x.db.arr_data = [1, 2, 3, 4, 5]
 
@@ -250,14 +250,14 @@ class EquallySpacedTimeSeriesTest(test_HydraIface.HydraIfaceTest):
         x.db.frequency = 1
         x.save()
         x.commit()
-        
+
         x.delete()
         x.commit()
 
         assert x.load() == False, "Delete did not work correctly."
 
     def test_load(self):
-        x = HydraIface.EquallySpacedTimeSeries()
+        x = HydraIface.EqTimeSeries()
 
         x.db.arr_data = [1, 2, 3, 4, 5]
 
@@ -266,7 +266,7 @@ class EquallySpacedTimeSeriesTest(test_HydraIface.HydraIfaceTest):
         x.save()
         x.commit()
 
-        y = HydraIface.EquallySpacedTimeSeries(data_id=x.db.data_id)
+        y = HydraIface.EqTimeSeries(data_id=x.db.data_id)
         assert y.load() == True, "Load did not work correctly"
 
 class ArrayTest(test_HydraIface.HydraIfaceTest):
@@ -303,7 +303,7 @@ class ArrayTest(test_HydraIface.HydraIfaceTest):
 
         x.save()
         x.commit()
-        
+
         x.delete()
         x.commit()
 
@@ -345,7 +345,7 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         data.save()
         data.commit()
         data.load()
-        
+
         sd = self.create_scenariodata(data.db.data_id)
 
         dattr = HydraIface.DataAttr()
@@ -357,7 +357,7 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         dattr.save()
         dattr.commit()
         dattr.load()
-        
+
         dattr.db.d_attr_val = 100.2
         dattr.save()
         dattr.commit()
@@ -371,7 +371,7 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         data.save()
         data.commit()
         data.load()
-        
+
         sd = self.create_scenariodata(data.db.data_id)
 
         dattr = HydraIface.DataAttr()
@@ -383,7 +383,7 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         dattr.save()
         dattr.commit()
         dattr.load()
-        
+
         dattr.delete()
         assert dattr.load() == False, "Delete did not work correctly."
 
@@ -393,7 +393,7 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         data.save()
         data.commit()
         data.load()
-        
+
         sd = self.create_scenariodata(data.db.data_id)
 
         dattr = HydraIface.DataAttr()
@@ -405,7 +405,7 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         dattr.save()
         dattr.commit()
         dattr.load()
-        
+
         dattr1 = HydraIface.DataAttr(d_attr_id=dattr.db.d_attr_id)
         assert dattr1.load() == True, "Load did not work correctly"
 
