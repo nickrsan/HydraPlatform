@@ -3,7 +3,7 @@ import logging
 from HydraLib.HydraException import HydraError
 from spyne.model.primitive import Integer, Boolean
 from spyne.decorator import rpc
-from hydra_struct import Network, Node
+from hydra_complexmodels import Network, Node
 from db import HydraIface
 
 class NetworkService(ServiceBase):
@@ -25,7 +25,7 @@ class NetworkService(ServiceBase):
             l.commit()
             link.link_id = l.db.link_id
 
-        return network
+        return x.get_as_complexmodel()
 
     @rpc(Network, _returns=Network)
     def update_network(ctx, network):
@@ -46,14 +46,11 @@ class NetworkService(ServiceBase):
                 l.db.link_description = link.link_description
             l.save()
             l.commit()
-            link.link_id = l.db.link_id
 
         x.save()
         x.commit()
-        network.network_id = x.db.network_id
-        return network
+        return x.get_as_complexmodel()
 
-    #TODO Return the network in the correct format
     @rpc(Integer, _returns=Boolean)
     def delete_network(ctx, network_id):
         success = True
@@ -77,8 +74,9 @@ class NetworkService(ServiceBase):
         x.db.node_description = node.node_description
         x.save()
         x.commit()
-        node.node_id = x.db.node_id
-        return node
+        n = x.get_as_complexmodel()
+        logging.debug("%s or %s", n.node_x, node.node_x)
+        return x.get_as_complexmodel()
 
     @rpc(Node, _returns=Node)
     def update_node(ctx, node):
@@ -89,17 +87,23 @@ class NetworkService(ServiceBase):
         x.db.node_description = node.node_description
         x.save()
         x.commit()
-        return node
+        return x.get_as_complexmodel()
 
     @rpc(Integer, _returns=Node)
     def delete_node(ctx, node_id):
-        x = HydraIface.Node(node_id = node_id)
-        x.db.status =  'X'
-        x.save()
-        x.commit()
-        return True
+        success = True
+        try:
+            x = HydraIface.Node(node_id = node_id)
+            x.db.status = 'X'
+            x.save()
+            x.commit()
+        except HydraError, e:
+            logging.critical(e)
+            success = False
 
-    @rpc(Integer, _returns=Node)
+        return success
+
+    @rpc(Integer, _returns=Boolean) 
     def purge_node(ctx, node_id):
         x = HydraIface.Node(node_id = node_id)
         x.delete()

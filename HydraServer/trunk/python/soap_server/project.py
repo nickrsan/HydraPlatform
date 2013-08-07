@@ -2,7 +2,7 @@ from spyne.service import ServiceBase
 from spyne.decorator import rpc
 from spyne.model.primitive import Integer
 from db import HydraIface
-from hydra_struct import Project
+from hydra_complexmodels import Project
 
 class ProjectService(ServiceBase):
 
@@ -13,17 +13,17 @@ class ProjectService(ServiceBase):
         x.db.project_description = project.project_description
         x.save()
         x.commit()
-        project.project_id = x.db.project_id
-        return project
+        return x.get_as_complexmodel()
 
     @rpc(Project, _returns=Project) 
     def update_project(ctx, project):
         x = HydraIface.Project(project_id = project.project_id)
         x.db.project_name = project.project_name
-        x.db.project_name = project.project_description
+        x.db.project_description = project.project_description
         x.save()
         x.commit()
-        return project
+        return x.get_as_complexmodel()
+ 
 
     @rpc(Integer, _returns=Project)
     def get_project(ctx, project_id):
@@ -34,6 +34,7 @@ class ProjectService(ServiceBase):
         project.project_name = x.db.project_name
         project.project_description = x.db.project_description
 
-        return project
+        return x.get_as_complexmodel()
+ 
 
 

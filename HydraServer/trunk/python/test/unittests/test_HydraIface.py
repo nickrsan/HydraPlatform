@@ -5,9 +5,8 @@ import logging
 
 class HydraIfaceTest(unittest.TestCase):
     def setUp(self):
-        HydraIface.init(hdb.connect())
         hydra_logging.init(level='DEBUG')
-
+        HydraIface.init(hdb.connect())
 
     def tearDown(self):
         hdb.commit()

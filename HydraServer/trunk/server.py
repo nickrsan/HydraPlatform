@@ -21,6 +21,7 @@ from soap_server.network import NetworkService
 from soap_server.project import ProjectService
 
 from HydraLib import hydra_logging, hdb
+from db import HydraIface
 
 class HelloWorldService(ServiceBase):
     @srpc(Unicode, Integer, _returns=Iterable(Unicode))
@@ -33,6 +34,7 @@ if __name__=='__main__':
 
     hydra_logging.init(level='DEBUG')
     connection = hdb.connect()
+    HydraIface.init(connection)
 
     from wsgiref.simple_server import make_server
 

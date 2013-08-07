@@ -2,6 +2,7 @@ from HydraLib import util
 from HydraLib.hdb import HydraMySqlCursor
 import logging
 from decimal import Decimal
+from soap_server import hydra_complexmodels 
 
 global DB_STRUCT
 DB_STRUCT = {}
@@ -133,7 +134,9 @@ class IfaceBase(object):
         for name, rows in children.items():
             #turn 'link' into 'links'
             attr_name              = name[1:].lower() + 's'
-            self.__setattr__(attr_name, [])
+            #if it's not already set, set it to a default []
+            if hasattr(self, attr_name) is False:
+                self.__setattr__(attr_name, [])
         return children
 
     def load_children(self):
@@ -156,7 +159,7 @@ class IfaceBase(object):
 
                 child_objs.append(child_obj)
             self.__setattr__(attr_name, child_objs)
-            self.children[name.lower()] = self.__getattribute__(attr_name)
+            self.children[attr_name] = self.__getattribute__(attr_name)
 
     def get_parent(self):
         if self.parent is None and self.in_db:
@@ -166,6 +169,41 @@ class IfaceBase(object):
             logging.debug("Parent: %s", parent)
             self.parent = parent
             self.__setattr__(parent_name, parent)
+
+    def get_as_complexmodel(self):
+        """
+            Converts this object into a spyne.model.ComplexModel type
+            which can be used by the soap library.
+        """
+        #first create the appropriate soap complex model
+        cm = getattr(hydra_complexmodels, self.name)
+
+        #assign values for each database attribute
+        for attr in self.db.db_attrs:
+            value = getattr(self.db, attr)
+            if type(value) == Decimal:
+                value = float(value)
+            setattr(cm, attr, value)
+
+        #get my children, convert them and assign them to the new
+        #soap object
+        self.load_children()
+        for name, objs in self.children.items():
+            child_objs = []
+            for obj in objs:
+                child_cm = obj.get_as_complexmodel()
+                child_objs.append(child_cm)
+            setattr(cm, name, child_objs)
+
+        #if I have attributes, convert them
+        #and assign them to the new object too.
+        if hasattr(self, 'attributes'):
+            attributes = []
+            for attr in self.attributes:
+                attributes.append(attr.get_as_complexmodel())
+            setattr(cm, 'attributes', attributes)
+
+        return cm
 
 class IfaceDB(object):
 

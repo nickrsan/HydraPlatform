@@ -1,5 +1,5 @@
 from spyne.model.complex import Array, ComplexModel
-from spyne.model.primitive import String, Integer, Double
+from spyne.model.primitive import String, Integer, Decimal
 
 class Attribute(ComplexModel):
  _type_info = [
@@ -20,8 +20,8 @@ class Node(ComplexModel):
         ('node_id', Integer),
         ('node_name', String),
         ('node_description', String),
-        ('node_x', Double),
-        ('node_y', Double),
+        ('node_x', Decimal),
+        ('node_y', Decimal),
         ('attributes', Array(Attribute)),
     ]
 
