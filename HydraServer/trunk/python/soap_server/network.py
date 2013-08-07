@@ -8,7 +8,7 @@ from db import HydraIface
 
 class NetworkService(ServiceBase):
 
-    @rpc(Network, _returns=Network) 
+    @rpc(Network, _returns=Network)
     def add_network(ctx, network):
         x = HydraIface.Network()
         logging.debug(network)
@@ -26,8 +26,8 @@ class NetworkService(ServiceBase):
             link.link_id = l.db.link_id
 
         return network
-        
-    @rpc(Network, _returns=Network) 
+
+    @rpc(Network, _returns=Network)
     def update_network(ctx, network):
         x = HydraIface.Network(network_id = network.network_id)
         x.db.project_id          = network.project_id
@@ -54,7 +54,7 @@ class NetworkService(ServiceBase):
         return network
 
     #TODO Return the network in the correct format
-    @rpc(Integer, _returns=Boolean) 
+    @rpc(Integer, _returns=Boolean)
     def delete_network(ctx, network_id):
         success = True
         try:
@@ -68,7 +68,7 @@ class NetworkService(ServiceBase):
 
         return success
 
-    @rpc(Node, _returns=Node) 
+    @rpc(Node, _returns=Node)
     def add_node(ctx, node):
         x = HydraIface.Node()
         x.db.node_name = node.node_name
@@ -80,7 +80,7 @@ class NetworkService(ServiceBase):
         node.node_id = x.db.node_id
         return node
 
-    @rpc(Node, _returns=Node) 
+    @rpc(Node, _returns=Node)
     def update_node(ctx, node):
         x = HydraIface.Node(node_id = node.node_id)
         x.db.node_name = node.node_name
@@ -91,7 +91,7 @@ class NetworkService(ServiceBase):
         x.commit()
         return node
 
-    @rpc(Integer, _returns=Node) 
+    @rpc(Integer, _returns=Node)
     def delete_node(ctx, node_id):
         x = HydraIface.Node(node_id = node_id)
         x.db.status =  'X'
@@ -99,7 +99,7 @@ class NetworkService(ServiceBase):
         x.commit()
         return True
 
-    @rpc(Integer, _returns=Node) 
+    @rpc(Integer, _returns=Node)
     def purge_node(ctx, node_id):
         x = HydraIface.Node(node_id = node_id)
         x.delete()

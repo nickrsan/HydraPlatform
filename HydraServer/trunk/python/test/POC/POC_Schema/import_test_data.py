@@ -407,21 +407,21 @@ def scenario_assign_data(scenario, resource, attribute, dataset):
     return res_scenario
 
 
-if __name__ == '__main__':
-#def main():
-    #hydra_logging.init(level='INFO')
+#if __name__ == '__main__':
+def main():
+    hydra_logging.init(level='INFO')
     # Load the structure file
-    filename = '../../data/gatineau/Gatineau_system.ods'
+    filename = '../data/gatineau/Gatineau_system.ods'
     gatineau_res_data = importReservoirData(filename)
     res_ids = gatineau_res_data.getid()
 
     # Load additional time series (daily time series).
-    inflow_filenames = ['../../data/gatineau/1008.csv',
-                        '../../data/gatineau/1009.csv',
-                        '../../data/gatineau/1056.csv',
-                        '../../data/gatineau/1077.csv',
-                        '../../data/gatineau/1078.csv',
-                        '../../data/gatineau/7030.csv']
+    inflow_filenames = ['../data/gatineau/1008.csv',
+                        '../data/gatineau/1009.csv',
+                        '../data/gatineau/1056.csv',
+                        '../data/gatineau/1077.csv',
+                        '../data/gatineau/1078.csv',
+                        '../data/gatineau/7030.csv']
 
     daily_ts_data = dict()
     n = 0
@@ -474,7 +474,8 @@ if __name__ == '__main__':
         nodes.append(tmp_node)
 
     # Write the data to the database
-    hdb.connect()
+    dbconnection = hdb.connect()
+    HydraIface.init(dbconnection)
 
     project = create_project('Test example',
                              'Example project to test database schema.')
@@ -580,19 +581,20 @@ if __name__ == '__main__':
                 if dataset.db.data_name.find(node.db.node_name) >= 0 and \
                         dataset.db.data_name.find(attribute.db.attr_name) >= 0:
                     scenario_assign_data(scenario, node, attribute, dataset)
-                    print n, dataset.db.data_name, node.db.node_name, \
-                        attribute.db.attr_name
+                    #print n, dataset.db.data_name, node.db.node_name, \
+                    #    attribute.db.attr_name
                     n += 1
 
     # Disconnect from db
+    hdb.commit()
     hdb.disconnect()
 
 
-#if __name__ == '__main__':
-#    import cProfile
-#    import pstats
-#
-#    cProfile.run('main()', 'stats')
-#    pr = pstats.Stats('stats')
-#    #pr.strip_dirs().sort_stats('time').print_stats(20)
-#    pr.strip_dirs().sort_stats('cumulative').print_stats(30)
+if __name__ == '__main__':
+    import cProfile
+    import pstats
+
+    cProfile.run('main()', 'stats')
+    pr = pstats.Stats('stats')
+    #pr.strip_dirs().sort_stats('time').print_stats(30)
+    pr.strip_dirs().sort_stats('cumulative').print_stats(30)
