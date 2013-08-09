@@ -103,7 +103,7 @@ class NetworkService(ServiceBase):
 
         return success
 
-    @rpc(Integer, _returns=Boolean) 
+    @rpc(Integer, _returns=Boolean)
     def purge_node(ctx, node_id):
         x = HydraIface.Node(node_id = node_id)
         x.delete()

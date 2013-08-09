@@ -1,4 +1,5 @@
 # Make file for creating a standalone server.
+# Copied and adapted from https://github.com/cython/cython/blob/master/Demos/embed/Makefile
 PYTHON=python
 PYVERSION=$(shell $(PYTHON) -c "import sys; print(sys.version[:3])")
 

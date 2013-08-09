@@ -74,3 +74,9 @@ class Project(ComplexModel):
         ('attributes', Array(Attribute)),
 
     ]
+
+class Test(ComplexModel):
+    _type_info = [
+        ('test_entry_1', Integer),
+        ('test_entry_2', String),
+    ]
