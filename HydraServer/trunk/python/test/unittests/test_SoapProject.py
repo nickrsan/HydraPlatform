@@ -51,7 +51,18 @@ class ProjectTest(test_SoapServer.SoapServerTest):
             "project_description did not load correctly."
 
     def test_delete(self):
-        pass
+        cli = test_SoapServer.SoapServerTest.connect(self)
+        project = cli.factory.create('hyd:Project')
+        project.project_name = 'SOAP test'
+        project.project_description = \
+            'A project created through the SOAP interface.'
+        project = cli.service.add_project(project)
+
+        cli.service.delete_project(project.project_id)
+
+        assert cli.service.get_project(project.project_id) is False, \
+            'Deleting project did not work correctly.'
+
 
 if __name__ == '__main__':
     test_SoapServer.run()
