@@ -14,11 +14,13 @@ from spyne.server.wsgi import WsgiApplication
 from spyne.decorator import srpc
 from spyne.service import ServiceBase
 from spyne.model.complex import Iterable
-from spyne.model.primitive import Integer
+from spyne.model.primitive import Integer, AnyDict
 from spyne.model.primitive import Unicode
 
 from soap_server.network import NetworkService
 from soap_server.project import ProjectService
+from soap_server.attributes import AttributeService
+from soap_server.scenario import ScenarioService, DataService
 
 from HydraLib import hydra_logging, hdb
 from db import HydraIface
@@ -28,6 +30,11 @@ class HelloWorldService(ServiceBase):
     def say_hello(name, times):
         for i in range(times):
             yield u'Hello, %s' % name
+
+
+    @srpc(_returns=AnyDict)
+    def testf():
+        return {"a": "1"}
 
 
 if __name__=='__main__':
@@ -44,7 +51,14 @@ if __name__=='__main__':
     logging.info("listening to http://127.0.0.1:8000")
     logging.info("wsdl is at: http://localhost:8000/?wsdl")
 
-    applications = [HelloWorldService, NetworkService, ProjectService]
+    applications = [
+        HelloWorldService,
+        NetworkService,
+        ProjectService,
+        AttributeService,
+        ScenarioService,
+        DataService,
+    ]
 
     application = Application(applications, 'hydra.soap',
                 in_protocol=Soap11(validator='lxml'),

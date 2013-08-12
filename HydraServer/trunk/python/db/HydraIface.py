@@ -176,7 +176,7 @@ class IfaceBase(object):
             which can be used by the soap library.
         """
         #first create the appropriate soap complex model
-        cm = getattr(hydra_complexmodels, self.name)
+        cm = getattr(hydra_complexmodels, self.name)()
 
         #assign values for each database attribute
         for attr in self.db.db_attrs:
@@ -517,7 +517,6 @@ class GenericResource(IfaceBase):
         attr.db.ref_key = self.ref_key
         attr.db.ref_id  = self.ref_id
         attr.save()
-        attr.commit()
         self.attributes.append(attr)
 
         return attr
@@ -579,6 +578,7 @@ class Network(GenericResource):
         GenericResource.__init__(self, self.__class__.__name__, 'NETWORK', ref_id=network_id)
 
         self.db.network_id = network_id
+        self.nodes = []
         if network_id is not None:
             self.load()
     
@@ -596,6 +596,17 @@ class Network(GenericResource):
         l.db.network_id = self.db.network_id
         self.links.append(l)
         return l
+    
+    def get_nodes(self):
+        self.nodes = []
+        for l in self.links:
+            node_a = Node(node_id=l.db.node_1_id)
+            node_b = Node(node_id=l.db.node_2_id)
+            if node_a not in self.nodes:
+                self.nodes.append(node_a)
+            if node_b not in self.nodes:
+                self.nodes.append(node_b)
+        return self.nodes
 
 class Node(GenericResource):
     """

@@ -10,6 +10,7 @@ class NetworkService(ServiceBase):
 
     @rpc(Network, _returns=Network)
     def add_network(ctx, network):
+        logging.critical(str(network))
         x = HydraIface.Network()
         logging.debug(network)
         x.db.project_id          = network.project_id
@@ -18,14 +19,34 @@ class NetworkService(ServiceBase):
         x.save()
         x.commit()
         network.network_id = x.db.network_id
-
+        
+        logging.debug(network.links)
         for link in network.links:
             l = x.add_link(link.link_name, link.link_description, link.node_1_id, link.node_2_id)
             l.save()
             l.commit()
             link.link_id = l.db.link_id
 
-        return x.get_as_complexmodel()
+        nodes = [node.get_as_complexmodel() for node in x.get_nodes()]
+
+        if network.scenarios is not None:
+            for s in network.scenarios:
+                scen = HydraIface.Scenario()
+                scen.db.scenario_name        = s.scenario_name
+                scen.db.scenario_description = s.scenario_description
+                scen.db.network_id           = x.db.network_id
+
+                for attr_data in s.data:
+                    logging.debug(attr_data)
+                    logging.debug(attr_data.value)
+                    if attr_data.value is not None:
+                        logging.debug(attr_data.value.text)
+                scen.save()
+        
+        net = x.get_as_complexmodel()
+        net.nodes = nodes
+
+        return net
 
     @rpc(Network, _returns=Network)
     def update_network(ctx, network):
@@ -73,9 +94,14 @@ class NetworkService(ServiceBase):
         x.db.node_y    = node.node_y
         x.db.node_description = node.node_description
         x.save()
-        x.commit()
-        n = x.get_as_complexmodel()
-        logging.debug("%s or %s", n.node_x, node.node_x)
+        
+        if node.attributes is not None:
+            #ra is for ResourceAttr
+            for ra in node.attributes:
+                attr_is_var = 'N'
+                if ra.attr_is_var is True:
+                    attr_is_var = 'Y'
+                x.add_attribute(ra.attr_id, attr_is_var)
         return x.get_as_complexmodel()
 
     @rpc(Node, _returns=Node)
