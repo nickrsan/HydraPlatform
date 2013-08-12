@@ -27,6 +27,10 @@ def parse_value(value):
     (data_type, units, name, dimension, value)
     """
     pass
+class Data(ComplexModel):
+   _type_info = [
+        ('value', AnyDict),
+    ]
 
 class Descriptor(ComplexModel):
    _type_info = [
@@ -115,7 +119,7 @@ class ScenarioAttr(ComplexModel):
     _type_info = [
         ('resource_attr_id', Integer),
         ('attr_id', Integer),
-        ('value', AnyXml)
+        ('value', AnyDict)
     ]
 
 class Scenario(ComplexModel):

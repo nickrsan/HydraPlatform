@@ -34,12 +34,13 @@ class HelloWorldService(ServiceBase):
 
     @srpc(_returns=AnyDict)
     def testf():
-        return {"a": "1"}
+        return {"a": "1", "b": "2"}
 
 
 if __name__=='__main__':
 
     hydra_logging.init(level='DEBUG')
+    logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
     connection = hdb.connect()
     HydraIface.init(connection)
 

@@ -40,10 +40,20 @@ class NetworkService(ServiceBase):
                     logging.debug(attr_data)
                     logging.debug(attr_data.value)
                     if attr_data.value is not None:
-                        logging.debug(attr_data.value.text)
+                        logging.debug(attr_data.value)
                 scen.save()
         
         net = x.get_as_complexmodel()
+        net.nodes = nodes
+
+        return net
+
+    @rpc(Integer, _returns=Network)
+    def get_network(ctx, network_id):
+        x = HydraIface.Network(network_id = network_id)
+        nodes = [node.get_as_complexmodel() for node in x.get_nodes()]
+
+        net = x.get_as_complex_model()
         net.nodes = nodes
 
         return net

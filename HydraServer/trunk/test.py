@@ -5,28 +5,17 @@ import shutil
 from tempfile import gettempdir as tmp
 shutil.rmtree(os.path.join(tmp(), 'suds'), True)
 from suds.client import Client
-
 from suds.plugin import MessagePlugin
-from suds.sax.attribute import Attribute
 
-class SoapFixer(MessagePlugin):
+class MyPlugin(MessagePlugin):
     def marshalled(self, context):
-        # Alter the envelope so that the xsd namespace is allowed
-        context.envelope.nsprefixes['xsd'] = 'http://www.w3.org/2001/XMLSchema'
-        # Go through every node in the document and apply the fix function to patch up incompatible XML. 
-        context.envelope.walk(self.fix_any_type_string)
-    def fix_any_type_string(self, element):
-        """Used as a filter function with walk in order to fix errors.
-        If the element has a certain name, give it a xsi:type=xsd:int. Note that the nsprefix xsd must also
-         be added in to make this work."""
-
-        # Fix elements which have these names
-        fix_names = ['value']
-        if element.name in fix_names:
-            element.attributes.append(Attribute('xsi:type', 'xsd:string'))
-
-
-plugin=SoapFixer()
+        scenarios = context.envelope.getChild('Body')[0].getChild('network').getChild('scenarios')
+        scenario = scenarios.getChildren()[0]
+        data = scenario.getChild('data')
+        scenario_attr = data.getChildren()[0]
+        val = scenario_attr.getChild('value')
+        for v in val.getChildren():
+            v.setPrefix('ns0')
 
 class TestSoap(unittest.TestCase):
 
@@ -125,7 +114,7 @@ class TestSoap(unittest.TestCase):
         assert Network is not None, "Network did not create correctly"
 
     def test_scenario(self):
-        c = Client('http://localhost:8000/?wsdl', plugins=[plugin])
+        c = Client('http://localhost:8000/?wsdl', plugins=[MyPlugin()])
         print c
 
         (project) = {
@@ -164,10 +153,12 @@ class TestSoap(unittest.TestCase):
         scenario_attr.attr_id = node_attrs.ResourceAttr[0].attr_id
         scenario_attr.resource_attr_id = node_attrs.ResourceAttr[0].resource_attr_id
 
-        descriptor  = c.factory.create('ns1:Descriptor')
-
-        descriptor.desc_val = "I am a value"
-        scenario_attr.value = "I am a value" 
+        data  = c.factory.create('ns1:Data')
+        data.value = "I am a value"
+        test = c.factory.create('xs:anyType')
+        test.a = "test"
+        test.b = "test1"
+        scenario_attr.value = test 
 
         scenario_data.ScenarioAttr.append(scenario_attr)
 

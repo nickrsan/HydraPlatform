@@ -1,6 +1,8 @@
 from spyne.service import ServiceBase
 from spyne.decorator import rpc
-from spyne.model.primitive import Integer
+from spyne.model.primitive import Integer, Boolean
+from HydraLib.HydraException import HydraError
+import logging
 from db import HydraIface
 from hydra_complexmodels import Project
 
@@ -35,6 +37,18 @@ class ProjectService(ServiceBase):
         project.project_description = x.db.project_description
 
         return x.get_as_complexmodel()
- 
+
+    def delete_project(Integer, _returns=Boolean):
+        success = True
+        try:
+            x = HydraIface.Project(project_id = project_id)
+            x.db.status = 'X'
+            x.save()
+            x.commit()
+        except HydraError, e:
+            logging.critical(e)
+            success = False
+
+        return success
 
 
