@@ -29,6 +29,7 @@ def parse_value(value):
     pass
 class Data(ComplexModel):
    _type_info = [
+        ('type', String),
         ('value', AnyDict),
     ]
 

@@ -1,4 +1,5 @@
 import os
+import datetime
 import unittest
 from decimal import Decimal
 import shutil
@@ -7,15 +8,20 @@ shutil.rmtree(os.path.join(tmp(), 'suds'), True)
 from suds.client import Client
 from suds.plugin import MessagePlugin
 
-class MyPlugin(MessagePlugin):
+class FixNamespace(MessagePlugin):
     def marshalled(self, context):
         scenarios = context.envelope.getChild('Body')[0].getChild('network').getChild('scenarios')
-        scenario = scenarios.getChildren()[0]
-        data = scenario.getChild('data')
-        scenario_attr = data.getChildren()[0]
-        val = scenario_attr.getChild('value')
-        for v in val.getChildren():
-            v.setPrefix('ns0')
+        if scenarios:
+            scenario = scenarios.getChildren()[0]
+            if scenario:
+                data = scenario.getChild('data')
+                if data:
+                    scenario_attr = data.getChildren()[0]
+                    if scenario_attr:
+                        val = scenario_attr.getChild('value')
+                        for v in val.getChildren():
+                            if v.namespace()[0] == 'xs':
+                                v.setPrefix('ns0')
 
 class TestSoap(unittest.TestCase):
 
@@ -114,7 +120,7 @@ class TestSoap(unittest.TestCase):
         assert Network is not None, "Network did not create correctly"
 
     def test_scenario(self):
-        c = Client('http://localhost:8000/?wsdl', plugins=[MyPlugin()])
+        c = Client('http://localhost:8000/?wsdl', plugins=[FixNamespace()])
         print c
 
         (project) = {
@@ -123,53 +129,142 @@ class TestSoap(unittest.TestCase):
         }
         p =  c.service.add_project(project)
 
-        attr = self.create_attr(c) 
+        #Create some attributes, which we can then use to put data on our nodes
+        attr1 = self.create_attr(c) 
+        attr2 = self.create_attr(c) 
+        attr3 = self.create_attr(c) 
 
+        #From our attributes, create a resource attr for our node
+        #We don't assign data directly to these resource attributes. This
+        #is done when creating the scenario -- a scenario is just a set of
+        #data for a given list of resource attributes.
         attr_array = c.factory.create('ns5:ResourceAttrArray')
-        node_attr  = c.factory.create('ns5:ResourceAttr')
-        node_attr.attr_id = attr.attr_id
-        attr_array.ResourceAttr.append(node_attr)
+        node_attr1  = c.factory.create('ns5:ResourceAttr')
+        node_attr1.attr_id = attr1.attr_id
+        node_attr2  = c.factory.create('ns5:ResourceAttr')
+        node_attr2.attr_id = attr2.attr_id
+        node_attr3  = c.factory.create('ns5:ResourceAttr')
+        node_attr3.attr_id = attr3.attr_id
+        attr_array.ResourceAttr.append(node_attr1)
+        attr_array.ResourceAttr.append(node_attr2)
+        attr_array.ResourceAttr.append(node_attr3)
 
+        #Create 2 nodes
         node1 = self.create_node(c, "Node 1", attributes=attr_array)
         node2 = self.create_node(c, "Node 2")
 
+        #Connect the two nodes with a link
         link = self.create_link(c, 'link 1', node1['node_id'], node2['node_id'])
 
+        #A network must contain an array of links. In this case, the array
+        #contains a single link
         link_array = c.factory.create('ns5:LinkArray')
         link_array.Link.append(link)
-
-        scenario_array = c.factory.create('ns5:ScenarioArray')
         
+        #Create the scenario
         scenario = c.factory.create('ns5:Scenario')
         scenario.scenario_name = 'Scenario 1'
         scenario.scenario_description = 'Scenario Description'
-        scenario_array.Scenario.append(scenario)
 
-        scenario_data = c.factory.create('ns5:ScenarioAttrArray')  
+        #Multiple data (Called ScenarioAttr) means an array.
+        scenario_data = c.factory.create('ns5:ScenarioAttrArray')
         
-        scenario_attr = c.factory.create('ns5:ScenarioAttr')
+        #Our node has several 'resource attributes', created earlier.
         node_attrs = node1.attributes
+        
+        #This is an example of 3 diffent kinds of data
+        #A simple string (Descriptor)
+        #A time series, where the value may be a 1-D array
+        #A multi-dimensional array.
+        descriptor = self.create_descriptor(c, node_attrs.ResourceAttr[0])
+        timeseries = self.create_timeseries(c, node_attrs.ResourceAttr[0])
+        array      = self.create_array(c, node_attrs.ResourceAttr[0])
+        
+        scenario_data.ScenarioAttr.append(descriptor)
+        scenario_data.ScenarioAttr.append(timeseries)
+        scenario_data.ScenarioAttr.append(array)
 
-        scenario_attr.attr_id = node_attrs.ResourceAttr[0].attr_id
-        scenario_attr.resource_attr_id = node_attrs.ResourceAttr[0].resource_attr_id
 
-        data  = c.factory.create('ns1:Data')
-        data.value = "I am a value"
-        test = c.factory.create('xs:anyType')
-        test.a = "test"
-        test.b = "test1"
-        scenario_attr.value = test 
-
-        scenario_data.ScenarioAttr.append(scenario_attr)
-
+        #Set the scenario's data to the array we have just populated
         scenario.data = scenario_data
 
+        #A network can have multiple scenarios, so they are contained in
+        #a scenario array
+        scenario_array = c.factory.create('ns5:ScenarioArray')
+        scenario_array.Scenario.append(scenario)
         network = self.create_network(c, p['project_id'], 'Network1', 'Test Network with 2 nodes and 1 link',links=link_array,scenarios=scenario_array)
-
         print c.last_sent()
         print network
-        print c.service.testf()
         print c.last_received()
+
+    def create_descriptor(self, c, ResourceAttr):
+        #A scenario attribute is a piece of data associated
+        #with a resource attribute.
+        scenario_attr = c.factory.create('ns5:ScenarioAttr')
+        
+        scenario_attr.attr_id = ResourceAttr.attr_id
+        scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
+        
+        #All pieces of data must be wrapped in a 'Data' tag, in which 
+        #you put the type and the value itself. The value must be one
+        #of the following: [Descriptor, TimeSeries, EqTimeSeries, Scalar, Array]
+        data  = c.factory.create('ns1:Data')
+        data.type = 'Descriptor'
+        descriptor = c.factory.create('ns1:Descriptor')
+        descriptor.desc_val = "I am a value"
+        data.value = descriptor
+        scenario_attr.value = data 
+
+        return scenario_attr
+
+
+    def create_timeseries(self, c, ResourceAttr):
+        #A scenario attribute is a piece of data associated
+        #with a resource attribute.
+        scenario_attr = c.factory.create('ns5:ScenarioAttr')
+        
+        scenario_attr.attr_id = ResourceAttr.attr_id
+        scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
+        
+        #All pieces of data must be wrapped in a 'Data' tag, in which 
+        #you put the type and the value itself. The value must be one
+        #of the following: [Descriptor, TimeSeries, EqTimeSeries, Scalar, Array]
+        data  = c.factory.create('ns1:Data')
+        data.type = 'TimeSeries'
+        ts = c.factory.create('ns1:TimeSeries')
+        ts.ts_time = datetime.datetime.now()
+        ts.ts_value = [1, 2, 3, 4, 5]
+        data.value = ts
+        scenario_attr.value = data 
+
+        return scenario_attr
+
+    def create_array(self, c, ResourceAttr):
+        #A scenario attribute is a piece of data associated
+        #with a resource attribute.
+        scenario_attr = c.factory.create('ns5:ScenarioAttr')
+        
+        scenario_attr.attr_id = ResourceAttr.attr_id
+        scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
+        
+        #All pieces of data must be wrapped in a 'Data' tag, in which 
+        #you put the type and the value itself. The value must be one
+        #of the following: [Descriptor, TimeSeries, EqTimeSeries, Scalar, Array]
+        data  = c.factory.create('ns1:Data')
+        data.type = 'Array'
+        
+        arr2 = c.factory.create('ns1:Array')
+        arr2.arr_data = [1, 2, 3]
+        arr3 = c.factory.create('ns1:Array')
+        arr3.arr_data = [4, 5, 6]
+        
+        arr1 = c.factory.create('ns1:Array')
+        arr1.arr_data = [arr2, arr3]
+
+        data.value = arr1
+        scenario_attr.value = data 
+
+        return scenario_attr
 
 def run():
     unittest.main()

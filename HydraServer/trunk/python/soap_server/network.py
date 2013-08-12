@@ -10,9 +10,7 @@ class NetworkService(ServiceBase):
 
     @rpc(Network, _returns=Network)
     def add_network(ctx, network):
-        logging.critical(str(network))
         x = HydraIface.Network()
-        logging.debug(network)
         x.db.project_id          = network.project_id
         x.db.network_name        = network.network_name
         x.db.network_description = network.network_description
@@ -37,8 +35,6 @@ class NetworkService(ServiceBase):
                 scen.db.network_id           = x.db.network_id
 
                 for attr_data in s.data:
-                    logging.debug(attr_data)
-                    logging.debug(attr_data.value)
                     if attr_data.value is not None:
                         logging.debug(attr_data.value)
                 scen.save()
