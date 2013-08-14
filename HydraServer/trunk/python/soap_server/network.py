@@ -3,8 +3,9 @@ import logging
 from HydraLib.HydraException import HydraError
 from spyne.model.primitive import Integer, Boolean
 from spyne.decorator import rpc
-from hydra_complexmodels import Network, Node
+from hydra_complexmodels import Network, Node, parse_value
 from db import HydraIface
+from HydraLib import hdb
 
 class NetworkService(ServiceBase):
 
@@ -22,7 +23,6 @@ class NetworkService(ServiceBase):
         for link in network.links:
             l = x.add_link(link.link_name, link.link_description, link.node_1_id, link.node_2_id)
             l.save()
-            l.commit()
             link.link_id = l.db.link_id
 
         nodes = [node.get_as_complexmodel() for node in x.get_nodes()]
@@ -33,15 +33,28 @@ class NetworkService(ServiceBase):
                 scen.db.scenario_name        = s.scenario_name
                 scen.db.scenario_description = s.scenario_description
                 scen.db.network_id           = x.db.network_id
-
-                for attr_data in s.data:
-                    if attr_data.value is not None:
-                        logging.debug(attr_data.value)
                 scen.save()
+
+                for attr_data in s.resourcescenarios:
+                  
+                    if attr_data.value is not None:
+                        ra_id = attr_data.resource_attr_id
+                        r_a = HydraIface.ResourceAttr(resource_attr_id=ra_id)
+                        res = r_a.get_resource()
+                        
+                        data_type = attr_data.type.lower()
+                       
+                        value = parse_value(data_type, attr_data)
+
+                        res.assign_value(scen.db.scenario_id, ra_id, data_type, value,
+                                        "", "", "") 
+
+                        res.save()
+                    
         
         net = x.get_as_complexmodel()
         net.nodes = nodes
-
+        hdb.commit()
         return net
 
     @rpc(Integer, _returns=Network)

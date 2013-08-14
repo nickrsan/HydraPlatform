@@ -4,7 +4,6 @@ from HydraLib.HydraException import HydraError
 from spyne.model.primitive import Integer, Boolean
 from spyne.decorator import rpc
 from hydra_complexmodels import Scenario,\
-        Data,\
         Descriptor,\
         TimeSeries,\
         EqTimeSeries,\
@@ -59,9 +58,6 @@ class ScenarioService(ServiceBase):
 
 
 class DataService(ServiceBase):
-    @rpc(Data, _returns=Data)
-    def echo_data(x):
-        return x
 
     @rpc(Descriptor, _returns=Descriptor)
     def echo_descriptor(x):

@@ -1,5 +1,7 @@
 from spyne.model.complex import Array as SpyneArray, ComplexModel 
-from spyne.model.primitive import String, Integer, Decimal, DateTime, Boolean, AnyDict, AnyXml
+from spyne.model.primitive import String, Integer, Decimal, DateTime, Boolean, AnyDict
+from datetime import datetime 
+from spyne.util.odict import odict
 
 #This is on hold until we come up with a solution
 #for dynamically generating the classes below.
@@ -20,30 +22,79 @@ from spyne.model.primitive import String, Integer, Decimal, DateTime, Boolean, A
 #        type_info.append((col_name, spyne_type))
 #    return type_info
 
-def parse_value(value):
+global FORMAT
+FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+#"2013-08-13T15:55:43.468886Z"
+
+def parse_value(data_type, data):
     """
     Turn a complex model object into a hydraiface - friendly value.
     returns a tuple containing:
     (data_type, units, name, dimension, value)
     """
-    pass
-class Data(ComplexModel):
-   _type_info = [
-        ('type', String),
-        ('value', AnyDict),
-    ]
+    #attr_data.value is a dictionary,
+    #but the keys have namespaces which must be stripped.
+    val_names = data.value.keys()
+    value = []
+    for name in val_names:
+        value.append(data.value[name])
+
+    if data_type == 'descriptor':
+        return value[0][0]
+    elif data_type == 'timeseries':
+        ts = []
+        for ts_val in value[0]:
+            ts_time = datetime.strptime(ts_val[0][0], FORMAT) 
+            series = eval(ts_val[1][0])
+            ts.append((ts_time, series))
+        return ts
+    elif data_type == 'eqtimeseries':
+        start_time = datetime.strptime(value[0][0], FORMAT)
+        frequency  = value[1][0]
+        arr_data   = eval(value[2][0])
+        return (start_time, frequency, arr_data)
+    elif data_type == 'scalar':
+       return value[0][0] 
+    elif data_type == 'array':
+        val = eval(value[0][0])
+        return val
+
+
+def get_array(arr):
+    
+    if len(arr) == 0:
+        return []
+    
+    #am I a dictionary? If so, i'm only iterested in the values
+    if type(arr) is odict:
+        arr = arr[0]
+
+    if type(arr[0]) is str:
+        return [float(val) for val in arr]
+
+    #arr must therefore be a list.
+    current_level = []
+    for level in arr:
+        current_level.append(get_array(level))
+
+    return current_level
 
 class Descriptor(ComplexModel):
    _type_info = [
         ('desc_val', String),
     ]
 
-class TimeSeries(ComplexModel):
-    _type_info = [
+class TimeSeriesData(ComplexModel):
+ _type_info = [
         ('ts_time', DateTime),
         ('ts_value', AnyDict),
     ]
 
+class TimeSeries(ComplexModel):
+    _type_info = [
+        ('ts_values', SpyneArray(TimeSeriesData)),
+    ]
+    
 class EqTimeSeries(ComplexModel):
     _type_info = [
         ('start_time', DateTime),
@@ -58,7 +109,7 @@ class Scalar(ComplexModel):
 
 class Array(ComplexModel):
     _type_info = [
-        ('arr_data', AnyDict),
+        ('arr_data', SpyneArray(AnyDict)),
     ]
 
 class Attr(ComplexModel):
@@ -116,11 +167,12 @@ class Link(ComplexModel):
         ('attributes',       SpyneArray(ResourceAttr)),
     ]
 
-class ScenarioAttr(ComplexModel):
+class ResourceScenario(ComplexModel):
     _type_info = [
         ('resource_attr_id', Integer),
         ('attr_id', Integer),
-        ('value', AnyDict)
+        ('type', String),
+        ('value', AnyDict),
     ]
 
 class Scenario(ComplexModel):
@@ -130,7 +182,7 @@ class Scenario(ComplexModel):
         ('scenario_name', String),
         ('scenario_description', String),
         ('attributes', SpyneArray(ResourceAttr)),
-        ('data', SpyneArray(ScenarioAttr)),
+        ('resourcescenarios', SpyneArray(ResourceScenario)),
     ]
 
 class Network(ComplexModel):

@@ -11,17 +11,14 @@ from suds.plugin import MessagePlugin
 class FixNamespace(MessagePlugin):
     def marshalled(self, context):
         scenarios = context.envelope.getChild('Body')[0].getChild('network').getChild('scenarios')
-        if scenarios:
-            scenario = scenarios.getChildren()[0]
-            if scenario:
-                data = scenario.getChild('data')
-                if data:
-                    scenario_attr = data.getChildren()[0]
-                    if scenario_attr:
-                        val = scenario_attr.getChild('value')
-                        for v in val.getChildren():
-                            if v.namespace()[0] == 'xs':
-                                v.setPrefix('ns0')
+        self.fix_ns(scenarios)
+
+    def fix_ns(self, element):
+        if element.prefix == 'xs':
+            element.prefix = 'ns0'
+
+        for e in element.getChildren():
+            self.fix_ns(e)
 
 class TestSoap(unittest.TestCase):
 
@@ -60,6 +57,7 @@ class TestSoap(unittest.TestCase):
             'links'               : links,
             'scenarios'           : scenarios,
         }
+        print network
         network = c.service.add_network(network)
         return network
 
@@ -166,8 +164,8 @@ class TestSoap(unittest.TestCase):
         scenario.scenario_name = 'Scenario 1'
         scenario.scenario_description = 'Scenario Description'
 
-        #Multiple data (Called ScenarioAttr) means an array.
-        scenario_data = c.factory.create('ns5:ScenarioAttrArray')
+        #Multiple data (Called ResourceScenario) means an array.
+        scenario_data = c.factory.create('ns5:ResourceScenarioArray')
         
         #Our node has several 'resource attributes', created earlier.
         node_attrs = node1.attributes
@@ -177,16 +175,16 @@ class TestSoap(unittest.TestCase):
         #A time series, where the value may be a 1-D array
         #A multi-dimensional array.
         descriptor = self.create_descriptor(c, node_attrs.ResourceAttr[0])
-        timeseries = self.create_timeseries(c, node_attrs.ResourceAttr[0])
-        array      = self.create_array(c, node_attrs.ResourceAttr[0])
+        timeseries = self.create_timeseries(c, node_attrs.ResourceAttr[1])
+        array      = self.create_array(c, node_attrs.ResourceAttr[2])
         
-        scenario_data.ScenarioAttr.append(descriptor)
-        scenario_data.ScenarioAttr.append(timeseries)
-        scenario_data.ScenarioAttr.append(array)
+        scenario_data.ResourceScenario.append(descriptor)
+        scenario_data.ResourceScenario.append(timeseries)
+        scenario_data.ResourceScenario.append(array)
 
 
         #Set the scenario's data to the array we have just populated
-        scenario.data = scenario_data
+        scenario.resourcescenarios = scenario_data
 
         #A network can have multiple scenarios, so they are contained in
         #a scenario array
@@ -200,20 +198,13 @@ class TestSoap(unittest.TestCase):
     def create_descriptor(self, c, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-        scenario_attr = c.factory.create('ns5:ScenarioAttr')
+        scenario_attr = c.factory.create('ns5:ResourceScenario')
         
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
+        scenario_attr.type = 'descriptor'
         
-        #All pieces of data must be wrapped in a 'Data' tag, in which 
-        #you put the type and the value itself. The value must be one
-        #of the following: [Descriptor, TimeSeries, EqTimeSeries, Scalar, Array]
-        data  = c.factory.create('ns1:Data')
-        data.type = 'Descriptor'
-        descriptor = c.factory.create('ns1:Descriptor')
-        descriptor.desc_val = "I am a value"
-        data.value = descriptor
-        scenario_attr.value = data 
+        scenario_attr.value = {'value' : 'I am a value'} 
 
         return scenario_attr
 
@@ -221,48 +212,71 @@ class TestSoap(unittest.TestCase):
     def create_timeseries(self, c, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-        scenario_attr = c.factory.create('ns5:ScenarioAttr')
+        scenario_attr = c.factory.create('ns5:ResourceScenario')
         
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
+        scenario_attr.type = 'timeseries'
         
-        #All pieces of data must be wrapped in a 'Data' tag, in which 
-        #you put the type and the value itself. The value must be one
-        #of the following: [Descriptor, TimeSeries, EqTimeSeries, Scalar, Array]
-        data  = c.factory.create('ns1:Data')
-        data.type = 'TimeSeries'
-        ts = c.factory.create('ns1:TimeSeries')
-        ts.ts_time = datetime.datetime.now()
-        ts.ts_value = [1, 2, 3, 4, 5]
-        data.value = ts
-        scenario_attr.value = data 
+        ts1 = c.factory.create('ns1:TimeSeriesData')
+        ts1.ts_time = datetime.datetime.now()
+        ts1.ts_value = [1, 2, 3, 4, 5]
+
+        ts2 = c.factory.create('ns1:TimeSeriesData')
+        ts2.ts_time = datetime.datetime.now() + datetime.timedelta(hours=1)
+        ts2.ts_value = [2, 3, 4, 5, 6]
+
+        ts3 = c.factory.create('ns1:TimeSeries')
+        ts3.ts_values =[ts1, ts2] 
+        
+    #    scenario_attr.value = ts3
+        scenario_attr.value = {
+            'value'            : [
+                {
+                   'ts_time'   :  datetime.datetime.now(),
+                   'ts_value' : str([1, 2, 3, 4, 5]),
+                },
+                {
+                    'ts_time'  : datetime.datetime.now() + datetime.timedelta(hours=1),
+                    'ts_value' : str([2, 3, 4, 5, 6]),
+                }
+            ]
+        }
 
         return scenario_attr
 
     def create_array(self, c, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-        scenario_attr = c.factory.create('ns5:ScenarioAttr')
+        scenario_attr = c.factory.create('ns5:ResourceScenario')
         
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
-        
-        #All pieces of data must be wrapped in a 'Data' tag, in which 
-        #you put the type and the value itself. The value must be one
-        #of the following: [Descriptor, TimeSeries, EqTimeSeries, Scalar, Array]
-        data  = c.factory.create('ns1:Data')
-        data.type = 'Array'
-        
-        arr2 = c.factory.create('ns1:Array')
-        arr2.arr_data = [1, 2, 3]
-        arr3 = c.factory.create('ns1:Array')
-        arr3.arr_data = [4, 5, 6]
+        scenario_attr.type = 'array'
         
         arr1 = c.factory.create('ns1:Array')
-        arr1.arr_data = [arr2, arr3]
+        arr1.arr_data = [1, 2, 3]
+        arr2 = c.factory.create('ns1:Array')
+        arr2.arr_data = [4, 5, 6]
+        
+        arr = c.factory.create('ns1:Array')
+        arr.arr_data = [arr1, arr2]
 
-        data.value = arr1
-        scenario_attr.value = data 
+        arr3 = c.factory.create('ns1:Array')
+        arr3.arr_data = [10, 20, 30]
+        arr4 = c.factory.create('ns1:Array')
+        arr4.arr_data = [40, 50, 60]
+        
+        arr5 = c.factory.create('ns1:Array')
+        arr5.arr_data = [arr3, arr4]
+
+        arr6 = c.factory.create('ns1:Array')
+        arr6.arr_data = [arr, arr5]
+
+        scenario_attr.value = arr6 
+        scenario_attr.value = {
+            'arr_data' : str([[[1, 2, 3], [4, 5, 6]], [[10, 20, 30],[40, 50, 60]]])
+        }
 
         return scenario_attr
 

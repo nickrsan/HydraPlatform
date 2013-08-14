@@ -191,6 +191,7 @@ class IfaceBase(object):
         for name, objs in self.children.items():
             child_objs = []
             for obj in objs:
+                obj.load()
                 child_cm = obj.get_as_complexmodel()
                 child_objs.append(child_cm)
             setattr(cm, name, child_objs)
@@ -202,7 +203,6 @@ class IfaceBase(object):
             for attr in self.attributes:
                 attributes.append(attr.get_as_complexmodel())
             setattr(cm, 'attributes', attributes)
-
         return cm
 
 class IfaceDB(object):
@@ -671,6 +671,20 @@ class ResourceAttr(IfaceBase):
 
         if resource_attr_id is not None:
             self.load()
+    
+    def get_resource(self):
+        ref_key_map = {
+            'NODE'     : Node,
+            'LINK'     : Link,
+            'NETWORK'  : Network,
+            'SCENARIO' : Scenario,
+            'PROJECT'  : Project,
+        }
+
+        obj = ref_key_map[self.db.ref_key]()
+        obj.db.__setattr__(obj.db.pk_attrs[0], self.db.ref_id)  
+        obj.load()
+        return obj
 
 class ResourceTemplate(IfaceBase):
     """
@@ -722,9 +736,50 @@ class ResourceScenario(IfaceBase):
 
         self.db.scenario_id = scenario_id
         self.db.resource_attr_id = resource_attr_id
+        self.resourceattr = None
+        self.scenariodata = None
 
         if scenario_id is not None and resource_attr_id is not None:
             self.load()
+    
+    def load(self):
+        """
+            Override the base load function to also load sibling
+            objects -- resource attribute and scenario data.
+        """
+        super(ResourceScenario, self).load()
+        self.get_resource_attr()
+        self.get_scenariodata()
+
+    def get_resource_attr(self):
+        ra = ResourceAttr(resource_attr_id = self.db.resource_attr_id)
+        self.resourceattr = ra
+        return ra
+
+    def get_scenariodata(self):
+        ds = None
+        if self.db.dataset_id is not None:
+            ds = ScenarioData(dataset_id = self.db.dataset_id)
+            self.scenariodata = ds
+        return ds
+
+    def get_as_complexmodel(self):
+        """
+            This method overrides the base method as it hides
+            some of the DB complexities from the soap interface
+            and makes a simpler structure
+        """
+        #first create the appropriate soap complex model
+        cm = hydra_complexmodels.ResourceScenario()
+        cm.resource_attr_id = self.db.resource_attr_id
+        cm.attr_id = self.resourceattr.db.attr_id
+
+        if self.scenariodata is not None:
+            cm.type = self.scenariodata.db.data_type
+            cm.value = self.scenariodata.get_as_complexmodel()
+
+        return cm
+
 
 class ScenarioData(IfaceBase):
     """
@@ -744,11 +799,11 @@ class ScenarioData(IfaceBase):
         val = None
         if self.db.data_type == 'descriptor':
             d = Descriptor(data_id = self.db.data_id)
-            val = d.desc_val
+            val = d.db.desc_val
         elif self.db.data_type == 'timeseries':
             ts = TimeSeries(data_id=self.db.data_id)
-            #TODO: Use TimeSeries.get_ts_val() function
-            val = ts.db.ts_value
+            ts_datas = ts.timeseriesdatas
+            val = [(ts_data.db.time, ts_data.db.ts_value) for ts_data in ts_datas]
         elif self.db.data_type == 'eqtimeseries':
             eqts = EqTimeSeries(data_id = self.db.data_id)
             val  = eqts.db.arr_data
@@ -789,8 +844,64 @@ class ScenarioData(IfaceBase):
         self.db.data_type = data_type
         self.db.data_id = data.db.data_id
         return data
+    
+    def get_as_complexmodel(self):
+        """
+            This method overrides the base method as it hides
+            some of the DB complexities from the soap interface
+            and makes a simpler structure, in a ScenarioAttr object.
+        """
 
+        complexmodel = None
+        if self.db.data_type == 'descriptor':
+            d = Descriptor(data_id = self.db.data_id)
+            complexmodel = {'desc_val': [d.db.desc_val]} 
+        elif self.db.data_type == 'timeseries':
+            ts = TimeSeries(data_id=self.db.data_id)
+            ts_datas = ts.timeseriesdatas
+            ts_values = []
+            for ts in ts_datas:
+                ts_values.append({
+                    'ts_time'  : [ts.db.ts_time],
+                    'ts_value' : [ts.db.ts_value]
+                })
+            complexmodel = {
+                'ts_values' : ts_values
+            }
+        elif self.db.data_type == 'eqtimeseries':
+            eqts = EqTimeSeries(data_id = self.db.data_id)
+            complexmodel = {
+                'start_time' : eqts.db.start_time,
+                'frequency'  : eqts.db.frequency,
+                'arr_data'   : eqts.db.arr_data,
+            }
+        elif self.db.data_type == 'scalar':
+            s = Scalar(data_id = self.db.data_id)
+            complexmodel = {
+                 'param_value' : s.db.param_value,  
+            }
+        elif self.db.data_type == 'array':
+            a = Array(data_id = self.db.data_id)
+            #complexmodel = self.make_complexmodel_array(a.db.arr_data)
+            complexmodel = {
+                'arr_data' : a.db.arr_data
+            }
 
+        return complexmodel
+
+    def make_complexmodel_array(self, value):
+#        cm_array = hydra_complexmodels.Array()
+
+        cm_arr_data = []
+        for v in value:
+            if type(v) is list:
+                cm_arr_data.append(self.make_complexmodel_array(v))
+            else:
+                cm_arr_data.append(v)
+        cm_array = {
+            'arr_data' : cm_arr_data
+        }
+        return cm_array
 
 class DataAttr(IfaceBase):
     """
@@ -895,8 +1006,6 @@ class TimeSeriesData(IfaceBase):
         self.db.data_id = data_id
         if data_id is not None:
             self.load()
-
-
 
 class EqTimeSeries(IfaceBase):
     """
