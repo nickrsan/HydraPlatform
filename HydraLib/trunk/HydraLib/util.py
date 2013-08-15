@@ -49,6 +49,7 @@ def load_config():
     #      for Windows machines.
     modulepath = os.path.dirname(os.path.abspath(__file__))
 
+    localfiles = glob.glob('*.ini')
     userfiles = glob.glob(os.path.expanduser('~') + '/.config/hydra/*.ini')
     sysfiles = glob.glob('/etc/hydra/*.ini')
     repofiles = glob.glob(modulepath + '/../../../config/*.ini')
@@ -65,6 +66,8 @@ def load_config():
     for ini_file in sysfiles:
         config.read(ini_file)
     for ini_file in userfiles:
+        config.read(ini_file)
+    for ini_file in localfiles:
         config.read(ini_file)
 
     return config
