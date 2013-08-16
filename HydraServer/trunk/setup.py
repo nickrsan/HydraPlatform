@@ -5,7 +5,8 @@ includes = ["encodings.utf_8",\
             "encodings.ascii",\
             "lxml._elementpath",\
             "ConfigParser",\
-            "mysql.connector"]
+            "mysql.connector",\
+            "suds"]
 
 setup(
     name = "On Dijkstra's Algorithm",

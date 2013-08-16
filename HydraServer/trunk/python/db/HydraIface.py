@@ -35,6 +35,7 @@ def init(cnx):
 
     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
     rs = cursor.execute_sql(sql)
+    
     #Table desc gives us:
     #[...,(col_name, col_type, nullable, key ('PRI' or 'MUL'), default, auto_increment),...]
     logging.debug(len(rs))
@@ -48,10 +49,10 @@ def init(cnx):
         col_info['primary_key']    = True if r.column_key == 'PRI' else False
         col_info['auto_increment'] = True if r.extra == 'auto_increment' else False
  
-        tab_info = DB_STRUCT.get(r.table_name, {'columns' : {}})
+        tab_info = DB_STRUCT.get(r.table_name.lower(), {'columns' : {}})
         tab_info['columns'][r.column_name] = col_info
         tab_info['child_info'] = {}
-        DB_STRUCT[r.table_name] = tab_info
+        DB_STRUCT[r.table_name.lower()] = tab_info
 
     fk_qry    = """
         select
@@ -72,7 +73,7 @@ def init(cnx):
 
         child_dict['column_name'] = r.column_name
         child_dict['referenced_column_name'] = r.referenced_column_name
-        DB_STRUCT[r.referenced_table_name]['child_info'][r.table_name] = child_dict
+        DB_STRUCT[r.referenced_table_name.lower()]['child_info'][r.table_name] = child_dict
 
 class IfaceBase(object):
     def __init__(self, class_name):
@@ -130,7 +131,7 @@ class IfaceBase(object):
             self.in_db = True
 
     def get_children(self):
-        children = DB_STRUCT[self.db.table_name]['child_info']
+        children = DB_STRUCT[self.db.table_name.lower()]['child_info']
         for name, rows in children.items():
             #turn 'link' into 'links'
             attr_name              = name[1:].lower() + 's'
@@ -143,7 +144,7 @@ class IfaceBase(object):
 
         child_rs = self.db.load_children(self.child_info)
         for name, rows in child_rs.items():
-            #turn 'link' into 'links'
+            #turn 'tLink' into 'links'
             attr_name              = name[1:].lower() + 's'
 
             child_objs = []
@@ -222,7 +223,7 @@ class IfaceDB(object):
         self.class_name = class_name.lower()
         self.table_name = db_hierarchy[self.class_name]['table_name']
 
-        col_dict = DB_STRUCT[self.table_name]['columns']
+        col_dict = DB_STRUCT[self.table_name.lower()]['columns']
         
         for col_name, col_data in col_dict.items():
 
