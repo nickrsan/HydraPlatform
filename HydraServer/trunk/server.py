@@ -5,6 +5,12 @@
 #server.registerFunction(hello)
 #server.serve_forever()
 
+import sys
+if "./python" not in sys.path:
+    sys.path.append("./python")
+if "../../HydraLib/trunk" not in sys.path:
+    sys.path.append("../../HydraLib/trunk")
+
 import logging
 
 from spyne.application import Application
