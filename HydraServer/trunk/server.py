@@ -21,7 +21,7 @@ from soap_server.project import ProjectService
 from soap_server.attributes import AttributeService
 from soap_server.scenario import ScenarioService, DataService
 
-from HydraLib import hydra_logging, hdb
+from HydraLib import hydra_logging, hdb, util
 from db import HydraIface
 
 class HelloWorldService(ServiceBase):
@@ -37,6 +37,8 @@ class HelloWorldService(ServiceBase):
 
 
 if __name__=='__main__':
+
+    config = util.load_config()
 
     hydra_logging.init(level='INFO')
     logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
@@ -66,5 +68,7 @@ if __name__=='__main__':
             )
     wsgi_application = WsgiApplication(application)
 
-    server = make_server('127.0.0.1', 8000, wsgi_application)
+    port = config.getint('soap_server', 'port') 
+
+    server = make_server('127.0.0.1', port, wsgi_application)
     server.serve_forever()

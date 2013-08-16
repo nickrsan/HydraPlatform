@@ -1,3 +1,9 @@
+import sys
+if "./python" not in sys.path:
+    sys.path.append("./python")
+if "../../HydraLib/trunk/" not in sys.path:
+    sys.path.append("../../HydraLib/trunk/")
+
 import os
 import datetime
 import unittest
@@ -7,6 +13,7 @@ from tempfile import gettempdir as tmp
 shutil.rmtree(os.path.join(tmp(), 'suds'), True)
 from suds.client import Client
 from suds.plugin import MessagePlugin
+from HydraLib import util
 
 class FixNamespace(MessagePlugin):
     def marshalled(self, context):
@@ -62,7 +69,10 @@ class TestSoap(unittest.TestCase):
         return network
 
     def test_add_project(self):
-        c = Client('http://localhost:8000/?wsdl')
+
+        config = util.load_config()
+        port = config.getint('soap_server', 'port')
+        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
         (project) = {
             'project_name' : 'New Project',
             'project_description' : 'New Project Description',
@@ -81,7 +91,10 @@ class TestSoap(unittest.TestCase):
 
 
     def test_add_node(self):
-        c = Client('http://localhost:8000/?wsdl')
+        config = util.load_config()
+        port = config.getint('soap_server', 'port')
+        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
+
         (Node1) = {
             'node_name' : 'Node One',
             'node_description' : 'Node One Description',
@@ -93,7 +106,11 @@ class TestSoap(unittest.TestCase):
         assert Node1 is not None, "Node did not add correctly"
 
     def test_network(self):
-        c = Client('http://localhost:8000/?wsdl')
+        config = util.load_config()
+        port = config.getint('soap_server', 'port')
+        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
+
+
         (project) = {
             'project_name' : 'New Project',
             'project_description' : 'New Project Description',
@@ -118,7 +135,9 @@ class TestSoap(unittest.TestCase):
         assert Network is not None, "Network did not create correctly"
 
     def test_scenario(self):
-        c = Client('http://localhost:8000/?wsdl', plugins=[FixNamespace()])
+        config = util.load_config()
+        port = config.getint('soap_server', 'port')
+        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
         print c
 
         (project) = {
