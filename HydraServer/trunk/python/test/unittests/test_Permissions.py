@@ -7,18 +7,20 @@ class UserTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         x = HydraIface.User()
         x.db.username = "test"
+        x.db.password = "12345"
         x.save()
         x.commit()
 
-        x.db.username = "test_new"
+        x.db.password = "23456"
         x.save()
         x.commit()
         x.load()
-        assert x.db.username == "test_new", "User did not update correctly"
+        assert x.db.password == "23456", "User did not update correctly"
 
     def test_delete(self):
         x = HydraIface.User()
         x.db.username = "test"
+        x.db.password = "12345"
         x.save()
         x.commit()
 
@@ -28,6 +30,7 @@ class UserTest(test_HydraIface.HydraIfaceTest):
     def test_load(self):
         x = HydraIface.User()
         x.db.username = "test"
+        x.db.password = "12345"
         x.save()
         x.commit()
         x.load()
@@ -108,6 +111,7 @@ class RoleUserTest(test_HydraIface.HydraIfaceTest):
     def create_user(self, username):
         x = HydraIface.User()
         x.db.username = username
+        x.db.password = "12345"
         x.save()
         x.commit()
         x.load()

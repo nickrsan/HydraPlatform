@@ -149,11 +149,10 @@ class IfaceBase(object):
             child_objs = []
             for row in rows:
                 row = row.get_as_dict()
-                child_obj = eval(name[1:])()
+                child_obj = db_hierarchy[name[1:].lower()]['obj']()
 
                 child_obj.parent = self
                 child_obj.__setattr__(self.name.lower(), self)
-
                 for col, val in row.items():
                     child_obj.db.__setattr__(col, val)
 
@@ -210,7 +209,7 @@ class IfaceDB(object):
     def __init__(self, class_name):
 
         self.db_attrs = []
-        self.pk_attrs = []#db_hierarchy['t'+class_name]['pk']
+        self.pk_attrs = []
         self.db_data  = {}
         self.nullable_attrs = []
         self.attr_types = {}
@@ -220,7 +219,8 @@ class IfaceDB(object):
         self.has_changed = False
 
         #this turns 'Project' into 'tProject' so it can identify the table
-        self.table_name = "t%s"%class_name
+        self.class_name = class_name.lower()
+        self.table_name = db_hierarchy[self.class_name]['table_name']
 
         col_dict = DB_STRUCT[self.table_name]['columns']
         
@@ -277,15 +277,16 @@ class IfaceDB(object):
         return child_dict
 
     def get_parent(self):
-        parent = db_hierarchy[self.table_name]['parent']
+        parent_key = db_hierarchy[self.class_name]['parent']
 
-        if parent is None:
+        if parent_key is None:
             return None
 
-        logging.debug("PARENT: %s", parent)
+        logging.debug("PARENT: %s", parent_key)
 
-        parent_class = db_hierarchy[parent]['obj']
-        parent_pk    = db_hierarchy[parent]['pk']
+        parent_class = db_hierarchy[parent_key]['obj']
+        parent_table = db_hierarchy[parent_key]['table_name']
+        parent_pk    = db_hierarchy[parent_key]['pk']
 
         for k in parent_pk:
             if self.__getattr__(k) is None:
@@ -304,7 +305,7 @@ class IfaceDB(object):
         """
 
         complete_parent_sql = base_parent_sql % dict(
-                table = parent,
+                table = parent_table,
                 pk    = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in parent_pk]),
         )
 
@@ -1184,172 +1185,172 @@ class RolePerm(IfaceBase):
 
 
 db_hierarchy = dict(
-    tProject  = dict(
+    project  = dict(
         obj   = Project,
-        name  = 'Project',
         parent = None,
+        table_name = 'tProject',
         pk     = ['project_id']
     ),
-    tNetwork  = dict(
+    network  = dict(
         obj   = Network,
-        name  = 'network',
-        parent = 'tProject',
+        parent = 'project',
+        table_name = 'tNetwork',
         pk     = ['network_id']
     ),
-    tNode  = dict(
+    node  = dict(
         obj   = Node,
-        name  = 'node',
         parent = None,
+        table_name = 'tNode',
         pk     = ['node_id']
    ),
-    tLink  = dict(
+    link  = dict(
         obj   = Link,
-        name  = 'link',
-        parent = 'tNetwork',
+        parent = 'network',
+        table_name = 'tLink',
         pk     = ['link_id']
     ),
-    tScenario  = dict(
+    scenario  = dict(
         obj    = Scenario,
-        name   = 'scenario',
-        parent = 'tNetwork',
+        parent = 'network',
+        table_name = 'tScenario',
         pk     = ['scenario_id']
     ),
-    tAttr  = dict(
+    attr  = dict(
         obj   = Attr,
-        name  = 'attr',
         parent = None,
+        table_name = 'tAttr',
         pk     = ['attr_id']
     ),
-    tAttrMap  = dict(
+    attrmap  = dict(
         obj   = AttrMap,
-        name  = 'attrmap',
         parent = None,
+        table_name = 'tAttrMap',
         pk     = ['attr_id_a', 'attr_id_b']
     ),
-    tResourceAttr  = dict(
+    resourceattr  = dict(
         obj   = ResourceAttr,
-        name  = 'resourceattr',
-        parent = 'tAttr',
+        parent = 'attr',
+        table_name = 'tResourceAttr',
         pk     = ['resource_attr_id']
     ),
-    tResourceTemplate  = dict(
+    resourcetemplate  = dict(
         obj   = ResourceTemplate,
-        name  = 'resourcetemplate',
-        parent = 'tResourceTemplateGroup',
+        parent = 'resourcetemplategroup',
+        table_name = 'tResourceTemplate',
         pk     = ['template_id']
     ),
-    tResourceTemplateItem  = dict(
+    resourcetemplateitem  = dict(
         obj   = ResourceTemplateItem,
-        name  = 'resourcetemplateitem',
-        parent = 'tResourceTemplate',
+        parent = 'resourcetemplate',
+        table_name = 'tResourceTemplateItem',
         pk     = ['attr_id', 'template_id'],
     ),
-    tResourceTemplateGroup  = dict(
+    resourcetemplategroup  = dict(
         obj   = ResourceTemplateGroup,
-        name  = 'resourcetemplategroup',
         parent = None,
+        table_name = 'tResourceTemplateGroup',
         pk     = ['group_id']
     ),
-    tResourceScenario  = dict(
+    resourcescenario  = dict(
         obj   = ResourceScenario,
-        name  = 'resourcescenario',
-        parent = 'tScenario',
+        parent = 'scenario',
+        table_name = 'tResourceScenario',
         pk     = ['resource_attr_id', 'scenario_id']
     ),
-    tScenarioData  = dict(
+    scenariodata  = dict(
         obj   = ScenarioData,
-        name  = 'scenariodata',
         parent = None,
+        table_name = 'tScenarioData',
         pk     = ['dataset_id']
     ),
-    tDataAttr  = dict(
+    dataattr  = dict(
         obj   = DataAttr,
-        name  = 'dataattr',
         parent = None,
+        table_name = 'tDataAttr',
         pk     = ['d_attr_id'],
     ),
-    tDescriptor  = dict(
+    descriptor  = dict(
         obj   = Descriptor,
-        name  = 'Descriptor',
         parent = None,
+        table_name = 'tDescriptor',
         pk     = ['data_id']
     ),
-    tTimeSeries  = dict(
+    timeseries  = dict(
         obj   = TimeSeries,
-        name  = 'timeseries',
         parent = None,
+        table_name = 'tTimeSeries',
         pk     = ['data_id']
     ),
-    tTimeSeriesData  = dict(
+    timeseriesdata  = dict(
         obj   = TimeSeriesData,
-        name  = 'timeseriesdata',
-        parent = 'tTimeSeries',
+        parent = 'timeseries',
+        table_name = 'tTimeSeriesData',
         pk     = ['data_id', 'ts_time']
     ),
-    tEqTimeSeries  = dict(
+    eqtimeseries  = dict(
         obj   = EqTimeSeries,
-        name  = 'eqtimeseries',
         parent = None,
+        table_name = 'tEqTimeSeries',
         pk     = ['data_id']
     ),
-    tScalar  = dict(
+    scalar  = dict(
         obj   = Scalar,
-        name  = 'scalar',
         parent = None,
+        table_name = 'tScalar',
         pk     = ['data_id']
     ),
-    tArray  = dict(
+    array  = dict(
         obj   = Array,
-        name  = 'array',
         parent = None,
+        table_name = 'tArray',
         pk     = ['data_id']
     ),
-    tConstraint  = dict(
+    constraint  = dict(
         obj   = Constraint,
-        name  = 'constraint',
-        parent = 'tScenario',
+        parent = 'scenario',
+        table_name = 'tConstraint',
         pk     = ['constraint_id']
     ),
-    tConstraintGroup  = dict(
+    constraintgroup  = dict(
         obj   = ConstraintGroup,
-        name  = 'constraintgroup',
-        parent = 'tConstraint',
+        parent = 'constraint',
+        table_name = 'tConstraintGroup',
         pk     = ['group_id']
     ),
-    tConstraintItem  = dict(
+    constraintitem  = dict(
         obj   = ConstraintItem,
-        name  = 'constraintitem',
-        parent = 'tConstraint',
+        parent = 'constraint',
+        table_name = 'tConstraintItem',
         pk     = ['item_id']
     ),
-    tUser  = dict(
+    user  = dict(
         obj   = User,
-        name  = 'user',
         parent = None,
+        table_name = 'tUser',
         pk     = ['user_id']
     ),
-    tRole  = dict(
+    role  = dict(
         obj   = Role,
-        name  = 'role',
         parent = None,
+        table_name = 'tRole',
         pk     = ['role_id']
     ),
-    tPerm  = dict(
+    perm  = dict(
         obj   = Perm,
-        name  = 'perm',
         parent = None,
+        table_name = 'tPerm',
         pk     = ['perm_id']
     ),
-    tRoleUser  = dict(
+    roleuser  = dict(
         obj   = RoleUser,
-        name  = 'roleuser',
-        parent = 'tRole',
+        parent = 'role',
+        table_name = 'tRoleUser',
         pk     = ['user_id', 'role_id']
     ),
-    tRolePerm  = dict(
+    roleperm  = dict(
         obj   = RolePerm,
-        name  = 'roleperm',
-        parent = 'tRole',
+        parent = 'role',
+        table_name = 'tRolePerm',
         pk     = ['perm_id', 'role_id']
     )
 )

@@ -1,15 +1,8 @@
-#import SOAPpy
-#def hello():
-#    return "Hello World"
-#server = SOAPpy.SOAPServer(("localhost", 8080))
-#server.registerFunction(hello)
-#server.serve_forever()
-
 import sys
 if "./python" not in sys.path:
     sys.path.append("./python")
-if "../../HydraLib/trunk" not in sys.path:
-    sys.path.append("../../HydraLib/trunk")
+if "../../HydraLib/trunk/" not in sys.path:
+    sys.path.append("../../HydraLib/trunk/")
 
 import logging
 
@@ -45,7 +38,7 @@ class HelloWorldService(ServiceBase):
 
 if __name__=='__main__':
 
-    hydra_logging.init(level='DEBUG')
+    hydra_logging.init(level='INFO')
     logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
     connection = hdb.connect()
     HydraIface.init(connection)

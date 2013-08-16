@@ -14,7 +14,7 @@ from tempfile import gettempdir as tmp
 class SoapServerTest(unittest.TestCase):
 
     def setUp(self):
-        hydra_logging.init(level='DEBUG')
+        hydra_logging.init(level='INFO')
         # Clear SUDS cache:
         shutil.rmtree(os.path.join(tmp(), 'suds'), True)
 
