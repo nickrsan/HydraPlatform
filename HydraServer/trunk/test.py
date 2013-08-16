@@ -17,8 +17,7 @@ from HydraLib import util
 
 class FixNamespace(MessagePlugin):
     def marshalled(self, context):
-        scenarios = context.envelope.getChild('Body')[0].getChild('network').getChild('scenarios')
-        self.fix_ns(scenarios)
+        self.fix_ns(context.envelope)
 
     def fix_ns(self, element):
         if element.prefix == 'xs':

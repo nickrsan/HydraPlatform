@@ -38,16 +38,15 @@ class HelloWorldService(ServiceBase):
 
 if __name__=='__main__':
 
-    config = util.load_config()
 
     hydra_logging.init(level='INFO')
-    logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
+    #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
     connection = hdb.connect()
     HydraIface.init(connection)
 
     from wsgiref.simple_server import make_server
 
-   # logging.basicConfig(level=logging.DEBUG)
+    #logging.basicConfig(level=logging.DEBUG)
     #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
 
     logging.info("listening to http://127.0.0.1:8000")
@@ -68,6 +67,7 @@ if __name__=='__main__':
             )
     wsgi_application = WsgiApplication(application)
 
+    config = util.load_config()
     port = config.getint('soap_server', 'port') 
 
     server = make_server('127.0.0.1', port, wsgi_application)
