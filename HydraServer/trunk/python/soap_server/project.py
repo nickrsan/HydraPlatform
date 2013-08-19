@@ -30,16 +30,10 @@ class ProjectService(ServiceBase):
     @rpc(Integer, _returns=Project)
     def get_project(ctx, project_id):
         x = HydraIface.Project(project_id = project_id)
-        x.load()
-        project = Project()
-        project.project_id = x.db.project_id
-        project.project_name = x.db.project_name
-        project.project_description = x.db.project_description
-
         return x.get_as_complexmodel()
 
     @rpc(Integer, _returns=Boolean)
-    def delete_project(project_id):
+    def delete_project(ctx, project_id):
         success = True
         try:
             x = HydraIface.Project(project_id = project_id)

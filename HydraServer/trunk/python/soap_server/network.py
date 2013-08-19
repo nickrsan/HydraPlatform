@@ -62,7 +62,7 @@ class NetworkService(ServiceBase):
         x = HydraIface.Network(network_id = network_id)
         nodes = [node.get_as_complexmodel() for node in x.get_nodes()]
 
-        net = x.get_as_complex_model()
+        net = x.get_as_complexmodel()
         net.nodes = nodes
 
         return net

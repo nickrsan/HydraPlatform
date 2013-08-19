@@ -581,6 +581,7 @@ class Network(GenericResource):
 
         self.db.network_id = network_id
         self.nodes = []
+        self.links = []
         if network_id is not None:
             self.load()
     
@@ -598,7 +599,30 @@ class Network(GenericResource):
         l.db.network_id = self.db.network_id
         self.links.append(l)
         return l
-    
+
+    def get_link(self, link_id):
+        """
+        Return a link with id link_id if it is in this
+        network
+        """
+        link = None
+        for l in self.links:
+                if l.db.link_id == link_id:
+                    l.load()
+                    link = l
+        return link
+
+    def get_node(self, node_id):
+        """
+        Return node object with id node_id if it is
+        in this network.
+        """
+        node = None
+        for n in self.get_nodes():
+            if n.db.node_id == node_id:
+                node = n
+        return node
+
     def get_nodes(self):
         self.nodes = []
         for l in self.links:

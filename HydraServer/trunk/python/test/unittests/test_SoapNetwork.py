@@ -111,11 +111,8 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
         assert network.network_name == new_network.network_name, \
             "network_name has changed."
-        assert network.network_description != new_network.network_description,\
+        assert network.network_description == new_network.network_description,\
             "project_description did not load correctly"
-        assert new_network.network_description == \
-            'A network for SOAP unit tests.', \
-            "Load did not work correctly."
 
     def test_delete(self):
         cli = test_SoapServer.SoapServerTest.connect(self)
@@ -159,5 +156,8 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
         cli.service.delete_network(network.network_id)
 
-        assert cli.service.get_network(network.network_id) is False, \
+        assert cli.service.get_network(network.network_id).status == 'X', \
             'Deleting network did not work correctly.'
+
+if __name__ == '__main__':
+    test_SoapServer.run()

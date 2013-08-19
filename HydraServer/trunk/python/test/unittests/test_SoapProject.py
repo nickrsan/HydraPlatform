@@ -60,7 +60,9 @@ class ProjectTest(test_SoapServer.SoapServerTest):
 
         cli.service.delete_project(project.project_id)
 
-        assert cli.service.get_project(project.project_id) is False, \
+        proj = cli.service.get_project(project.project_id)
+
+        assert proj.status == 'X', \
             'Deleting project did not work correctly.'
 
 
