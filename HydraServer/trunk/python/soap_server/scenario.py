@@ -9,13 +9,14 @@ from hydra_complexmodels import Scenario,\
         EqTimeSeries,\
         Scalar,\
         Array as HydraArray,\
+        ResourceScenario,\
         parse_value
 
 from db import HydraIface
 
 class ScenarioService(ServiceBase):
-   @rpc(Scenario, _returns=Scenario)
-   def add_scenario(ctx, scenario):
+    @rpc(Scenario, _returns=Scenario)
+    def add_scenario(ctx, scenario):
         x = HydraIface.Scenario()
         x.db.network_id           = scenario.network_id
         x.db.scenario_name        = scenario.scenario_name
@@ -43,8 +44,8 @@ class ScenarioService(ServiceBase):
                           )
         return scenario 
 
-   @rpc(Integer, _returns=Boolean)
-   def delete_scenario(ctx, scenario_id):
+    @rpc(Integer, _returns=Boolean)
+    def delete_scenario(ctx, scenario_id):
         success = True
         try:
             x = HydraIface.Scenario(scenario_id = scenario_id)
@@ -56,7 +57,27 @@ class ScenarioService(ServiceBase):
 
         return success
 
+    @rpc(Integer, ResourceScenario, _returns=ResourceScenario)
+    def update_resourcescenario(ctx,scenario_id, resource_scenario):
+        if resource_scenario.value is not None:
+            _update_resourcescenario(scenario_id, resource_scenario)
 
+def _update_resourcescenario(scenario_id, resource_scenario):
+        ra_id = resource_scenario.resource_attr_id
+        r_a = HydraIface.ResourceAttr(resource_attr_id=ra_id)
+        r_a.load()
+        res = r_a.get_resource()
+        
+        data_type = resource_scenario.type.lower()
+       
+        value = parse_value(data_type, resource_scenario)
+
+        res.assign_value(scenario_id, ra_id, data_type, value,
+                        "", "", "") 
+
+        res.save()
+        
+        return res
 class DataService(ServiceBase):
 
     @rpc(Descriptor, _returns=Descriptor)

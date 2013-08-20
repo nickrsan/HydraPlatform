@@ -38,7 +38,6 @@ def init(cnx):
     
     #Table desc gives us:
     #[...,(col_name, col_type, nullable, key ('PRI' or 'MUL'), default, auto_increment),...]
-    logging.debug(len(rs))
     for r in rs:
 
         col_info    = {}
@@ -633,6 +632,16 @@ class Network(GenericResource):
             if node_b not in self.nodes:
                 self.nodes.append(node_b)
         return self.nodes
+
+    def get_as_complexmodel(self):
+        """
+            Override base function to add node children, which
+            are currently not accessible except by calling get_nodes()
+        """
+        net = super(Network, self).get_as_complexmodel()
+        nodes = [node.get_as_complexmodel() for node in self.get_nodes()]
+        net.nodes = nodes
+        return net
 
 class Node(GenericResource):
     """

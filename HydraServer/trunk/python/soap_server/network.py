@@ -6,11 +6,17 @@ from spyne.decorator import rpc
 from hydra_complexmodels import Network, Node, parse_value
 from db import HydraIface
 from HydraLib import hdb
+import scenario
 
 class NetworkService(ServiceBase):
 
     @rpc(Network, _returns=Network)
     def add_network(ctx, network):
+        """
+            Takes an entire network complex model and saves it to the DB.
+            This complex model includes links & scenarios (with resource data).
+            Returns the network's complex model.
+        """
         x = HydraIface.Network()
         x.db.project_id          = network.project_id
         x.db.network_name        = network.network_name
@@ -25,8 +31,6 @@ class NetworkService(ServiceBase):
             l.save()
             link.link_id = l.db.link_id
 
-        nodes = [node.get_as_complexmodel() for node in x.get_nodes()]
-
         if network.scenarios is not None:
             for s in network.scenarios:
                 scen = HydraIface.Scenario()
@@ -35,35 +39,20 @@ class NetworkService(ServiceBase):
                 scen.db.network_id           = x.db.network_id
                 scen.save()
 
-                for attr_data in s.resourcescenarios:
-                  
-                    if attr_data.value is not None:
-                        ra_id = attr_data.resource_attr_id
-                        r_a = HydraIface.ResourceAttr(resource_attr_id=ra_id)
-                        res = r_a.get_resource()
-                        
-                        data_type = attr_data.type.lower()
-                       
-                        value = parse_value(data_type, attr_data)
+                for r_scen in s.resourcescenarios:
+                   scenario._update_resourcescenario(scen.db.scenario_id, r_scen) 
 
-                        res.assign_value(scen.db.scenario_id, ra_id, data_type, value,
-                                        "", "", "") 
-
-                        res.save()
-                    
-        
         net = x.get_as_complexmodel()
-        net.nodes = nodes
+
         hdb.commit()
+
         return net
 
     @rpc(Integer, _returns=Network)
     def get_network(ctx, network_id):
         x = HydraIface.Network(network_id = network_id)
-        nodes = [node.get_as_complexmodel() for node in x.get_nodes()]
 
         net = x.get_as_complexmodel()
-        net.nodes = nodes
 
         return net
 
@@ -87,12 +76,20 @@ class NetworkService(ServiceBase):
             l.save()
             l.commit()
 
-        x.save()
-        x.commit()
-        return x.get_as_complexmodel()
+        net = x.get_as_complexmodel()
+
+        hdb.commit()
+        
+        return net
 
     @rpc(Integer, _returns=Boolean)
     def delete_network(ctx, network_id):
+        """
+            Deletes a network. This does not
+            remove the network from the DB. It just
+            sets the status to 'X', meaning it can no longer
+            be seen by the user.
+        """
         success = True
         try:
             x = HydraIface.Network(network_id = network_id)
@@ -103,10 +100,14 @@ class NetworkService(ServiceBase):
             logging.critical(e)
             success = False
 
+        hdb.commit()
         return success
 
     @rpc(Node, _returns=Node)
     def add_node(ctx, node):
+        """
+            Add a node
+        """
         x = HydraIface.Node()
         x.db.node_name = node.node_name
         x.db.node_x    = node.node_x
@@ -121,6 +122,7 @@ class NetworkService(ServiceBase):
                 if ra.attr_is_var is True:
                     attr_is_var = 'Y'
                 x.add_attribute(ra.attr_id, attr_is_var)
+        hdb.commit()
         return x.get_as_complexmodel()
 
     @rpc(Node, _returns=Node)
@@ -132,6 +134,7 @@ class NetworkService(ServiceBase):
         x.db.node_description = node.node_description
         x.save()
         x.commit()
+        hdb.commit()
         return x.get_as_complexmodel()
 
     @rpc(Integer, _returns=Node)
@@ -146,6 +149,7 @@ class NetworkService(ServiceBase):
             logging.critical(e)
             success = False
 
+        hdb.commit()
         return success
 
     @rpc(Integer, _returns=Boolean)
@@ -154,5 +158,6 @@ class NetworkService(ServiceBase):
         x.delete()
         x.save()
         x.commit()
+        hdb.commit()
         return x.load()
 

@@ -14,6 +14,7 @@ shutil.rmtree(os.path.join(tmp(), 'suds'), True)
 from suds.client import Client
 from suds.plugin import MessagePlugin
 from HydraLib import util
+from suds.sax.element import Element
 
 class FixNamespace(MessagePlugin):
     def marshalled(self, context):
@@ -21,7 +22,7 @@ class FixNamespace(MessagePlugin):
 
     def fix_ns(self, element):
         if element.prefix == 'xs':
-            element.prefix = 'ns0'
+            element.prefix = 'ns1'
 
         for e in element.getChildren():
             self.fix_ns(e)
@@ -41,7 +42,7 @@ class TestSoap(unittest.TestCase):
         return node_1
     
     def create_link(self,c,name,node_1_id, node_2_id):
-        link = c.factory.create('ns5:Link')
+        link = c.factory.create('ns1:Link')
         link.link_name = name
         link.link_description = 'Link from %s to %s'%(node_1_id, node_2_id)
         link.node_1_id = node_1_id 
@@ -49,7 +50,7 @@ class TestSoap(unittest.TestCase):
         return link
 
     def create_attr(self, c):
-        attr = c.factory.create('ns5:Attr')
+        attr = c.factory.create('ns1:Attr')
         attr.attr_name = 'Test Attr'
         attr.attr_dimen = 'very big'
         attr = c.service.add_attribute(attr)
@@ -121,7 +122,7 @@ class TestSoap(unittest.TestCase):
 
         link = self.create_link(c, 'link 1', node1['node_id'], node2['node_id'])
 
-        LinkArray = c.factory.create('ns5:LinkArray')
+        LinkArray = c.factory.create('ns1:LinkArray')
         LinkArray.Link.append(link)
 
         (Network) = {
@@ -136,7 +137,8 @@ class TestSoap(unittest.TestCase):
     def test_scenario(self):
         config = util.load_config()
         port = config.getint('soap_server', 'port')
-        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
+        c = Client('http://localhost:%s/?wsdl'%port, xstq=False,  plugins=[FixNamespace()])
+#        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
         print c
 
         (project) = {
@@ -154,12 +156,12 @@ class TestSoap(unittest.TestCase):
         #We don't assign data directly to these resource attributes. This
         #is done when creating the scenario -- a scenario is just a set of
         #data for a given list of resource attributes.
-        attr_array = c.factory.create('ns5:ResourceAttrArray')
-        node_attr1  = c.factory.create('ns5:ResourceAttr')
+        attr_array = c.factory.create('ns1:ResourceAttrArray')
+        node_attr1  = c.factory.create('ns1:ResourceAttr')
         node_attr1.attr_id = attr1.attr_id
-        node_attr2  = c.factory.create('ns5:ResourceAttr')
+        node_attr2  = c.factory.create('ns1:ResourceAttr')
         node_attr2.attr_id = attr2.attr_id
-        node_attr3  = c.factory.create('ns5:ResourceAttr')
+        node_attr3  = c.factory.create('ns1:ResourceAttr')
         node_attr3.attr_id = attr3.attr_id
         attr_array.ResourceAttr.append(node_attr1)
         attr_array.ResourceAttr.append(node_attr2)
@@ -174,16 +176,16 @@ class TestSoap(unittest.TestCase):
 
         #A network must contain an array of links. In this case, the array
         #contains a single link
-        link_array = c.factory.create('ns5:LinkArray')
+        link_array = c.factory.create('ns1:LinkArray')
         link_array.Link.append(link)
         
         #Create the scenario
-        scenario = c.factory.create('ns5:Scenario')
+        scenario = c.factory.create('ns1:Scenario')
         scenario.scenario_name = 'Scenario 1'
         scenario.scenario_description = 'Scenario Description'
 
         #Multiple data (Called ResourceScenario) means an array.
-        scenario_data = c.factory.create('ns5:ResourceScenarioArray')
+        scenario_data = c.factory.create('ns1:ResourceScenarioArray')
         
         #Our node has several 'resource attributes', created earlier.
         node_attrs = node1.attributes
@@ -206,7 +208,7 @@ class TestSoap(unittest.TestCase):
 
         #A network can have multiple scenarios, so they are contained in
         #a scenario array
-        scenario_array = c.factory.create('ns5:ScenarioArray')
+        scenario_array = c.factory.create('ns1:ScenarioArray')
         scenario_array.Scenario.append(scenario)
         network = self.create_network(c, p['project_id'], 'Network1', 'Test Network with 2 nodes and 1 link',links=link_array,scenarios=scenario_array)
         print c.last_sent()
@@ -216,13 +218,15 @@ class TestSoap(unittest.TestCase):
     def create_descriptor(self, c, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-        scenario_attr = c.factory.create('ns5:ResourceScenario')
+        scenario_attr = c.factory.create('ns1:ResourceScenario')
         
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
         scenario_attr.type = 'descriptor'
-        
-        scenario_attr.value = {'value' : 'I am a value'} 
+       
+        print scenario_attr
+
+        scenario_attr.value = {'desc_val' : 'test'} 
 
         return scenario_attr
 
@@ -230,24 +234,24 @@ class TestSoap(unittest.TestCase):
     def create_timeseries(self, c, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-        scenario_attr = c.factory.create('ns5:ResourceScenario')
+        scenario_attr = c.factory.create('ns1:ResourceScenario')
         
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
         scenario_attr.type = 'timeseries'
         
         ts1 = c.factory.create('ns1:TimeSeriesData')
-        ts1.ts_time = datetime.datetime.now()
+        ts1.ts_time  = datetime.datetime.now()
         ts1.ts_value = [1, 2, 3, 4, 5]
 
         ts2 = c.factory.create('ns1:TimeSeriesData')
-        ts2.ts_time = datetime.datetime.now() + datetime.timedelta(hours=1)
+        ts2.ts_time  = datetime.datetime.now() + datetime.timedelta(hours=1)
         ts2.ts_value = [2, 3, 4, 5, 6]
 
         ts3 = c.factory.create('ns1:TimeSeries')
-        ts3.ts_values =[ts1, ts2] 
+        ts3.ts_values = [ts1, ts2] 
         
-    #    scenario_attr.value = ts3
+        #scenario_attr.value = ts3
         scenario_attr.value = {
             'value'            : [
                 {
@@ -266,7 +270,7 @@ class TestSoap(unittest.TestCase):
     def create_array(self, c, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-        scenario_attr = c.factory.create('ns5:ResourceScenario')
+        scenario_attr = c.factory.create('ns1:ResourceScenario')
         
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
@@ -291,9 +295,9 @@ class TestSoap(unittest.TestCase):
         arr6 = c.factory.create('ns1:Array')
         arr6.arr_data = [arr, arr5]
 
-        scenario_attr.value = arr6 
+        #scenario_attr.value = arr6 
         scenario_attr.value = {
-            'arr_data' : str([[[1, 2, 3], [4, 5, 6]], [[10, 20, 30],[40, 50, 60]]])
+           'arr_data' : str([[[1, 2, 3], [4, 5, 6]], [[10, 20, 30],[40, 50, 60]]])
         }
 
         return scenario_attr
