@@ -7,9 +7,17 @@ from db import HydraIface
 from hydra_complexmodels import Project
 
 class ProjectService(ServiceBase):
+    """
+        The project SOAP service
+    """
+    
 
     @rpc(Project, _returns=Project) 
     def add_project(ctx, project):
+        """
+            Add a new project
+            returns a project complexmodel
+        """
         x = HydraIface.Project()
         x.db.project_name = project.project_name
         x.db.project_description = project.project_description
@@ -19,6 +27,10 @@ class ProjectService(ServiceBase):
 
     @rpc(Project, _returns=Project) 
     def update_project(ctx, project):
+        """
+            Update a project
+            returns a project complexmodel
+        """
         x = HydraIface.Project(project_id = project.project_id)
         x.db.project_name = project.project_name
         x.db.project_description = project.project_description
@@ -29,11 +41,17 @@ class ProjectService(ServiceBase):
 
     @rpc(Integer, _returns=Project)
     def get_project(ctx, project_id):
+        """
+            get a project complexmodel
+        """
         x = HydraIface.Project(project_id = project_id)
         return x.get_as_complexmodel()
 
     @rpc(Integer, _returns=Boolean)
     def delete_project(ctx, project_id):
+        """
+            Set the status of a project to 'X'
+        """
         success = True
         try:
             x = HydraIface.Project(project_id = project_id)

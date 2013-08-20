@@ -273,3 +273,20 @@ class Test(ComplexModel):
         ('test_entry_1', Integer),
         ('test_entry_2', String),
     ]
+
+class PluginParam(ComplexModel):
+    _type_info = [
+        ('name',        String),
+        ('value',       String),
+    ]
+
+class Plugin(ComplexModel):
+    _type_info = [
+        ('plugin_name',        String),
+        ('plugin_description', String),
+        ('params',           SpyneArray(PluginParam)),
+    ]
+
+
+
+

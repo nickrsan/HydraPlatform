@@ -75,6 +75,9 @@ def init(cnx):
         DB_STRUCT[r.referenced_table_name.lower()]['child_info'][r.table_name] = child_dict
 
 class IfaceBase(object):
+    """
+        The base database interface class.
+    """
     def __init__(self, class_name):
         logging.info("Initialising %s", class_name)
         self.db = IfaceDB(class_name)
@@ -205,6 +208,10 @@ class IfaceBase(object):
         return cm
 
 class IfaceDB(object):
+    """
+        The class which represents the actual row in the database. Accessed
+        from the base class using '.db'
+    """
 
     def __init__(self, class_name):
 
@@ -464,6 +471,9 @@ class IfaceDB(object):
             return str(val)
 
 class GenericResource(IfaceBase):
+    """
+        A superclass for all 'resource' types -- Network, Node, Link, Scenario and Project.
+    """
     def __init__(self, class_name, ref_key, ref_id=None):
         IfaceBase.__init__(self, class_name)
 

@@ -1,7 +1,7 @@
 from spyne.service import ServiceBase
 import logging
 from HydraLib.HydraException import HydraError
-from spyne.model.primitive import Integer, Boolean
+from spyne.model.primitive import Integer, Boolean, AnyDict
 from spyne.decorator import rpc
 from hydra_complexmodels import Scenario,\
         Descriptor,\
@@ -13,10 +13,18 @@ from hydra_complexmodels import Scenario,\
         parse_value
 
 from db import HydraIface
+from HydraLib import hdb
 
 class ScenarioService(ServiceBase):
+    """
+        The scenario SOAP service
+    """
+
     @rpc(Scenario, _returns=Scenario)
     def add_scenario(ctx, scenario):
+        """
+            Add a scenario to a specified network.
+        """
         x = HydraIface.Scenario()
         x.db.network_id           = scenario.network_id
         x.db.scenario_name        = scenario.scenario_name
@@ -25,27 +33,18 @@ class ScenarioService(ServiceBase):
         x.commit()
         scenario.scenario_id = x.db.scenario_id
 
-        #scenario.attributes are ScenarioAttr types.
-        for attr in scenario.attributes:
-            #ra = resource attribute
-            ra = x.add_attribute(attr.attr_id, attr.is_val)
-            ra.save()
-            ra.commit()
-            attr.resource_attr_id = ra.db.resource_attr_id
-            
-            data_type, units, name, dimension, value = parse_value(attr.value)
-            x.assign_value(scenario.scenario_id,
-                           attr.resource_attr_id,
-                           data_type,
-                           value,
-                           units,
-                           name,
-                           dimension
-                          )
-        return scenario 
+        for r_scen in scenario.resourcescenarios:
+            scenario._update_resourcescenario(x.db.scenario_id, r_scen)
+
+        hdb.commit()
+
+        return x.get_as_complexmodel()
 
     @rpc(Integer, _returns=Boolean)
     def delete_scenario(ctx, scenario_id):
+        """
+            Set the status of a scenario to 'X'. 
+        """
         success = True
         try:
             x = HydraIface.Scenario(scenario_id = scenario_id)
@@ -58,9 +57,24 @@ class ScenarioService(ServiceBase):
         return success
 
     @rpc(Integer, ResourceScenario, _returns=ResourceScenario)
-    def update_resourcescenario(ctx,scenario_id, resource_scenario):
+    def update_resourcedata(ctx,scenario_id, resource_scenario):
+        """
+            Update the data associated with a scenario.
+            Data missing from the resource scenario will not be removed
+            from the scenario. Use the remove_resourcedata for this task.
+        """
         if resource_scenario.value is not None:
             _update_resourcescenario(scenario_id, resource_scenario)
+
+    @rpc(Integer, ResourceScenario, _returns=ResourceScenario)
+    def delete_resourcedata(ctx,scenario_id, resource_scenario):
+        """
+            Remove the data associated with a scenario.
+        """
+        _delete_resourcescenario(scenario_id, resource_scenario)
+
+def _delete_resourcescenario(scenario_id, resource_scenario):
+    pass
 
 def _update_resourcescenario(scenario_id, resource_scenario):
         ra_id = resource_scenario.resource_attr_id
@@ -79,23 +93,47 @@ def _update_resourcescenario(scenario_id, resource_scenario):
         
         return res
 class DataService(ServiceBase):
+  
+    """
+        The data SOAP service
+    """
+
+    @rpc(AnyDict, _returns=AnyDict)
+    def update_dataset(ctx, data):
+        """
+            Update a piece of data directly, rather than through a resource scenario
+        """
+
+    @rpc(Integer, _returns=AnyDict)
+    def get_dataset(dataset_id):
+        """
+            Get a piece of data directly, rather than through a resource scenario
+        """
+    @rpc(Integer, _returns=Boolean)
+    def delete_dataset(dataset_id):
+        """
+            Removes a piece of data from the DB. 
+            CAUTION! Use with care, as this cannot be undone easily.
+        """
+
+
 
     @rpc(Descriptor, _returns=Descriptor)
-    def echo_descriptor(x):
+    def echo_descriptor(ctx, x):
         return x
 
     @rpc(TimeSeries, _returns=TimeSeries)
-    def echo_timeseries(x):
+    def echo_timeseries(ctx, x):
         return x
 
     @rpc(EqTimeSeries, _returns=EqTimeSeries)
-    def echo_eqtimeseries(x):
+    def echo_eqtimeseries(ctx, x):
         return x
 
     @rpc(Scalar, _returns=Scalar)
-    def echo_scalar(x):
+    def echo_scalar(ctx, x):
         return x
 
     @rpc(HydraArray, _returns=HydraArray)
-    def echo_array(x):
+    def echo_array(ctx, x):
         return x

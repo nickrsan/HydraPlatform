@@ -30,7 +30,7 @@ class FixNamespace(MessagePlugin):
 class TestSoap(unittest.TestCase):
 
     def create_node(self,c,name,desc="Node Description", x=0, y=0, attributes=None):
-        (node_1) = {
+        (node) = {
             'node_name' : name,
             'node_description' : desc,
             'node_x' : x,
@@ -38,8 +38,9 @@ class TestSoap(unittest.TestCase):
             'attributes': attributes,
         }
 
-        node_1 = c.service.add_node(node_1)
-        return node_1
+        node = c.service.add_node(node)
+        print node
+        return node
     
     def create_link(self,c,name,node_1_id, node_2_id):
         link = c.factory.create('ns1:Link')
@@ -47,6 +48,7 @@ class TestSoap(unittest.TestCase):
         link.link_description = 'Link from %s to %s'%(node_1_id, node_2_id)
         link.node_1_id = node_1_id 
         link.node_2_id = node_2_id
+        print link
         return link
 
     def create_attr(self, c):
@@ -54,6 +56,7 @@ class TestSoap(unittest.TestCase):
         attr.attr_name = 'Test Attr'
         attr.attr_dimen = 'very big'
         attr = c.service.add_attribute(attr)
+        print attr
         return attr
 
     def create_network(self, c, project_id, name, desc=None, links=None, scenarios=None):
@@ -139,7 +142,6 @@ class TestSoap(unittest.TestCase):
         port = config.getint('soap_server', 'port')
         c = Client('http://localhost:%s/?wsdl'%port, xstq=False,  plugins=[FixNamespace()])
 #        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
-        print c
 
         (project) = {
             'project_name' : 'New Project',
@@ -211,9 +213,9 @@ class TestSoap(unittest.TestCase):
         scenario_array = c.factory.create('ns1:ScenarioArray')
         scenario_array.Scenario.append(scenario)
         network = self.create_network(c, p['project_id'], 'Network1', 'Test Network with 2 nodes and 1 link',links=link_array,scenarios=scenario_array)
-        print c.last_sent()
-        print network
-        print c.last_received()
+     #   print c.last_sent()
+     #   print network
+      #  print c.last_received()
 
     def create_descriptor(self, c, ResourceAttr):
         #A scenario attribute is a piece of data associated

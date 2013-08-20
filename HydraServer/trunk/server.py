@@ -20,6 +20,7 @@ from soap_server.network import NetworkService
 from soap_server.project import ProjectService
 from soap_server.attributes import AttributeService
 from soap_server.scenario import ScenarioService, DataService
+from soap_server.plugins import PluginService
 
 from HydraLib import hydra_logging, hdb, util
 from db import HydraIface
@@ -59,6 +60,7 @@ if __name__=='__main__':
         AttributeService,
         ScenarioService,
         DataService,
+        PluginService,
     ]
 
     application = Application(applications, 'hydra.soap',
