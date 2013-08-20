@@ -1,3 +1,8 @@
+import sys
+if "../../" not in sys.path:
+    sys.path.append("../../")
+if "../../../../../HydraLib/trunk/" not in sys.path:
+    sys.path.append("../../../../../HydraLib/trunk/")
 import unittest
 from db import HydraIface
 from HydraLib import hydra_logging, hdb
