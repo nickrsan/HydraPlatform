@@ -38,16 +38,14 @@ class TestSoap(unittest.TestCase):
             'attributes': attributes,
         }
 
-        node = c.service.add_node(node)
-        print node
         return node
     
-    def create_link(self,c,name,node_1_id, node_2_id):
+    def create_link(self,c,name,node_1, node_2):
         link = c.factory.create('ns1:Link')
         link.link_name = name
-        link.link_description = 'Link from %s to %s'%(node_1_id, node_2_id)
-        link.node_1_id = node_1_id 
-        link.node_2_id = node_2_id
+        link.link_description = 'Link from %s to %s'%(node_1, node_2)
+        link.node_1 = node_1 
+        link.node_2 = node_2
         print link
         return link
 
@@ -92,22 +90,6 @@ class TestSoap(unittest.TestCase):
         p2 = c.service.update_project(project1)
         print p2
 
-
-    def test_add_node(self):
-        config = util.load_config()
-        port = config.getint('soap_server', 'port')
-        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
-
-        (Node1) = {
-            'node_name' : 'Node One',
-            'node_description' : 'Node One Description',
-            'node_x' : Decimal('1.50'),
-            'node_y' : Decimal('2.00'),
-        }
-
-        Node1 = c.service.add_node(Node1)
-        assert Node1 is not None, "Node did not add correctly"
-
     def test_network(self):
         config = util.load_config()
         port = config.getint('soap_server', 'port')
@@ -120,20 +102,29 @@ class TestSoap(unittest.TestCase):
         }
         p =  c.service.add_project(project)
 
+        NodeArray = c.factory.create('ns1:NodeArray')
         node1 = self.create_node(c, "Node 1")
         node2 = self.create_node(c, "Node 2")
+        node3 = self.create_node(c, "Node 3")
+        NodeArray.Node.append(node1)
+        NodeArray.Node.append(node2)
+        NodeArray.Node.append(node3)
 
-        link = self.create_link(c, 'link 1', node1['node_id'], node2['node_id'])
+        link1 = self.create_link(c, 'link 1', node1, node2)
+        link2 = self.create_link(c, 'link 1', node2, node3)
 
         LinkArray = c.factory.create('ns1:LinkArray')
-        LinkArray.Link.append(link)
+        LinkArray.Link.append(link1)
+        LinkArray.Link.append(link2)
 
         (Network) = {
             'network_name'        : 'Network1',
             'network_description' : 'Test Network with 2 nodes and 1 link',
             'project_id'          : p['project_id'],
             'links'              : LinkArray,
+            'nodes'              : NodeArray,
         }
+        print Network
         Network = c.service.add_network(Network)
         assert Network is not None, "Network did not create correctly"
 
@@ -214,7 +205,7 @@ class TestSoap(unittest.TestCase):
         scenario_array.Scenario.append(scenario)
         network = self.create_network(c, p['project_id'], 'Network1', 'Test Network with 2 nodes and 1 link',links=link_array,scenarios=scenario_array)
      #   print c.last_sent()
-     #   print network
+        print network
       #  print c.last_received()
 
     def create_descriptor(self, c, ResourceAttr):

@@ -78,7 +78,7 @@ class IfaceBase(object):
     """
         The base database interface class.
     """
-    def __init__(self, class_name):
+    def __init__(self, parent, class_name):
         logging.info("Initialising %s", class_name)
         self.db = IfaceDB(class_name)
 
@@ -91,7 +91,7 @@ class IfaceBase(object):
 
         self.child_info = self.get_children()
         self.children   = {}
-        self.parent = None
+        self.parent = parent 
 
     def load(self):
         self.in_db = self.db.load()
@@ -106,7 +106,7 @@ class IfaceBase(object):
         """
             Commit any inserts or updates to the DB. No going back from here...
         """
-        #CONNECTION.commit()
+        CONNECTION.commit()
         if self.deleted == True:
             self.in_db = False
 
@@ -152,7 +152,7 @@ class IfaceBase(object):
             child_objs = []
             for row in rows:
                 row = row.get_as_dict()
-                child_obj = db_hierarchy[name[1:].lower()]['obj']()
+                child_obj = db_hierarchy[name[1:].lower()]['obj'](self)
 
                 child_obj.parent = self
                 child_obj.__setattr__(self.name.lower(), self)
@@ -474,11 +474,13 @@ class GenericResource(IfaceBase):
     """
         A superclass for all 'resource' types -- Network, Node, Link, Scenario and Project.
     """
-    def __init__(self, class_name, ref_key, ref_id=None):
-        IfaceBase.__init__(self, class_name)
-
+    def __init__(self, parent, class_name, ref_key, ref_id=None):
+        self.parent = parent
+        
         self.ref_key = ref_key
         self.ref_id  = ref_id
+        
+        IfaceBase.__init__(self, parent, class_name)
 
         self.attributes = self.get_attributes()
 
@@ -534,9 +536,14 @@ class GenericResource(IfaceBase):
 
     def assign_value(self, scenario_id, resource_attr_id, data_type, val,
                      units, name, dimension):
-        attr = ResourceAttr(resource_attr_id = resource_attr_id)
 
-        sd = ScenarioData()
+        rs = ResourceScenario(scenario_id=scenario_id, resource_attr_id=resource_attr_id)
+
+        if rs.db.dataset_id is not None:
+            sd = ScenarioData(dataset_id = rs.db.dataset_id)
+        else:
+            sd = ScenarioData()
+
         sd.set_val(data_type, val)
 
         sd.db.data_type  = data_type
@@ -546,11 +553,9 @@ class GenericResource(IfaceBase):
         sd.save()
         sd.commit()
 
-        rs = ResourceScenario()
+        if rs.db.dataset_id is None:
+            rs.db.dataset_id       = sd.db.dataset_id
 
-        rs.db.scenario_id      = scenario_id
-        rs.db.dataset_id       = sd.db.dataset_id
-        rs.db.resource_attr_id = attr.db.resource_attr_id
         rs.save()
         rs.commit()
 
@@ -563,18 +568,45 @@ class Project(GenericResource):
         Contains networks and scenarios.
     """
     def __init__(self, project_id = None):
-        GenericResource.__init__(self, self.__class__.__name__, 'PROJECT', ref_id=project_id)
+        GenericResource.__init__(self, None, self.__class__.__name__, 'PROJECT', ref_id=project_id)
 
         self.db.project_id = project_id
+        self.networks = []
         if project_id is not None:
             self.load()
+    
+   # def load(self):
+   #     success = super(Project, self).load()
+   #     if success:
+   #         self.get_networks()
+
+   #     return success
+
+   # def get_networks(self):
+   #     sql = """
+   #         select
+   #             network_id
+   #         from
+   #             tNetwork
+   #         where
+   #             project_id=%s
+   #     """ % self.db.project_id
+
+   #     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
+   #     rs = cursor.execute_sql(sql)
+
+   #     for r in rs:
+   #         n = Network(project=self, network_id = r.network_id)
+   #         self.networks.append(n)
+
+   #     return self.networks
 
 class Scenario(GenericResource):
     """
         A set of nodes and links
     """
-    def __init__(self, scenario_id = None):
-        GenericResource.__init__(self, self.__class__.__name__, 'SCENARIO', ref_id=scenario_id)
+    def __init__(self, network = None, scenario_id = None):
+        GenericResource.__init__(self, network, self.__class__.__name__, 'SCENARIO', ref_id=scenario_id)
 
         self.db.scenario_id = scenario_id
         if scenario_id is not None:
@@ -585,9 +617,10 @@ class Network(GenericResource):
     """
         A set of nodes and links
     """
-    def __init__(self, network_id = None):
-        GenericResource.__init__(self, self.__class__.__name__, 'NETWORK', ref_id=network_id)
-
+    def __init__(self, project = None, network_id = None):
+        GenericResource.__init__(self,project, self.__class__.__name__, 'NETWORK', ref_id=network_id)
+    
+        self.project = project
         self.db.network_id = network_id
         self.nodes = []
         self.links = []
@@ -608,6 +641,20 @@ class Network(GenericResource):
         l.db.network_id = self.db.network_id
         self.links.append(l)
         return l
+    
+    
+    def add_node(self, name, desc, node_x, node_y):
+        """
+            Add a node to a network.
+        """
+        n = Node()
+        n.db.node_name = name
+        n.db.node_description = desc
+        n.db.node_x = node_x
+        n.db.node_y = node_y
+        n.db.network_id = self.db.network_id
+        self.nodes.append(n)
+        return n
 
     def get_link(self, link_id):
         """
@@ -627,39 +674,19 @@ class Network(GenericResource):
         in this network.
         """
         node = None
-        for n in self.get_nodes():
+        for n in self.nodes:
             if n.db.node_id == node_id:
                 node = n
         return node
-
-    def get_nodes(self):
-        self.nodes = []
-        for l in self.links:
-            node_a = Node(node_id=l.db.node_1_id)
-            node_b = Node(node_id=l.db.node_2_id)
-            if node_a not in self.nodes:
-                self.nodes.append(node_a)
-            if node_b not in self.nodes:
-                self.nodes.append(node_b)
-        return self.nodes
-
-    def get_as_complexmodel(self):
-        """
-            Override base function to add node children, which
-            are currently not accessible except by calling get_nodes()
-        """
-        net = super(Network, self).get_as_complexmodel()
-        nodes = [node.get_as_complexmodel() for node in self.get_nodes()]
-        net.nodes = nodes
-        return net
 
 class Node(GenericResource):
     """
         Representation of a resource.
     """
-    def __init__(self, node_id = None):
-        GenericResource.__init__(self, self.__class__.__name__, 'NODE', ref_id=node_id)
+    def __init__(self, network = None, node_id = None):
+        GenericResource.__init__(self,network, self.__class__.__name__, 'NODE', ref_id=node_id)
 
+        self.network = network
         self.db.node_id = node_id
         if node_id is not None:
             self.load()
@@ -668,10 +695,11 @@ class Link(GenericResource):
     """
         Representation of a connection between nodes.
     """
-    def __init__(self, link_id = None):
-        GenericResource.__init__(self, self.__class__.__name__, 'LINK', ref_id=link_id)
+    def __init__(self,network = None, link_id = None):
+        GenericResource.__init__(self,network, self.__class__.__name__, 'LINK', ref_id=link_id)
 
         self.db.link_id = link_id
+        self.network    = network
         if link_id is not None:
             self.load()
 
@@ -683,7 +711,7 @@ class Attr(IfaceBase):
         attribute.
     """
     def __init__(self, attr_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.attr_id = attr_id
 
@@ -695,7 +723,7 @@ class AttrMap(IfaceBase):
        Defines equality between attributes ('volume' is equivalent to 'vol')
     """
     def __init__(self, attr_id_a = None, attr_id_b = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.attr_id_a = attr_id_a
         self.db.attr_id_b = attr_id_b
@@ -709,8 +737,8 @@ class ResourceAttr(IfaceBase):
         A resource attribute is a instance of an attribute for
         a given resource.
     """
-    def __init__(self, resource_attr_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+    def __init__(self, attr = None, resource_attr_id = None):
+        IfaceBase.__init__(self, attr, self.__class__.__name__)
 
         self.db.resource_attr_id = resource_attr_id
 
@@ -737,8 +765,8 @@ class ResourceTemplate(IfaceBase):
         a resource. For example, a "reservoir" template may have "volume",
         "discharge" and "daily throughput".
     """
-    def __init__(self, template_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+    def __init__(self, resourcetemplategroup  = None, template_id = None):
+        IfaceBase.__init__(self, resourcetemplategroup, self.__class__.__name__)
 
         self.db.template_id = template_id
 
@@ -750,8 +778,8 @@ class ResourceTemplateItem(IfaceBase):
         A resource template item is a link between a resource template
         and attributes.
     """
-    def __init__(self, attr_id = None, template_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+    def __init__(self, resourcetemplate=None, attr_id = None, template_id = None):
+        IfaceBase.__init__(self, resourcetemplate, self.__class__.__name__)
 
         self.db.attr_id = attr_id
         self.db.template_id = template_id
@@ -765,7 +793,7 @@ class ResourceTemplateGroup(IfaceBase):
         by the plugin which they were defined for.
     """
     def __init__(self, group_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.group_id = group_id
         if group_id is not None:
@@ -776,8 +804,8 @@ class ResourceScenario(IfaceBase):
         A resource scenario is what links the actual piece of data
         with a resource -- the data per resource will change per scenario.
     """
-    def __init__(self, scenario_id = None, resource_attr_id=None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+    def __init__(self, scenario = None, scenario_id = None, resource_attr_id=None):
+        IfaceBase.__init__(self, scenario, self.__class__.__name__)
 
         self.db.scenario_id = scenario_id
         self.db.resource_attr_id = resource_attr_id
@@ -833,7 +861,7 @@ class ScenarioData(IfaceBase):
         in another table, which is identified based on the type.
     """
     def __init__(self, dataset_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.dataset_id = dataset_id
 
@@ -953,7 +981,7 @@ class DataAttr(IfaceBase):
         Holds additional information on data.
     """
     def __init__(self, d_attr_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.d_attr_id = d_attr_id
 
@@ -965,7 +993,7 @@ class Descriptor(IfaceBase):
         A non numeric data value
     """
     def __init__(self, data_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.data_id = data_id
         if data_id is not None:
@@ -978,7 +1006,7 @@ class TimeSeries(IfaceBase):
         actually stores the info.
     """
     def __init__(self, data_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.data_id = data_id
         if data_id is not None:
@@ -1046,7 +1074,7 @@ class TimeSeriesData(IfaceBase):
         In other words: a value and a timestamp.
     """
     def __init__(self, data_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.data_id = data_id
         if data_id is not None:
@@ -1058,7 +1086,7 @@ class EqTimeSeries(IfaceBase):
         -- a start time, frequency and an associated array.
     """
     def __init__(self, data_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.data_id = data_id
 
@@ -1070,7 +1098,7 @@ class Scalar(IfaceBase):
         The values contained in an equally spaced time series.
     """
     def __init__(self, data_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.data_id = data_id
         if data_id is not None:
@@ -1081,7 +1109,7 @@ class Array(IfaceBase):
         List of values, stored as a BLOB.
     """
     def __init__(self, data_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.data_id = data_id
         if data_id is not None:
@@ -1093,7 +1121,7 @@ class Constraint(IfaceBase):
         to ensure mutual exclusion of certain resources..
     """
     def __init__(self, scenario=None, constraint_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, scenario, self.__class__.__name__)
 
         self.scenario=scenario
         self.db.constraint_id = constraint_id
@@ -1114,7 +1142,7 @@ class ConstraintGroup(IfaceBase):
         into logical sections, not unlike parentheses in a mathematical equation.
     """
     def __init__(self, constraint=None, group_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, constraint, self.__class__.__name__)
 
         self.constraint = constraint
         self.db.group_id = group_id
@@ -1162,9 +1190,10 @@ class ConstraintItem(IfaceBase):
     """
         The link to the resource, upon which the constraint is being applied.
     """
-    def __init__(self, item_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+    def __init__(self, constraint=None, item_id = None):
+        IfaceBase.__init__(self, constraint, self.__class__.__name__)
 
+        self.constraint = constraint
         self.db.item_id = item_id
         if item_id is not None:
             self.load()
@@ -1174,7 +1203,7 @@ class User(IfaceBase):
         Users of the hydra
     """
     def __init__(self, user_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.user_id = user_id
         if user_id is not None:
@@ -1185,7 +1214,7 @@ class Role(IfaceBase):
         Roles for hydra users
     """
     def __init__(self, role_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.role_id = role_id
         if role_id is not None:
@@ -1197,7 +1226,7 @@ class Perm(IfaceBase):
         Hydra Permissions
     """
     def __init__(self, perm_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.perm_id = perm_id
         if perm_id is not None:
@@ -1207,8 +1236,8 @@ class RoleUser(IfaceBase):
     """
         Roles for hydra users
     """
-    def __init__(self, user_id = None, role_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+    def __init__(self, role=None, user_id = None, role_id = None):
+        IfaceBase.__init__(self, role, self.__class__.__name__)
 
         self.db.user_id = user_id
         self.db.role_id = role_id
@@ -1219,8 +1248,8 @@ class RolePerm(IfaceBase):
     """
         Permissions for hydra Roles
     """
-    def __init__(self, perm_id = None, role_id = None):
-        IfaceBase.__init__(self, self.__class__.__name__)
+    def __init__(self, role=None, perm_id = None, role_id = None):
+        IfaceBase.__init__(self, role, self.__class__.__name__)
 
         self.db.perm_id = perm_id
         self.db.role_id = role_id

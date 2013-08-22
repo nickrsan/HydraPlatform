@@ -21,6 +21,7 @@ class ProjectTest(test_HydraIface.HydraIfaceTest):
         x.db.project_description = "test description"
         x.save()
         x.commit()
+
         assert x.load() == True, "Pre-delete save did not work correctly."
 
         x.delete()

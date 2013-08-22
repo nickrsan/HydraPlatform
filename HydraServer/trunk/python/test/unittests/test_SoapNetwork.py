@@ -25,7 +25,6 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             node.node_description = 'Test node ' + str(i)
             node.node_x = x[i]
             node.node_y = y[i]
-            node = cli.service.add_node(node)
 
             nodes.Node.append(node)
 
@@ -33,9 +32,8 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             link = cli.factory.create('hyd:Link')
             link.link_name = 'Link ' + str(i)
             link.link_description = 'Test link ' + str(i)
-            link.node_1_id = nodes.Node[i].node_id
-            link.node_2_id = nodes.Node[i + 1].node_id
-            #link = cli.service.add_link(link)
+            link.node_1 = nodes[i]
+            link.node_2 = nodes[i + 1]
 
             links.Link.append(link)
 

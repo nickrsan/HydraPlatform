@@ -13,6 +13,8 @@ from hydra_complexmodels import Network,\
         ResourceTemplateGroup,\
         ResourceTemplate
 
+from HydraLib import hdb
+
 def get_resource(ref_key, ref_id):
     if ref_key == 'NODE':
         return HydraIface.Node(node_id = ref_id)
@@ -44,12 +46,17 @@ class AttributeService(ServiceBase):
             }
 
         """
-
-        x = HydraIface.Attr()
-        x.db.attr_name = attr.attr_name
-        x.db.attr_dimen = attr.attr_dimen
-        x.save()
-        return x.get_as_complexmodel()
+        try:
+            x = HydraIface.Attr()
+            x.db.attr_name = attr.attr_name
+            x.db.attr_dimen = attr.attr_dimen
+            x.save()
+            hdb.commit()
+            return x.get_as_complexmodel()
+        except Exception, e:
+            logging.critical(e)
+            hdb.rollback()
+            return None
 
     @rpc(Integer, _returns=Boolean)
     def delete_attribute(ctx, attr_id):
@@ -61,8 +68,10 @@ class AttributeService(ServiceBase):
             x = HydraIface.Attr(attr_id = attr_id)
             x.db.status = 'X'
             x.save()
+            hdb.commit()
         except HydraError, e:
             logging.critical(e)
+            hdb.rollback()
             success = False
         return success
         

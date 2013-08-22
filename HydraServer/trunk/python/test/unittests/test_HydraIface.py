@@ -10,7 +10,7 @@ import logging
 
 class HydraIfaceTest(unittest.TestCase):
     def setUp(self):
-        hydra_logging.init(level='DEBUG')
+        hydra_logging.init(level='INFO')
         HydraIface.init(hdb.connect())
 
     def tearDown(self):
@@ -42,9 +42,10 @@ class HydraIfaceTest(unittest.TestCase):
         x.commit()
         return x
 
-    def create_node(self, name):
+    def create_node(self, name, network_id):
         x = HydraIface.Node()
         x.db.node_name = name
+        x.db.network_id = network_id
         x.save()
         x.commit()
         return x

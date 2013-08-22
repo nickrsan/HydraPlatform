@@ -45,8 +45,8 @@ class LinkTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         proj = self.create_project("Test Proj)")
         net = self.create_network("Test Net", proj.db.project_id)
-        node_a = self.create_node("Node A")
-        node_b = self.create_node("Node B")
+        node_a = self.create_node("Node A", net.db.network_id)
+        node_b = self.create_node("Node B", net.db.network_id)
         x = HydraIface.Link()
         x.db.link_name = "test"
         x.db.link_description = "test description"
@@ -64,8 +64,8 @@ class LinkTest(test_HydraIface.HydraIfaceTest):
     def test_delete(self):
         proj = self.create_project("Test Proj)")
         net = self.create_network("Test Net", proj.db.project_id)
-        node_a = self.create_node("Node A")
-        node_b = self.create_node("Node B")
+        node_a = self.create_node("Node A", net.db.network_id)
+        node_b = self.create_node("Node B", net.db.network_id)
         x = HydraIface.Link()
         x.db.link_name = "test"
         x.db.link_description = "test description"
@@ -81,9 +81,9 @@ class LinkTest(test_HydraIface.HydraIfaceTest):
     def test_load(self):
         proj = self.create_project("Test Proj)")
         net = self.create_network("Test Net", proj.db.project_id)
-        node_a = self.create_node("Node A")
-        node_b = self.create_node("Node B")
-        node_c = self.create_node("Node B")
+        node_a = self.create_node("Node A", net.db.network_id)
+        node_b = self.create_node("Node B", net.db.network_id)
+        node_c = self.create_node("Node B", net.db.network_id)
         x = HydraIface.Link()
         x.db.link_name = "test"
         x.db.link_description = "test description"
@@ -110,9 +110,12 @@ class LinkTest(test_HydraIface.HydraIfaceTest):
 class NodeTest(test_HydraIface.HydraIfaceTest):
 
     def test_update(self):
+        proj = self.create_project("Test Proj)")
+        net = self.create_network("Test Net", proj.db.project_id)
         x = HydraIface.Node()
         x.db.node_name = "test"
         x.db.node_description = "test description"
+        x.db.network_id = net.db.network_id
         x.save()
         x.commit()
 
@@ -124,9 +127,12 @@ class NodeTest(test_HydraIface.HydraIfaceTest):
 
 
     def test_delete(self):
+        proj = self.create_project("Test Proj)")
+        net = self.create_network("Test Net", proj.db.project_id)
         x = HydraIface.Node()
         x.db.node_name = "test"
         x.db.node_description = "test description"
+        x.db.network_id = net.db.network_id
         x.save()
         x.commit()
 
@@ -134,9 +140,12 @@ class NodeTest(test_HydraIface.HydraIfaceTest):
         assert x.load() == False, "Delete did not work correctly."
 
     def test_load(self):
+        proj = self.create_project("Test Proj)")
+        net = self.create_network("Test Net", proj.db.project_id)
         x = HydraIface.Node()
         x.db.node_name = "test"
         x.db.node_description = "test description"
+        x.db.network_id = net.db.network_id
         x.save()
         x.commit()
         y = HydraIface.Node(node_id=x.db.node_id)

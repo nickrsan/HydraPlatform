@@ -13,9 +13,9 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         network = self.create_network("Network A", project.db.project_id)
         scenario = self.create_scenario(network.db.network_id, "Scenario A")
 
-        node_a = self.create_node("Node A")
-        node_b = self.create_node("Node B")
-        node_c = self.create_node("Node C")
+        node_a = self.create_node("Node A", network.db.network_id)
+        node_b = self.create_node("Node B", network.db.network_id)
+        node_c = self.create_node("Node C", network.db.network_id)
 
         attr_a = self.create_attribute("Flow")
 
@@ -37,19 +37,19 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         con.save()
         con.commit()
 
-        item_a = HydraIface.ConstraintItem()
+        item_a = HydraIface.ConstraintItem(constraint=con)
         item_a.db.constraint_id = con.db.constraint_id
         item_a.db.resource_attr_id = ra.db.resource_attr_id
         item_a.save()
         item_a.commit()
 
-        item_b = HydraIface.ConstraintItem()
+        item_b = HydraIface.ConstraintItem(constraint=con)
         item_b.db.constraint_id = con.db.constraint_id
         item_b.db.resource_attr_id = rb.db.resource_attr_id
         item_b.save()
         item_b.commit()
 
-        item_c = HydraIface.ConstraintItem()
+        item_c = HydraIface.ConstraintItem(constraint=con)
         item_c.db.constraint_id = con.db.constraint_id
         item_c.db.resource_attr_id = rc.db.resource_attr_id
         item_c.save()

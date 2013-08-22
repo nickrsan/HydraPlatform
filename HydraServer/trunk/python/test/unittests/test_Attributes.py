@@ -111,7 +111,9 @@ class ResourceAttrTest(test_HydraIface.HydraIfaceTest):
         return x
 
     def test_create(self):
-        n1 = self.create_node("Node1")
+        proj = self.create_project("Test Proj)")
+        net = self.create_network("Test Net", proj.db.project_id)
+        n1 = self.create_node("Node1", net.db.network_id)
         a1 = self.create_attribute("Attr1")
 
         ra = HydraIface.ResourceAttr()
@@ -125,7 +127,9 @@ class ResourceAttrTest(test_HydraIface.HydraIfaceTest):
         assert ra.load() == True, "AttrMap did not update correctly"
 
     def test_delete(self):
-        n1 = self.create_node("Node1")
+        proj = self.create_project("Test Proj)")
+        net = self.create_network("Test Net", proj.db.project_id)
+        n1 = self.create_node("Node1", net.db.network_id)
         a1 = self.create_attribute("Attr1")
 
         ra = HydraIface.ResourceAttr()
@@ -140,7 +144,10 @@ class ResourceAttrTest(test_HydraIface.HydraIfaceTest):
         assert ra.load() == False, "AttrMap did not delete correctly"
 
     def test_load(self):
-        n1 = self.create_node("Node1")
+
+        proj = self.create_project("Test Proj)")
+        net = self.create_network("Test Net", proj.db.project_id)
+        n1 = self.create_node("Node1", net.db.network_id)
         a1 = self.create_attribute("Attr1")
 
         ra1 = HydraIface.ResourceAttr()
@@ -158,7 +165,10 @@ class ResourceAttrTest(test_HydraIface.HydraIfaceTest):
         assert ra2.load() == True, "ResourceAttr did not load correctly"
 
     def test_fk(self):
-        n1 = self.create_node("Node1")
+
+        proj = self.create_project("Test Proj)")
+        net = self.create_network("Test Net", proj.db.project_id)
+        n1 = self.create_node("Node1", net.db.network_id)
 
         ra = HydraIface.ResourceAttr()
         ra.db.attr_id = 0

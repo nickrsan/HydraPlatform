@@ -25,20 +25,26 @@ class ScenarioService(ServiceBase):
         """
             Add a scenario to a specified network.
         """
-        x = HydraIface.Scenario()
-        x.db.network_id           = scenario.network_id
-        x.db.scenario_name        = scenario.scenario_name
-        x.db.scenario_description = scenario.scenario_description
-        x.save()
-        x.commit()
-        scenario.scenario_id = x.db.scenario_id
+        try:
+            x = HydraIface.Scenario()
+            x.db.network_id           = scenario.network_id
+            x.db.scenario_name        = scenario.scenario_name
+            x.db.scenario_description = scenario.scenario_description
+            x.save()
+            scenario.scenario_id = x.db.scenario_id
 
-        for r_scen in scenario.resourcescenarios:
-            scenario._update_resourcescenario(x.db.scenario_id, r_scen)
+            for r_scen in scenario.resourcescenarios:
+                scenario._update_resourcescenario(x.db.scenario_id, r_scen)
 
-        hdb.commit()
+            hdb.commit()
+            
+            return x.get_as_complexmodel()
 
-        return x.get_as_complexmodel()
+        except Exception, e:
+            logging.critical(e)
+            hdb.rollback()
+            return None
+
 
     @rpc(Integer, _returns=Boolean)
     def delete_scenario(ctx, scenario_id):
@@ -52,6 +58,7 @@ class ScenarioService(ServiceBase):
             x.save()
         except HydraError, e:
             logging.critical(e)
+            hdb.rollback()
             success=False
 
         return success
@@ -63,8 +70,14 @@ class ScenarioService(ServiceBase):
             Data missing from the resource scenario will not be removed
             from the scenario. Use the remove_resourcedata for this task.
         """
-        if resource_scenario.value is not None:
-            _update_resourcescenario(scenario_id, resource_scenario)
+        try:
+            if resource_scenario.value is not None:
+                res = _update_resourcescenario(scenario_id, resource_scenario)
+                return res.get_as_complexmodel()
+        except Exception, e:
+            logging.critical(e)
+            hdb.rollback()
+            return None
 
     @rpc(Integer, ResourceScenario, _returns=ResourceScenario)
     def delete_resourcedata(ctx,scenario_id, resource_scenario):
@@ -92,6 +105,7 @@ def _update_resourcescenario(scenario_id, resource_scenario):
         res.save()
         
         return res
+
 class DataService(ServiceBase):
   
     """

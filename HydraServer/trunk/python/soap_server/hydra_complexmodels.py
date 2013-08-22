@@ -157,14 +157,20 @@ class Node(ComplexModel):
         ('status',           String),
         ('attributes',       SpyneArray(ResourceAttr)),
     ]
+    def __eq__(self, other):
+        if self.node_x == other.node_x and self.node_y == other.node_y \
+        and self.node_name == other.node_name:
+            return True
+        else:
+            return False
 
 class Link(ComplexModel):
     _type_info = [
         ('link_id',          Integer),
         ('link_name',        String),
         ('link_description', String),
-        ('node_1_id',        Integer),
-        ('node_2_id',        Integer),
+        ('node_1',           Node),
+        ('node_2',           Node),
         ('status',           String),
         ('attributes',       SpyneArray(ResourceAttr)),
     ]

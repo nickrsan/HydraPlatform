@@ -51,6 +51,9 @@ def connect(user=None, password=None, db_name=None):
 def commit():
     CNX.commit()
 
+def rollback():
+    CNX.rollback()
+
 def disconnect():
     logging.debug("DIS - CONNECTING")
     global CNX
