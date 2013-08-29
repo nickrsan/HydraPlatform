@@ -7,14 +7,12 @@ if "../../HydraLib/trunk/" not in sys.path:
 import os
 import datetime
 import unittest
-from decimal import Decimal
 import shutil
 from tempfile import gettempdir as tmp
 shutil.rmtree(os.path.join(tmp(), 'suds'), True)
 from suds.client import Client
 from suds.plugin import MessagePlugin
 from HydraLib import util
-from suds.sax.element import Element
 
 class FixNamespace(MessagePlugin):
     def marshalled(self, context):
@@ -29,41 +27,49 @@ class FixNamespace(MessagePlugin):
 
 class TestSoap(unittest.TestCase):
 
-    def create_node(self,c,name,desc="Node Description", x=0, y=0, attributes=None):
-        (node) = {
-            'node_name' : name,
-            'node_description' : desc,
-            'node_x' : x,
-            'node_y' : y,
-            'attributes': attributes,
-        }
+    def create_node(self,c,node_id,name,desc="Node Description", x=0, y=0, attributes=None):
+        node = c.factory.create('ns1:Node')
+        node.id = node_id
+        node.name = name
+        node.description = desc
+        node.x = x
+        node.y = y
 
         return node
     
-    def create_link(self,c,name,node_1, node_2):
+    def create_link(self,c,name,node_1_id, node_2_id):
         link = c.factory.create('ns1:Link')
-        link.link_name = name
-        link.link_description = 'Link from %s to %s'%(node_1, node_2)
-        link.node_1 = node_1 
-        link.node_2 = node_2
+        link.name = name
+        link.description = 'Link from %s to %s'%(node_1_id, node_2_id)
+        link.node_1_id = node_1_id 
+        link.node_2_id = node_2_id
         print link
+        return link
+
+    def create_link_without_ids(self,c,name,node_1_name, node_1_x, node_1_y, node_2_name, node_2_x, node_2_y):
+        link = c.factory.create('ns1:Link')
+        link.name = name
+        link.description = 'Link from node %s at %s, %s to node %s at %s, %s'%(node_1_name, node_1_x, node_2_x, node_2_name, node_2_x, node_2_y)
+        link.node_1_id = "%s,%s,%s"%(node_1_name, node_1_x, node_1_y) 
+        link.node_2_id = "%s,%s,%s"%(node_2_name, node_2_x, node_2_y)
         return link
 
     def create_attr(self, c):
         attr = c.factory.create('ns1:Attr')
-        attr.attr_name = 'Test Attr'
-        attr.attr_dimen = 'very big'
+        attr.name = 'Test Attr'
+        attr.dimen = 'very big'
         attr = c.service.add_attribute(attr)
-        print attr
+        #print attr
         return attr
 
-    def create_network(self, c, project_id, name, desc=None, links=None, scenarios=None):
+    def create_network(self, c, project_id, name, desc=None, nodes=None, links=None, scenarios=None):
         (network) = {
-            'network_name'        : name,
-            'network_description' : desc,
-            'project_id'          : project_id,
-            'links'               : links,
-            'scenarios'           : scenarios,
+            'name'        : name,
+            'description' : desc,
+            'project_id'  : project_id,
+            'links'       : links,
+            'nodes'       : nodes,
+            'scenarios'   : scenarios,
         }
         print network
         network = c.service.add_network(network)
@@ -75,17 +81,17 @@ class TestSoap(unittest.TestCase):
         port = config.getint('soap_server', 'port')
         c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
         (project) = {
-            'project_name' : 'New Project',
-            'project_description' : 'New Project Description',
+            'name' : 'New Project',
+            'description' : 'New Project Description',
         }
         p =  c.service.add_project(project)
         print p
-        p1 =  c.service.get_project(p['project_id'])
+        p1 =  c.service.get_project(p['id'])
         print p1
         (project1) = {
-            'project_id'   : p['project_id'],
-            'project_name' : 'Updated Project',
-            'project_description' : 'Updated Project Description',
+            'id'   : p['id'],
+            'name' : 'Updated Project',
+            'description' : 'Updated Project Description',
         }
         p2 = c.service.update_project(project1)
         print p2
@@ -97,32 +103,32 @@ class TestSoap(unittest.TestCase):
 
 
         (project) = {
-            'project_name' : 'New Project',
-            'project_description' : 'New Project Description',
+            'name' : 'New Project',
+            'description' : 'New Project Description',
         }
         p =  c.service.add_project(project)
 
         NodeArray = c.factory.create('ns1:NodeArray')
-        node1 = self.create_node(c, "Node 1")
-        node2 = self.create_node(c, "Node 2")
-        node3 = self.create_node(c, "Node 3")
+        node1 = self.create_node(c, -1, "Node 1")
+        node2 = self.create_node(c, -2, "Node 2")
+        node3 = self.create_node(c, -3, "Node 3")
         NodeArray.Node.append(node1)
         NodeArray.Node.append(node2)
         NodeArray.Node.append(node3)
 
-        link1 = self.create_link(c, 'link 1', node1, node2)
-        link2 = self.create_link(c, 'link 1', node2, node3)
+        link1 = self.create_link(c, 'link 1', node1.id, node2.id)
+        link2 = self.create_link(c, 'link 1', node2.id, node3.id)
 
         LinkArray = c.factory.create('ns1:LinkArray')
         LinkArray.Link.append(link1)
         LinkArray.Link.append(link2)
 
         (Network) = {
-            'network_name'        : 'Network1',
-            'network_description' : 'Test Network with 2 nodes and 1 link',
-            'project_id'          : p['project_id'],
-            'links'              : LinkArray,
-            'nodes'              : NodeArray,
+            'name'        : 'Network1',
+            'description' : 'Test Network with 2 nodes and 1 link',
+            'project_id'  : p['id'],
+            'links'       : LinkArray,
+            'nodes'       : NodeArray,
         }
         print Network
         Network = c.service.add_network(Network)
@@ -135,8 +141,8 @@ class TestSoap(unittest.TestCase):
 #        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
 
         (project) = {
-            'project_name' : 'New Project',
-            'project_description' : 'New Project Description',
+            'name'        : 'New Project',
+            'description' : 'New Project Description',
         }
         p =  c.service.add_project(project)
 
@@ -145,27 +151,36 @@ class TestSoap(unittest.TestCase):
         attr2 = self.create_attr(c) 
         attr3 = self.create_attr(c) 
 
+        #Create 2 nodes
+        node1 = self.create_node(c, -1, "Node 1")
+        node2 = self.create_node(c, -2, "Node 2")
+
+        node_array = c.factory.create('ns1:NodeArray')
+        node_array.Node.append(node1)
+        node_array.Node.append(node2)
+
         #From our attributes, create a resource attr for our node
         #We don't assign data directly to these resource attributes. This
         #is done when creating the scenario -- a scenario is just a set of
         #data for a given list of resource attributes.
         attr_array = c.factory.create('ns1:ResourceAttrArray')
         node_attr1  = c.factory.create('ns1:ResourceAttr')
-        node_attr1.attr_id = attr1.attr_id
+        node_attr1.id = -1
+        node_attr1.attr_id = attr1.id
         node_attr2  = c.factory.create('ns1:ResourceAttr')
-        node_attr2.attr_id = attr2.attr_id
+        node_attr2.attr_id = attr2.id
+        node_attr2.id = -2
         node_attr3  = c.factory.create('ns1:ResourceAttr')
-        node_attr3.attr_id = attr3.attr_id
+        node_attr3.attr_id = attr3.id
+        node_attr3.id = -3
         attr_array.ResourceAttr.append(node_attr1)
         attr_array.ResourceAttr.append(node_attr2)
         attr_array.ResourceAttr.append(node_attr3)
 
-        #Create 2 nodes
-        node1 = self.create_node(c, "Node 1", attributes=attr_array)
-        node2 = self.create_node(c, "Node 2")
+        node1.attributes = attr_array
 
         #Connect the two nodes with a link
-        link = self.create_link(c, 'link 1', node1['node_id'], node2['node_id'])
+        link = self.create_link(c, 'link 1', node1['id'], node2['id'])
 
         #A network must contain an array of links. In this case, the array
         #contains a single link
@@ -174,14 +189,15 @@ class TestSoap(unittest.TestCase):
         
         #Create the scenario
         scenario = c.factory.create('ns1:Scenario')
-        scenario.scenario_name = 'Scenario 1'
-        scenario.scenario_description = 'Scenario Description'
+        scenario.id = -1
+        scenario.name = 'Scenario 1'
+        scenario.description = 'Scenario Description'
 
         #Multiple data (Called ResourceScenario) means an array.
         scenario_data = c.factory.create('ns1:ResourceScenarioArray')
         
-        #Our node has several 'resource attributes', created earlier.
-        node_attrs = node1.attributes
+        #Our node has several dmin'resource attributes', created earlier.
+        node_attrs = node1['attributes']
         
         #This is an example of 3 diffent kinds of data
         #A simple string (Descriptor)
@@ -203,8 +219,9 @@ class TestSoap(unittest.TestCase):
         #a scenario array
         scenario_array = c.factory.create('ns1:ScenarioArray')
         scenario_array.Scenario.append(scenario)
-        network = self.create_network(c, p['project_id'], 'Network1', 'Test Network with 2 nodes and 1 link',links=link_array,scenarios=scenario_array)
+        network = self.create_network(c, p['id'], 'Network1', 'Test Network with 2 nodes and 1 link',nodes=node_array,links=link_array,scenarios=scenario_array)
      #   print c.last_sent()
+        print "****************************"
         print network
       #  print c.last_received()
 
@@ -214,7 +231,7 @@ class TestSoap(unittest.TestCase):
         scenario_attr = c.factory.create('ns1:ResourceScenario')
         
         scenario_attr.attr_id = ResourceAttr.attr_id
-        scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
+        scenario_attr.resource_attr_id = ResourceAttr.id
         scenario_attr.type = 'descriptor'
        
         print scenario_attr
@@ -230,7 +247,7 @@ class TestSoap(unittest.TestCase):
         scenario_attr = c.factory.create('ns1:ResourceScenario')
         
         scenario_attr.attr_id = ResourceAttr.attr_id
-        scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
+        scenario_attr.resource_attr_id = ResourceAttr.id
         scenario_attr.type = 'timeseries'
         
         ts1 = c.factory.create('ns1:TimeSeriesData')
@@ -266,7 +283,7 @@ class TestSoap(unittest.TestCase):
         scenario_attr = c.factory.create('ns1:ResourceScenario')
         
         scenario_attr.attr_id = ResourceAttr.attr_id
-        scenario_attr.resource_attr_id = ResourceAttr.resource_attr_id
+        scenario_attr.resource_attr_id = ResourceAttr.id
         scenario_attr.type = 'array'
         
         arr1 = c.factory.create('ns1:Array')

@@ -40,16 +40,16 @@ class AttributeService(ServiceBase):
             Add a generic attribute, which can then be used in creating
             a resource attribute, and put into a template.
             (Attr){
-                attr_id = 1020
-                attr_name = "Test Attr"
-                attr_dimen = "very big"
+                id = 1020
+                name = "Test Attr"
+                dimen = "very big"
             }
 
         """
         try:
             x = HydraIface.Attr()
-            x.db.attr_name = attr.attr_name
-            x.db.attr_dimen = attr.attr_dimen
+            x.db.attr_name = attr.name
+            x.db.attr_dimen = attr.dimen
             x.save()
             hdb.commit()
             return x.get_as_complexmodel()

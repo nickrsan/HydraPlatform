@@ -21,25 +21,27 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
         for i in range(nnodes):
             node = cli.factory.create('hyd:Node')
-            node.node_name = 'Node ' + str(i)
-            node.node_description = 'Test node ' + str(i)
-            node.node_x = x[i]
-            node.node_y = y[i]
+            node.id = i * -1
+            node.name = 'Node ' + str(i)
+            node.description = 'Test node ' + str(i)
+            node.x = x[i]
+            node.y = y[i]
 
             nodes.Node.append(node)
 
         for i in range(nlinks):
             link = cli.factory.create('hyd:Link')
-            link.link_name = 'Link ' + str(i)
-            link.link_description = 'Test link ' + str(i)
-            link.node_1 = nodes[i]
-            link.node_2 = nodes[i + 1]
+            link.id = 1 * -1
+            link.name = 'Link ' + str(i)
+            link.description = 'Test link ' + str(i)
+            link.node_1_id = nodes.Node[i].id
+            link.node_2_id = nodes.Node[i + 1].id
 
             links.Link.append(link)
 
-        network.project_id = project.project_id
-        network.network_name = 'Test'
-        network.network_description = 'A network for SOAP unit tests.'
+        network.project_id = project.id
+        network.name = 'Test'
+        network.description = 'A network for SOAP unit tests.'
         network.nodes = nodes
         network.links = links
 
@@ -47,21 +49,21 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
         new_network = copy.deepcopy(network)
 
-        new_network.links.Link[1].node_1_id = nodes.Node[2].node_id
-        new_network.links.Link[1].node_2_id = nodes.Node[1].node_id
+        new_network.links.Link[1].node_1_id = nodes.Node[2].id
+        new_network.links.Link[1].node_2_id = nodes.Node[1].id
 
-        new_network.network_description = \
+        new_network.description = \
             'A different network for SOAP unit tests.'
 
         new_network = cli.service.update_network(new_network)
 
-        assert network.network_id == new_network.network_id, \
+        assert network.id == new_network.id, \
             'network_id has changed on update.'
-        assert network.network_name == new_network.network_name, \
+        assert network.name == new_network.name, \
             "network_name changed on update."
-        assert network.network_description != new_network.network_description,\
+        assert network.description != new_network.description,\
             "project_description did not update"
-        assert new_network.network_description == \
+        assert new_network.description == \
             'A different network for SOAP unit tests.', \
             "Update did not work correctly."
 
@@ -79,37 +81,37 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
         for i in range(nnodes):
             node = cli.factory.create('hyd:Node')
-            node.node_name = 'Node ' + str(i)
-            node.node_description = 'Test node ' + str(i)
-            node.node_x = x[i]
-            node.node_y = y[i]
-            node = cli.service.add_node(node)
+            node.id = i * -1
+            node.name = 'Node ' + str(i)
+            node.description = 'Test node ' + str(i)
+            node.x = x[i]
+            node.y = y[i]
 
             nodes.Node.append(node)
 
         for i in range(nlinks):
             link = cli.factory.create('hyd:Link')
-            link.link_name = 'Link ' + str(i)
-            link.link_description = 'Test link ' + str(i)
-            link.node_1_id = nodes.Node[i].node_id
-            link.node_2_id = nodes.Node[i + 1].node_id
-            #link = cli.service.add_link(link)
+            link.id = i * -1
+            link.name = 'Link ' + str(i)
+            link.description = 'Test link ' + str(i)
+            link.node_1_id = nodes.Node[i].id
+            link.node_2_id = nodes.Node[i + 1].id
 
             links.Link.append(link)
 
-        network.project_id = project.project_id
-        network.network_name = 'Test'
-        network.network_description = 'A network for SOAP unit tests.'
+        network.project_id = project.id
+        network.name = 'Test'
+        network.description = 'A network for SOAP unit tests.'
         network.nodes = nodes
         network.links = links
 
         network = cli.service.add_network(network)
 
-        new_network = cli.service.get_network(network.network_id)
+        new_network = cli.service.get_network(network.id)
 
-        assert network.network_name == new_network.network_name, \
+        assert network.name == new_network.name, \
             "network_name has changed."
-        assert network.network_description == new_network.network_description,\
+        assert network.description == new_network.description,\
             "project_description did not load correctly"
 
     def test_delete(self):
@@ -126,35 +128,36 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
         for i in range(nnodes):
             node = cli.factory.create('hyd:Node')
-            node.node_name = 'Node ' + str(i)
-            node.node_description = 'Test node ' + str(i)
-            node.node_x = x[i]
-            node.node_y = y[i]
-            node = cli.service.add_node(node)
+            node.id = i * -1
+            node.name = 'Node ' + str(i)
+            node.description = 'Test node ' + str(i)
+            node.x = x[i]
+            node.y = y[i]
 
             nodes.Node.append(node)
 
         for i in range(nlinks):
             link = cli.factory.create('hyd:Link')
-            link.link_name = 'Link ' + str(i)
-            link.link_description = 'Test link ' + str(i)
-            link.node_1_id = nodes.Node[i].node_id
-            link.node_2_id = nodes.Node[i + 1].node_id
+            link.id = i * -1
+            link.name = 'Link ' + str(i)
+            link.description = 'Test link ' + str(i)
+            link.node_1_id = nodes.Node[i].id
+            link.node_2_id = nodes.Node[i + 1].id
             #link = cli.service.add_link(link)
 
             links.Link.append(link)
 
-        network.project_id = project.project_id
-        network.network_name = 'Test'
-        network.network_description = 'A network for SOAP unit tests.'
+        network.project_id = project.id
+        network.name = 'Test'
+        network.description = 'A network for SOAP unit tests.'
         network.nodes = nodes
         network.links = links
 
         network = cli.service.add_network(network)
 
-        cli.service.delete_network(network.network_id)
+        cli.service.delete_network(network.id)
 
-        assert cli.service.get_network(network.network_id).status == 'X', \
+        assert cli.service.get_network(network.id).status == 'X', \
             'Deleting network did not work correctly.'
 
 if __name__ == '__main__':

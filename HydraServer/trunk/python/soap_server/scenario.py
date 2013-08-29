@@ -28,8 +28,8 @@ class ScenarioService(ServiceBase):
         try:
             x = HydraIface.Scenario()
             x.db.network_id           = scenario.network_id
-            x.db.scenario_name        = scenario.scenario_name
-            x.db.scenario_description = scenario.scenario_description
+            x.db.scenario_name        = scenario.name
+            x.db.scenario_description = scenario.description
             x.save()
             scenario.scenario_id = x.db.scenario_id
 

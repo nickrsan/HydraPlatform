@@ -21,16 +21,16 @@ class ProjectService(ServiceBase):
         """
         try:
             x = HydraIface.Project()
-            x.db.project_name = project.project_name
-            x.db.project_description = project.project_description
+            x.db.project_name = project.name
+            x.db.project_description = project.description
             x.save()
             x.commit()
-            return x.get_as_complexmodel()
+            ret = x.get_as_complexmodel()
         except Exception, e:
             logging.critical(e)
             hdb.rollback()
-            return None
-
+            ret = None
+        return ret
     @rpc(Project, _returns=Project) 
     def update_project(ctx, project):
         """
@@ -38,9 +38,9 @@ class ProjectService(ServiceBase):
             returns a project complexmodel
         """
         try:
-            x = HydraIface.Project(project_id = project.project_id)
-            x.db.project_name = project.project_name
-            x.db.project_description = project.project_description
+            x = HydraIface.Project(project_id = project.id)
+            x.db.project_name        = project.name
+            x.db.project_description = project.description
             x.save()
             x.commit()
             return x.get_as_complexmodel()

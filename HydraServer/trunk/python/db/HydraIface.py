@@ -185,6 +185,11 @@ class IfaceBase(object):
             value = getattr(self.db, attr)
             if type(value) == Decimal:
                 value = float(value)
+
+            attr_prefix = "%s_"%self.name.lower()
+            if attr.find(attr_prefix) == 0:
+                attr = attr.replace(attr_prefix, "")
+            
             setattr(cm, attr, value)
 
         #get my children, convert them and assign them to the new
@@ -677,6 +682,7 @@ class Network(GenericResource):
         for n in self.nodes:
             if n.db.node_id == node_id:
                 node = n
+                node.load()
         return node
 
 class Node(GenericResource):

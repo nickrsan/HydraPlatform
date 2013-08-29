@@ -35,7 +35,7 @@ class SoapServerTest(unittest.TestCase):
     def create_project(self, name):
         cli = self.connect()
         project = cli.factory.create('hyd:Project')
-        project.project_name = 'SOAP test'
+        project.name = 'SOAP test'
         project = cli.service.add_project(project)
         return project
 

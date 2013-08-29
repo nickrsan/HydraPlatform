@@ -114,30 +114,30 @@ class Array(ComplexModel):
 
 class Attr(ComplexModel):
     _type_info = [
-        ('attr_id', Integer),
-        ('attr_name', String),
-        ('attr_dimen', String),
+        ('id', Integer),
+        ('name', String),
+        ('dimen', String),
     ]
 
 class ResourceAttr(ComplexModel):
     _type_info = [
-        ('resource_attr_id', Integer),
-        ('attr_id',          Integer),
-        ('ref_id',           Integer),
-        ('ref_key',          String),
-        ('attr_is_var',      Boolean),
+        ('id',      Integer),
+        ('attr_id', Integer),
+        ('ref_id',  Integer),
+        ('ref_key', String),
+        ('is_var',  Boolean),
     ]
 
 class ResourceTemplateGroup(ComplexModel):
     _type_info = [
-        ('group_id', Integer),
-        ('group_name', String),
+        ('id',   Integer),
+        ('name', String),
     ]
 
 class ResourceTemplate(ComplexModel):
     _type_info = [
-        ('template_name', Integer),
-        ('template_id', Integer),
+        ('name', Integer),
+        ('id', Integer),
         ('group_id',    Integer)
     ]
 
@@ -149,13 +149,13 @@ class ResourceTemplateItem(ComplexModel):
 
 class Node(ComplexModel):
     _type_info = [
-        ('node_id',          Integer),
-        ('node_name',        String),
-        ('node_description', String),
-        ('node_x',           Decimal),
-        ('node_y',           Decimal),
-        ('status',           String),
-        ('attributes',       SpyneArray(ResourceAttr)),
+        ('id',          Integer),
+        ('name',        String),
+        ('description', String),
+        ('x',           Decimal),
+        ('y',           Decimal),
+        ('status',      String),
+        ('attributes',  SpyneArray(ResourceAttr)),
     ]
     def __eq__(self, other):
         if self.node_x == other.node_x and self.node_y == other.node_y \
@@ -166,13 +166,13 @@ class Node(ComplexModel):
 
 class Link(ComplexModel):
     _type_info = [
-        ('link_id',          Integer),
-        ('link_name',        String),
-        ('link_description', String),
-        ('node_1',           Node),
-        ('node_2',           Node),
-        ('status',           String),
-        ('attributes',       SpyneArray(ResourceAttr)),
+        ('id',          Integer),
+        ('name',        String),
+        ('description', String),
+        ('node_1_id',   Integer),
+        ('node_2_id',   Integer),
+        ('status',      String),
+        ('attributes',  SpyneArray(ResourceAttr)),
     ]
 
 class ResourceScenario(ComplexModel):
@@ -185,11 +185,11 @@ class ResourceScenario(ComplexModel):
 
 class Scenario(ComplexModel):
     _type_info = [
+        ('id',                   Integer),
+        ('name',                 String),
+        ('description',          String),
         ('network_id',           Integer),
-        ('scenario_id',          Integer),
-        ('scenario_name',        String),
         ('status',               String),
-        ('scenario_description', String),
         ('attributes',           SpyneArray(ResourceAttr)),
         ('resourcescenarios',    SpyneArray(ResourceScenario)),
     ]
@@ -197,10 +197,10 @@ class Scenario(ComplexModel):
 class Network(ComplexModel):
     _type_info = [
         ('project_id',          Integer),
-        ('network_id',          Integer),
-        ('network_name',        String),
-        ('network_description', String),
-        ('status'             , String),
+        ('id',                  Integer),
+        ('name',                String),
+        ('description',         String),
+        ('status',              String),
         ('attributes',          SpyneArray(ResourceAttr)),
         ('scenarios',           SpyneArray(Scenario)),
         ('nodes',               SpyneArray(Node)),
@@ -209,26 +209,26 @@ class Network(ComplexModel):
 
 class Project(ComplexModel):
     _type_info = [
-        ('project_id',          Integer),
-        ('project_name',        String),
-        ('project_description', String),
-        ('status',              String),
-        ('attributes',          SpyneArray(ResourceAttr)),
+        ('id',          Integer),
+        ('name',        String),
+        ('description', String),
+        ('status',      String),
+        ('attributes',  SpyneArray(ResourceAttr)),
 
     ]
 
 class ConstraintItem(ComplexModel):
     _type_info = [
+        ('id',               Integer),
         ('constraint_id',    Integer),
-        ('item_id',          Integer),
         ('resource_attr_id', Integer),
         ('resource_attr',    ResourceAttr),
     ]
 
 class ConstraintGroup(ComplexModel):
     _type_info = [
+        ('id',            Integer),
         ('constraint_id', Integer),
-        ('group_id',      Integer),
         ('op',            String),
         ('ref_key_1',     String),
         ('ref_id_1',      Integer),
@@ -238,7 +238,7 @@ class ConstraintGroup(ComplexModel):
 
 class Constraint(ComplexModel):
     _type_info = [
-        ('constraint_id', Integer),
+        ('id',            Integer),
         ('scenario_id',   Integer),
         ('group_id',      Integer),
         ('constant',      Decimal),
@@ -270,15 +270,9 @@ class Role(ComplexModel):
 
 class RoleUser(ComplexModel):
     _type_info = [
-        ('role_id', Integer),
-        ('',        String),
+        ('role_id',   Integer),
+        ('role_name', String),
            ]
-
-class Test(ComplexModel):
-    _type_info = [
-        ('test_entry_1', Integer),
-        ('test_entry_2', String),
-    ]
 
 class PluginParam(ComplexModel):
     _type_info = [
