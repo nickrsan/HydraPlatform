@@ -116,7 +116,7 @@ class HydraServer():
 
 # These few lines are needed to turn the server into a WSGI script.
 server = HydraServer()
-appication = server.crate_application()
+application = server.crate_application()
 
 
 if __name__ == '__main__':
