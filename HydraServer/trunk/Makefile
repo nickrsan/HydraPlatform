@@ -14,6 +14,7 @@ LINKCC=$(shell $(PYTHON) -c "import distutils.sysconfig; print(distutils.sysconf
 LINKFORSHARED=$(shell $(PYTHON) -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_var('LINKFORSHARED'))")
 LIBS=$(shell $(PYTHON) -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_var('LIBS'))")
 SYSLIBS= $(shell $(PYTHON) -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_var('SYSLIBS'))")
+WININCDIR=/home/phm/.wine/drive_c/Python27/include/
 
 server: server.o
 	$(LINKCC) -o $@ $^ -L$(LIBDIR1) -L$(LIBDIR2) -l$(PYLIB) $(LIBS) $(SYSLIBS) $(LINKFORSHARED)
@@ -27,6 +28,12 @@ server.c: server.py
 	@$(PYTHON) $(CYTHON) --embed server.py
 
 all: server
+
+win64: server.c
+	x86_64-w64-mingw32-gcc -c $^ -I$(WININCDIR) -o server_w64.exe
+
+win32: server.c
+	i686-w64-mingw32-gcc -c$^ -I$(WININCDIR) -o server_w32.exe
 
 clean:
 	@rm -f *~ *.o *.c server

@@ -36,14 +36,14 @@ class NetworkService(ServiceBase):
             node_ids = dict()
             #Maps a node's name, x and y to a real node_id.
             node_namexy = dict()
-            
+
             resource_attr_id_map = dict()
 
              #First add all the nodes
             for node in network.nodes:
                 n = x.add_node(node.name, node.description, node.x, node.y)
                 n.save()
-               
+
                 if node.attributes is not None:
                     #ra is for ResourceAttr
                     for ra in node.attributes:
@@ -57,7 +57,7 @@ class NetworkService(ServiceBase):
                 #store the mapping to the real node_id
                 if node.id is not None:
                     node_ids[node.id] = n.db.node_id
-                
+
                 #If no temporary ID was given, store a map between the nodes
                 #name, x, y to the node id.
                 node_uid = "%s,%s,%s" % (n.db.node_name, n.db.node_x, n.db.node_y)
@@ -67,11 +67,11 @@ class NetworkService(ServiceBase):
 
             #Then add all the links.
             for link in network.links:
-                node_1_id = link.node_1_id 
+                node_1_id = link.node_1_id
                 if link.node_1_id in node_ids:
                     node_1_id = node_ids[link.node_1_id]
 
-                node_2_id = link.node_2_id 
+                node_2_id = link.node_2_id
                 if link.node_2_id in node_ids:
                     node_2_id = node_ids[link.node_2_id]
 
@@ -92,7 +92,7 @@ class NetworkService(ServiceBase):
 
                     for r_scen in s.resourcescenarios:
                         r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
-                        scenario._update_resourcescenario(scen.db.scenario_id, r_scen) 
+                        scenario._update_resourcescenario(scen.db.scenario_id, r_scen)
 
             net = x.get_as_complexmodel()
 
@@ -133,7 +133,7 @@ class NetworkService(ServiceBase):
              #First add all the nodes
             for node in network.nodes:
                 is_new = False
-                
+
                 #If we get a negative or null node id, we know
                 #it is a new node.
                 if node.id is not None and node.id > 0:
@@ -146,7 +146,7 @@ class NetworkService(ServiceBase):
                     is_new = True
                     n = x.add_node(node.name, node.description, node.x, node.y)
                 n.save()
-                
+
                 #If a temporary ID was given to the node
                 #store the mapping to the real node_id
                 if is_new is True:
@@ -155,18 +155,18 @@ class NetworkService(ServiceBase):
                 node.id = n.db.node_id
 
             for link in network.links:
-                node_1_id = link.node_1_id 
+                node_1_id = link.node_1_id
                 if link.node_1_id in node_id_map:
                     node_1_id = node_id_map[link.node_1_id]
 
-                node_2_id = link.node_2_id 
+                node_2_id = link.node_2_id
                 if link.node_2_id in node_id_map:
                     node_2_id = node_id_map[link.node_2_id]
 
                 link_id = None
                 if hasattr(link, 'id'):
                     link_id = link.id
-                
+
                 l = x.get_link(link_id)
                 if l is None:
                     l = x.add_link(link.name, link.description, node_1_id, node_2_id)
@@ -189,7 +189,7 @@ class NetworkService(ServiceBase):
                     scen.save()
 
                     for r_scen in s.resourcescenarios:
-                        scenario._update_resourcescenario(scen.db.scenario_id, r_scen) 
+                        scenario._update_resourcescenario(scen.db.scenario_id, r_scen)
 
             net = x.get_as_complexmodel()
 
@@ -229,7 +229,7 @@ class NetworkService(ServiceBase):
             Given two networks and a set of nodes, return
             a new network which is a combination of both networks, with
             the nodes as the joining nodes.
-            
+
         """
         pass
 
@@ -243,9 +243,9 @@ class NetworkService(ServiceBase):
                description = "Node Description"
                x = 0.0
                y = 0.0
-               attributes = 
+               attributes =
                   (ResourceAttrArray){
-                     ResourceAttr[] = 
+                     ResourceAttr[] =
                         (ResourceAttr){
                            attr_id = 1234
                         },
@@ -263,7 +263,7 @@ class NetworkService(ServiceBase):
             x.db.node_y    = node.y
             x.db.node_description = node.description
             x.save()
-            
+
             if node.attributes is not None:
                 #ra is for ResourceAttr
                 for ra in node.attributes:
@@ -293,9 +293,9 @@ class NetworkService(ServiceBase):
                x = 0.0
                y = 0.0
                status = "A"
-               attributes = 
+               attributes =
                   (ResourceAttrArray){
-                     ResourceAttr[] = 
+                     ResourceAttr[] =
                         (ResourceAttr){
                            id = 850
                            attr_id = 1038
@@ -321,7 +321,7 @@ class NetworkService(ServiceBase):
             x.db.node_x    = node.x
             x.db.node_y    = node.y
             x.db.node_description = node.description
-            
+
             if node.attributes is not None:
                 #ra is for ResourceAttr
                 for ra in node.attributes:
@@ -398,7 +398,7 @@ class NetworkService(ServiceBase):
             x.db.node_2_id = link.node_2_id
             x.db.link_description = link.description
             x.save()
-        
+
             if link.attributes is not None:
                 #ra is for ResourceAttr
                 for ra in link.attributes:
@@ -411,7 +411,7 @@ class NetworkService(ServiceBase):
         except Exception, e:
             logging.critical(e)
             hdb.rollback()
-        return link 
+        return link
 
     @rpc(Link, _returns=Link)
     def update_link(ctx, link):
