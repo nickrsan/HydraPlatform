@@ -9,7 +9,7 @@ class HydraDaemon(Daemon):
 
     def run(self):
         server = HydraServer()
-        server.run()
+        server.run_server()
 
 
 if __name__ == '__main__':

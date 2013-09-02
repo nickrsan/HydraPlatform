@@ -74,14 +74,7 @@ class MyApplication(Application):
 
 class HydraServer():
 
-    def run(self):
-        hydra_logging.init(level='INFO')
-        #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
-        connection = hdb.connect()
-        HydraIface.init(connection)
-
-        from wsgiref.simple_server import make_server
-
+    def crate_application(self):
 
         applications = [
             NetworkService,
@@ -97,6 +90,17 @@ class HydraServer():
                     out_protocol=Soap11()
                 )
         wsgi_application = WsgiApplication(application)
+        return wsgi_application
+
+    def run_server(self):
+        hydra_logging.init(level='INFO')
+        #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
+        connection = hdb.connect()
+        HydraIface.init(connection)
+
+        wsgi_application = self.crate_application()
+
+        from wsgiref.simple_server import make_server
 
         config = util.load_config()
         port = config.getint('soap_server', 'port')
