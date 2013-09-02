@@ -26,13 +26,16 @@ from db import HydraIface
 import datetime
 import sys, traceback
 
+
 def _on_method_call(ctx):
     #Open a cursor?
     pass
 
+
 def _on_method_context_closed(ctx):
     pass
     #hdb.commit()
+
 
 class MyApplication(Application):
     """
@@ -111,6 +114,11 @@ class HydraServer():
         server = make_server('127.0.0.1', port, wsgi_application)
         server.serve_forever()
 
+# These few lines are needed to turn the server into a WSGI script.
+server = HydraServer()
+appication = server.crate_application()
+
+
 if __name__ == '__main__':
     server = HydraServer()
-    server.run()
+    server.run_server()
