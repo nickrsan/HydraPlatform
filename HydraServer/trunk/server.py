@@ -37,7 +37,7 @@ def _on_method_context_closed(ctx):
 class MyApplication(Application):
     """
         Subclass of the base spyne Application class.
-        
+
         Used to handle transactions in request handlers and to log
         how long each request takes.
 
@@ -69,37 +69,44 @@ class MyApplication(Application):
             hdb.rollback()
             raise Fault('Server', e.message)
 
-if __name__=='__main__':
+#if __name__=='__main__':
 
 
-    hydra_logging.init(level='INFO')
-    #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
-    connection = hdb.connect()
-    HydraIface.init(connection)
+class HydraServer():
 
-    from wsgiref.simple_server import make_server
+    def run(self):
+        hydra_logging.init(level='INFO')
+        #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
+        connection = hdb.connect()
+        HydraIface.init(connection)
+
+        from wsgiref.simple_server import make_server
 
 
-    applications = [
-        NetworkService,
-        ProjectService,
-        AttributeService,
-        ScenarioService,
-        DataService,
-        PluginService,
-    ]
+        applications = [
+            NetworkService,
+            ProjectService,
+            AttributeService,
+            ScenarioService,
+            DataService,
+            PluginService,
+        ]
 
-    application = MyApplication(applications, 'hydra.soap',
-                in_protocol=Soap11(validator='lxml'),
-                out_protocol=Soap11()
-            )
-    wsgi_application = WsgiApplication(application)
+        application = MyApplication(applications, 'hydra.soap',
+                    in_protocol=Soap11(validator='lxml'),
+                    out_protocol=Soap11()
+                )
+        wsgi_application = WsgiApplication(application)
 
-    config = util.load_config()
-    port = config.getint('soap_server', 'port') 
-    
-    logging.info("listening to http://127.0.0.1:%s", port)
-    logging.info("wsdl is at: http://localhost:%s/?wsdl", port)
+        config = util.load_config()
+        port = config.getint('soap_server', 'port')
 
-    server = make_server('127.0.0.1', port, wsgi_application)
-    server.serve_forever()
+        logging.info("listening to http://127.0.0.1:%s", port)
+        logging.info("wsdl is at: http://localhost:%s/?wsdl", port)
+
+        server = make_server('127.0.0.1', port, wsgi_application)
+        server.serve_forever()
+
+if __name__ == '__main__':
+    server = HydraServer()
+    server.run()

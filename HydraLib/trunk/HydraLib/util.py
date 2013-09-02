@@ -4,6 +4,7 @@ import os
 import glob
 import ConfigParser
 
+
 def load_csv(cnx, cursor, filepath):
 
     sql = "insert into %(table_name)s (%(col_names)s) values (%(values)s)"
@@ -36,15 +37,17 @@ def load_config():
     """Load a config file. This function looks for a config (*.ini) file in the
     following order::
 
-        (1) ~/.config/hydra/
-        (2) /etc/hydra
-        (3) [...]/HYDRA/HydraLib/trunk/../../config/
+        (1) ./*.ini
+        (2) ~/.config/hydra/
+        (3) /etc/hydra
+        (4) [...]/HYDRA/HydraLib/trunk/../../config/
 
-    (1) will override (2) will override (3). Parameters not defined in (1) will
-    be taken from (2). Parameters not defined in (2) will be taken from (3).
-    (3) is the config folder that will be checked out from the svn repository.
-    (2) Will be be provided as soon as an installable distribution is
-    available. (1) will usually be written individually by every user."""
+    (1) will override (2) will override (3) will override (4). Parameters not
+    defined in (1) will be taken from (2). Parameters not defined in (2) will
+    be taken from (3).  (3) is the config folder that will be checked out from
+    the svn repository.  (2) Will be be provided as soon as an installable
+    distribution is available. (1) will usually be written individually by
+    every user."""
     #TODO: Check for the operating system we are running, provide search paths
     #      for Windows machines.
     modulepath = os.path.dirname(os.path.abspath(__file__))
