@@ -19,22 +19,25 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         # Create node attributes
         attr_array = cli.factory.create('hyd:ResourceAttrArray')
         node_attr1 = cli.factory.create('hyd:ResourceAttr')
-        node_attr1.attr_id = attr1.attr_id
+        node_attr1.attr_id = attr1.id
         node_attr2 = cli.factory.create('hyd:ResourceAttr')
-        node_attr2.attr_id = attr2.attr_id
+        node_attr2.attr_id = attr2.id
         node_attr3 = cli.factory.create('hyd:ResourceAttr')
-        node_attr3.attr_id = attr3.attr_id
+        node_attr3.attr_id = attr3.id
         attr_array.ResourceAttr.append(node_attr1)
         attr_array.ResourceAttr.append(node_attr2)
         attr_array.ResourceAttr.append(node_attr3)
 
-        # Create nodes and a link between.
-        node1 = test_SoapServer.SoapServerTest.create_node(self,
-                attributes=attr_array)
-        node2 = test_SoapServer.SoapServerTest.create_node(self)
 
-        link = test_SoapServer.SoapServerTest.create_link(self,
-                network, node1, node2)
+        node_array = cli.factory.create('hyd:NodeArray')
+        # Create nodes and a link between.
+        node1 = test_SoapServer.SoapServerTest.create_node(self, -1,
+                attributes=attr_array)
+        node2 = test_SoapServer.SoapServerTest.create_node(self, -2)
+        node_array.Node.append(node1)
+        node_array.Node.append(node2)
+
+        link = test_SoapServer.SoapServerTest.create_link(self, node1.id, node2.id)
 
         # Links are stored in the network as a link array.
         link_array = cli.factory.create('hyd:LinkArray')
@@ -60,3 +63,6 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         # A descriptor
 
         # A time series
+
+if __name__ == '__main__':
+    test_SoapServer.run()

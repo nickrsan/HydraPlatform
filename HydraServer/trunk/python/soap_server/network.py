@@ -8,7 +8,27 @@ from hydra_complexmodels import Network, Node, Link
 from db import HydraIface
 from HydraLib import hdb
 import scenario
-import sys, traceback
+
+def _add_attributes(resource_i, attributes):
+    resource_attr_id_map = dict()
+    if attributes is None:
+        return dict()
+
+    #ra is for ResourceAttr
+    for ra in attributes:
+        attr_is_var = 'N'
+        if ra.is_var is True:
+            attr_is_var = 'Y'
+
+        if ra.id < 0:
+            ra_i = resource_i.add_attribute(ra.attr_id, attr_is_var)
+        else:
+            ra = HydraIface.ResourceAttr(resource_attr_id=ra.id)
+            ra.db.attr_is_var = attr_is_var
+
+        resource_attr_id_map[ra.id] = ra_i.db.resource_attr_id
+
+    return resource_attr_id_map
 
 class NetworkService(ServiceBase):
     """
@@ -21,88 +41,80 @@ class NetworkService(ServiceBase):
             Takes an entire network complex model and saves it to the DB.
             This complex model includes links & scenarios (with resource data).
             Returns the network's complex model.
+
+            As links connect two nodes using the node_ids, if the nodes are new
+            they will not yet have node_ids. In this case, use negative ids 
+            as temporary IDS until the node has been given an permanent ID.
+
+            All inter-object referencing of new objects
+            should be done using negative IDs in the client.
+
+            The returned object will have positive IDS
+
         """
-        net = None
-        try:
-            x = HydraIface.Network()
-            x.db.project_id          = network.project_id
-            x.db.network_name        = network.name
-            x.db.network_description = network.description
-            x.save()
-            x.commit()
-            network.network_id = x.db.network_id
+        return_value = None
 
-            #Maps temporary node_ids to real node_ids
-            node_ids = dict()
-            #Maps a node's name, x and y to a real node_id.
-            node_namexy = dict()
+        x = HydraIface.Network()
+        x.db.project_id          = network.project_id
+        x.db.network_name        = network.name
+        x.db.network_description = network.description
+        x.save()
+        x.commit()
+        network.network_id = x.db.network_id
+        
+        resource_attr_id_map = _add_attributes(x, x.attributes)
 
-            resource_attr_id_map = dict()
+        #Maps temporary node_ids to real node_ids
+        node_ids = dict()
+        
+         #First add all the nodes
+        for node in network.nodes:
+            n = x.add_node(node.name, node.description, node.x, node.y)
+            n.save()
+           
+            node_attr_id_map = _add_attributes(n, node.attributes)
+            resource_attr_id_map.update(node_attr_id_map)
+            #If a temporary ID was given to the node
+            #store the mapping to the real node_id
+            if node.id is not None:
+                node_ids[node.id] = n.db.node_id
 
-             #First add all the nodes
-            for node in network.nodes:
-                n = x.add_node(node.name, node.description, node.x, node.y)
-                n.save()
+        #Then add all the links.
+        for link in network.links:
+            node_1_id = link.node_1_id 
+            if link.node_1_id in node_ids:
+                node_1_id = node_ids[link.node_1_id]
 
-                if node.attributes is not None:
-                    #ra is for ResourceAttr
-                    for ra in node.attributes:
-                        attr_is_var = 'N'
-                        if ra.is_var is True:
-                            attr_is_var = 'Y'
-                        ra_i = x.add_attribute(ra.attr_id, attr_is_var)
-                        resource_attr_id_map[ra.id] = ra_i.db.resource_attr_id
+            node_2_id = link.node_2_id 
+            if link.node_2_id in node_ids:
+                node_2_id = node_ids[link.node_2_id]
 
-                #If a temporary ID was given to the node
-                #store the mapping to the real node_id
-                if node.id is not None:
-                    node_ids[node.id] = n.db.node_id
+            if node_1_id is None or node_2_id is None:
+                raise HydraError("Node IDS (%s, %s)are incorrect!"%(node_1_id, node_2_id))
 
-                #If no temporary ID was given, store a map between the nodes
-                #name, x, y to the node id.
-                node_uid = "%s,%s,%s" % (n.db.node_name, n.db.node_x, n.db.node_y)
-                node_namexy[node_uid] = n.db.node_id
+            l = x.add_link(link.name, link.description, node_1_id, node_2_id)
+            l.save()
+            link_attr_id_map = _add_attributes(l, node.attributes)
+            resource_attr_id_map.update(link_attr_id_map)
 
-                node.id = n.db.node_id
+        if network.scenarios is not None:
+            for s in network.scenarios:
+                scen = HydraIface.Scenario()
+                scen.db.scenario_name        = s.name
+                scen.db.scenario_description = s.description
+                scen.db.network_id           = x.db.network_id
+                scen.save()
 
-            #Then add all the links.
-            for link in network.links:
-                node_1_id = link.node_1_id
-                if link.node_1_id in node_ids:
-                    node_1_id = node_ids[link.node_1_id]
+                for r_scen in s.resourcescenarios:
+                    r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
+                    scenario._update_resourcescenario(scen.db.scenario_id, r_scen) 
 
-                node_2_id = link.node_2_id
-                if link.node_2_id in node_ids:
-                    node_2_id = node_ids[link.node_2_id]
+        return_value = x.get_as_complexmodel()
 
-                if node_1_id is None or node_2_id is None:
-                    raise HydraError("Node IDS (%s, %s)are incorrect!"%(node_1_id, node_2_id))
+        hdb.commit()
 
-                l = x.add_link(link.name, link.description, node_1_id, node_2_id)
-                l.save()
-                link.id = l.db.link_id
+        return return_value
 
-            if network.scenarios is not None:
-                for s in network.scenarios:
-                    scen = HydraIface.Scenario()
-                    scen.db.scenario_name        = s.name
-                    scen.db.scenario_description = s.description
-                    scen.db.network_id           = x.db.network_id
-                    scen.save()
-
-                    for r_scen in s.resourcescenarios:
-                        r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
-                        scenario._update_resourcescenario(scen.db.scenario_id, r_scen)
-
-            net = x.get_as_complexmodel()
-
-            hdb.commit()
-        except Exception, e:
-            logging.critical(e)
-            traceback.print_exc(file=sys.stdout)
-            hdb.rollback()
-
-        return net
 
     @rpc(Integer, _returns=Network)
     def get_network(ctx, network_id):
@@ -121,88 +133,90 @@ class NetworkService(ServiceBase):
             Update an entire network, excluding nodes.
         """
         net = None
-        try:
-            x = HydraIface.Network(network_id = network.id)
-            x.db.project_id          = network.project_id
-            x.db.network_name        = network.name
-            x.db.network_description = network.description
+        x = HydraIface.Network(network_id = network.id)
+        x.db.project_id          = network.project_id
+        x.db.network_name        = network.name
+        x.db.network_description = network.description
+        
+        resource_attr_id_map = _add_attributes(x, x.attributes)
 
-            #Maps temporary node_ids to real node_ids
-            node_id_map = dict()
+        #Maps temporary node_ids to real node_ids
+        node_id_map = dict()
 
-             #First add all the nodes
-            for node in network.nodes:
-                is_new = False
+         #First add all the nodes
+        for node in network.nodes:
+            is_new = False
+            
+            #If we get a negative or null node id, we know
+            #it is a new node.
+            if node.id is not None and node.id > 0:
+                n = x.get_node(node.id)
+                n.db.node_name        = node.name
+                n.db.node_description = node.description
+                n.db.node_x           = node.x
+                n.db.node_y           = node.y
+            else:
+                is_new = True
+                n = x.add_node(node.name, node.description, node.x, node.y)
+            n.save()
+            
+            node_attr_id_map = _add_attributes(n, node.attributes)
+            resource_attr_id_map.update(node_attr_id_map)
+            
+            #If a temporary ID was given to the node
+            #store the mapping to the real node_id
+            if is_new is True:
+                node_id_map[node.id] = n.db.node_id
 
-                #If we get a negative or null node id, we know
-                #it is a new node.
-                if node.id is not None and node.id > 0:
-                    n = x.get_node(node.id)
-                    n.db.node_name        = node.name
-                    n.db.node_description = node.description
-                    n.db.node_x           = node.x
-                    n.db.node_y           = node.y
+
+        for link in network.links:
+            node_1_id = link.node_1_id 
+            if link.node_1_id in node_id_map:
+                node_1_id = node_id_map[link.node_1_id]
+
+            node_2_id = link.node_2_id 
+            if link.node_2_id in node_id_map:
+                node_2_id = node_id_map[link.node_2_id]
+
+            if link.id is None or link.id < 0:
+                l = x.add_link(link.name, link.description, node_1_id, node_2_id)
+            else:
+                l = x.get_link(link.id)
+                l.load()
+                l.db.link_name       = link.name
+                l.db.link_descripion = link.description
+            
+            l.save()
+            
+            link_attr_id_map = _add_attributes(l, node.attributes)
+            resource_attr_id_map.update(link_attr_id_map)
+
+
+        if network.scenarios is not None:
+            for s in network.scenarios:
+                if s.id is not None and s.id > 0:
+                    scen = HydraIface.Scenario(scenario_id=s.id)
+
                 else:
-                    is_new = True
-                    n = x.add_node(node.name, node.description, node.x, node.y)
-                n.save()
+                    scen = HydraIface.Scenario()
+                scen.db.scenario_name        = s.name
+                scen.db.scenario_description = s.description
+                scen.db.network_id           = x.db.network_id
+                scen.save()
 
-                #If a temporary ID was given to the node
-                #store the mapping to the real node_id
-                if is_new is True:
-                    node_id_map[node.id] = n.db.node_id
+                for r_scen in s.resourcescenarios:
+                    r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
 
-                node.id = n.db.node_id
+                    scenario._update_resourcescenario(scen.db.scenario_id, r_scen) 
+        
+        net = x.get_as_complexmodel()
 
-            for link in network.links:
-                node_1_id = link.node_1_id
-                if link.node_1_id in node_id_map:
-                    node_1_id = node_id_map[link.node_1_id]
-
-                node_2_id = link.node_2_id
-                if link.node_2_id in node_id_map:
-                    node_2_id = node_id_map[link.node_2_id]
-
-                link_id = None
-                if hasattr(link, 'id'):
-                    link_id = link.id
-
-                l = x.get_link(link_id)
-                if l is None:
-                    l = x.add_link(link.name, link.description, node_1_id, node_2_id)
-                    link.id = l.db.link_id
-                else:
-                    l.db.link_name       = link.name
-                    l.db.link_descripion = link.description
-                l.save()
-                l.commit()
-
-            if network.scenarios is not None:
-                for s in network.scenarios:
-                    if hasattr('scenrio_id', s):
-                        scen = HydraIface.Scenario(scenario_id=s.id)
-                    else:
-                        scen = HydraIface.Scenario()
-                    scen.db.scenario_name        = s.name
-                    scen.db.scenario_description = s.description
-                    scen.db.network_id           = x.db.network_id
-                    scen.save()
-
-                    for r_scen in s.resourcescenarios:
-                        scenario._update_resourcescenario(scen.db.scenario_id, r_scen)
-
-            net = x.get_as_complexmodel()
-
-            hdb.commit()
-        except Exception, e:
-            logging.critical(e)
-            traceback.print_exc(file=sys.stdout)
-            hdb.rollback()
+        hdb.commit()
 
         return net
 
-    @rpc(Integer, _returns=Boolean)
-    def delete_network(ctx, network_id):
+    @rpc(Integer, Boolean, _returns=Boolean)
+    def delete_network(ctx, network_id, purge_data):
         """
             Deletes a network. This does not
             remove the network from the DB. It just
@@ -210,15 +224,10 @@ class NetworkService(ServiceBase):
             be seen by the user.
         """
         success = True
-        try:
-            x = HydraIface.Network(network_id = network_id)
-            x.db.status = 'X'
-            x.save()
-            x.commit()
-        except HydraError, e:
-            logging.critical(e)
-            success = False
-            x.rollback()
+        x = HydraIface.Network(network_id = network_id)
+        x.db.status = 'X'
+        x.save()
+        x.commit()
 
         hdb.commit()
         return success
@@ -233,8 +242,8 @@ class NetworkService(ServiceBase):
         """
         pass
 
-    @rpc(Node, _returns=Node)
-    def add_node(ctx, node):
+    @rpc(Integer, Node, _returns=Node)
+    def add_node(ctx, network_id, node):
         """
             Add a node
             (Node){
@@ -256,26 +265,19 @@ class NetworkService(ServiceBase):
              }
         """
         node = None
-        try:
-            x = HydraIface.Node()
-            x.db.node_name = node.name
-            x.db.node_x    = node.x
-            x.db.node_y    = node.y
-            x.db.node_description = node.description
-            x.save()
+        
+        x = HydraIface.Node()
+        x.db.network_id = network_id
+        x.db.node_name = node.name
+        x.db.node_x    = node.x
+        x.db.node_y    = node.y
+        x.db.node_description = node.description
+        x.save()
 
-            if node.attributes is not None:
-                #ra is for ResourceAttr
-                for ra in node.attributes:
-                    attr_is_var = 'N'
-                    if ra.attr_is_var is True:
-                        attr_is_var = 'Y'
-                    x.add_attribute(ra.attr_id, attr_is_var)
-            hdb.commit()
-            node = x.get_as_complexmodel()
-        except Exception, e:
-            logging.critical(e)
-            hdb.rollback()
+        _add_attributes(x, node.attributes)
+
+        hdb.commit()
+        node = x.get_as_complexmodel()
 
         return node
 
@@ -315,40 +317,35 @@ class NetworkService(ServiceBase):
 
         """
         node = None
-        try:
-            x = HydraIface.Node(node_id = node.id)
-            x.db.node_name = node.name
-            x.db.node_x    = node.x
-            x.db.node_y    = node.y
-            x.db.node_description = node.description
+        
+        x = HydraIface.Node(node_id = node.id)
+        x.db.node_name = node.name
+        x.db.node_x    = node.x
+        x.db.node_y    = node.y
+        x.db.node_description = node.description
+        
+        _add_attributes(x, node.attributes)
 
-            if node.attributes is not None:
-                #ra is for ResourceAttr
-                for ra in node.attributes:
-                    ra_i = HydraIface.ResourceAttr(resource_attr_id = ra.resource_attr_id)
-                    ra_i
-
-            x.save()
-            x.commit()
-            hdb.commit()
-            node = x.get_as_complexmodel()
-        except Exception, e:
-            logging.critical(e)
-            hdb.rollback()
+        x.save()
+        x.commit()
+        hdb.commit()
+        node = x.get_as_complexmodel()
 
         return node
 
-    @rpc(Integer, _returns=Boolean)
-    def delete_resourceattr(node_id, resource_attr_id):
+    @rpc(Integer, Boolean,  _returns=Boolean)
+    def delete_resourceattr(ctx, resource_attr_id, purge_data):
         """
             Deletes a resource attribute and all associated data.
 
+
         """
-        try:
-            pass
-        except Exception, e:
-            logging.critical(e)
-            hdb.rollback()
+        success = True
+        ra = HydraIface.ResourceAttr(resource_attr_id = resource_attr_id)
+        ra.load()
+        ra.delete(purge_data)
+
+        return success
 
 
     @rpc(Integer, _returns=Node)
@@ -357,60 +354,49 @@ class NetworkService(ServiceBase):
             Set the status of a node to 'X'
         """
         success = True
-        try:
-            x = HydraIface.Node(node_id = node_id)
-            x.db.status = 'X'
-            x.save()
-            x.commit()
-        except HydraError, e:
-            logging.critical(e)
-            success = False
+        x = HydraIface.Node(node_id = node_id)
+        x.db.status = 'X'
+        x.save()
+        x.commit()
 
         hdb.commit()
         return success
 
-    @rpc(Integer, _returns=Boolean)
-    def purge_node(ctx, node_id):
+    @rpc(Integer, Boolean, _returns=Boolean)
+    def purge_node(ctx, node_id, purge_data):
         """
             Remove node from DB completely
+            If there are attributes on the node, use purge_data to try to
+            delete the data. If no other resources link to this data, it 
+            will be deleted.
+
         """
         x = HydraIface.Node(node_id = node_id)
-        try:
-            x.delete()
-            x.save()
-            x.commit()
-            hdb.commit()
-        except Exception, e:
-            logging.critical(e)
-            hdb.rollback()
+        x.delete(purge_data=purge_data)
+        x.save()
+        x.commit()
         return x.load()
 
-    @rpc(Link, _returns=Link)
-    def add_link(ctx, link):
+    @rpc(Integer, Link, _returns=Link)
+    def add_link(ctx, network_id, link):
         """
             Add a link
         """
         link = None
-        try:
-            x = HydraIface.Link()
-            x.db.link_name = link.name
-            x.db.node_1_id = link.node_1_id
-            x.db.node_2_id = link.node_2_id
-            x.db.link_description = link.description
-            x.save()
 
-            if link.attributes is not None:
-                #ra is for ResourceAttr
-                for ra in link.attributes:
-                    attr_is_var = 'N'
-                    if ra.attr_is_var is True:
-                        attr_is_var = 'Y'
-                    x.add_attribute(ra.attr_id, attr_is_var)
-            hdb.commit()
-            link = x.get_as_complexmodel()
-        except Exception, e:
-            logging.critical(e)
-            hdb.rollback()
+        x = HydraIface.Link()
+        x.db.network_id = network_id
+        x.db.link_name = link.name
+        x.db.node_1_id = link.node_1_id
+        x.db.node_2_id = link.node_2_id
+        x.db.link_description = link.description
+        x.save()
+   
+        _add_attributes(x, link.attributes)
+        x.commit()
+
+        link = x.get_as_complexmodel()
+
         return link
 
     @rpc(Link, _returns=Link)
@@ -418,20 +404,17 @@ class NetworkService(ServiceBase):
         """
             Update a link.
         """
-        try:
-            x = HydraIface.Link(link_id = link.id)
-            x.db.link_name = link.name
-            x.db.node_1_id = link.node_1_id
-            x.db.node_2_id = link.node_2_id
-            x.db.link_description = link.description
-            x.save()
-            x.commit()
-            hdb.commit()
-            return x.get_as_complexmodel()
-        except Exception, e:
-            logging.critical(e)
-            hdb.rollback()
-            return None
+        x = HydraIface.Link(link_id = link.id)
+        x.db.link_name = link.name
+        x.db.node_1_id = link.node_1_id
+        x.db.node_2_id = link.node_2_id
+        x.db.link_description = link.description
+        
+        _add_attributes(x, link.attributes)
+        
+        x.save()
+        x.commit()
+        return x.get_as_complexmodel()
 
     @rpc(Integer, _returns=Link)
     def delete_link(ctx, link_id):
@@ -439,33 +422,24 @@ class NetworkService(ServiceBase):
             Set the status of a link to 'X'
         """
         success = True
-        try:
-            x = HydraIface.Link(link_id = link_id)
-            x.db.status = 'X'
-            x.save()
-            x.commit()
-            hdb.commit()
-        except HydraError, e:
-            logging.critical(e)
-            hdb.rollback()
-            success = False
+        x = HydraIface.Link(link_id = link_id)
+        x.db.status = 'X'
+        x.save()
+        x.commit()
 
         return success
 
-    @rpc(Integer, _returns=Boolean)
-    def purge_link(ctx, link_id):
+    @rpc(Integer, Boolean, _returns=Boolean)
+    def purge_link(ctx, link_id, purge_data):
         """
             Remove link from DB completely
+            If there are attributes on the link, use purge_data to try to
+            delete the data. If no other resources link to this data, it 
+            will be deleted.
         """
-        try:
-            x = HydraIface.Link(link_id = link_id)
-            x.delete()
-            x.save()
-            x.commit()
-            hdb.commit()
-            return x.load()
-        except Exception, e:
-            logging.critical(e)
-            hdb.rollback()
-            return None
+        x = HydraIface.Link(link_id = link_id)
+        x.delete(purge_data=purge_data)
+        x.save()
+        x.commit()
+        return x.load()
 

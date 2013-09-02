@@ -1,10 +1,7 @@
 from spyne.service import ServiceBase
 from spyne.decorator import rpc
 from spyne.model.primitive import Integer, Boolean
-from HydraLib.HydraException import HydraError
-import logging
 from db import HydraIface
-from HydraLib import hdb
 from hydra_complexmodels import Project
 
 class ProjectService(ServiceBase):
@@ -19,36 +16,31 @@ class ProjectService(ServiceBase):
             Add a new project
             returns a project complexmodel
         """
-        try:
-            x = HydraIface.Project()
-            x.db.project_name = project.name
-            x.db.project_description = project.description
-            x.save()
-            x.commit()
-            ret = x.get_as_complexmodel()
-        except Exception, e:
-            logging.critical(e)
-            hdb.rollback()
-            ret = None
+
+        x = HydraIface.Project()
+        x.db.project_name = project.name
+        x.db.project_description = project.description
+        x.save()
+        x.commit()
+        
+        ret = x.get_as_complexmodel()
+
         return ret
+
     @rpc(Project, _returns=Project) 
     def update_project(ctx, project):
         """
             Update a project
             returns a project complexmodel
         """
-        try:
-            x = HydraIface.Project(project_id = project.id)
-            x.db.project_name        = project.name
-            x.db.project_description = project.description
-            x.save()
-            x.commit()
-            return x.get_as_complexmodel()
+        
+        x = HydraIface.Project(project_id = project.id)
+        x.db.project_name        = project.name
+        x.db.project_description = project.description
+        
+        x.save()
 
-        except Exception, e:
-            logging.critical(e)
-            hdb.rollback()
-            return None
+        return x.get_as_complexmodel()
  
 
     @rpc(Integer, _returns=Project)
@@ -65,15 +57,10 @@ class ProjectService(ServiceBase):
             Set the status of a project to 'X'
         """
         success = True
-        try:
-            x = HydraIface.Project(project_id = project_id)
-            x.db.status = 'X'
-            x.save()
-            x.commit()
-        except HydraError, e:
-            logging.critical(e)
-            success = False
-            hdb.rollback()
+        x = HydraIface.Project(project_id = project_id)
+        x.db.status = 'X'
+        x.save()
+        x.commit()
 
         return success
 

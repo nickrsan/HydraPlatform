@@ -4,6 +4,8 @@ import logging
 from decimal import Decimal
 from soap_server import hydra_complexmodels 
 
+from HydraLib.HydraException import HydraError
+
 global DB_STRUCT
 DB_STRUCT = {}
 
@@ -34,24 +36,32 @@ def init(cnx):
     """%(config.get('mysqld', 'db_name'),)
 
     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-    rs = cursor.execute_sql(sql)
+    #rs = cursor.execute_sql(sql)
+    cursor.execute(sql)
     
     #Table desc gives us:
     #[...,(col_name, col_type, nullable, key ('PRI' or 'MUL'), default, auto_increment),...]
-    for r in rs:
+    for r in cursor.fetchall():
+        table_name     = r[0]
+        column_name    = r[1]
+        column_default = r[2]
+        is_nullable    = r[3]
+        column_type    = r[4]
+        column_key     = r[5]
+        extra          = r[6]
 
         col_info    = {}
 
-        col_info['default']        = r.column_default
-        col_info['nullable']       = True if r.is_nullable == 'YES' else False
-        col_info['type']           = r.column_type
-        col_info['primary_key']    = True if r.column_key == 'PRI' else False
-        col_info['auto_increment'] = True if r.extra == 'auto_increment' else False
+        col_info['default']        = column_default
+        col_info['nullable']       = True if is_nullable == 'YES' else False
+        col_info['type']           = column_type
+        col_info['primary_key']    = True if column_key == 'PRI' else False
+        col_info['auto_increment'] = True if extra == 'auto_increment' else False
  
-        tab_info = DB_STRUCT.get(r.table_name.lower(), {'columns' : {}})
-        tab_info['columns'][r.column_name] = col_info
+        tab_info = DB_STRUCT.get(table_name.lower(), {'columns' : {}})
+        tab_info['columns'][column_name] = col_info
         tab_info['child_info'] = {}
-        DB_STRUCT[r.table_name.lower()] = tab_info
+        DB_STRUCT[table_name.lower()] = tab_info
 
     fk_qry    = """
         select
@@ -66,13 +76,13 @@ def init(cnx):
         and constraint_name != 'PRIMARY'
     """%(config.get('mysqld', 'db_name'),)
 
-    rs = cursor.execute_sql(fk_qry)
-    for r in rs:
+    cursor.execute(fk_qry)
+    for r in cursor.fetchall():
         child_dict = {}
 
-        child_dict['column_name'] = r.column_name
-        child_dict['referenced_column_name'] = r.referenced_column_name
-        DB_STRUCT[r.referenced_table_name.lower()]['child_info'][r.table_name] = child_dict
+        child_dict['column_name'] = r[1]
+        child_dict['referenced_column_name'] = r[3]
+        DB_STRUCT[r[2].lower()]['child_info'][r[0]] = child_dict
 
 class IfaceBase(object):
     """
@@ -151,12 +161,11 @@ class IfaceBase(object):
 
             child_objs = []
             for row in rows:
-                row = row.get_as_dict()
                 child_obj = db_hierarchy[name[1:].lower()]['obj'](self)
 
                 child_obj.parent = self
                 child_obj.__setattr__(self.name.lower(), self)
-                for col, val in row.items():
+                for col, val in row:
                     child_obj.db.__setattr__(col, val)
 
                 child_objs.append(child_obj)
@@ -281,11 +290,15 @@ class IfaceDB(object):
                 fk_val = self.__getattr__(referenced_column_name)
             )
 
-            cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-            rs = cursor.execute_sql(complete_child_sql)
+            cursor = CONNECTION.cursor()
+            #rs = cursor.execute_sql(complete_child_sql)
+            cursor.execute(complete_child_sql)
+            rs = cursor.fetchall()
+            child_rs = []
+            for r in rs:
+                child_rs.append(zip(cursor.column_names, r))
 
-            child_dict[table_name] = rs
-
+            child_dict[table_name] = child_rs
         return child_dict
 
     def get_parent(self):
@@ -501,6 +514,12 @@ class GenericResource(IfaceBase):
         self.ref_id = pk
 
         return result
+
+    def delete(self, purge_data=True):
+        for attr in self.attributes:
+            attr.delete(purge_data=purge_data)
+
+        super(GenericResource, self).delete()
 
     def get_attributes(self):
         if self.ref_id is None:
@@ -765,6 +784,39 @@ class ResourceAttr(IfaceBase):
         obj.load()
         return obj
 
+    def get_data(self):
+        """
+            Get all the resource scenario objects associated with this
+            resource attribute.
+        """
+        return self.resourcescenarios
+    
+    def delete(self, purge_data=False):
+            #If there are any constraints associated with this resource attribute, it cannot be deleted
+            if len(self.constraintitems) > 0:
+                constraints = [ci.db.constraint_id for ci in self.constraintitems]
+                raise HydraError("Resource attribute cannot be deleted. "
+                                 "It is referened by constraints: %s "\
+                                 %constraints)
+
+            for resource_scenario in self.resourcescenarios:
+                #We can only purge data if there are no other resource
+                #attributes associated with this data.
+                if purge_data == True:
+                    sd = resource_scenario.scenariodata
+                    sd.load()
+                    #If there is only 1 resource attribute for this
+                    #piece of data, it's OK to remove it.
+                    if len(sd.resourcescenarios) == 1:
+                        #Delete the data entry first
+                        resource_scenario.scenariodata.delete_val()
+                        #then delete the scenario data
+                        sd.delete()
+                #delete the reference to the resource attribute
+                resource_scenario.delete()
+            #delete the resource attribute
+            super(ResourceAttr, self).delete()
+
 class ResourceTemplate(IfaceBase):
     """
         A resource template is a grouping of attributes which define
@@ -923,7 +975,22 @@ class ScenarioData(IfaceBase):
         self.db.data_type = data_type
         self.db.data_id = data.db.data_id
         return data
-    
+   
+    def delete_val(self):
+        if self.db.data_type == 'descriptor':
+            d = Descriptor(data_id = self.db.data_id)
+        elif self.db.data_type == 'timeseries':
+            d = TimeSeries(data_id=self.db.data_id)
+        elif self.db.data_type == 'eqtimeseries':
+            d = EqTimeSeries(data_id = self.db.data_id)
+        elif self.db.data_type == 'scalar':
+            d = Scalar(data_id = self.db.data_id)
+        elif self.db.data_type == 'array':
+            d = Array(data_id = self.db.data_id)
+
+        logging.info("Deleting %s with data id %s", self.db.data_type, self.db.data_id)
+        d.delete()
+
     def get_as_complexmodel(self):
         """
             This method overrides the base method as it hides

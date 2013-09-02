@@ -10,11 +10,9 @@ from spyne.application import Application
 from spyne.protocol.soap import Soap11
 from spyne.server.wsgi import WsgiApplication
 
-from spyne.decorator import srpc
-from spyne.service import ServiceBase
-from spyne.model.complex import Iterable
-from spyne.model.primitive import Integer, AnyDict
-from spyne.model.primitive import Unicode
+from spyne.error import InternalError,\
+                        RequestNotAllowed,\
+                        Fault
 
 from soap_server.network import NetworkService
 from soap_server.project import ProjectService
@@ -25,17 +23,51 @@ from soap_server.plugins import PluginService
 from HydraLib import hydra_logging, hdb, util
 from db import HydraIface
 
-class HelloWorldService(ServiceBase):
-    @srpc(Unicode, Integer, _returns=Iterable(Unicode))
-    def say_hello(name, times):
-        for i in range(times):
-            yield u'Hello, %s' % name
+import datetime
+import sys, traceback
 
+def _on_method_call(ctx):
+    #Open a cursor?
+    pass
 
-    @srpc(_returns=AnyDict)
-    def testf():
-        return {"a": "1", "b": "2"}
+def _on_method_context_closed(ctx):
+    pass
+    #hdb.commit()
 
+class MyApplication(Application):
+    """
+        Subclass of the base spyne Application class.
+        
+        Used to handle transactions in request handlers and to log
+        how long each request takes.
+
+        Used also to handle exceptions, allowing server side exceptions
+        to be send to the client.
+    """
+    def __init__(self, services, tns, name=None,
+                                         in_protocol=None, out_protocol=None):
+        Application.__init__(self, services, tns, name, in_protocol,
+                                                                 out_protocol)
+
+        self.event_manager.add_listener('method_call', _on_method_call)
+        self.event_manager.add_listener("method_context_closed",
+                                                    _on_method_context_closed)
+
+    def call_wrapper(self, ctx):
+        try:
+            start = datetime.datetime.now()
+            res =  ctx.service_class.call_wrapper(ctx)
+            logging.info("Call took: %s"%(datetime.datetime.now()-start))
+            return res
+        except Fault, e:
+            logging.error(e)
+            raise
+
+        except Exception, e:
+            logging.critical(e)
+            traceback.print_exc(file=sys.stdout)
+            hdb.rollback()
+            raise Fault('Server', e.message)
 
 if __name__=='__main__':
 
@@ -47,14 +79,8 @@ if __name__=='__main__':
 
     from wsgiref.simple_server import make_server
 
-    #logging.basicConfig(level=logging.DEBUG)
-    #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
-
-    logging.info("listening to http://127.0.0.1:8000")
-    logging.info("wsdl is at: http://localhost:8000/?wsdl")
 
     applications = [
-        HelloWorldService,
         NetworkService,
         ProjectService,
         AttributeService,
@@ -63,7 +89,7 @@ if __name__=='__main__':
         PluginService,
     ]
 
-    application = Application(applications, 'hydra.soap',
+    application = MyApplication(applications, 'hydra.soap',
                 in_protocol=Soap11(validator='lxml'),
                 out_protocol=Soap11()
             )
@@ -71,6 +97,9 @@ if __name__=='__main__':
 
     config = util.load_config()
     port = config.getint('soap_server', 'port') 
+    
+    logging.info("listening to http://127.0.0.1:%s", port)
+    logging.info("wsdl is at: http://localhost:%s/?wsdl", port)
 
     server = make_server('127.0.0.1', port, wsgi_application)
     server.serve_forever()

@@ -46,17 +46,12 @@ class AttributeService(ServiceBase):
             }
 
         """
-        try:
-            x = HydraIface.Attr()
-            x.db.attr_name = attr.name
-            x.db.attr_dimen = attr.dimen
-            x.save()
-            hdb.commit()
-            return x.get_as_complexmodel()
-        except Exception, e:
-            logging.critical(e)
-            hdb.rollback()
-            return None
+        x = HydraIface.Attr()
+        x.db.attr_name = attr.name
+        x.db.attr_dimen = attr.dimen
+        x.save()
+        hdb.commit()
+        return x.get_as_complexmodel()
 
     @rpc(Integer, _returns=Boolean)
     def delete_attribute(ctx, attr_id):
@@ -64,15 +59,10 @@ class AttributeService(ServiceBase):
             Set the status of an attribute to 'X'
         """
         success = True
-        try:
-            x = HydraIface.Attr(attr_id = attr_id)
-            x.db.status = 'X'
-            x.save()
-            hdb.commit()
-        except HydraError, e:
-            logging.critical(e)
-            hdb.rollback()
-            success = False
+        x = HydraIface.Attr(attr_id = attr_id)
+        x.db.status = 'X'
+        x.save()
+        hdb.commit()
         return success
         
 

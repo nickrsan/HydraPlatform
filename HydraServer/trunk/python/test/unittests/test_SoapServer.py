@@ -42,39 +42,39 @@ class SoapServerTest(unittest.TestCase):
     def create_network(self, project):
         cli = self.connect()
         network = cli.factory.create('hyd:Network')
-        network.network_name = 'Test network'
-        network.network_description = 'A test network.'
+        network.name = 'Test network'
+        network.description = 'A test network.'
         network.project_id = project.project_id
         network = cli.service.add_network(network)
         return network
 
-    def create_node(self, attributes=None):
-        cli = self.connect()
-        node = cli.factory.create('hyd:Node')
-        node.node_name = 'Test node'
-        node.node_description = 'A test node for testing.'
-        node.node_x = 1
-        node.node_y = 1
-        node.attributes = attributes
-        node = cli.service.add_node(node)
-        return node
-
-    def create_link(self, network, node1, node2):
+    def create_link(self, node_1_id, node_2_id):
         cli = self.connect()
         link = cli.factory.create('hyd:Link')
-        link.link_name = 'Test'
-        link.link_description = 'A test link between two nodes.'
-        link.node_1_id = node1.node_id
-        link.node_2_id = node2.node_id
-        link.network_id = network.network_id
-        link = cli.service.add_link(link)
+        link.name = 'Test'
+        link.description = 'A test link between two nodes.'
+        link.node_1_id = node_1_id
+        link.node_2_id = node_2_id
+        
         return link
+   
+    def create_node(self,node_id, attributes=None):
+        cli = self.connect()
+        node = cli.factory.create('hyd:Node')
+        node.id = node_id
+        node.name = "Test Node name"
+        node.description = "A node representing a water resource"
+        node.x = 0
+        node.y = 0
+        node.attributes = attributes
 
+        return node
+    
     def create_attr(self):
         cli = self.connect()
         attr = cli.factory.create('hyd:Attr')
-        attr.attr_name = 'Test attribute'
-        attr.attr_dimen = 'dimensionless'
+        attr.name = 'Test attribute'
+        attr.dimen = 'dimensionless'
         attr = cli.service.add_attribute(attr)
         return attr
 
