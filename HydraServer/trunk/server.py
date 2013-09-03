@@ -77,12 +77,14 @@ class MyApplication(Application):
 
 class HydraServer():
 
-    def crate_application(self):
+    def __init__(self):
 
         hydra_logging.init(level='INFO')
         #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
         connection = hdb.connect()
         HydraIface.init(connection)
+
+    def crate_application(self):
 
         applications = [
             NetworkService,
