@@ -36,12 +36,12 @@ class TestSoap(unittest.TestCase):
         node.y = y
 
         return node
-    
+
     def create_link(self,c,name,node_1_id, node_2_id):
         link = c.factory.create('ns1:Link')
         link.name = name
         link.description = 'Link from %s to %s'%(node_1_id, node_2_id)
-        link.node_1_id = node_1_id 
+        link.node_1_id = node_1_id
         link.node_2_id = node_2_id
         print link
         return link
@@ -50,7 +50,7 @@ class TestSoap(unittest.TestCase):
         link = c.factory.create('ns1:Link')
         link.name = name
         link.description = 'Link from node %s at %s, %s to node %s at %s, %s'%(node_1_name, node_1_x, node_2_x, node_2_name, node_2_x, node_2_y)
-        link.node_1_id = "%s,%s,%s"%(node_1_name, node_1_x, node_1_y) 
+        link.node_1_id = "%s,%s,%s"%(node_1_name, node_1_x, node_1_y)
         link.node_2_id = "%s,%s,%s"%(node_2_name, node_2_x, node_2_y)
         return link
 
@@ -78,8 +78,8 @@ class TestSoap(unittest.TestCase):
     def test_add_project(self):
 
         config = util.load_config()
-        port = config.getint('soap_server', 'port')
-        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
+        url = config.get('hydra_client', 'url')
+        c = Client(url, plugins=[FixNamespace()])
         (project) = {
             'name' : 'New Project',
             'description' : 'New Project Description',
@@ -98,9 +98,8 @@ class TestSoap(unittest.TestCase):
 
     def test_network(self):
         config = util.load_config()
-        port = config.getint('soap_server', 'port')
-        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
-
+        url = config.get('hydra_client', 'url')
+        c = Client(url, plugins=[FixNamespace()])
 
         (project) = {
             'name' : 'New Project',
@@ -136,9 +135,8 @@ class TestSoap(unittest.TestCase):
 
     def test_scenario(self):
         config = util.load_config()
-        port = config.getint('soap_server', 'port')
-        c = Client('http://localhost:%s/?wsdl'%port, xstq=False,  plugins=[FixNamespace()])
-#        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
+        url = config.get('hydra_client', 'url')
+        c = Client(url, plugins=[FixNamespace()])
 
         (project) = {
             'name'        : 'New Project',
@@ -147,9 +145,9 @@ class TestSoap(unittest.TestCase):
         p =  c.service.add_project(project)
 
         #Create some attributes, which we can then use to put data on our nodes
-        attr1 = self.create_attr(c) 
-        attr2 = self.create_attr(c) 
-        attr3 = self.create_attr(c) 
+        attr1 = self.create_attr(c)
+        attr2 = self.create_attr(c)
+        attr3 = self.create_attr(c)
 
         #Create 2 nodes
         node1 = self.create_node(c, -1, "Node 1")
@@ -186,7 +184,7 @@ class TestSoap(unittest.TestCase):
         #contains a single link
         link_array = c.factory.create('ns1:LinkArray')
         link_array.Link.append(link)
-        
+
         #Create the scenario
         scenario = c.factory.create('ns1:Scenario')
         scenario.id = -1
@@ -195,10 +193,10 @@ class TestSoap(unittest.TestCase):
 
         #Multiple data (Called ResourceScenario) means an array.
         scenario_data = c.factory.create('ns1:ResourceScenarioArray')
-        
+
         #Our node has several dmin'resource attributes', created earlier.
         node_attrs = node1['attributes']
-        
+
         #This is an example of 3 diffent kinds of data
         #A simple string (Descriptor)
         #A time series, where the value may be a 1-D array
@@ -206,7 +204,7 @@ class TestSoap(unittest.TestCase):
         descriptor = self.create_descriptor(c, node_attrs.ResourceAttr[0])
         timeseries = self.create_timeseries(c, node_attrs.ResourceAttr[1])
         array      = self.create_array(c, node_attrs.ResourceAttr[2])
-        
+
         scenario_data.ResourceScenario.append(descriptor)
         scenario_data.ResourceScenario.append(timeseries)
         scenario_data.ResourceScenario.append(array)
@@ -229,14 +227,14 @@ class TestSoap(unittest.TestCase):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
         scenario_attr = c.factory.create('ns1:ResourceScenario')
-        
+
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.id
         scenario_attr.type = 'descriptor'
-       
+
         print scenario_attr
 
-        scenario_attr.value = {'desc_val' : 'test'} 
+        scenario_attr.value = {'desc_val' : 'test'}
 
         return scenario_attr
 
@@ -245,11 +243,11 @@ class TestSoap(unittest.TestCase):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
         scenario_attr = c.factory.create('ns1:ResourceScenario')
-        
+
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.id
         scenario_attr.type = 'timeseries'
-        
+
         ts1 = c.factory.create('ns1:TimeSeriesData')
         ts1.ts_time  = datetime.datetime.now()
         ts1.ts_value = [1, 2, 3, 4, 5]
@@ -259,8 +257,8 @@ class TestSoap(unittest.TestCase):
         ts2.ts_value = [2, 3, 4, 5, 6]
 
         ts3 = c.factory.create('ns1:TimeSeries')
-        ts3.ts_values = [ts1, ts2] 
-        
+        ts3.ts_values = [ts1, ts2]
+
         #scenario_attr.value = ts3
         scenario_attr.value = {
             'value'            : [
@@ -281,16 +279,16 @@ class TestSoap(unittest.TestCase):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
         scenario_attr = c.factory.create('ns1:ResourceScenario')
-        
+
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.id
         scenario_attr.type = 'array'
-        
+
         arr1 = c.factory.create('ns1:Array')
         arr1.arr_data = [1, 2, 3]
         arr2 = c.factory.create('ns1:Array')
         arr2.arr_data = [4, 5, 6]
-        
+
         arr = c.factory.create('ns1:Array')
         arr.arr_data = [arr1, arr2]
 
@@ -298,14 +296,14 @@ class TestSoap(unittest.TestCase):
         arr3.arr_data = [10, 20, 30]
         arr4 = c.factory.create('ns1:Array')
         arr4.arr_data = [40, 50, 60]
-        
+
         arr5 = c.factory.create('ns1:Array')
         arr5.arr_data = [arr3, arr4]
 
         arr6 = c.factory.create('ns1:Array')
         arr6.arr_data = [arr, arr5]
 
-        #scenario_attr.value = arr6 
+        #scenario_attr.value = arr6
         scenario_attr.value = {
            'arr_data' : str([[[1, 2, 3], [4, 5, 6]], [[10, 20, 30],[40, 50, 60]]])
         }

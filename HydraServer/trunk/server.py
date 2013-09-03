@@ -106,7 +106,7 @@ class HydraServer():
         from wsgiref.simple_server import make_server
 
         config = util.load_config()
-        port = config.getint('soap_server', 'port')
+        port = config.getint('hydra_server', 'port')
 
         logging.info("listening to http://127.0.0.1:%s", port)
         logging.info("wsdl is at: http://localhost:%s/?wsdl", port)

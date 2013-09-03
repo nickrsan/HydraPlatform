@@ -25,7 +25,7 @@ class SoapServerTest(unittest.TestCase):
     def connect(self):
         #logging.debug("Connecting to server.")
         config = util.load_config()
-        port = config.getint('soap_server', 'port')
+        port = config.getint('hydra_server', 'port')
         url = 'http://localhost:%s?wsdl' % port
         client = Client(url)
         client.set_options(cache=None)
@@ -55,9 +55,9 @@ class SoapServerTest(unittest.TestCase):
         link.description = 'A test link between two nodes.'
         link.node_1_id = node_1_id
         link.node_2_id = node_2_id
-        
+
         return link
-   
+
     def create_node(self,node_id, attributes=None):
         cli = self.connect()
         node = cli.factory.create('hyd:Node')
@@ -69,7 +69,7 @@ class SoapServerTest(unittest.TestCase):
         node.attributes = attributes
 
         return node
-    
+
     def create_attr(self):
         cli = self.connect()
         attr = cli.factory.create('hyd:Attr')
