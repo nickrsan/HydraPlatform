@@ -79,6 +79,11 @@ class HydraServer():
 
     def crate_application(self):
 
+        hydra_logging.init(level='INFO')
+        #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
+        connection = hdb.connect()
+        HydraIface.init(connection)
+
         applications = [
             NetworkService,
             ProjectService,
@@ -96,11 +101,6 @@ class HydraServer():
         return wsgi_application
 
     def run_server(self):
-        hydra_logging.init(level='INFO')
-        #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
-        connection = hdb.connect()
-        HydraIface.init(connection)
-
         wsgi_application = self.crate_application()
 
         from wsgiref.simple_server import make_server
