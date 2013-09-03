@@ -14,6 +14,11 @@ from spyne.error import InternalError,\
                         RequestNotAllowed,\
                         Fault
 
+from spyne.error import Fault, InternalError, RequestNotAllowed
+
+from spyne.service import ServiceBase
+from spyne.decorator import rpc
+
 from soap_server.network import NetworkService
 from soap_server.project import ProjectService
 from soap_server.attributes import AttributeService
