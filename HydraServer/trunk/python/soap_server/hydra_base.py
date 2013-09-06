@@ -63,16 +63,27 @@ class ObjectNotFoundError(HydraServiceError):
         )
 
 
-class Preferences(ComplexModel):
-    __namespace__ = 'hydra.authentication'
+#class Preferences(ComplexModel):
+#    __namespace__ = 'hydra.authentication'
+#
+#    language = String(max_len=2)
+#    time_zone = String
 
-    language = String(max_len=2)
-    time_zone = String
-
-preferences_db = {
-    'test': Preferences(language='en', time_zone='Europe/London'),
-}
-
+#preferences_db = {
+#    'test': Preferences(language='en', time_zone='Europe/London'),
+#}
+#
+#class PreferenceService(HydraService):
+#    __tns__      = 'hydra.authentication'
+#    
+#    @srpc(Mandatory.String, _throws=ResourceNotFoundError, _returns=Preferences)
+#    def get_preferences(username):
+#        if username == 'smith':
+#            raise AuthorizationError()
+#
+#        retval = preferences_db[username]
+#
+#        return retval
 class LogoutService(HydraService):
     __tns__      = 'hydra.authentication'
     
@@ -103,12 +114,4 @@ class AuthenticationService(ServiceBase):
 
         return session_id[1]
 
-    @srpc(Mandatory.String, _throws=ResourceNotFoundError, _returns=Preferences)
-    def get_preferences(username):
-        if username == 'smith':
-            raise AuthorizationError()
-
-        retval = preferences_db[username]
-
-        return retval
 

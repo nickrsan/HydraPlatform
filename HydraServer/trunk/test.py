@@ -40,7 +40,6 @@ class TestSoap(unittest.TestCase):
         token.username = 'root'
 
         self.c.set_options(soapheaders=token)
-        pref = self.c.service.get_preferences('test')
 
     def create_node(self,node_id,name,desc="Node Description", x=0, y=0, attributes=None):
         node = self.c.factory.create('ns1:Node')

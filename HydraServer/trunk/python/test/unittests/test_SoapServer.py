@@ -31,6 +31,7 @@ class SoapServerTest(unittest.TestCase):
         
         token = None
         if login == True:
+
             session_id = client.service.login('root', '')
         
             token = client.factory.create('RequestHeader')

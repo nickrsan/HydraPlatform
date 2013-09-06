@@ -12,6 +12,7 @@ from spyne.server.wsgi import WsgiApplication
 
 from spyne.service import ServiceBase
 from spyne.error import Fault, ArgumentError
+import bcrypt
 
 from soap_server.network import NetworkService
 from soap_server.project import ProjectService
@@ -98,6 +99,16 @@ class HydraServer():
         #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
         connection = hdb.connect()
         HydraIface.init(connection)
+
+        user = HydraIface.User()
+        user.db.username = 'root'
+        user.db.password =  bcrypt.hashpw('', bcrypt.gensalt())
+        
+        if user.get_user_id() is None:
+            user.save()
+            user.commit()
+        else:
+            logging.info("Root user exists.")
 
     def create_application(self):
 
