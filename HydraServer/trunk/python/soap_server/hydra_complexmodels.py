@@ -79,47 +79,50 @@ def get_array(arr):
 
     return current_level
 
-class Descriptor(ComplexModel):
+class HydraComplexModel(ComplexModel):
+    error = String()
+
+class Descriptor(HydraComplexModel):
    _type_info = [
         ('desc_val', String),
     ]
 
-class TimeSeriesData(ComplexModel):
+class TimeSeriesData(HydraComplexModel):
  _type_info = [
         ('ts_time', DateTime),
         ('ts_value', AnyDict),
     ]
 
-class TimeSeries(ComplexModel):
+class TimeSeries(HydraComplexModel):
     _type_info = [
         ('ts_values', SpyneArray(TimeSeriesData)),
     ]
     
-class EqTimeSeries(ComplexModel):
+class EqTimeSeries(HydraComplexModel):
     _type_info = [
         ('start_time', DateTime),
         ('frequency', Decimal),
         ('arr_data', AnyDict),
     ]
 
-class Scalar(ComplexModel):
+class Scalar(HydraComplexModel):
     _type_info = [
         ('param_value', Decimal),
     ]
 
-class Array(ComplexModel):
+class Array(HydraComplexModel):
     _type_info = [
         ('arr_data', SpyneArray(AnyDict)),
     ]
 
-class Attr(ComplexModel):
+class Attr(HydraComplexModel):
     _type_info = [
         ('id', Integer),
         ('name', String),
         ('dimen', String),
     ]
 
-class ResourceAttr(ComplexModel):
+class ResourceAttr(HydraComplexModel):
     _type_info = [
         ('id',      Integer),
         ('attr_id', Integer),
@@ -128,26 +131,31 @@ class ResourceAttr(ComplexModel):
         ('is_var',  Boolean),
     ]
 
-class ResourceTemplateGroup(ComplexModel):
-    _type_info = [
-        ('id',   Integer),
-        ('name', String),
-    ]
-
-class ResourceTemplate(ComplexModel):
-    _type_info = [
-        ('name', Integer),
-        ('id', Integer),
-        ('group_id',    Integer)
-    ]
-
-class ResourceTemplateItem(ComplexModel):
+class ResourceTemplateItem(HydraComplexModel):
     _type_info = [
         ('attr_id', Integer),
         ('template_id', Integer),
     ]
 
-class Node(ComplexModel):
+class ResourceTemplate(HydraComplexModel):
+    _type_info = [
+        ('name', Integer),
+        ('id', Integer),
+        ('group_id',    Integer),
+        ('resourcetemplateitems', SpyneArray(ResourceTemplateItem)),
+    ]
+
+class ResourceTemplateGroup(HydraComplexModel):
+    _type_info = [
+        ('id',   Integer),
+        ('name', String),
+        ('resourcetemplates', SpyneArray(ResourceTemplate)),
+    ]
+
+class Resource(HydraComplexModel):
+    pass
+
+class Node(Resource):
     _type_info = [
         ('id',          Integer),
         ('name',        String),
@@ -164,7 +172,7 @@ class Node(ComplexModel):
         else:
             return False
 
-class Link(ComplexModel):
+class Link(Resource):
     _type_info = [
         ('id',          Integer),
         ('name',        String),
@@ -175,7 +183,7 @@ class Link(ComplexModel):
         ('attributes',  SpyneArray(ResourceAttr)),
     ]
 
-class ResourceScenario(ComplexModel):
+class ResourceScenario(Resource):
     _type_info = [
         ('resource_attr_id', Integer),
         ('attr_id',          Integer),
@@ -183,7 +191,7 @@ class ResourceScenario(ComplexModel):
         ('value',            AnyDict),
     ]
 
-class Scenario(ComplexModel):
+class Scenario(Resource):
     _type_info = [
         ('id',                   Integer),
         ('name',                 String),
@@ -194,7 +202,7 @@ class Scenario(ComplexModel):
         ('resourcescenarios',    SpyneArray(ResourceScenario)),
     ]
 
-class Network(ComplexModel):
+class Network(Resource):
     _type_info = [
         ('project_id',          Integer),
         ('id',                  Integer),
@@ -207,7 +215,7 @@ class Network(ComplexModel):
         ('links',               SpyneArray(Link)),
     ]
 
-class Project(ComplexModel):
+class Project(Resource):
     _type_info = [
         ('id',          Integer),
         ('name',        String),
@@ -217,7 +225,7 @@ class Project(ComplexModel):
 
     ]
 
-class ConstraintItem(ComplexModel):
+class ConstraintItem(HydraComplexModel):
     _type_info = [
         ('id',               Integer),
         ('constraint_id',    Integer),
@@ -225,7 +233,7 @@ class ConstraintItem(ComplexModel):
         ('resource_attr',    ResourceAttr),
     ]
 
-class ConstraintGroup(ComplexModel):
+class ConstraintGroup(HydraComplexModel):
     _type_info = [
         ('id',            Integer),
         ('constraint_id', Integer),
@@ -236,7 +244,7 @@ class ConstraintGroup(ComplexModel):
         ('ref_id_2',      Integer),
     ]
 
-class Constraint(ComplexModel):
+class Constraint(HydraComplexModel):
     _type_info = [
         ('id',            Integer),
         ('scenario_id',   Integer),
@@ -247,40 +255,45 @@ class Constraint(ComplexModel):
         ('items',         SpyneArray(ConstraintItem)),
     ]
 
-class User(ComplexModel):
+class User(HydraComplexModel):
     _type_info = [
-        ('user_id',  Integer),
+        ('id',  Integer),
         ('username', String),
         ('password', String),
     ]
 
-class Perm(ComplexModel):
+class Perm(HydraComplexModel):
+    _type_info = [
+        ('id',   Integer),
+        ('name', String),
+    ]
+
+class RoleUser(HydraComplexModel):
+    _type_info = [
+        ('user_id',  Integer),
+    ]
+
+class RolePerm(HydraComplexModel):
     _type_info = [
         ('perm_id',   Integer),
-        ('perm_name', String),
     ]
 
-class Role(ComplexModel):
+
+class Role(HydraComplexModel):
     _type_info = [
-        ('role_id',     Integer),
-        ('role_name',   String),
-        ('permissions', SpyneArray(Perm)),
-        ('users',       SpyneArray(User)),
+        ('id',     Integer),
+        ('name',   String),
+        ('roleperms', SpyneArray(RolePerm)),
+        ('roleusers', SpyneArray(RoleUser)),
     ]
 
-class RoleUser(ComplexModel):
-    _type_info = [
-        ('role_id',   Integer),
-        ('role_name', String),
-           ]
-
-class PluginParam(ComplexModel):
+class PluginParam(HydraComplexModel):
     _type_info = [
         ('name',        String),
         ('value',       String),
     ]
 
-class Plugin(ComplexModel):
+class Plugin(HydraComplexModel):
     _type_info = [
         ('plugin_name',        String),
         ('plugin_description', String),

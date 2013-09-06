@@ -7,6 +7,7 @@ from spyne.decorator import rpc
 from hydra_complexmodels import Network, Node, Link
 from db import HydraIface
 from HydraLib import hdb
+from hydra_base import HydraService
 import scenario
 
 def _add_attributes(resource_i, attributes):
@@ -30,7 +31,7 @@ def _add_attributes(resource_i, attributes):
 
     return resource_attr_id_map
 
-class NetworkService(ServiceBase):
+class NetworkService(HydraService):
     """
         The network SOAP service.
     """

@@ -1,10 +1,10 @@
-from spyne.service import ServiceBase
 from spyne.decorator import rpc
 from spyne.model.primitive import Integer, Boolean
 from db import HydraIface
 from hydra_complexmodels import Project
+from hydra_base import HydraService, ObjectNotFoundError
 
-class ProjectService(ServiceBase):
+class ProjectService(HydraService):
     """
         The project SOAP service
     """
@@ -49,7 +49,12 @@ class ProjectService(ServiceBase):
             get a project complexmodel
         """
         x = HydraIface.Project(project_id = project_id)
+        
+        if x.load() is False:
+            raise ObjectNotFoundError("Project (project_id=%s) not found."%project_id)
+
         return x.get_as_complexmodel()
+ 
 
     @rpc(Integer, _returns=Boolean)
     def delete_project(ctx, project_id):

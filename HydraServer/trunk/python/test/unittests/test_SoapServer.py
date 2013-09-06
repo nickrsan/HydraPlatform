@@ -22,13 +22,22 @@ class SoapServerTest(unittest.TestCase):
         logging.debug("Tearing down")
         hydra_logging.shutdown()
 
-    def connect(self):
+    def connect(self, login=True):
         #logging.debug("Connecting to server.")
         config = util.load_config()
         port = config.getint('hydra_server', 'port')
         url = 'http://localhost:%s?wsdl' % port
         client = Client(url)
-        client.set_options(cache=None)
+        
+        token = None
+        if login == True:
+            session_id = client.service.login('root', '')
+        
+            token = client.factory.create('RequestHeader')
+            token.session_id = session_id
+            token.username = 'root'
+      
+        client.set_options(cache=None, soapheaders=token)
         client.add_prefix('hyd', 'soap_server.hydra_complexmodels')
         return client
 

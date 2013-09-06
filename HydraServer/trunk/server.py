@@ -10,20 +10,23 @@ from spyne.application import Application
 from spyne.protocol.soap import Soap11
 from spyne.server.wsgi import WsgiApplication
 
-from spyne.error import InternalError,\
-                        RequestNotAllowed,\
-                        Fault
-
-from spyne.error import Fault, InternalError, RequestNotAllowed
-
 from spyne.service import ServiceBase
-from spyne.decorator import rpc
+from spyne.error import Fault, ArgumentError
 
 from soap_server.network import NetworkService
 from soap_server.project import ProjectService
 from soap_server.attributes import AttributeService
 from soap_server.scenario import ScenarioService, DataService
 from soap_server.plugins import PluginService
+from soap_server.users import UserService
+from soap_server.hydra_base import AuthenticationService,\
+    LogoutService,\
+    get_session_db,\
+    AuthenticationError,\
+    ObjectNotFoundError,\
+    HydraServiceError
+
+from HydraLib.HydraException import HydraError
 
 from HydraLib import hydra_logging, hdb, util
 from db import HydraIface
@@ -32,15 +35,21 @@ import datetime
 import sys, traceback
 
 
-def _on_method_call(ctx):
-    #Open a cursor?
-    pass
 
+def _on_method_call(ctx):
+
+    if ctx.function == AuthenticationService.login:
+        return
+
+    if ctx.in_object is None:
+        raise ArgumentError("RequestHeader is null")
+    if ctx.in_header is None:
+        raise AuthenticationError("No headers!")
+    if not (ctx.in_header.username, ctx.in_header.session_id) in get_session_db():
+        raise AuthenticationError(ctx.in_object.username)
 
 def _on_method_context_closed(ctx):
-    pass
-    #hdb.commit()
-
+    hdb.commit()
 
 class MyApplication(Application):
     """
@@ -54,6 +63,7 @@ class MyApplication(Application):
     """
     def __init__(self, services, tns, name=None,
                                          in_protocol=None, out_protocol=None):
+
         Application.__init__(self, services, tns, name, in_protocol,
                                                                  out_protocol)
 
@@ -67,18 +77,18 @@ class MyApplication(Application):
             res =  ctx.service_class.call_wrapper(ctx)
             logging.info("Call took: %s"%(datetime.datetime.now()-start))
             return res
+        except HydraError, e:
+            raise HydraServiceError(e.message)
+        except ObjectNotFoundError, e:
+            raise
         except Fault, e:
             logging.error(e)
             raise
-
         except Exception, e:
             logging.critical(e)
             traceback.print_exc(file=sys.stdout)
             hdb.rollback()
             raise Fault('Server', e.message)
-
-#if __name__=='__main__':
-
 
 class HydraServer():
 
@@ -89,9 +99,12 @@ class HydraServer():
         connection = hdb.connect()
         HydraIface.init(connection)
 
-    def crate_application(self):
+    def create_application(self):
 
         applications = [
+            AuthenticationService,
+            UserService,
+            LogoutService,
             NetworkService,
             ProjectService,
             AttributeService,
@@ -100,7 +113,7 @@ class HydraServer():
             PluginService,
         ]
 
-        application = MyApplication(applications, 'hydra.soap',
+        application = MyApplication(applications, 'hydra.authentication',
                     in_protocol=Soap11(validator='lxml'),
                     out_protocol=Soap11()
                 )
@@ -108,7 +121,8 @@ class HydraServer():
         return wsgi_application
 
     def run_server(self):
-        wsgi_application = self.crate_application()
+
+        wsgi_application = self.create_application()
 
         from wsgiref.simple_server import make_server
 
@@ -118,12 +132,13 @@ class HydraServer():
         logging.info("listening to http://127.0.0.1:%s", port)
         logging.info("wsdl is at: http://localhost:%s/?wsdl", port)
 
+        
         server = make_server('127.0.0.1', port, wsgi_application)
         server.serve_forever()
 
 # These few lines are needed to turn the server into a WSGI script.
 server = HydraServer()
-application = server.crate_application()
+application = server.create_application()
 
 
 if __name__ == '__main__':

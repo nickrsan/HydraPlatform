@@ -1,17 +1,13 @@
-from spyne.service import ServiceBase
-import logging
-from HydraLib.HydraException import HydraError
-from spyne.model.primitive import Integer, Boolean
+from spyne.model.primitive import Integer, Boolean, String
 from spyne.decorator import rpc
 from hydra_complexmodels import Attr
 from db import HydraIface
-from hydra_complexmodels import Network,\
-        Node,\
-        Link,\
-        Project,\
-        Scenario,\
-        ResourceTemplateGroup,\
-        ResourceTemplate
+from hydra_complexmodels import ResourceTemplateGroup,\
+        ResourceTemplate, \
+        Resource
+
+from hydra_base import HydraService
+
 
 from HydraLib import hdb
 
@@ -29,7 +25,7 @@ def get_resource(ref_key, ref_id):
     else:
         return None
 
-class AttributeService(ServiceBase):
+class AttributeService(HydraService):
     """
         The attribute SOAP service
     """
@@ -66,108 +62,120 @@ class AttributeService(ServiceBase):
         return success
         
 
-    @rpc(Integer, Integer, _returns=Node)
-    def add_node_attribute(ctx, node_id, attr_id):
+    @rpc(String, Integer, Integer, Boolean, _returns=Resource)
+    def add_resource_attribute(ctx,resource_type, resource_id, attr_id, is_var):
         """
-            Add an attribute to a node.
-        """
+            Add a resource attribute attribute to a resource.
 
-    @rpc(Integer, Integer, _returns=Link)
-    def add_link_attribute(ctx, link_id, attr_id):
+            attr_is_var indicates whether the attribute is a variable or not --
+            this is used in simulation to indicate that this value is expected
+            to be filled in by the simulator.
         """
-            Add an attribute to a link.
-        """
-    @rpc(Integer, Integer, _returns=Network)
-    def add_network_attribute(ctx, network_id, attr_id):
-        """
-            Add an attribute to a network.
-        """
-    @rpc(Integer, Integer, _returns=Scenario)
-    def add_scenaro_attribute(ctx, scenario_id, attr_id):
-        """
-            Add an attribute to a scenario.
-        """
-    @rpc(Integer, Integer,_returns=Project)
-    def add_project_attribute(ctx, project_id, attr_id):
-        """
-            Add an attribute to a project.
-        """
+        resource_i = get_resource(resource_type, resource_id)
+        resource_i.load()
+
+        attr_is_var = 'Y' if is_var else 'N'
+
+        resource_i.add_attribute(attr_id, attr_is_var)
+
+        return resource_i.get_as_complexmodel()
 
     @rpc(ResourceTemplateGroup, _returns=ResourceTemplateGroup)
     def add_template_group(ctx, group):
         """
             Add a template group
         """
-        pass
+
+        g_i = HydraIface.ResourceTemplateGroup()
+        g_i.db.group_name = group.name
+
+        g_i.save()
+
+        for template in group.resourcetemplates:
+            t_i = g_i.add_template(template.name)
+            for item in template.resourcetemplateitmes:
+                t_i.add_item(item.attr_id)
+
+        return g_i.get_as_complexmodel()
 
     @rpc(ResourceTemplateGroup, _returns=ResourceTemplateGroup)
     def update_template_group(ctx, group):
         """
             Add a template group
         """
-        pass
+        g_i = HydraIface.ResourceTemplateGroup(group_id=group.id)
+        g_i.db.group_name = group.name
+
+        g_i.save()
+
+        for template in group.resourcetemplates:
+            t_i = g_i.add_template(template.name)
+            for item in template.resourcetemplateitmes:
+                t_i.add_item(item.attr_id)
+
+        return g_i.get_as_complexmodel()
 
     @rpc(ResourceTemplate, _returns=ResourceTemplate)
     def add_resource_template(ctx, resourcetemplate):
         """
             Add a resource template
+            A group_id may or may not be specified in the
+            resource template complex model, as the template
+            does not necessarily need to be in a group.
         """
-        pass
+        template_i = ResourceTemplate()
+
+        #Check if the resourcetemplate is in a group  
+        if hasattr('group_id', resourcetemplate) and\
+           resourcetemplate.group_id is not None:
+            template_i.db.group_id = resourcetemplate.group_id
+
+        template_i.db.template_name = resourcetemplate.name
+        template_i.save()
+
+        for item in resourcetemplate.resourcetemplateitmes:
+            template_i.add_item(item.attr_id)
+
+        return template_i.get_as_complexmodel()
+ 
 
     @rpc(ResourceTemplate, _returns=ResourceTemplate)
     def update_resource_template(ctx, resourcetemplate):
         """
             Add a resource template
         """
-        pass
+        template_i = HydraIface.ResourceTemplate(template_id=resourcetemplate.id)
+       
+        #Check if the resourcetemplate is in a group  
+        if hasattr('group_id', resourcetemplate) and\
+           resourcetemplate.group_id is not None:
+            template_i.db.group_id = resourcetemplate.group_id
 
-    @rpc(Integer, ResourceTemplate, _returns=ResourceTemplateGroup)
-    def add_resource_template_to_group(ctx, group_id, template):
-        """
-            Add a template to a group
-        """
-        pass
+        for item in resourcetemplate.resourcetemplateitmes:
+            template_i.add_item(item.attr_id)
 
-    @rpc(Integer, Attr, _returns=ResourceTemplate)
-    def add_attr_to_template(ctx, template_id, attr):
+        return template_i.get_as_complexmodel()
+
+    @rpc(Integer, Integer, _returns=ResourceTemplate)
+    def remove_attr_from_template(ctx, template_id, attr_id):
         """
 
-            Add an attribute to a resourcetemplate, creating a resourcetemplateitem.
+            Remove an attribute from a resourcetemplate
         """
-        pass
+        templateitem_i = HydraIface.ResourceTemplateItem(template_id=template_id, attr_id=attr_id)
+        templateitem_i.delete()
 
-    @rpc(Integer, Node, _returns=Node)
-    def add_node_attrs_from_template(ctx, template_id, node):
+    @rpc(Integer, String, Integer, _returns=Resource)
+    def add_node_attrs_from_template(ctx, template_id, resource_type, resource_id):
         """
             adds all the attributes defined by a template to a node.
         """
-        pass
+        template_i = HydraIface.ResourceTemplate(template_id)
+        template_i.load()
 
-    @rpc(Integer, Link, _returns=Node)
-    def add_link_attrs_from_template(ctx, template_id, link):
-        """
-            adds all the attributes defined by a template to a link.
-        """
-        pass
+        resource_i = get_resource(resource_type, resource_id)
 
-    @rpc(Integer, Network, _returns=Network)
-    def add_network_attrs_from_template(ctx, template_id, network):
-        """
-            adds all the attributes defined by a template to a link.
-        """
-        pass
+        for item in template_i.resourcetemplateitems:
+            resource_i.add_attribute(item.db.attr_id)
 
-
-    @rpc(Integer, Scenario, _returns=Scenario)
-    def add_scenario_attrs_from_template(ctx, template_id, Scenario):
-        """
-            adds all the attributes defined by a template to a scenario.
-        """
-        pass
-
-    @rpc(Integer, Project, _returns=Project)
-    def add_project_attrs_from_template(ctx, template_id, project):
-        """
-            adds all the attributes defined by a template to a project.
-        """
-        pass
+        return resource_i.get_as_complexmodel()

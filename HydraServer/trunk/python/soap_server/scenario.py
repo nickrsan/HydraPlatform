@@ -1,4 +1,3 @@
-from spyne.service import ServiceBase
 import logging
 from HydraLib.HydraException import HydraError
 from spyne.model.primitive import Integer, Boolean, AnyDict
@@ -14,8 +13,9 @@ from hydra_complexmodels import Scenario,\
 
 from db import HydraIface
 from HydraLib import hdb
+from hydra_base import HydraService
 
-class ScenarioService(ServiceBase):
+class ScenarioService(HydraService):
     """
         The scenario SOAP service
     """
@@ -82,31 +82,43 @@ class ScenarioService(ServiceBase):
     @rpc(Integer, ResourceScenario, _returns=ResourceScenario)
     def delete_resourcedata(ctx,scenario_id, resource_scenario):
         """
-            Remove the data associated with a scenario.
+            Remove the data associated with a resource in a scenario.
         """
         _delete_resourcescenario(scenario_id, resource_scenario)
 
 def _delete_resourcescenario(scenario_id, resource_scenario):
-    pass
+    try:
+
+        ra_id = resource_scenario.resource_attr_id
+        sd = HydraIface.ResourceScenario(scenario_id=scenario_id, resource_attr_id=ra_id)
+        sd.delete()
+    except Exception, e:
+        logging.critical(e)
+        hdb.rollback()
+        return False
+    #Success? Return true.
+    return True
+
+
 
 def _update_resourcescenario(scenario_id, resource_scenario):
-        ra_id = resource_scenario.resource_attr_id
-        r_a = HydraIface.ResourceAttr(resource_attr_id=ra_id)
-        r_a.load()
-        res = r_a.get_resource()
-        
-        data_type = resource_scenario.type.lower()
-       
-        value = parse_value(data_type, resource_scenario)
+    ra_id = resource_scenario.resource_attr_id
+    r_a = HydraIface.ResourceAttr(resource_attr_id=ra_id)
+    r_a.load()
+    res = r_a.get_resource()
+    
+    data_type = resource_scenario.type.lower()
+   
+    value = parse_value(data_type, resource_scenario)
 
-        res.assign_value(scenario_id, ra_id, data_type, value,
-                        "", "", "") 
+    res.assign_value(scenario_id, ra_id, data_type, value,
+                    "", "", "") 
 
-        res.save()
-        
-        return res
+    res.save()
+    
+    return res
 
-class DataService(ServiceBase):
+class DataService(HydraService):
   
     """
         The data SOAP service

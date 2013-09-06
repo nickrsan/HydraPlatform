@@ -186,8 +186,15 @@ class IfaceBase(object):
             Converts this object into a spyne.model.ComplexModel type
             which can be used by the soap library.
         """
+
         #first create the appropriate soap complex model
         cm = getattr(hydra_complexmodels, self.name)()
+
+        #If self is not in the DB, then return an empty
+        #complex model.
+        if self.in_db is False:
+            cm.error = "Not in DB"
+            return cm
 
         #assign values for each database attribute
         for attr in self.db.db_attrs:
@@ -823,13 +830,28 @@ class ResourceTemplate(IfaceBase):
         a resource. For example, a "reservoir" template may have "volume",
         "discharge" and "daily throughput".
     """
-    def __init__(self, resourcetemplategroup  = None, template_id = None):
+    def __init__(self, resourcetemplategroup = None, template_id = None):
         IfaceBase.__init__(self, resourcetemplategroup, self.__class__.__name__)
 
         self.db.template_id = template_id
 
         if template_id is not None:
             self.load()
+
+    def add_item(self, attr_id):
+        """
+            Add a resource template item to a resource template.
+        """
+        item_i = ResourceTemplateItem()
+        item_i.db.attr_id = attr_id
+        item_i.db.template_id = self.db.template_id
+       
+        #If the item already exists, there's no need to add it again.
+        if item_i.load() == False:
+            item_i.save()
+            self.resourcetemplateitems.append(item_i)
+
+        return item_i
 
 class ResourceTemplateItem(IfaceBase):
     """
@@ -856,6 +878,18 @@ class ResourceTemplateGroup(IfaceBase):
         self.db.group_id = group_id
         if group_id is not None:
             self.load()
+
+
+    def add_template(self, name):
+        template_i = ResourceTemplate()
+        template_i.db.group_id = self.db.group_id
+        template_i.db.template_name = name
+        template_i.save()
+
+        self.resourcetemplates.append(template_i)
+
+        return template_i
+
 
 class ResourceScenario(IfaceBase):
     """
@@ -1279,8 +1313,45 @@ class User(IfaceBase):
         IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.user_id = user_id
+
         if user_id is not None:
             self.load()
+
+    def get_user_id(self):
+        """
+            Returns the user_id for a given username. NB: The username must
+            be set by this point!
+            If the user exists, the password and user id will be updated and
+            the user id returnd.
+            If not, None is returned.
+        """
+        
+        if self.db.user_id is not None:
+            return self.db.user_id
+
+        if self.db.username is None:
+            raise HydraError("Cannot find a user's id without a username.")
+        
+        sql = """
+            select
+                user_id,
+                password
+            from
+                tUser
+            where
+                username = '%s' 
+        """ % self.db.username
+        
+        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
+        user_rs =cursor.execute_sql(sql)
+        
+        if len(user_rs) > 0:
+            self.db.user_id = user_rs[0].user_id
+            self.db.password = user_rs[0].password
+            return self.db.user_id
+        else:
+            logging.info("User %s does not exist."%self.db.username)
+            return None
 
 class Role(IfaceBase):
     """

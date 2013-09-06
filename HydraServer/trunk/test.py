@@ -13,7 +13,6 @@ shutil.rmtree(os.path.join(tmp(), 'suds'), True)
 from suds.client import Client
 from suds.plugin import MessagePlugin
 from HydraLib import util
-import datetime
 
 class FixNamespace(MessagePlugin):
     def marshalled(self, context):
@@ -32,7 +31,16 @@ class TestSoap(unittest.TestCase):
         config = util.load_config()
         url = config.get('hydra_client', 'url')
         print "Connecting to %s"%url
+
         self.c = Client(url, plugins=[FixNamespace()])
+        session_id = self.c.service.login('root', '')
+
+        token = self.c.factory.create('RequestHeader')
+        token.session_id = session_id
+        token.username = 'root'
+
+        self.c.set_options(soapheaders=token)
+        pref = self.c.service.get_preferences('test')
 
     def create_node(self,node_id,name,desc="Node Description", x=0, y=0, attributes=None):
         node = self.c.factory.create('ns1:Node')
@@ -66,7 +74,7 @@ class TestSoap(unittest.TestCase):
         attr.name = 'Test Attr'
         attr.dimen = 'very big'
         attr = self.c.service.add_attribute(attr)
-        #print attr
+ 
         return attr
 
     def create_network(self, project_id, name, desc=None, nodes=None, links=None, scenarios=None):
@@ -80,6 +88,7 @@ class TestSoap(unittest.TestCase):
         }
         #print network
         network = self.c.service.add_network(network)
+     
         return network
 
     def test_add_project(self):
@@ -97,7 +106,9 @@ class TestSoap(unittest.TestCase):
             'name' : 'Updated Project',
             'description' : 'Updated Project Description',
         }
+
         p2 = self.c.service.update_project(project1)
+        print self.c.last_sent()
         print p2
 
     def test_network(self):
@@ -237,10 +248,9 @@ class TestSoap(unittest.TestCase):
         network = self.create_network(p['id'], 'Network1', 'Test Network with 2 nodes and 1 link',nodes=node_array,links=link_array,scenarios=scenario_array)
 
         print "Network Creation took: %s"%(datetime.datetime.now()-start)
-     #   print c.last_sent()
         #print "****************************"
         #print network
-      #  print c.last_received()
+        #print c.last_received()
 
     def create_descriptor(self, ResourceAttr):
         #A scenario attribute is a piece of data associated
