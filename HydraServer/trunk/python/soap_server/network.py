@@ -95,7 +95,7 @@ class NetworkService(HydraService):
 
             l = x.add_link(link.name, link.description, node_1_id, node_2_id)
             l.save()
-            link_attr_id_map = _add_attributes(l, node.attributes)
+            link_attr_id_map = _add_attributes(l, link.attributes)
             resource_attr_id_map.update(link_attr_id_map)
 
         if network.scenarios is not None:
@@ -144,7 +144,7 @@ class NetworkService(HydraService):
         #Maps temporary node_ids to real node_ids
         node_id_map = dict()
 
-         #First add all the nodes
+        #First add all the nodes
         for node in network.nodes:
             is_new = False
             
@@ -189,7 +189,7 @@ class NetworkService(HydraService):
             
             l.save()
             
-            link_attr_id_map = _add_attributes(l, node.attributes)
+            link_attr_id_map = _add_attributes(l, link.attributes)
             resource_attr_id_map.update(link_attr_id_map)
 
 
