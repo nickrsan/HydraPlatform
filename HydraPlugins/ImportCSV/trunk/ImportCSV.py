@@ -158,9 +158,9 @@ class ImportCSV(object):
 
         self.Network = self.cli.factory.create('hyd:Network')
         self.Network.project_id = self.Project.id
-        #self.Network.nodes = self.cli.factory.create('hyd:NodeArray')
-        #self.Network.links = self.cli.factory.create('hyd:LinkArray')
-        #self.Network.scenarios = self.cli.factory.create('hyd:ScenarioArray')
+        self.Network.nodes = self.cli.factory.create('hyd:NodeArray')
+        self.Network.links = self.cli.factory.create('hyd:LinkArray')
+        self.Network.scenarios = self.cli.factory.create('hyd:ScenarioArray')
 
         if file is not None:
             with open(file, mode='r') as csv_file:
