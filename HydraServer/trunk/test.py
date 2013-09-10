@@ -57,7 +57,7 @@ class TestSoap(unittest.TestCase):
         link.description = 'Link from %s to %s'%(node_1_id, node_2_id)
         link.node_1_id = node_1_id
         link.node_2_id = node_2_id
-        
+
         return link
 
     def create_link_without_ids(self,name,node_1_name, node_1_x, node_1_y, node_2_name, node_2_x, node_2_y):
@@ -73,7 +73,7 @@ class TestSoap(unittest.TestCase):
         attr.name = 'Test Attr'
         attr.dimen = 'very big'
         attr = self.c.service.add_attribute(attr)
- 
+
         return attr
 
     def create_network(self, project_id, name, desc=None, nodes=None, links=None, scenarios=None):
@@ -87,7 +87,7 @@ class TestSoap(unittest.TestCase):
         }
         #print network
         network = self.c.service.add_network(network)
-     
+
         return network
 
     def test_add_project(self):
@@ -145,7 +145,7 @@ class TestSoap(unittest.TestCase):
             'nodes'       : NodeArray,
         }
         print "Time until network creation: %s"%(datetime.datetime.now()-start)
-        
+
         Network = self.c.service.add_network(Network)
         print "Total test time was: %s"%(datetime.datetime.now()-start)
         assert Network is not None, "Network did not create correctly"
@@ -160,11 +160,11 @@ class TestSoap(unittest.TestCase):
 
         print "Project creation took: %s"%(datetime.datetime.now()-start)
         start = datetime.datetime.now()
-        
+
         #Create some attributes, which we can then use to put data on our nodes
-        attr1 = self.create_attr() 
-        attr2 = self.create_attr() 
-        attr3 = self.create_attr() 
+        attr1 = self.create_attr()
+        attr2 = self.create_attr()
+        attr3 = self.create_attr()
 
         print "Attribute creation took: %s"%(datetime.datetime.now()-start)
         start = datetime.datetime.now()
@@ -245,6 +245,7 @@ class TestSoap(unittest.TestCase):
         start = datetime.datetime.now()
 
         network = self.create_network(p['id'], 'Network1', 'Test Network with 2 nodes and 1 link',nodes=node_array,links=link_array,scenarios=scenario_array)
+        print self.c.last_sent()
 
         print "Network Creation took: %s"%(datetime.datetime.now()-start)
         #print "****************************"
@@ -339,7 +340,7 @@ class TestSoap(unittest.TestCase):
         return scenario_attr
 
 def run():
-    
+
     #import profile
     #profile.run('unittest.main()')
     unittest.main()

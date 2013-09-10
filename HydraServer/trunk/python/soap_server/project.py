@@ -8,9 +8,9 @@ class ProjectService(HydraService):
     """
         The project SOAP service
     """
-    
 
-    @rpc(Project, _returns=Project) 
+
+    @rpc(Project, _returns=Project)
     def add_project(ctx, project):
         """
             Add a new project
@@ -22,26 +22,26 @@ class ProjectService(HydraService):
         x.db.project_description = project.description
         x.save()
         x.commit()
-        
+
         ret = x.get_as_complexmodel()
 
         return ret
 
-    @rpc(Project, _returns=Project) 
+    @rpc(Project, _returns=Project)
     def update_project(ctx, project):
         """
             Update a project
             returns a project complexmodel
         """
-        
+
         x = HydraIface.Project(project_id = project.id)
         x.db.project_name        = project.name
         x.db.project_description = project.description
-        
+
         x.save()
 
         return x.get_as_complexmodel()
- 
+
 
     @rpc(Integer, _returns=Project)
     def get_project(ctx, project_id):
@@ -77,12 +77,12 @@ class ProjectService(HydraService):
 #        networks = []
 #
 #        x = HydraIface.Project(project_id = project_id)
-#        
+#
 #        for n_i in x.get_networks():
 #            networks.append(n_i.get_as_complexmodel())
 #
 #        return networks
-        
+
 
 
 
