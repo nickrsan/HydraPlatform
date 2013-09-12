@@ -9,9 +9,10 @@ import time
 from ImportCSV import ImportCSV
 from generate_networks import create_network
 
-nodenumbers = [2]
+nodenumbers = [16]
 #nodenumbers = [2, 4, 8, 16]
-attrnumbers = [2, 4, 8, 16, 32, 64, 128, 256]
+#attrnumbers = [2, 4, 8, 16, 32, 64, 128, 256]
+attrnumbers = [256]
 
 
 if __name__ == '__main__':
@@ -45,6 +46,7 @@ if __name__ == '__main__':
 
                 # Commit the network and measure time
                 startime = time.time()
+
                 testcase.cli.service.add_network(testcase.Network)
                 endtime = time.time()
                 exectime = endtime - startime
@@ -61,5 +63,5 @@ if __name__ == '__main__':
         res = subprocess.call(['python', '../../../../hydra_daemon.py',
                                'stop'])
         if res == 0:
-            print "Stopped server successfully..."
+            print "Stopped server successfully after exception..."
         raise

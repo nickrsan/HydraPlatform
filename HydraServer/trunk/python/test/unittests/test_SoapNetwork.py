@@ -8,11 +8,10 @@ import copy
 class NetworkTest(test_SoapServer.SoapServerTest):
 
     def test_update(self):
-        cli = test_SoapServer.SoapServerTest.connect(self)
         project = test_SoapServer.SoapServerTest.create_project(self, 'test')
-        network = cli.factory.create('hyd:Network')
-        nodes = cli.factory.create('hyd:NodeArray')
-        links = cli.factory.create('hyd:LinkArray')
+        network = self.client.factory.create('hyd:Network')
+        nodes = self.client.factory.create('hyd:NodeArray')
+        links = self.client.factory.create('hyd:LinkArray')
 
         nnodes = 3
         nlinks = 2
@@ -20,7 +19,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         y = [0, 1, 0]
 
         for i in range(nnodes):
-            node = cli.factory.create('hyd:Node')
+            node = self.client.factory.create('hyd:Node')
             node.id = i * -1
             node.name = 'Node ' + str(i)
             node.description = 'Test node ' + str(i)
@@ -30,7 +29,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             nodes.Node.append(node)
 
         for i in range(nlinks):
-            link = cli.factory.create('hyd:Link')
+            link = self.client.factory.create('hyd:Link')
             link.id = 1 * -1
             link.name = 'Link ' + str(i)
             link.description = 'Test link ' + str(i)
@@ -45,7 +44,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         network.nodes = nodes
         network.links = links
 
-        network = cli.service.add_network(network)
+        network = self.client.service.add_network(network)
 
         new_network = copy.deepcopy(network)
 
@@ -55,7 +54,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         new_network.description = \
             'A different network for SOAP unit tests.'
 
-        new_network = cli.service.update_network(new_network)
+        new_network = self.client.service.update_network(new_network)
 
         assert network.id == new_network.id, \
             'network_id has changed on update.'
@@ -67,12 +66,12 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             'A different network for SOAP unit tests.', \
             "Update did not work correctly."
 
+
     def test_load(self):
-        cli = test_SoapServer.SoapServerTest.connect(self)
         project = test_SoapServer.SoapServerTest.create_project(self, 'test')
-        network = cli.factory.create('hyd:Network')
-        nodes = cli.factory.create('hyd:NodeArray')
-        links = cli.factory.create('hyd:LinkArray')
+        network = self.client.factory.create('hyd:Network')
+        nodes = self.client.factory.create('hyd:NodeArray')
+        links = self.client.factory.create('hyd:LinkArray')
 
         nnodes = 3
         nlinks = 2
@@ -80,7 +79,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         y = [0, 1, 0]
 
         for i in range(nnodes):
-            node = cli.factory.create('hyd:Node')
+            node = self.client.factory.create('hyd:Node')
             node.id = i * -1
             node.name = 'Node ' + str(i)
             node.description = 'Test node ' + str(i)
@@ -90,7 +89,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             nodes.Node.append(node)
 
         for i in range(nlinks):
-            link = cli.factory.create('hyd:Link')
+            link = self.client.factory.create('hyd:Link')
             link.id = i * -1
             link.name = 'Link ' + str(i)
             link.description = 'Test link ' + str(i)
@@ -105,9 +104,9 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         network.nodes = nodes
         network.links = links
 
-        network = cli.service.add_network(network)
+        network = self.client.service.add_network(network)
 
-        new_network = cli.service.get_network(network.id)
+        new_network = self.client.service.get_network(network.id)
 
         assert network.name == new_network.name, \
             "network_name has changed."
@@ -115,11 +114,10 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             "project_description did not load correctly"
 
     def test_delete(self):
-        cli = test_SoapServer.SoapServerTest.connect(self)
         project = test_SoapServer.SoapServerTest.create_project(self, 'test')
-        network = cli.factory.create('hyd:Network')
-        nodes = cli.factory.create('hyd:NodeArray')
-        links = cli.factory.create('hyd:LinkArray')
+        network = self.client.factory.create('hyd:Network')
+        nodes = self.client.factory.create('hyd:NodeArray')
+        links = self.client.factory.create('hyd:LinkArray')
 
         nnodes = 3
         nlinks = 2
@@ -127,7 +125,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         y = [0, 1, 0]
 
         for i in range(nnodes):
-            node = cli.factory.create('hyd:Node')
+            node = self.client.factory.create('hyd:Node')
             node.id = i * -1
             node.name = 'Node ' + str(i)
             node.description = 'Test node ' + str(i)
@@ -137,13 +135,13 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             nodes.Node.append(node)
 
         for i in range(nlinks):
-            link = cli.factory.create('hyd:Link')
+            link = self.client.factory.create('hyd:Link')
             link.id = i * -1
             link.name = 'Link ' + str(i)
             link.description = 'Test link ' + str(i)
             link.node_1_id = nodes.Node[i].id
             link.node_2_id = nodes.Node[i + 1].id
-            #link = cli.service.add_link(link)
+            #link = self.client.service.add_link(link)
 
             links.Link.append(link)
 
@@ -153,11 +151,11 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         network.nodes = nodes
         network.links = links
 
-        network = cli.service.add_network(network)
+        network = self.client.service.add_network(network)
 
-        cli.service.delete_network(network.id)
+        self.client.service.delete_network(network.id)
 
-        assert cli.service.get_network(network.id).status == 'X', \
+        assert self.client.service.get_network(network.id).status == 'X', \
             'Deleting network did not work correctly.'
 
 if __name__ == '__main__':

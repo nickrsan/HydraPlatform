@@ -3,8 +3,10 @@ from HydraLib.hdb import HydraMySqlCursor
 import logging
 from decimal import Decimal
 from soap_server import hydra_complexmodels
+import datetime
 
 from HydraLib.HydraException import HydraError
+import sys, traceback
 
 global DB_STRUCT
 DB_STRUCT = {}
@@ -84,12 +86,18 @@ def init(cnx):
         child_dict['referenced_column_name'] = r[3]
         DB_STRUCT[r[2].lower()]['child_info'][r[0]] = child_dict
 
+def execute(sql):
+    cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
+    rs = cursor.execute_sql(sql)
+    return rs
+
 class IfaceBase(object):
     """
         The base database interface class.
     """
     def __init__(self, parent, class_name):
-        logging.info("Initialising %s", class_name)
+        logging.debug("Initialising %s", class_name)
+
         self.db = IfaceDB(class_name)
 
         self.name = class_name
@@ -104,6 +112,11 @@ class IfaceBase(object):
         self.parent = parent
 
     def load(self):
+        self.in_db = self.db.load()
+
+        return self.in_db
+
+    def load_all(self):
         self.in_db = self.db.load()
 
         if self.in_db:
@@ -186,7 +199,7 @@ class IfaceBase(object):
             Converts this object into a spyne.model.ComplexModel type
             which can be used by the soap library.
         """
-
+        start = datetime.datetime.now()
         #first create the appropriate soap complex model
         cm = getattr(hydra_complexmodels, self.name)()
 
@@ -214,7 +227,7 @@ class IfaceBase(object):
         for name, objs in self.children.items():
             child_objs = []
             for obj in objs:
-                obj.load()
+                #obj.load()
                 child_cm = obj.get_as_complexmodel()
                 child_objs.append(child_cm)
             setattr(cm, name, child_objs)
@@ -223,9 +236,10 @@ class IfaceBase(object):
         #and assign them to the new object too.
         if hasattr(self, 'attributes'):
             attributes = []
-            for attr in self.attributes:
+            for attr in self.get_attributes():
                 attributes.append(attr.get_as_complexmodel())
             setattr(cm, 'attributes', attributes)
+        logging.info("Complex model conversion of %s took: %s " % (self.name, datetime.datetime.now()-start))
         return cm
 
 class IfaceDB(object):
@@ -277,7 +291,7 @@ class IfaceDB(object):
             column_name = ref_cols['column_name']
             referenced_column_name = ref_cols['referenced_column_name']
 
-            logging.info("Loading child %s", table_name)
+            logging.debug("Loading child %s", table_name)
 
             base_child_sql = """
                 select
@@ -301,6 +315,7 @@ class IfaceDB(object):
             #rs = cursor.execute_sql(complete_child_sql)
             cursor.execute(complete_child_sql)
             rs = cursor.fetchall()
+            cursor.close()
             child_rs = []
             for r in rs:
                 child_rs.append(zip(cursor.column_names, r))
@@ -325,7 +340,7 @@ class IfaceDB(object):
                 logging.debug("Cannot load parent. %s is None", k)
                 return
 
-        logging.info("Loading parent %s", self.table_name)
+        logging.debug("Loading parent %s", self.table_name)
 
         base_parent_sql = """
             select
@@ -343,6 +358,7 @@ class IfaceDB(object):
 
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         rs = cursor.execute_sql(complete_parent_sql)
+        cursor.close()
 
         if len(rs) == 0:
             logging.info("Object %s has no parent with pk: %s", self.table_name, parent_pk)
@@ -401,13 +417,18 @@ class IfaceDB(object):
 
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         base_insert = "insert into %(table)s (%(cols)s) values (%(vals)s);"
+
+
+        if 'cr_date' in self.db_attrs:
+            del(self.db_attrs[self.db_attrs.index('cr_date')])
+
         complete_insert = base_insert % dict(
             table = self.table_name,
             cols  = ",".join([n for n in self.db_attrs]),
             vals  = ",".join([self.get_val(n) for n in self.db_attrs]),
         )
 
-        logging.debug("Running insert: %s", complete_insert)
+        logging.info("Running insert: %s", complete_insert)
         old_seq = cursor.lastrowid
 
         cursor.execute(complete_insert)
@@ -415,6 +436,7 @@ class IfaceDB(object):
         if self.seq is not None:
             if old_seq is None or old_seq != cursor.lastrowid:
                 setattr(self, self.seq, cursor.lastrowid)
+        cursor.close()
 
     def update(self):
         """
@@ -431,6 +453,7 @@ class IfaceDB(object):
         logging.debug("Running update: %s", complete_update)
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         cursor.execute(complete_update)
+        cursor.close()
 
     def load(self):
         """
@@ -438,7 +461,6 @@ class IfaceDB(object):
             the self.db_data dictionary. These are accessible direcly from
             the object, without any need to look in the db_data dictionary.
         """
-
         #Idenitfy the primary key, which is used to get a single row in the db.
         for pk in self.pk_attrs:
             if self.__getattr__(pk) is None:
@@ -458,9 +480,11 @@ class IfaceDB(object):
 
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         rs = cursor.execute_sql(complete_load)
+        cursor.close()
 
         if len(rs) == 0:
-            logging.warning("No entry found for table")
+            logging.warning("No entry found for table %s", self.table_name)
+                
             return False
 
         for r in rs:
@@ -541,9 +565,11 @@ class GenericResource(IfaceBase):
                     where
                         ref_id = %(ref_id)s
                     and ref_key = '%(ref_key)s'
-            """
+            """ % dict(ref_key = self.ref_key, ref_id = self.ref_id)
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-        rs = cursor.execute_sql(sql%dict(ref_key = self.ref_key, ref_id = self.ref_id))
+        
+        rs = cursor.execute_sql(sql)
+        cursor.close()
 
         for r in rs:
             ra = ResourceAttr(resource_attr_id=r.resource_attr_id)
@@ -566,11 +592,25 @@ class GenericResource(IfaceBase):
         return attr
 
     def assign_value(self, scenario_id, resource_attr_id, data_type, val,
-                     units, name, dimension):
+                     units, name, dimension, new=False):
+        """
+            Insert or update a piece of data in a scenario. the 'new' flag
+            indicates that the data is new, thus allowing us to avoid unnecessary
+            queries for non-existant data. If this flag is not True, a check
+            will be performed in the DB for its existance.
+        """
 
-        rs = ResourceScenario(scenario_id=scenario_id, resource_attr_id=resource_attr_id)
+        rs = ResourceScenario()
+        rs.db.scenario_id=scenario_id
+        rs.db.resource_attr_id=resource_attr_id
+        
+        dataset_id = None
+        if new is not True:
+            data_in_db = rs.load()
+            if data_in_db is True:
+                dataset_id = rs.db.dataset_id
 
-        if rs.db.dataset_id is not None:
+        if dataset_id is not None:
             sd = ScenarioData(dataset_id = rs.db.dataset_id)
         else:
             sd = ScenarioData()
@@ -582,16 +622,13 @@ class GenericResource(IfaceBase):
         sd.db.data_name  = name
         sd.db.data_dimen = dimension
         sd.save()
-        sd.commit()
 
-        if rs.db.dataset_id is None:
+        if dataset_id is None:
             rs.db.dataset_id       = sd.db.dataset_id
 
         rs.save()
-        rs.commit()
 
         return rs
-
 
 class Project(GenericResource):
     """
@@ -823,6 +860,12 @@ class ResourceAttr(IfaceBase):
                 resource_scenario.delete()
             #delete the resource attribute
             super(ResourceAttr, self).delete()
+    
+    def get_as_complexmodel(self):
+        cm = super(ResourceAttr, self).get_as_complexmodel()
+        cm.id = self.db.resource_attr_id
+
+        return cm
 
 class ResourceTemplate(IfaceBase):
     """
@@ -1232,8 +1275,9 @@ class Constraint(IfaceBase):
 
         self.scenario=scenario
         self.db.constraint_id = constraint_id
+
         if constraint_id is not None:
-            self.load()
+            self.load()   
 
     def eval_condition(self):
         grp_1 = ConstraintGroup(constraint=self, group_id = self.db.group_id)
@@ -1253,8 +1297,56 @@ class ConstraintGroup(IfaceBase):
 
         self.constraint = constraint
         self.db.group_id = group_id
+        
+        self.groups = []
+        self.items  = []
+
         if group_id is not None:
             self.load()
+
+    def load(self):
+        super(ConstraintGroup, self).load()
+        self.get_groups()
+        self.get_items()
+
+    def save(self):
+
+        for group in self.get_groups():
+            group.save()
+
+        for item in self.get_items():
+            item.save()
+
+        super(ConstraintGroup, self).save()
+
+    def get_groups(self):
+        if len(self.groups) > 0:
+            return self.groups
+
+        if self.db.ref_key_1 == 'GRP':
+            group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_1)
+            self.groups.append(group)
+
+        if self.db.ref_key_2 == 'GRP':
+            group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_2)
+            self.groups.append(group)
+
+        return self.groups
+
+    def get_items(self):
+
+        if len(self.items) > 0:
+            return self.items
+
+        if self.db.ref_key_1 == 'ITEM':
+            item = ConstraintItem(item_id=self.db.ref_id_1)
+            self.items.append(item)
+
+        if self.db.ref_key_2 == 'ITEM':
+            item = ConstraintItem(item_id=self.db.ref_id_2)
+            self.items.append(item)
+
+        return self.items
 
     def eval_group(self):
 
@@ -1290,8 +1382,30 @@ class ConstraintGroup(IfaceBase):
             str_2 = d.get_val()
 
 
-        return "%s %s %s"%(str_1, self.db.op, str_2)
+        return "(%s %s %s)"%(str_1, self.db.op, str_2)
 
+    def get_as_complexmodel(self):
+
+        str_1 = None
+        str_2 = None
+
+        if self.db.ref_key_1 == 'GRP':
+            group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_1)
+            str_1 = group.eval_group()
+        elif self.db.ref_key_1 == 'ITEM':
+            item = ConstraintItem(item_id=self.db.ref_id_1)
+
+            str_1 = item.db.resource_attr_id
+
+        if self.db.ref_key_2 == 'GRP':
+            group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_2)
+            str_2 = group.eval_group()
+        elif self.db.ref_key_2 == 'ITEM':
+            item = ConstraintItem(item_id=self.db.ref_id_2)
+
+            str_2 = item.db.resource_attr_id
+
+        return "(%s %s %s)"%(str_1, self.db.op, str_2)
 
 class ConstraintItem(IfaceBase):
     """
@@ -1400,6 +1514,29 @@ class RolePerm(IfaceBase):
         if perm_id is not None and role_id is not None:
             self.load()
 
+class ProjectOwner(IfaceBase):
+    """
+       Ownership for a project. 
+    """
+    def __init__(self, project=None, user_id = None, project_id = None):
+        IfaceBase.__init__(self, project, self.__class__.__name__)
+
+        self.db.user_id = user_id
+        self.db.project_id = project_id
+        if user_id is not None and project_id is not None:
+            self.load()
+
+class DatasetOwner(IfaceBase):
+    """
+        Ownership for a piece of data
+    """
+    def __init__(self, scenariodata=None, user_id = None, dataset_id = None):
+        IfaceBase.__init__(self, scenariodata, self.__class__.__name__)
+
+        self.db.user_id = user_id
+        self.db.dataset_id = dataset_id
+        if user_id is not None and dataset_id is not None:
+            self.load()
 
 db_hierarchy = dict(
     project  = dict(
@@ -1569,5 +1706,17 @@ db_hierarchy = dict(
         parent = 'role',
         table_name = 'tRolePerm',
         pk     = ['perm_id', 'role_id']
-    )
+    ),
+    projectowner  = dict(
+        obj   = ProjectOwner,
+        parent = 'project',
+        table_name = 'tProjectOwner',
+        pk     = ['user_id', 'project_id']
+    ),
+    datasetowner  = dict(
+        obj   = DatasetOwner,
+        parent = 'scenariodata',
+        table_name = 'tDatasetOwner',
+        pk     = ['user_id', 'dataset_id']
+    ),
 )

@@ -4,11 +4,12 @@ from HydraLib.HydraException import HydraError
 from spyne.model.primitive import Integer, Boolean
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
-from hydra_complexmodels import Network, Node, Link
+from hydra_complexmodels import Network, Node, Link, Scenario
 from db import HydraIface
 from HydraLib import hdb
 from hydra_base import HydraService
 import scenario
+import datetime
 
 def _add_attributes(resource_i, attributes):
     resource_attr_id_map = dict()
@@ -54,13 +55,13 @@ class NetworkService(HydraService):
 
         """
         return_value = None
+        insert_start = datetime.datetime.now()
 
         x = HydraIface.Network()
         x.db.project_id          = network.project_id
         x.db.network_name        = network.name
         x.db.network_description = network.description
         x.save()
-        x.commit()
         network.network_id = x.db.network_id
 
         resource_attr_id_map = _add_attributes(x, network.attributes)
@@ -108,11 +109,11 @@ class NetworkService(HydraService):
 
                 for r_scen in s.resourcescenarios:
                     r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
-                    scenario._update_resourcescenario(scen.db.scenario_id, r_scen)
+                    scenario._update_resourcescenario(scen.db.scenario_id, r_scen, new=True)
+        
+        logging.info("Insertion of network took: %s",(datetime.datetime.now()-insert_start))
 
         return_value = x.get_as_complexmodel()
-
-        hdb.commit()
 
         return return_value
 
@@ -444,3 +445,19 @@ class NetworkService(HydraService):
         x.commit()
         return x.load()
 
+    @rpc(Integer, _returns=SpyneArray(Scenario))
+    def get_scenarios(ctx, network_id):
+        """
+            Get all the scenarios in a given network.
+        """
+        net = HydraIface.Network(network_id=network_id)
+
+        net.load()
+    
+        scenarios = []
+
+        for scen in net.scenarios:
+            scen.load()
+            scenarios.append(scen.get_as_complexmodel())
+
+        return scenarios

@@ -7,7 +7,6 @@ import test_SoapServer
 class ScenarioTest(test_SoapServer.SoapServerTest):
 
     def test_update(self):
-        cli = test_SoapServer.SoapServerTest.connect(self)
 
         project = test_SoapServer.SoapServerTest.create_project(self, 'Test')
 
@@ -17,19 +16,19 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         attr3 = test_SoapServer.SoapServerTest.create_attr(self)
 
         # Create node attributes
-        attr_array = cli.factory.create('hyd:ResourceAttrArray')
-        node_attr1 = cli.factory.create('hyd:ResourceAttr')
+        attr_array = self.client.factory.create('hyd:ResourceAttrArray')
+        node_attr1 = self.client.factory.create('hyd:ResourceAttr')
         node_attr1.attr_id = attr1.id
-        node_attr2 = cli.factory.create('hyd:ResourceAttr')
+        node_attr2 = self.client.factory.create('hyd:ResourceAttr')
         node_attr2.attr_id = attr2.id
-        node_attr3 = cli.factory.create('hyd:ResourceAttr')
+        node_attr3 = self.client.factory.create('hyd:ResourceAttr')
         node_attr3.attr_id = attr3.id
         attr_array.ResourceAttr.append(node_attr1)
         attr_array.ResourceAttr.append(node_attr2)
         attr_array.ResourceAttr.append(node_attr3)
 
 
-        node_array = cli.factory.create('hyd:NodeArray')
+        node_array = self.client.factory.create('hyd:NodeArray')
         # Create nodes and a link between.
         node1 = test_SoapServer.SoapServerTest.create_node(self, -1,
                 attributes=attr_array)
@@ -40,23 +39,23 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         link = test_SoapServer.SoapServerTest.create_link(self, node1.id, node2.id)
 
         # Links are stored in the network as a link array.
-        link_array = cli.factory.create('hyd:LinkArray')
+        link_array = self.client.factory.create('hyd:LinkArray')
         link_array.Link.append(link)
 
         # Create a scenario
-        scenario = cli.factory.create('hyd:Scenario')
+        scenario = self.client.factory.create('hyd:Scenario')
         scenario.scenario_name = 'Scenario 1'
         scenario.scenario_description = 'A scenario.'
 
         # All the data sets that belong to a scenario are store in an array
-        scenario_data = cli.factory.create('hyd:ResourceScenarioArray')
+        scenario_data = self.client.factory.create('hyd:ResourceScenarioArray')
 
         node_attrs = node1.attributes
 
         # Create the data to be assigned to each attribute:
 
         # An array:
-        array = cli.factory.create('hyd:Array')
+        array = self.client.factory.create('hyd:Array')
         array.arr_data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
 

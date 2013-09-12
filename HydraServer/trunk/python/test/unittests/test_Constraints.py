@@ -35,25 +35,21 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         con.db.constant               = 0
         con.db.op                     = "=="
         con.save()
-        con.commit()
 
         item_a = HydraIface.ConstraintItem(constraint=con)
         item_a.db.constraint_id = con.db.constraint_id
         item_a.db.resource_attr_id = ra.db.resource_attr_id
         item_a.save()
-        item_a.commit()
 
         item_b = HydraIface.ConstraintItem(constraint=con)
         item_b.db.constraint_id = con.db.constraint_id
         item_b.db.resource_attr_id = rb.db.resource_attr_id
         item_b.save()
-        item_b.commit()
 
         item_c = HydraIface.ConstraintItem(constraint=con)
         item_c.db.constraint_id = con.db.constraint_id
         item_c.db.resource_attr_id = rc.db.resource_attr_id
         item_c.save()
-        item_c.commit()
 
         grp_a = HydraIface.ConstraintGroup()
         grp_a.db.constraint_id = con.db.constraint_id
@@ -63,7 +59,6 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         grp_a.db.ref_id_2  = item_b.db.item_id
         grp_a.db.op        = "+"
         grp_a.save()
-        grp_a.commit()
 
         grp_b = HydraIface.ConstraintGroup()
         grp_b.db.constraint_id = con.db.constraint_id
@@ -73,13 +68,13 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         grp_b.db.ref_id_2  = item_c.db.item_id
         grp_b.db.op        = '-'
         grp_b.save()
-        grp_b.commit()
 
         con.db.group_id = grp_b.db.group_id
         con.save()
         con.commit()
 
         condition_string = con.eval_condition()
+        print condition_string
         assert eval(condition_string) == True, \
                     "Condition %s did not evaluate"%condition_string
 

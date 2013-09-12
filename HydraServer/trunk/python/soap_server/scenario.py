@@ -34,7 +34,7 @@ class ScenarioService(HydraService):
             scenario.scenario_id = x.db.scenario_id
 
             for r_scen in scenario.resourcescenarios:
-                scenario._update_resourcescenario(x.db.scenario_id, r_scen)
+                scenario._update_resourcescenario(x.db.scenario_id, r_scen, new=True)
 
             hdb.commit()
             
@@ -101,10 +101,17 @@ def _delete_resourcescenario(scenario_id, resource_scenario):
 
 
 
-def _update_resourcescenario(scenario_id, resource_scenario):
+def _update_resourcescenario(scenario_id, resource_scenario, new=False):
+    """
+        Insert or Update the value of a resource's attribute by first getting the
+        resource, then parsing the input data, then assigning the value.
+        
+        returns a HydraIface.ResourceScenari object.
+    """
     ra_id = resource_scenario.resource_attr_id
+    
     r_a = HydraIface.ResourceAttr(resource_attr_id=ra_id)
-    r_a.load()
+
     res = r_a.get_resource()
     
     data_type = resource_scenario.type.lower()
@@ -112,10 +119,8 @@ def _update_resourcescenario(scenario_id, resource_scenario):
     value = parse_value(data_type, resource_scenario)
 
     res.assign_value(scenario_id, ra_id, data_type, value,
-                    "", "", "") 
+                    "", "", "", new=new)
 
-    res.save()
-    
     return res
 
 class DataService(HydraService):

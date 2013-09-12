@@ -1,8 +1,10 @@
 from spyne.decorator import rpc
 from spyne.model.primitive import Integer, Boolean
+from spyne.model.complex import Array as SpyneArray
 from db import HydraIface
-from hydra_complexmodels import Project
-from hydra_base import HydraService, ObjectNotFoundError
+from hydra_complexmodels import Project, ProjectSummary, Network
+from hydra_base import HydraService, ObjectNotFoundError, get_user_id
+from HydraLib.HydraException import HydraError
 
 class ProjectService(HydraService):
     """
@@ -17,13 +19,19 @@ class ProjectService(HydraService):
             returns a project complexmodel
         """
 
-        x = HydraIface.Project()
-        x.db.project_name = project.name
-        x.db.project_description = project.description
-        x.save()
-        x.commit()
+        proj_i = HydraIface.Project()
+        proj_i.db.project_name = project.name
+        proj_i.db.project_description = project.description
 
-        ret = x.get_as_complexmodel()
+        proj_i.save()
+
+        proj_owner_i = HydraIface.ProjectOwner()
+        proj_owner_i.db.user_id = get_user_id(ctx.in_header.username)
+        proj_owner_i.db.project_id = proj_i.db.project_id
+
+        proj_owner_i.save()
+
+        ret = proj_i.get_as_complexmodel()
 
         return ret
 
@@ -55,6 +63,47 @@ class ProjectService(HydraService):
 
         return x.get_as_complexmodel()
  
+    @rpc(Integer, _returns=SpyneArray(ProjectSummary))
+    def get_projects(ctx):
+        """
+            get a project complexmodel
+        """
+        user_id = get_user_id(ctx.in_header.username)
+        if user_id is None:
+            user_i = HydraIface.User()
+            user_i.db.username = ctx.in_header.username
+            user_id = user_i.get_user_id()
+
+        if user_id is None:
+           raise HydraError("User %s does not exist!", ctx.in_header.username)
+
+        #Potentially join this with an rs of projects
+        #where no owner exists?
+        sql = """
+            select
+                p.project_id,
+                p.project_name
+            from
+                tProjectOwner o,
+                tProject p
+            where
+                o.user_id = %s
+                and p.project_id = o.project_id 
+            order by p.cr_date
+
+        """ % user_id
+
+        rs = HydraIface.execute(sql)
+
+        projects = []
+        for r in rs:
+            p = ProjectSummary()
+            p.id = r.project_id
+            p.name = r.project_name
+            projects.append(p)
+
+        return projects
+
 
     @rpc(Integer, _returns=Boolean)
     def delete_project(ctx, project_id):
@@ -69,20 +118,20 @@ class ProjectService(HydraService):
 
         return success
 
-#    @rpc(Integer, _returns=SpyneArray(Network))
-#    def get_networks(ctx, project_id):
-#        """
-#            Get all networks in a project
-#        """
-#        networks = []
-#
-#        x = HydraIface.Project(project_id = project_id)
-#
-#        for n_i in x.get_networks():
-#            networks.append(n_i.get_as_complexmodel())
-#
-#        return networks
+    @rpc(Integer, _returns=SpyneArray(Network))
+    def get_networks(ctx, project_id):
+        """
+            Get all networks in a project
+            Returns an array of network objects.
+        """
+        networks = []
 
+        x = HydraIface.Project(project_id = project_id)
+        x.load()
 
+        for n_i in x.networks:
+            n_i.load()
+            networks.append(n_i.get_as_complexmodel())
 
+        return networks
 

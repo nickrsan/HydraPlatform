@@ -20,6 +20,7 @@ from soap_server.attributes import AttributeService
 from soap_server.scenario import ScenarioService, DataService
 from soap_server.plugins import PluginService
 from soap_server.users import UserService
+from soap_server.constraints import ConstraintService
 from soap_server.hydra_base import AuthenticationService,\
     LogoutService,\
     get_session_db,\
@@ -74,8 +75,12 @@ class MyApplication(Application):
 
     def call_wrapper(self, ctx):
         try:
+            
+            logging.info("Received request: %s", ctx.function)
+
             start = datetime.datetime.now()
             res =  ctx.service_class.call_wrapper(ctx)
+
             logging.info("Call took: %s"%(datetime.datetime.now()-start))
             return res
         except HydraError, e:
@@ -122,6 +127,7 @@ class HydraServer():
             ScenarioService,
             DataService,
             PluginService,
+            ConstraintService,
         ]
 
         application = MyApplication(applications, 'hydra.authentication',

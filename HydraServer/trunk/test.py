@@ -260,10 +260,11 @@ class TestSoap(unittest.TestCase):
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.id
         scenario_attr.type = 'descriptor'
+        
+        descriptor = self.c.factory.create('ns1:Descriptor')
+        descriptor.desc_val = 'test'
 
-        print scenario_attr
-
-        scenario_attr.value = {'desc_val' : 'test'}
+        scenario_attr.value = descriptor
 
         return scenario_attr
 

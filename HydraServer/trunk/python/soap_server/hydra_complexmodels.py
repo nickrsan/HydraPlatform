@@ -211,8 +211,15 @@ class Network(Resource):
         ('status',              String),
         ('attributes',          SpyneArray(ResourceAttr)),
         ('scenarios',           SpyneArray(Scenario)),
-        ('nodes',               SpyneArray(Node)),
-        ('links',               SpyneArray(Link)),
+        ('nodes',               SpyneArray(Node, default=[])),
+        ('links',               SpyneArray(Link, default=[])),
+    ]
+
+class NetworkSummary(Resource):
+    _type_info = [
+        ('project_id',          Integer),
+        ('id',                  Integer),
+        ('name',                String),
     ]
 
 class Project(Resource):
@@ -225,12 +232,17 @@ class Project(Resource):
 
     ]
 
+class ProjectSummary(Resource):
+    _type_info = [
+        ('id',          Integer),
+        ('name',        String),
+    ]
+
 class ConstraintItem(HydraComplexModel):
     _type_info = [
         ('id',               Integer),
         ('constraint_id',    Integer),
         ('resource_attr_id', Integer),
-        ('resource_attr',    ResourceAttr),
     ]
 
 class ConstraintGroup(HydraComplexModel):
@@ -238,21 +250,18 @@ class ConstraintGroup(HydraComplexModel):
         ('id',            Integer),
         ('constraint_id', Integer),
         ('op',            String),
-        ('ref_key_1',     String),
-        ('ref_id_1',      Integer),
-        ('ref_key_2',     String),
-        ('ref_id_2',      Integer),
+        ('items',         SpyneArray(ConstraintItem)) 
     ]
+
+ConstraintGroup._type_info['groups'] = SpyneArray(ConstraintGroup)
 
 class Constraint(HydraComplexModel):
     _type_info = [
         ('id',            Integer),
         ('scenario_id',   Integer),
-        ('group_id',      Integer),
         ('constant',      Decimal),
         ('op',            String),
-        ('groups',        SpyneArray(ConstraintGroup)),
-        ('items',         SpyneArray(ConstraintItem)),
+        ('group',         ConstraintGroup),
     ]
 
 class User(HydraComplexModel):
@@ -299,6 +308,20 @@ class Plugin(HydraComplexModel):
         ('plugin_description', String),
         ('params',           SpyneArray(PluginParam)),
     ]
+
+
+class ProjectOwner(HydraComplexModel):
+    _type_info = [
+        ('project_id',   Integer),
+        ('user_id',   Integer),
+    ]
+
+class DatasetOwner(HydraComplexModel):
+    _type_info = [
+        ('dataset_id',   Integer),
+        ('user_id',   Integer),
+    ]
+
 
 
 
