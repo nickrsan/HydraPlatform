@@ -74,7 +74,7 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         con.commit()
 
         condition_string = con.eval_condition()
-        print condition_string
+
         assert eval(condition_string) == True, \
                     "Condition %s did not evaluate"%condition_string
 
