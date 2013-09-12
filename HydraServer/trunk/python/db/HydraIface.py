@@ -2,7 +2,7 @@ from HydraLib import util
 from HydraLib.hdb import HydraMySqlCursor
 import logging
 from decimal import Decimal
-from soap_server import hydra_complexmodels 
+from soap_server import hydra_complexmodels
 
 from HydraLib.HydraException import HydraError
 
@@ -28,7 +28,7 @@ def init(cnx):
             is_nullable,
             column_type,
             column_key,
-            extra 
+            extra
         from
             information_schema.columns
         where
@@ -38,7 +38,7 @@ def init(cnx):
     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
     #rs = cursor.execute_sql(sql)
     cursor.execute(sql)
-    
+
     #Table desc gives us:
     #[...,(col_name, col_type, nullable, key ('PRI' or 'MUL'), default, auto_increment),...]
     for r in cursor.fetchall():
@@ -57,7 +57,7 @@ def init(cnx):
         col_info['type']           = column_type
         col_info['primary_key']    = True if column_key == 'PRI' else False
         col_info['auto_increment'] = True if extra == 'auto_increment' else False
- 
+
         tab_info = DB_STRUCT.get(table_name.lower(), {'columns' : {}})
         tab_info['columns'][column_name] = col_info
         tab_info['child_info'] = {}
@@ -101,7 +101,7 @@ class IfaceBase(object):
 
         self.child_info = self.get_children()
         self.children   = {}
-        self.parent = parent 
+        self.parent = parent
 
     def load(self):
         self.in_db = self.db.load()
@@ -205,7 +205,7 @@ class IfaceBase(object):
             attr_prefix = "%s_"%self.name.lower()
             if attr.find(attr_prefix) == 0:
                 attr = attr.replace(attr_prefix, "")
-            
+
             setattr(cm, attr, value)
 
         #get my children, convert them and assign them to the new
@@ -251,11 +251,11 @@ class IfaceDB(object):
         self.table_name = db_hierarchy[self.class_name]['table_name']
 
         col_dict = DB_STRUCT[self.table_name.lower()]['columns']
-        
+
         for col_name, col_data in col_dict.items():
 
             self.db_attrs.append(col_name)
-            
+
             #[...,(col_name, col_type, nullable, key ('PRI' or 'MUL'), default, auto_increment),...]
 
             self.db_data[col_name] = col_data['default']
@@ -265,7 +265,7 @@ class IfaceDB(object):
             if col_data['nullable'] is True:
                 self.nullable_attrs.append(col_name)
 
-            if col_data['primary_key'] is True: 
+            if col_data['primary_key'] is True:
                 self.pk_attrs.append(col_name)
 
             if col_data['auto_increment'] is True:
@@ -501,10 +501,10 @@ class GenericResource(IfaceBase):
     """
     def __init__(self, parent, class_name, ref_key, ref_id=None):
         self.parent = parent
-        
+
         self.ref_key = ref_key
         self.ref_id  = ref_id
-        
+
         IfaceBase.__init__(self, parent, class_name)
 
         self.attributes = self.get_attributes()
@@ -605,7 +605,7 @@ class Project(GenericResource):
         self.networks = []
         if project_id is not None:
             self.load()
-    
+
    # def load(self):
    #     success = super(Project, self).load()
    #     if success:
@@ -650,14 +650,14 @@ class Network(GenericResource):
     """
     def __init__(self, project = None, network_id = None):
         GenericResource.__init__(self,project, self.__class__.__name__, 'NETWORK', ref_id=network_id)
-    
+
         self.project = project
         self.db.network_id = network_id
         self.nodes = []
         self.links = []
         if network_id is not None:
             self.load()
-    
+
     def add_link(self, name, desc, node_1_id, node_2_id):
         """
             Add a link to a network. Links are what effectively
@@ -672,8 +672,8 @@ class Network(GenericResource):
         l.db.network_id = self.db.network_id
         self.links.append(l)
         return l
-    
-    
+
+
     def add_node(self, name, desc, node_x, node_y):
         """
             Add a node to a network.
@@ -776,7 +776,7 @@ class ResourceAttr(IfaceBase):
 
         if resource_attr_id is not None:
             self.load()
-    
+
     def get_resource(self):
         ref_key_map = {
             'NODE'     : Node,
@@ -787,7 +787,7 @@ class ResourceAttr(IfaceBase):
         }
 
         obj = ref_key_map[self.db.ref_key]()
-        obj.db.__setattr__(obj.db.pk_attrs[0], self.db.ref_id)  
+        obj.db.__setattr__(obj.db.pk_attrs[0], self.db.ref_id)
         obj.load()
         return obj
 
@@ -797,7 +797,7 @@ class ResourceAttr(IfaceBase):
             resource attribute.
         """
         return self.resourcescenarios
-    
+
     def delete(self, purge_data=False):
             #If there are any constraints associated with this resource attribute, it cannot be deleted
             if len(self.constraintitems) > 0:
@@ -845,7 +845,7 @@ class ResourceTemplate(IfaceBase):
         item_i = ResourceTemplateItem()
         item_i.db.attr_id = attr_id
         item_i.db.template_id = self.db.template_id
-       
+
         #If the item already exists, there's no need to add it again.
         if item_i.load() == False:
             item_i.save()
@@ -906,7 +906,7 @@ class ResourceScenario(IfaceBase):
 
         if scenario_id is not None and resource_attr_id is not None:
             self.load()
-    
+
     def load(self):
         """
             Override the base load function to also load sibling
@@ -1009,7 +1009,7 @@ class ScenarioData(IfaceBase):
         self.db.data_type = data_type
         self.db.data_id = data.db.data_id
         return data
-   
+
     def delete_val(self):
         if self.db.data_type == 'descriptor':
             d = Descriptor(data_id = self.db.data_id)
@@ -1035,7 +1035,7 @@ class ScenarioData(IfaceBase):
         complexmodel = None
         if self.db.data_type == 'descriptor':
             d = Descriptor(data_id = self.db.data_id)
-            complexmodel = {'desc_val': [d.db.desc_val]} 
+            complexmodel = {'desc_val': [d.db.desc_val]}
         elif self.db.data_type == 'timeseries':
             ts = TimeSeries(data_id=self.db.data_id)
             ts_datas = ts.timeseriesdatas
@@ -1058,7 +1058,7 @@ class ScenarioData(IfaceBase):
         elif self.db.data_type == 'scalar':
             s = Scalar(data_id = self.db.data_id)
             complexmodel = {
-                 'param_value' : s.db.param_value,  
+                 'param_value' : [s.db.param_value],
             }
         elif self.db.data_type == 'array':
             a = Array(data_id = self.db.data_id)
@@ -1325,13 +1325,13 @@ class User(IfaceBase):
             the user id returnd.
             If not, None is returned.
         """
-        
+
         if self.db.user_id is not None:
             return self.db.user_id
 
         if self.db.username is None:
             raise HydraError("Cannot find a user's id without a username.")
-        
+
         sql = """
             select
                 user_id,
@@ -1339,12 +1339,12 @@ class User(IfaceBase):
             from
                 tUser
             where
-                username = '%s' 
+                username = '%s'
         """ % self.db.username
-        
+
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         user_rs =cursor.execute_sql(sql)
-        
+
         if len(user_rs) > 0:
             self.db.user_id = user_rs[0].user_id
             self.db.password = user_rs[0].password

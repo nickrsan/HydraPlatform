@@ -190,7 +190,7 @@ class ImportCSV(object):
 
             for i, key in enumerate(keys):
                 if i != name_idx and i != desc_idx:
-                    attrs.update({i: key})
+                    attrs.update({i: key.strip()})
 
             self.Network = self.add_data(self.Network, attrs, data)
 
@@ -203,7 +203,9 @@ class ImportCSV(object):
     def read_nodes(self, file):
         with open(file, mode='r') as csv_file:
             self.node_data = csv_file.read()
+        self.create_nodes()
 
+    def create_nodes(self):
         keys = self.node_data.split('\n', 1)[0].split(',')
         units = self.node_data.split('\n')[1].split(',')
         data = self.node_data.split('\n')[2:-1]
@@ -227,7 +229,7 @@ class ImportCSV(object):
 
         for i, key in enumerate(keys):
             if i != name_idx and i != desc_idx and i != x_idx and i != y_idx:
-                attrs.update({i: key})
+                attrs.update({i: key.strip()})
 
         for line in data:
             linedata = line.split(',')
@@ -256,7 +258,9 @@ class ImportCSV(object):
     def read_links(self, file):
         with open(file, mode='r') as csv_file:
             self.link_data = csv_file.read()
+        self.create_links()
 
+    def create_links(self):
         keys = self.link_data.split('\n', 1)[0].split(',')
         units = self.link_data.split('\n')[1].split(',')
         data = self.link_data.split('\n')[2:-1]
@@ -281,7 +285,7 @@ class ImportCSV(object):
         for i, key in enumerate(keys):
             if i != name_idx and i != desc_idx and \
                     i != from_idx and i != to_idx:
-                attrs.update({i: key})
+                attrs.update({i: key.strip()})
 
         for line in data:
             linedata = line.split(',')
@@ -358,8 +362,9 @@ class ImportCSV(object):
             resource.attributes.ResourceAttr.append(res_attr)
 
             # create dataset and assign to attribute
-            dataset = self.create_dataset(data[i], res_attr)
-            self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
+            if len(data[i]) > 0:
+                dataset = self.create_dataset(data[i], res_attr)
+                self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
 
         #resource.attributes = res_attr_array
 
@@ -457,8 +462,6 @@ if __name__ == '__main__':
                 csv.read_links(linkfile)
 
         csv.commit()
-
-        print csv.Network.scenarios
 
     else:
         logging.info('No nodes found. Nothing imported.')

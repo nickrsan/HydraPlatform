@@ -11,7 +11,7 @@ def connect():
     url = config.get('hydra_client', 'url')
     user = config.get('hydra_client', 'user')
     passwd = config.get('hydra_client', 'password')
-    cli = Client(url)
+    cli = Client(url, timeout=2400)
     session_id = cli.service.login(user, passwd)
     token = cli.factory.create('RequestHeader')
     token.session_id = session_id

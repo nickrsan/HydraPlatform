@@ -44,7 +44,7 @@ class NetworkService(HydraService):
             Returns the network's complex model.
 
             As links connect two nodes using the node_ids, if the nodes are new
-            they will not yet have node_ids. In this case, use negative ids 
+            they will not yet have node_ids. In this case, use negative ids
             as temporary IDS until the node has been given an permanent ID.
 
             All inter-object referencing of new objects
@@ -62,17 +62,17 @@ class NetworkService(HydraService):
         x.save()
         x.commit()
         network.network_id = x.db.network_id
-        
-        resource_attr_id_map = _add_attributes(x, x.attributes)
+
+        resource_attr_id_map = _add_attributes(x, network.attributes)
 
         #Maps temporary node_ids to real node_ids
         node_ids = dict()
-        
+
          #First add all the nodes
         for node in network.nodes:
             n = x.add_node(node.name, node.description, node.x, node.y)
             n.save()
-           
+
             node_attr_id_map = _add_attributes(n, node.attributes)
             resource_attr_id_map.update(node_attr_id_map)
             #If a temporary ID was given to the node
@@ -82,11 +82,11 @@ class NetworkService(HydraService):
 
         #Then add all the links.
         for link in network.links:
-            node_1_id = link.node_1_id 
+            node_1_id = link.node_1_id
             if link.node_1_id in node_ids:
                 node_1_id = node_ids[link.node_1_id]
 
-            node_2_id = link.node_2_id 
+            node_2_id = link.node_2_id
             if link.node_2_id in node_ids:
                 node_2_id = node_ids[link.node_2_id]
 
@@ -108,7 +108,7 @@ class NetworkService(HydraService):
 
                 for r_scen in s.resourcescenarios:
                     r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
-                    scenario._update_resourcescenario(scen.db.scenario_id, r_scen) 
+                    scenario._update_resourcescenario(scen.db.scenario_id, r_scen)
 
         return_value = x.get_as_complexmodel()
 
@@ -138,8 +138,8 @@ class NetworkService(HydraService):
         x.db.project_id          = network.project_id
         x.db.network_name        = network.name
         x.db.network_description = network.description
-        
-        resource_attr_id_map = _add_attributes(x, x.attributes)
+
+        resource_attr_id_map = _add_attributes(x, network.attributes)
 
         #Maps temporary node_ids to real node_ids
         node_id_map = dict()
@@ -147,7 +147,7 @@ class NetworkService(HydraService):
         #First add all the nodes
         for node in network.nodes:
             is_new = False
-            
+
             #If we get a negative or null node id, we know
             #it is a new node.
             if node.id is not None and node.id > 0:
@@ -160,10 +160,10 @@ class NetworkService(HydraService):
                 is_new = True
                 n = x.add_node(node.name, node.description, node.x, node.y)
             n.save()
-            
+
             node_attr_id_map = _add_attributes(n, node.attributes)
             resource_attr_id_map.update(node_attr_id_map)
-            
+
             #If a temporary ID was given to the node
             #store the mapping to the real node_id
             if is_new is True:
@@ -171,11 +171,11 @@ class NetworkService(HydraService):
 
 
         for link in network.links:
-            node_1_id = link.node_1_id 
+            node_1_id = link.node_1_id
             if link.node_1_id in node_id_map:
                 node_1_id = node_id_map[link.node_1_id]
 
-            node_2_id = link.node_2_id 
+            node_2_id = link.node_2_id
             if link.node_2_id in node_id_map:
                 node_2_id = node_id_map[link.node_2_id]
 
@@ -186,9 +186,9 @@ class NetworkService(HydraService):
                 l.load()
                 l.db.link_name       = link.name
                 l.db.link_descripion = link.description
-            
+
             l.save()
-            
+
             link_attr_id_map = _add_attributes(l, link.attributes)
             resource_attr_id_map.update(link_attr_id_map)
 
@@ -208,8 +208,8 @@ class NetworkService(HydraService):
                 for r_scen in s.resourcescenarios:
                     r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
 
-                    scenario._update_resourcescenario(scen.db.scenario_id, r_scen) 
-        
+                    scenario._update_resourcescenario(scen.db.scenario_id, r_scen)
+
         net = x.get_as_complexmodel()
 
         hdb.commit()
@@ -266,7 +266,7 @@ class NetworkService(HydraService):
              }
         """
         node = None
-        
+
         x = HydraIface.Node()
         x.db.network_id = network_id
         x.db.node_name = node.name
@@ -318,13 +318,13 @@ class NetworkService(HydraService):
 
         """
         node = None
-        
+
         x = HydraIface.Node(node_id = node.id)
         x.db.node_name = node.name
         x.db.node_x    = node.x
         x.db.node_y    = node.y
         x.db.node_description = node.description
-        
+
         _add_attributes(x, node.attributes)
 
         x.save()
@@ -368,7 +368,7 @@ class NetworkService(HydraService):
         """
             Remove node from DB completely
             If there are attributes on the node, use purge_data to try to
-            delete the data. If no other resources link to this data, it 
+            delete the data. If no other resources link to this data, it
             will be deleted.
 
         """
@@ -392,7 +392,7 @@ class NetworkService(HydraService):
         x.db.node_2_id = link.node_2_id
         x.db.link_description = link.description
         x.save()
-   
+
         _add_attributes(x, link.attributes)
         x.commit()
 
@@ -410,9 +410,9 @@ class NetworkService(HydraService):
         x.db.node_1_id = link.node_1_id
         x.db.node_2_id = link.node_2_id
         x.db.link_description = link.description
-        
+
         _add_attributes(x, link.attributes)
-        
+
         x.save()
         x.commit()
         return x.get_as_complexmodel()
@@ -435,7 +435,7 @@ class NetworkService(HydraService):
         """
             Remove link from DB completely
             If there are attributes on the link, use purge_data to try to
-            delete the data. If no other resources link to this data, it 
+            delete the data. If no other resources link to this data, it
             will be deleted.
         """
         x = HydraIface.Link(link_id = link_id)
