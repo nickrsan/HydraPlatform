@@ -104,7 +104,7 @@ class UserService(HydraService):
         roleuser_i = HydraIface.RoleUser(user_id=user.id, role_id=role.id)
         
         roleuser_i.save()
-        roleuser_i.load()
+        roleuser_i.role.load_all()
 
         return roleuser_i.role.get_as_complexmodel()
 
@@ -119,9 +119,10 @@ class UserService(HydraService):
     @rpc(Role, Perm, _returns=Role)
     def set_role_perm(ctx, role, perm):
         roleperm_i = HydraIface.RolePerm(role_id=role.id, perm_id=perm.id)
-        
+
         roleperm_i.save()
-        roleperm_i.load()
+
+        roleperm_i.role.load_all()
 
         return roleperm_i.role.get_as_complexmodel()
 

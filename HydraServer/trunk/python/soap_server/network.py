@@ -54,6 +54,8 @@ class NetworkService(HydraService):
             The returned object will have positive IDS
 
         """
+        logging.info("Adding network")
+
         return_value = None
         insert_start = datetime.datetime.now()
 
@@ -71,8 +73,8 @@ class NetworkService(HydraService):
 
          #First add all the nodes
         for node in network.nodes:
+            logging.info("Adding nodes to network")
             n = x.add_node(node.name, node.description, node.x, node.y)
-            n.save()
 
             node_attr_id_map = _add_attributes(n, node.attributes)
             resource_attr_id_map.update(node_attr_id_map)
@@ -81,8 +83,10 @@ class NetworkService(HydraService):
             if node.id is not None:
                 node_ids[node.id] = n.db.node_id
 
+
         #Then add all the links.
         for link in network.links:
+            logging.info("Adding links to network")
             node_1_id = link.node_1_id
             if link.node_1_id in node_ids:
                 node_1_id = node_ids[link.node_1_id]
@@ -95,11 +99,11 @@ class NetworkService(HydraService):
                 raise HydraError("Node IDS (%s, %s)are incorrect!"%(node_1_id, node_2_id))
 
             l = x.add_link(link.name, link.description, node_1_id, node_2_id)
-            l.save()
             link_attr_id_map = _add_attributes(l, link.attributes)
             resource_attr_id_map.update(link_attr_id_map)
 
         if network.scenarios is not None:
+            logging.info("Adding scenarios to network")
             for s in network.scenarios:
                 scen = HydraIface.Scenario()
                 scen.db.scenario_name        = s.name
@@ -110,9 +114,9 @@ class NetworkService(HydraService):
                 for r_scen in s.resourcescenarios:
                     r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
                     scenario._update_resourcescenario(scen.db.scenario_id, r_scen, new=True)
+                x.scenarios.append(scen)
         
         logging.info("Insertion of network took: %s",(datetime.datetime.now()-insert_start))
-
         return_value = x.get_as_complexmodel()
 
         return return_value
@@ -136,6 +140,7 @@ class NetworkService(HydraService):
         """
         net = None
         x = HydraIface.Network(network_id = network.id)
+        x.load_all()
         x.db.project_id          = network.project_id
         x.db.network_name        = network.name
         x.db.network_description = network.description
@@ -451,9 +456,9 @@ class NetworkService(HydraService):
             Get all the scenarios in a given network.
         """
         net = HydraIface.Network(network_id=network_id)
+        
+        net.load_all()
 
-        net.load()
-    
         scenarios = []
 
         for scen in net.scenarios:

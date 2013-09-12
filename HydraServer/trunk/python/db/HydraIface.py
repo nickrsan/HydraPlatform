@@ -107,21 +107,24 @@ class IfaceBase(object):
         #Indicates that the 'delete' function has been called on this object
         self.deleted = False
 
+        self.children   = []
         self.child_info = self.get_children()
-        self.children   = {}
         self.parent = parent
 
     def load(self):
-        self.in_db = self.db.load()
+        if self.in_db is False:
+            self.in_db = self.db.load()
+
+            if self.parent is None:
+                self.get_parent()
 
         return self.in_db
 
     def load_all(self):
-        self.in_db = self.db.load()
+        self.in_db = self.load()
 
         if self.in_db:
             self.load_children()
-            self.get_parent()
 
         return self.in_db
 
@@ -137,6 +140,7 @@ class IfaceBase(object):
         if self.in_db:
             self.db.delete()
         self.deleted = True
+        self.in_db   = False
 
     def save(self):
         """
@@ -163,6 +167,7 @@ class IfaceBase(object):
             #if it's not already set, set it to a default []
             if hasattr(self, attr_name) is False:
                 self.__setattr__(attr_name, [])
+                self.children.append(attr_name)
         return children
 
     def load_children(self):
@@ -182,12 +187,17 @@ class IfaceBase(object):
                     child_obj.db.__setattr__(col, val)
 
                 child_objs.append(child_obj)
+
+            #ex: set network.links = [link1, link2, link3]
             self.__setattr__(attr_name, child_objs)
-            self.children[attr_name] = self.__getattribute__(attr_name)
+            #ex: self.children.append('links')
+            self.children.append(attr_name)
 
     def get_parent(self):
-        if self.parent is None and self.in_db:
+        if self.parent is None:
             parent = self.db.get_parent()
+            if parent is None:
+                return None
             parent_name = parent.__class__.__name__.lower()
             logging.debug("Parent Name: %s", parent_name)
             logging.debug("Parent: %s", parent)
@@ -223,11 +233,11 @@ class IfaceBase(object):
 
         #get my children, convert them and assign them to the new
         #soap object
-        self.load_children()
-        for name, objs in self.children.items():
+        for name in self.children:
+            objs = getattr(self, name)
             child_objs = []
             for obj in objs:
-                #obj.load()
+                obj.load()
                 child_cm = obj.get_as_complexmodel()
                 child_objs.append(child_cm)
             setattr(cm, name, child_objs)
@@ -315,11 +325,12 @@ class IfaceDB(object):
             #rs = cursor.execute_sql(complete_child_sql)
             cursor.execute(complete_child_sql)
             rs = cursor.fetchall()
-            cursor.close()
             child_rs = []
             for r in rs:
                 child_rs.append(zip(cursor.column_names, r))
 
+            cursor.close()
+            
             child_dict[table_name] = child_rs
         return child_dict
 
@@ -643,32 +654,6 @@ class Project(GenericResource):
         if project_id is not None:
             self.load()
 
-   # def load(self):
-   #     success = super(Project, self).load()
-   #     if success:
-   #         self.get_networks()
-
-   #     return success
-
-   # def get_networks(self):
-   #     sql = """
-   #         select
-   #             network_id
-   #         from
-   #             tNetwork
-   #         where
-   #             project_id=%s
-   #     """ % self.db.project_id
-
-   #     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-   #     rs = cursor.execute_sql(sql)
-
-   #     for r in rs:
-   #         n = Network(project=self, network_id = r.network_id)
-   #         self.networks.append(n)
-
-   #     return self.networks
-
 class Scenario(GenericResource):
     """
         A set of nodes and links
@@ -679,7 +664,6 @@ class Scenario(GenericResource):
         self.db.scenario_id = scenario_id
         if scenario_id is not None:
             self.load()
-
 
 class Network(GenericResource):
     """
@@ -707,6 +691,7 @@ class Network(GenericResource):
         l.db.node_1_id = node_1_id
         l.db.node_2_id = node_2_id
         l.db.network_id = self.db.network_id
+        l.save()
         self.links.append(l)
         return l
 
@@ -721,6 +706,7 @@ class Network(GenericResource):
         n.db.node_x = node_x
         n.db.node_y = node_y
         n.db.network_id = self.db.network_id
+        n.save()
         self.nodes.append(n)
         return n
 

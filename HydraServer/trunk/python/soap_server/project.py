@@ -127,7 +127,7 @@ class ProjectService(HydraService):
         networks = []
 
         x = HydraIface.Project(project_id = project_id)
-        x.load()
+        x.load_all()
 
         for n_i in x.networks:
             n_i.load()

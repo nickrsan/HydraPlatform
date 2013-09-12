@@ -106,7 +106,7 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
         Insert or Update the value of a resource's attribute by first getting the
         resource, then parsing the input data, then assigning the value.
         
-        returns a HydraIface.ResourceScenari object.
+        returns a HydraIface.ResourceScenario object.
     """
     ra_id = resource_scenario.resource_attr_id
     

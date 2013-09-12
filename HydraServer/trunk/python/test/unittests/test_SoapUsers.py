@@ -4,12 +4,13 @@
 
 import test_SoapServer
 import bcrypt
+import datetime
 
 class UsersTest(test_SoapServer.SoapServerTest):
 
     def test_add_user(self):
         user = self.client.factory.create('hyd:User')
-        user.username = "test_user"
+        user.username = "test_user @ %s" % datetime.datetime.now()
         user.password = "test_user_password"
 
         new_user = self.client.service.add_user(user)
@@ -55,7 +56,7 @@ class UsersTest(test_SoapServer.SoapServerTest):
     def test_set_user_role(self):
 
         user = self.client.factory.create('hyd:User')
-        user.username = "test_user"
+        user.username = "test_user @ %s" % datetime.datetime.now()
         user.password = "test_user_password"
 
         new_user = self.client.service.add_user(user)

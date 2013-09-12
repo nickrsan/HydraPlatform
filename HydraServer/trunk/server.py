@@ -134,7 +134,7 @@ class HydraServer():
                     in_protocol=Soap11(validator='lxml'),
                     out_protocol=Soap11()
                 )
-        wsgi_application = WsgiApplication(application)
+        wsgi_application = WsgiApplication(application, max_content_length=10 * 0x100000)
         return wsgi_application
 
     def run_server(self):
