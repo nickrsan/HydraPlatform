@@ -20,6 +20,7 @@ from soap_server.attributes import AttributeService
 from soap_server.scenario import ScenarioService, DataService
 from soap_server.plugins import PluginService
 from soap_server.users import UserService
+from soap_server.template import TemplateService
 from soap_server.constraints import ConstraintService
 from soap_server.hydra_base import AuthenticationService,\
     LogoutService,\
@@ -128,6 +129,7 @@ class HydraServer():
             DataService,
             PluginService,
             ConstraintService,
+            TemplateService,
         ]
 
         application = MyApplication(applications, 'hydra.authentication',

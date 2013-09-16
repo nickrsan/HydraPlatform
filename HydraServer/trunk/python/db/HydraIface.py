@@ -185,7 +185,8 @@ class IfaceBase(object):
                 child_obj.__setattr__(self.name.lower(), self)
                 for col, val in row:
                     child_obj.db.__setattr__(col, val)
-
+                
+                child_obj.in_db = True
                 child_objs.append(child_obj)
 
             #ex: set network.links = [link1, link2, link3]
@@ -863,6 +864,7 @@ class ResourceTemplate(IfaceBase):
         IfaceBase.__init__(self, resourcetemplategroup, self.__class__.__name__)
 
         self.db.template_id = template_id
+        self.resourcetemplateitems = []
 
         if template_id is not None:
             self.load()
@@ -881,6 +883,33 @@ class ResourceTemplate(IfaceBase):
             self.resourcetemplateitems.append(item_i)
 
         return item_i
+
+
+    def remove_item(self, attr_id):
+        """
+            remove a resource template item from a resource template.
+        """
+        #Only remove the item if it is there.
+        for item_i in self.resourcetemplateitems:
+            if attr_id == item_i.db.attr_id:
+                self.resourcetemplateitems.remove(item_i)
+                item_i.save()
+
+        return item_i 
+
+    def get_as_complexmodel(self):
+        tmp =  hydra_complexmodels.ResourceTemplate()
+        tmp.name = self.db.template_name
+        tmp.id = self.db.template_id
+        tmp.group_id   = self.db.group_id
+
+        items = []
+        for item in self.resourcetemplateitems:
+            items.append(item.get_as_complexmodel())
+
+        tmp.resourcetemplateitems = items
+
+        return tmp
 
 class ResourceTemplateItem(IfaceBase):
     """
@@ -919,6 +948,18 @@ class ResourceTemplateGroup(IfaceBase):
 
         return template_i
 
+    def get_as_complexmodel(self):
+        grp =  hydra_complexmodels.ResourceTemplateGroup()
+        grp.name = self.db.group_name
+        grp.id   = self.db.group_id
+
+        templates = []
+        for template in self.resourcetemplates:
+            templates.append(template.get_as_complexmodel())
+
+        grp.resourcetemplates = templates
+
+        return grp
 
 class ResourceScenario(IfaceBase):
     """

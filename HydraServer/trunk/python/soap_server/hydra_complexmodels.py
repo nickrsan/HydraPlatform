@@ -139,17 +139,17 @@ class ResourceTemplateItem(HydraComplexModel):
 
 class ResourceTemplate(HydraComplexModel):
     _type_info = [
-        ('name', Integer),
+        ('name', String),
         ('id', Integer),
-        ('group_id',    Integer),
-        ('resourcetemplateitems', SpyneArray(ResourceTemplateItem)),
+        ('group_id',    Integer(default=None)),
+        ('resourcetemplateitems', SpyneArray(ResourceTemplateItem, default=[])),
     ]
 
 class ResourceTemplateGroup(HydraComplexModel):
     _type_info = [
         ('id',   Integer),
         ('name', String),
-        ('resourcetemplates', SpyneArray(ResourceTemplate)),
+        ('resourcetemplates', SpyneArray(ResourceTemplate, default=[])),
     ]
 
 class Resource(HydraComplexModel):
@@ -163,7 +163,7 @@ class Node(Resource):
         ('x',           Decimal),
         ('y',           Decimal),
         ('status',      String),
-        ('attributes',  SpyneArray(ResourceAttr)),
+        ('attributes',  SpyneArray(ResourceAttr, default=[])),
     ]
     def __eq__(self, other):
         if self.node_x == other.node_x and self.node_y == other.node_y \
@@ -180,7 +180,7 @@ class Link(Resource):
         ('node_1_id',   Integer),
         ('node_2_id',   Integer),
         ('status',      String),
-        ('attributes',  SpyneArray(ResourceAttr)),
+        ('attributes',  SpyneArray(ResourceAttr, default=[])),
     ]
 
 class ResourceScenario(Resource):
@@ -198,8 +198,8 @@ class Scenario(Resource):
         ('description',          String),
         ('network_id',           Integer),
         ('status',               String),
-        ('attributes',           SpyneArray(ResourceAttr)),
-        ('resourcescenarios',    SpyneArray(ResourceScenario)),
+        ('attributes',           SpyneArray(ResourceAttr, default=[])),
+        ('resourcescenarios',    SpyneArray(ResourceScenario, default=[])),
     ]
 
 class Network(Resource):
@@ -228,7 +228,7 @@ class Project(Resource):
         ('name',        String),
         ('description', String),
         ('status',      String),
-        ('attributes',  SpyneArray(ResourceAttr)),
+        ('attributes',  SpyneArray(ResourceAttr, default=[])),
 
     ]
 
@@ -250,10 +250,10 @@ class ConstraintGroup(HydraComplexModel):
         ('id',            Integer),
         ('constraint_id', Integer),
         ('op',            String),
-        ('items',         SpyneArray(ConstraintItem)) 
+        ('items',         SpyneArray(ConstraintItem, default=[])) 
     ]
 
-ConstraintGroup._type_info['groups'] = SpyneArray(ConstraintGroup)
+ConstraintGroup._type_info['groups'] = SpyneArray(ConstraintGroup, default=[])
 
 class Constraint(HydraComplexModel):
     _type_info = [
@@ -292,8 +292,8 @@ class Role(HydraComplexModel):
     _type_info = [
         ('id',     Integer),
         ('name',   String),
-        ('roleperms', SpyneArray(RolePerm)),
-        ('roleusers', SpyneArray(RoleUser)),
+        ('roleperms', SpyneArray(RolePerm, default=[])),
+        ('roleusers', SpyneArray(RoleUser, default=[])),
     ]
 
 class PluginParam(HydraComplexModel):
@@ -306,7 +306,7 @@ class Plugin(HydraComplexModel):
     _type_info = [
         ('plugin_name',        String),
         ('plugin_description', String),
-        ('params',           SpyneArray(PluginParam)),
+        ('params',           SpyneArray(PluginParam, default=[])),
     ]
 
 
