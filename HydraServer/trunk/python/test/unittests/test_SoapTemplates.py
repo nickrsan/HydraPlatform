@@ -52,6 +52,69 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         assert len(new_group.resourcetemplates) == 1, "Resource templates did not add correctly"
         assert len(new_group.resourcetemplates[0][0].resourcetemplateitems[0]) == 3, "Resource template items did not add correctly"
 
+
+    def test_update_group(self):
+
+        attr_1 = self.create_attr() 
+        attr_2 = self.create_attr() 
+        attr_3 = self.create_attr() 
+        
+        group = self.client.factory.create('hyd:ResourceTemplateGroup')
+        group.name = 'Test Group'
+
+        
+        templates = self.client.factory.create('hyd:ResourceTemplateArray')
+
+        template_1 = self.client.factory.create('hyd:ResourceTemplate')
+        template_1.name = "Test template 1"
+
+        template_2 = self.client.factory.create('hyd:ResourceTemplate')
+        template_2.name = "Test template 2"
+
+        items_1 = self.client.factory.create('hyd:ResourceTemplateItemArray')
+        items_2 = self.client.factory.create('hyd:ResourceTemplateItemArray')
+        
+        item_1 = self.client.factory.create('hyd:ResourceTemplateItem')
+        item_1.attr_id = attr_1.id
+        items_1.ResourceTemplateItem.append(item_1)
+
+        item_2 = self.client.factory.create('hyd:ResourceTemplateItem')
+        item_2.attr_id = attr_2.id
+        items_2.ResourceTemplateItem.append(item_2)
+        
+        templates.ResourceTemplate.append(template_1)
+        templates.ResourceTemplate.append(template_2)
+
+        template_1.resourcetemplateitems = items_1
+        template_2.resourcetemplateitems = items_2
+        
+        group.resourcetemplates = templates
+
+        new_group = self.client.service.add_resourcetemplategroup(group)
+        
+        assert new_group.name == group.name, "Names are not the same!"
+        assert new_group.id is not None, "New Group has no ID!"
+        assert new_group.id > 0, "New Group has incorrect ID!"
+
+        assert len(new_group.resourcetemplates[0]) == 2, "Resource templates did not add correctly"
+        assert len(new_group.resourcetemplates[0][0].resourcetemplateitems[0]) == 1, "Resource template items did not add correctly"
+        
+        #update the name of one of the templates
+        new_group.resourcetemplates[0][0].name = "Test template 3"
+
+        #add an item to one of the templates
+        item_3 = self.client.factory.create('hyd:ResourceTemplateItem')
+        item_3.attr_id = attr_3.id
+        new_group.resourcetemplates[0][0].resourcetemplateitems.ResourceTemplateItem.append(item_3)
+
+        updated_group = self.client.service.add_resourcetemplategroup(new_group)
+
+        assert updated_group.name == group.name, "Names are not the same!"
+
+        assert updated_group.resourcetemplates[0][0].name == "Test template 3", "Resource templates did not add correctly"
+
+        assert len(updated_group.resourcetemplates[0][0].resourcetemplateitems[0]) == 2, "Resource template items did not update correctly"
+
     def test_add_template(self):
 
         attr_1 = self.create_attr() 

@@ -122,3 +122,28 @@ class TemplateService(HydraService):
 
         return grp_i.get_as_complexmodel()
 
+    @rpc(ResourceTemplateGroup, _returns=ResourceTemplateGroup)
+    def update_resourcetemplategroup(ctx, group):
+        """
+            Update group and a template and items.
+        """
+        grp_i = HydraIface.ResourceTemplateGroup(group_id=group.id)
+        grp_i.db.group_name = group.name
+        grp_i.load_all()
+
+        for template in group.resourcetemplates:
+            if hasattr(template, 'id') and template.id is not None:
+                tmpl = HydraIface.ResourceTemplate(template_id=template.id)
+                tmpl.db.name = template.name
+            else:
+                rt_i = grp_i.add_template(template.name)
+
+            for item in template.resourcetemplateitems:
+                for item_i in rt_i.resourcetemplateitems:
+                    if item_i.db.attr_id == item.attr_id:
+                        break
+                else:
+                    rt_i.add_item(item.attr_id)
+
+        return grp_i.get_as_complexmodel()
+
