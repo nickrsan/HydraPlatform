@@ -28,6 +28,8 @@ class ProjectTest(test_SoapServer.SoapServerTest):
 
         assert project.id == new_project.id, \
             "project_id changed on update."
+        assert project.created_by is not None, \
+            "created by is null."
         assert project.name == new_project.name, \
             "project_name changed on update."
         assert project.description != new_project.description,\

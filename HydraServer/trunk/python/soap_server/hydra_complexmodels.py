@@ -228,6 +228,8 @@ class Project(Resource):
         ('name',        String),
         ('description', String),
         ('status',      String),
+        ('cr_date',     String),
+        ('created_by',  Integer),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
 
     ]
@@ -236,6 +238,7 @@ class ProjectSummary(Resource):
     _type_info = [
         ('id',          Integer),
         ('name',        String),
+        ('cr_date',     String),
     ]
 
 class ConstraintItem(HydraComplexModel):

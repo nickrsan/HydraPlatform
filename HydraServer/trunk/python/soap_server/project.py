@@ -22,6 +22,7 @@ class ProjectService(HydraService):
         proj_i = HydraIface.Project()
         proj_i.db.project_name = project.name
         proj_i.db.project_description = project.description
+        proj_i.db.created_by = get_user_id(ctx.in_header.username)
 
         proj_i.save()
 
@@ -82,7 +83,8 @@ class ProjectService(HydraService):
         sql = """
             select
                 p.project_id,
-                p.project_name
+                p.project_name,
+                p.cr_date
             from
                 tProjectOwner o,
                 tProject p
@@ -100,6 +102,7 @@ class ProjectService(HydraService):
             p = ProjectSummary()
             p.id = r.project_id
             p.name = r.project_name
+            p.cr_date = r.cr_date
             projects.append(p)
 
         return projects
