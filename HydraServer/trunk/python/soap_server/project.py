@@ -102,7 +102,7 @@ class ProjectService(HydraService):
             p = ProjectSummary()
             p.id = r.project_id
             p.name = r.project_name
-            p.cr_date = r.cr_date
+            p.cr_date = str(r.cr_date)
             projects.append(p)
 
         return projects
