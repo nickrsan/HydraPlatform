@@ -11,6 +11,8 @@ from spyne.protocol.soap import Soap11
 from spyne.server.wsgi import WsgiApplication
 
 from spyne.service import ServiceBase
+from spyne.decorator import rpc
+
 from spyne.error import Fault, ArgumentError
 import bcrypt
 
