@@ -13,13 +13,17 @@ from hydra_complexmodels import Scenario,\
 
 from db import HydraIface
 from HydraLib import hdb
-from hydra_base import HydraService
+from hydra_base import RequestHeader 
+from spyne.service import ServiceBase
 
-class ScenarioService(HydraService):
+class ScenarioService(ServiceBase):
     """
         The scenario SOAP service
     """
 
+    __tns__ = 'hydra.soap'
+    __in_header__ = RequestHeader
+    
     @rpc(Scenario, _returns=Scenario)
     def add_scenario(ctx, scenario):
         """
@@ -104,11 +108,14 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
 
     return res
 
-class DataService(HydraService):
+class DataService(ServiceBase):
   
     """
         The data SOAP service
     """
+
+    __tns__ = 'hydra.soap'
+    __in_header__ = RequestHeader
 
     @rpc(AnyDict, _returns=AnyDict)
     def update_dataset(ctx, data):

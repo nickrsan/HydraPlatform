@@ -1,4 +1,3 @@
-from spyne.service import ServiceBase
 import logging
 from HydraLib.HydraException import HydraError
 from spyne.model.primitive import Integer, Boolean
@@ -7,7 +6,8 @@ from spyne.decorator import rpc
 from hydra_complexmodels import Network, Node, Link, Scenario
 from db import HydraIface
 from HydraLib import hdb
-from hydra_base import HydraService
+from hydra_base import RequestHeader 
+from spyne.service import ServiceBase
 import scenario
 import datetime
 
@@ -32,10 +32,14 @@ def _add_attributes(resource_i, attributes):
 
     return resource_attr_id_map
 
-class NetworkService(HydraService):
+class NetworkService(ServiceBase):
     """
         The network SOAP service.
     """
+
+    __tns__ = 'hydra.soap'
+    __in_header__ = RequestHeader
+    
 
     @rpc(Network, _returns=Network)
     def add_network(ctx, network):

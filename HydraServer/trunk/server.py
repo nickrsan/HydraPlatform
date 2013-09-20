@@ -56,7 +56,7 @@ def _on_method_call(ctx):
 def _on_method_context_closed(ctx):
     hdb.commit()
 
-class MyApplication(Application):
+class HydraApplication(Application):
     """
         Subclass of the base spyne Application class.
 
@@ -134,7 +134,7 @@ class HydraServer():
             TemplateService,
         ]
 
-        application = MyApplication(applications, 'hydra.authentication',
+        application = HydraApplication(applications, 'hydra.authentication',
                     in_protocol=Soap11(validator='lxml'),
                     out_protocol=Soap11()
                 )

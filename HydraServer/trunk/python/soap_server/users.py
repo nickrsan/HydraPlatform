@@ -10,10 +10,17 @@ import bcrypt
 from hydra_base import HydraService
 from HydraLib.HydraException import HydraError
 
-class UserService(HydraService):
+from hydra_base import RequestHeader 
+from spyne.service import ServiceBase
+
+class UserService(ServiceBase):
     """
         The user soap service
     """
+
+    __tns__ = 'hydra.soap'
+    __in_header__ = RequestHeader
+
     @rpc(User, _returns=User)
     def add_user(ctx, user):
         """

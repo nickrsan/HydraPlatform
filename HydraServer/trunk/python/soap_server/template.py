@@ -5,12 +5,17 @@ from hydra_complexmodels import ResourceTemplate, ResourceTemplateGroup, Resourc
 
 from db import HydraIface
 from hydra_base import HydraService
+from hydra_base import RequestHeader 
+from spyne.service import ServiceBase
 
-class TemplateService(HydraService):
+class TemplateService(ServiceBase):
     """
         The template SOAP service
     """
 
+    __tns__ = 'hydra.soap'
+    __in_header__ = RequestHeader
+    
     @rpc(_returns=SpyneArray(ResourceTemplateGroup))
     def get_groups(ctx):
         """
