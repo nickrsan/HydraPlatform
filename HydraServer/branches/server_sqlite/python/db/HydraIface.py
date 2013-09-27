@@ -185,7 +185,7 @@ class IfaceBase(object):
                 child_obj.__setattr__(self.name.lower(), self)
                 for col, val in row:
                     child_obj.db.__setattr__(col, val)
-
+                
                 child_obj.in_db = True
                 child_objs.append(child_obj)
 
@@ -331,7 +331,7 @@ class IfaceDB(object):
                 child_rs.append(zip(cursor.column_names, r))
 
             cursor.close()
-
+            
             child_dict[table_name] = child_rs
         return child_dict
 
@@ -496,7 +496,7 @@ class IfaceDB(object):
 
         if len(rs) == 0:
             logging.warning("No entry found for table %s", self.table_name)
-
+                
             return False
 
         for r in rs:
@@ -579,7 +579,7 @@ class GenericResource(IfaceBase):
                     and ref_key = '%(ref_key)s'
             """ % dict(ref_key = self.ref_key, ref_id = self.ref_id)
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-
+        
         rs = cursor.execute_sql(sql)
         cursor.close()
 
@@ -615,7 +615,7 @@ class GenericResource(IfaceBase):
         rs = ResourceScenario()
         rs.db.scenario_id=scenario_id
         rs.db.resource_attr_id=resource_attr_id
-
+        
         dataset_id = None
         if new is not True:
             data_in_db = rs.load()
@@ -847,7 +847,7 @@ class ResourceAttr(IfaceBase):
                 resource_scenario.delete()
             #delete the resource attribute
             super(ResourceAttr, self).delete()
-
+    
     def get_as_complexmodel(self):
         cm = super(ResourceAttr, self).get_as_complexmodel()
         cm.id = self.db.resource_attr_id
@@ -895,7 +895,7 @@ class ResourceTemplate(IfaceBase):
                 self.resourcetemplateitems.remove(item_i)
                 item_i.save()
 
-        return item_i
+        return item_i 
 
     def get_as_complexmodel(self):
         tmp =  hydra_complexmodels.ResourceTemplate()
@@ -1304,7 +1304,7 @@ class Constraint(IfaceBase):
         self.db.constraint_id = constraint_id
 
         if constraint_id is not None:
-            self.load()
+            self.load()   
 
     def eval_condition(self):
         grp_1 = ConstraintGroup(constraint=self, group_id = self.db.group_id)
@@ -1324,7 +1324,7 @@ class ConstraintGroup(IfaceBase):
 
         self.constraint = constraint
         self.db.group_id = group_id
-
+        
         self.groups = []
         self.items  = []
 
@@ -1543,7 +1543,7 @@ class RolePerm(IfaceBase):
 
 class ProjectOwner(IfaceBase):
     """
-       Ownership for a project.
+       Ownership for a project. 
     """
     def __init__(self, project=None, user_id = None, project_id = None):
         IfaceBase.__init__(self, project, self.__class__.__name__)
@@ -1580,7 +1580,7 @@ db_hierarchy = dict(
     ),
     node  = dict(
         obj   = Node,
-        parent = 'network',
+        parent = None,
         table_name = 'tNode',
         pk     = ['node_id']
    ),

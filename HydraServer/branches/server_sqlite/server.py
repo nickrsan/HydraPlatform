@@ -11,8 +11,6 @@ from spyne.protocol.soap import Soap11
 from spyne.server.wsgi import WsgiApplication
 
 from spyne.service import ServiceBase
-from spyne.decorator import rpc
-
 from spyne.error import Fault, ArgumentError
 import bcrypt
 
@@ -56,7 +54,7 @@ def _on_method_call(ctx):
 def _on_method_context_closed(ctx):
     hdb.commit()
 
-class HydraApplication(Application):
+class MyApplication(Application):
     """
         Subclass of the base spyne Application class.
 
@@ -134,7 +132,7 @@ class HydraServer():
             TemplateService,
         ]
 
-        application = HydraApplication(applications, 'hydra.authentication',
+        application = MyApplication(applications, 'hydra.authentication',
                     in_protocol=Soap11(validator='lxml'),
                     out_protocol=Soap11()
                 )

@@ -12,7 +12,7 @@ from generate_networks import create_network
 nodenumbers = [16]
 #nodenumbers = [2, 4, 8, 16]
 #attrnumbers = [2, 4, 8, 16, 32, 64, 128, 256]
-attrnumbers = [16]
+attrnumbers = [256]
 
 
 if __name__ == '__main__':
@@ -46,10 +46,10 @@ if __name__ == '__main__':
 
                 # Commit the network and measure time
                 startime = time.time()
+
                 testcase.cli.service.add_network(testcase.Network)
                 endtime = time.time()
                 exectime = endtime - startime
-
                 logfile.write("%s, %s, %s\n" % (n, m, exectime))
                 print n, m, exectime
                 del testcase

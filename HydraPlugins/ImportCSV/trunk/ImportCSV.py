@@ -11,11 +11,11 @@ and files for links (usually on file per link type). One node file and one link
 file are mandatory, additional files are optional. The plug-in also allows you
 to import network attributes.
 
-   Basic usage::
+Basic usage::
 
-      usage: ImportCSV.py [-h] [-p PROJECT] [-s SCENARIO] [-t NETWORK]
-                          -n NODES [NODES ...] -l LINKS [LINKS ...]
-                          [-r RULES [RULES ...]] [-x]
+       ImportCSV.py [-h] [-p PROJECT] [-s SCENARIO] [-t NETWORK]
+                    -n NODES [NODES ...] -l LINKS [LINKS ...]
+                    [-r RULES [RULES ...]] [-x]
 
 Options
 ~~~~~~~
@@ -68,6 +68,12 @@ For links, the following is a valid file::
     Units,           ,         ,           m, ...,    m^2 s^-1,
     link1,      node1,    node2,         453, ...,        0.34, Water transfer
 
+It is optional to supply a network file. If you decide to do so, it needs to
+follow this structure::
+
+    ID, Name            , attribute_1, ..., Description
+    1 , My first network, test       ,    , A network create from CSV files
+
 .. note::
 
    If you specify a header line using the keywords ``name``, ``x``, ``y`` and
@@ -93,9 +99,14 @@ Please also consider the following:
 TODO
 ----
 
+- Implement updating of existing network, including existing nodes.
+
+- Implement updating of existing scenario.
+
 - Implement rules and constraints
 
-- Implement file name expansion and import of time series and arrays"""
+- Implement file name expansion and import of time series and arrays
+"""
 
 import argparse as ap
 import logging
@@ -117,6 +128,7 @@ class ImportCSV(object):
     NetworkAttributes = dict()
     NodeAttributes = dict()
     LinkAttributes = dict()
+    update_network_flag = False
 
     def __init__(self):
         self.cli = PluginLib.connect()
@@ -130,6 +142,8 @@ class ImportCSV(object):
                 ID = int(ID)
                 try:
                     self.Project = self.cli.service.get_project(ID)
+                    logging.info('Loading existing project (ID=%s)' % ID)
+                    return
                 except WebFault:
                     logging.info('Project ID not found. Creating new project')
 
@@ -156,12 +170,6 @@ class ImportCSV(object):
 
     def create_network(self, file=None):
 
-        self.Network = self.cli.factory.create('hyd:Network')
-        self.Network.project_id = self.Project.id
-        self.Network.nodes = self.cli.factory.create('hyd:NodeArray')
-        self.Network.links = self.cli.factory.create('hyd:LinkArray')
-        self.Network.scenarios = self.cli.factory.create('hyd:ScenarioArray')
-
         if file is not None:
             with open(file, mode='r') as csv_file:
                 self.net_data = csv_file.read()
@@ -171,30 +179,79 @@ class ImportCSV(object):
 
             # We assume a standard order of the network information (Name,
             # Description, attributes,...).
-            name_idx = 0
-            desc_idx = 1
+            id_idx   = 0
+            name_idx = 1
+            desc_idx = 2
             # If the file does not follow the standard, we can at least try to
             # guess what is stored where.
             for i, key in enumerate(keys):
-                if key.lower().strip() == 'name':
+                if key.lower().strip() == 'id':
+                    id_idx = i
+                elif key.lower().strip() == 'name':
                     name_idx = i
                 elif key.lower().strip() == 'description':
                     desc_idx = i
 
-            # Assign name and description
-            self.Network.name = data[name_idx].strip()
-            self.Network.description = data[desc_idx].strip()
+            try:
+                ID = int(data[id_idx])
+            except ValueError:
+                ID = None
+
+            if ID is not None:
+                # Check if network exists on the server.
+                try:
+                    self.Network = self.cli.service.get_network(data[id_idx])
+                    # Assign name and description in case anything has changed
+                    self.Network.name = data[name_idx].strip()
+                    self.Network.description = data[desc_idx].strip()
+                    self.update_network_flag = True
+                    logging.info('Loading existing network (ID=%s)' % ID)
+                    # load existing nodes
+                    for node in self.Network.nodes.Node:
+                        self.Nodes.update({node.name: node})
+                    # load existing links
+                    for link in self.Network.links.Link:
+                        self.Links.update({link.name: link})
+                    # Nodes and links are now deleted from the noetwork, they
+                    # will be added later...
+                    self.Network.nodes = \
+                        self.cli.factory.create('hyd:NodeArray')
+                    self.Network.links = \
+                        self.cli.factory.create('hyd:LinkArray')
+                except WebFault:
+                    logging.info('Network ID not found. Creating new network.')
+                    ID = None
+
+            if ID is None:
+                # Create a new network
+                self.Network = self.cli.factory.create('hyd:Network')
+                self.Network.project_id = self.Project.id
+                self.Network.nodes = \
+                    self.cli.factory.create('hyd:NodeArray')
+                self.Network.links = \
+                    self.cli.factory.create('hyd:LinkArray')
+                self.Network.scenarios = \
+                    self.cli.factory.create('hyd:ScenarioArray')
+                self.Network.name = data[name_idx].strip()
+                self.Network.description = data[desc_idx].strip()
 
             # Everything that is not name or description is an attribute
             attrs = dict()
 
             for i, key in enumerate(keys):
-                if i != name_idx and i != desc_idx:
+                if i != id_idx and i != name_idx and i != desc_idx:
                     attrs.update({i: key.strip()})
 
             self.Network = self.add_data(self.Network, attrs, data)
 
         else:
+            # Create a new network
+            self.Network = self.cli.factory.create('hyd:Network')
+            self.Network.project_id = self.Project.id
+            self.Network.nodes = self.cli.factory.create('hyd:NodeArray')
+            self.Network.links = self.cli.factory.create('hyd:LinkArray')
+            self.Network.scenarios = \
+                self.cli.factory.create('hyd:ScenarioArray')
             self.Network.name = "CSV import"
             self.Network.description = \
                 "Network created by the %s plug-in, %s." % \
@@ -233,27 +290,31 @@ class ImportCSV(object):
 
         for line in data:
             linedata = line.split(',')
-            node = self.cli.factory.create('hyd:Node')
-            node.id = self.node_id.next()
-            node.name = linedata[name_idx].strip()
-            node.description = linedata[desc_idx].strip()
-            try:
-                node.x = float(linedata[x_idx])
-            except ValueError:
-                node.x = 0
-                logging.info('X coordinate of node %s is not a number.'
-                             % node.name)
-            try:
-                node.y = float(linedata[y_idx])
-            except ValueError:
-                node.y = 0
-                logging.info('Y coordinate of node %s is not a number.'
-                             % node.name)
+            nodename = linedata[name_idx].strip()
+            if nodename in self.Nodes.keys():
+                node = self.Nodes[nodename]
+                logging.info('Node %s exists.' % nodename)
+            else:
+                node = self.cli.factory.create('hyd:Node')
+                node.id = self.node_id.next()
+                node.name = nodename
+                node.description = linedata[desc_idx].strip()
+                try:
+                    node.x = float(linedata[x_idx])
+                except ValueError:
+                    node.x = 0
+                    logging.info('X coordinate of node %s is not a number.'
+                                 % node.name)
+                try:
+                    node.y = float(linedata[y_idx])
+                except ValueError:
+                    node.y = 0
+                    logging.info('Y coordinate of node %s is not a number.'
+                                 % node.name)
 
             node = self.add_data(node, attrs, linedata, units=units)
 
             self.Nodes.update({node.name: node})
-            self.Network.nodes.Node.append(node)
 
     def read_links(self, file):
         with open(file, mode='r') as csv_file:
@@ -289,25 +350,30 @@ class ImportCSV(object):
 
         for line in data:
             linedata = line.split(',')
-            link = self.cli.factory.create('hyd:Link')
-            link.id = self.link_id.next()
-            link.name = linedata[name_idx].strip()
-            link.description = linedata[desc_idx].strip()
+            linkname = linedata[name_idx].strip()
+            if linkname in self.Links.keys():
+                link = self.Links[linkname]
+                logging.info('Link %s exists.' % linkname)
+            else:
+                link = self.cli.factory.create('hyd:Link')
+                link.id = self.link_id.next()
+                link.name = linkname
+                link.description = linedata[desc_idx].strip()
 
-            try:
-                fromnode = self.Nodes[linedata[from_idx].strip()]
-                tonode = self.Nodes[linedata[to_idx].strip()]
-                link.node_1_id = fromnode.id
-                link.node_2_id = tonode.id
+                try:
+                    fromnode = self.Nodes[linedata[from_idx].strip()]
+                    tonode = self.Nodes[linedata[to_idx].strip()]
+                    link.node_1_id = fromnode.id
+                    link.node_2_id = tonode.id
 
-                link = self.add_data(link, attrs, linedata, units=units)
-                self.Network.links.Link.append(link)
 
-            except KeyError:
-                logging.info(('Start or end node not found (%s -- %s).' +
-                             ' No link created.') %
-                             (linedata[from_idx].strip(),
-                              linedata[to_idx].strip()))
+                except KeyError:
+                    logging.info(('Start or end node not found (%s -- %s).' +
+                                ' No link created.') %
+                                (linedata[from_idx].strip(),
+                                linedata[to_idx].strip()))
+            link = self.add_data(link, attrs, linedata, units=units)
+            self.Links.update({link.name: link})
 
     def create_attribute(self, name, dimension=None):
         attribute = self.cli.factory.create('hyd:Attr')
@@ -326,11 +392,11 @@ class ImportCSV(object):
         res_type = str(resource).split('{', 1)[0]
 
         # Create resource attributes and data coollection
-        res_attr_array = \
-            self.cli.factory.create('hyd:ResourceAttrArray')
+        #res_attr_array = \
+        #    self.cli.factory.create('hyd:ResourceAttrArray')
 
         for i in attrs.keys():
-            # Create the attributes if the do not exist already
+            # Create the attributes if they do not exist already
             if res_type == '(Network)':
                 if attrs[i] in self.NetworkAttributes.keys():
                     attribute = self.NetworkAttributes[attrs[i]]
@@ -402,8 +468,15 @@ class ImportCSV(object):
         return descriptor
 
     def commit(self):
+        for node in self.Nodes.values():
+            self.Network.nodes.Node.append(node)
+        for link in self.Links.values():
+            self.Network.links.Link.append(link)
         self.Network.scenarios.Scenario.append(self.Scenario)
-        self.Network = self.cli.service.add_network(self.Network)
+        if self.update_network_flag:
+            self.Network = self.cli.service.update_network(self.Network)
+        else:
+            self.Network = self.cli.service.add_network(self.Network)
 
     def temp_ids(self, n=-1):
         while True:
@@ -412,7 +485,13 @@ class ImportCSV(object):
 
 
 def commandline_parser():
-    parser = ap.ArgumentParser()
+    parser = ap.ArgumentParser(
+        description="""Import a network saved in a set of CSV files into Hydra.
+
+Written by Philipp Meier <philipp@diemeiers.ch>
+(c) Copyright 2013, University College London.
+        """, epilog="For more information visit www.hydra-network.com",
+        formatter_class=ap.RawDescriptionHelpFormatter)
     parser.add_argument('-p', '--project',
                         help='''The ID of an existing project. If no project is
                         specified or if the ID provided does not belong to an

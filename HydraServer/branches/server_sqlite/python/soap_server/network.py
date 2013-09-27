@@ -1,3 +1,4 @@
+from spyne.service import ServiceBase
 import logging
 from HydraLib.HydraException import HydraError
 from spyne.model.primitive import Integer, Boolean
@@ -6,8 +7,7 @@ from spyne.decorator import rpc
 from hydra_complexmodels import Network, Node, Link, Scenario
 from db import HydraIface
 from HydraLib import hdb
-from hydra_base import RequestHeader
-from spyne.service import ServiceBase
+from hydra_base import HydraService
 import scenario
 import datetime
 
@@ -25,23 +25,17 @@ def _add_attributes(resource_i, attributes):
         if ra.id < 0:
             ra_i = resource_i.add_attribute(ra.attr_id, attr_is_var)
         else:
-            #ra = HydraIface.ResourceAttr(resource_attr_id=ra.id)
-            #ra.db.attr_is_var = attr_is_var
-            ra_i = HydraIface.ResourceAttr(resource_attr_id=ra.id)
-            ra_i.db.attr_is_var = attr_is_var
+            ra = HydraIface.ResourceAttr(resource_attr_id=ra.id)
+            ra.db.attr_is_var = attr_is_var
 
         resource_attr_id_map[ra.id] = ra_i.db.resource_attr_id
 
     return resource_attr_id_map
 
-class NetworkService(ServiceBase):
+class NetworkService(HydraService):
     """
         The network SOAP service.
     """
-
-    __tns__ = 'hydra.soap'
-    __in_header__ = RequestHeader
-
 
     @rpc(Network, _returns=Network)
     def add_network(ctx, network):
@@ -121,7 +115,7 @@ class NetworkService(ServiceBase):
                     r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
                     scenario._update_resourcescenario(scen.db.scenario_id, r_scen, new=True)
                 x.scenarios.append(scen)
-
+        
         logging.info("Insertion of network took: %s",(datetime.datetime.now()-insert_start))
         return_value = x.get_as_complexmodel()
 
@@ -134,10 +128,6 @@ class NetworkService(ServiceBase):
             Return a whole network as a complex model.
         """
         x = HydraIface.Network(network_id = network_id)
-
-        if x.load_all() is False:
-            raise ObjectNotFoundError("Network (network_id=%s) not found." % \
-                                      network_id)
 
         net = x.get_as_complexmodel()
 
@@ -466,7 +456,7 @@ class NetworkService(ServiceBase):
             Get all the scenarios in a given network.
         """
         net = HydraIface.Network(network_id=network_id)
-
+        
         net.load_all()
 
         scenarios = []

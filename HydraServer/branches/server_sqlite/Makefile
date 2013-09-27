@@ -29,5 +29,11 @@ server.c: server.py
 
 all: server
 
+win64: server.c
+	x86_64-w64-mingw32-gcc -c $^ -I$(WININCDIR) -o server_w64.exe
+
+win32: server.c
+	i686-w64-mingw32-gcc -c$^ -I$(WININCDIR) -o server_w32.exe
+
 clean:
 	@rm -f *~ *.o *.c server
