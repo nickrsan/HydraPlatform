@@ -40,7 +40,6 @@ import datetime
 import sys, traceback
 
 
-
 def _on_method_call(ctx):
 
     if ctx.function == AuthenticationService.login:

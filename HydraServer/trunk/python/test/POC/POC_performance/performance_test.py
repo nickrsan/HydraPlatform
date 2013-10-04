@@ -9,10 +9,10 @@ import time
 from ImportCSV import ImportCSV
 from generate_networks import create_network
 
-nodenumbers = [16]
+nodenumbers = [256]
 #nodenumbers = [2, 4, 8, 16]
 #attrnumbers = [2, 4, 8, 16, 32, 64, 128, 256]
-attrnumbers = [16]
+attrnumbers = [256]
 
 
 if __name__ == '__main__':
@@ -37,12 +37,31 @@ if __name__ == '__main__':
                 testcase.link_data = testdata['links']
                 testcase.create_project(ID=1000)
                 testcase.create_scenario(name='Performance test scenario')
+
+                startime = time.time()
                 testcase.create_network()
+                endtime = time.time()
+                exectime = endtime - startime
+                print "create_network took %s seconds." % exectime
+
+                startime = time.time()
                 testcase.create_nodes()
+                endtime = time.time()
+                exectime = endtime - startime
+                print "create_nodes took %s seconds." % exectime
+
+                startime = time.time()
                 testcase.create_links()
+                endtime = time.time()
+                exectime = endtime - startime
+                print "create_links took %s seconds." % exectime
 
                 # Create a complete network structure
                 testcase.Network.scenarios.Scenario.append(testcase.Scenario)
+                for node in testcase.Nodes.values():
+                    testcase.Network.nodes.Node.append(node)
+                for link in testcase.Links.values():
+                    testcase.Network.links.Link.append(link)
 
                 # Commit the network and measure time
                 startime = time.time()

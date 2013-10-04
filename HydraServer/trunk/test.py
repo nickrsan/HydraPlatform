@@ -260,7 +260,7 @@ class TestSoap(unittest.TestCase):
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.id
         scenario_attr.type = 'descriptor'
-        
+
         descriptor = self.c.factory.create('ns1:Descriptor')
         descriptor.desc_val = 'test'
 
@@ -280,30 +280,32 @@ class TestSoap(unittest.TestCase):
 
         ts1 = self.c.factory.create('ns1:TimeSeriesData')
         ts1.ts_time  = datetime.datetime.now()
-        ts1.ts_value = [1, 2, 3, 4, 5]
+        ts1.ts_value = str([1, 2, 3, 4, 5])
 
         ts2 = self.c.factory.create('ns1:TimeSeriesData')
         ts2.ts_time  = datetime.datetime.now() + datetime.timedelta(hours=1)
-        ts2.ts_value = [2, 3, 4, 5, 6]
+        ts2.ts_value = str([2, 3, 4, 5, 6])
 
         ts3 = self.c.factory.create('ns1:TimeSeries')
-        ts3.ts_values = [ts1, ts2]
+        ts3.ts_values.TimeSeriesData.append(ts1)
+        ts3.ts_values.TimeSeriesData.append(ts2)
 
-        #scenario_attr.value = ts3
-        scenario_attr.value = {
-            'value'            : [
-                {
-                   'ts_time'   :  datetime.datetime.now(),
-                   'ts_value' : str([1, 2, 3, 4, 5]),
-                },
-                {
-                    'ts_time'  : datetime.datetime.now() + datetime.timedelta(hours=1),
-                    'ts_value' : str([2, 3, 4, 5, 6]),
-                }
-            ]
-        }
+        scenario_attr.value = ts3
+        #scenario_attr.value = {
+        #    'value'            : [
+        #        {
+        #           'ts_time'   :  datetime.datetime.now(),
+        #           'ts_value' : str([1, 2, 3, 4, 5]),
+        #        },
+        #        {
+        #            'ts_time'  : datetime.datetime.now() + datetime.timedelta(hours=1),
+        #            'ts_value' : str([2, 3, 4, 5, 6]),
+        #        }
+        #    ]
+        #}
 
         return scenario_attr
+        #return ts3
 
     def create_array(self, ResourceAttr):
         #A scenario attribute is a piece of data associated

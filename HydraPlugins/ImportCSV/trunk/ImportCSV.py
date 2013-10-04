@@ -20,32 +20,39 @@ Basic usage::
 Options
 ~~~~~~~
 
-====================== ====== ========== =========================================
-Option                 Short  Parameter  Description
-====================== ====== ========== =========================================
-``--help``             ``-h``            show help message and exit.
-``--project``          ``-p`` PROJECT    The ID of an existing project. If no
-                                         project is specified or if the ID
-                                         provided does not belong to an existing
-                                         project, a new one will be created.
-``--scenario``         ``-s`` SCENARIO   Specify the name of the scenario created
-                                         by the import function. Every import
-                                         creates a new scenario. If no name is
-                                         provided a default name will be assigned.
-``--network``          ``-t`` NETWORK    Specify the file containing network
-                                         information. If no file is specified, a
-                                         new network will be created using default
-                                         values.
-``--nodes``            ``-n`` NODES      One or multiple files containing nodes
-                                         and attributes.
-``--links``            ``-l`` LINKS      One or multiple files containing
-                                         information on links.
-``--rules``            ``-l`` RULES      File(s) containing rules or constraints
-                                         as mathematical expressions.
-``--expand-filenames`` ``-x``            If the import function encounters
-                                         something that looks like a filename, it
-                                         tries to read the file.
-====================== ====== ========== =========================================
+====================== ====== ========= =======================================
+Option                 Short  Parameter Description
+====================== ====== ========= =======================================
+``--help``             ``-h``           show help message and exit.
+``--project``          ``-p`` PROJECT   The ID of an existing project. If no
+                                        project is specified or if the ID
+                                        provided does not belong to an existing
+                                        project, a new one will be created.
+``--scenario``         ``-s`` SCENARIO  Specify the name of the scenario
+                                        created by the import function. Every
+                                        import creates a new scenario. If no
+                                        name is provided a default name will be
+                                        assigned.
+``--network``          ``-t`` NETWORK   Specify the file containing network
+                                        information. If no file is specified, a
+                                        new network will be created using
+                                        default values.
+``--nodes``            ``-n`` NODES     One or multiple files containing nodes
+                                        and attributes.
+``--links``            ``-l`` LINKS     One or multiple files containing
+                                        information on links.
+``--rules``            ``-l`` RULES     File(s) containing rules or constraints
+                                        as mathematical expressions.
+``--timezone``         ``-z`` TIMEZONE  Specify a timezone as a string
+                                        following the Area/Loctation pattern
+                                        (e.g.  Europe/London). This timezone
+                                        will be used for all timeseries data
+                                        that is imported. If you don't specify
+                                        a timezone, it defaults to UTC.
+``--expand-filenames`` ``-x``           If the import function encounters
+                                        something that looks like a filename,
+                                        it tries to read the file.
+====================== ====== ========= =======================================
 
 
 File structure
@@ -99,8 +106,6 @@ Please also consider the following:
 TODO
 ----
 
-- Implement updating of existing network, including existing nodes.
-
 - Implement updating of existing scenario.
 
 - Implement rules and constraints
@@ -111,6 +116,7 @@ TODO
 import argparse as ap
 import logging
 from datetime import datetime
+import pytz
 
 import PluginLib
 
@@ -129,12 +135,14 @@ class ImportCSV(object):
     NodeAttributes = dict()
     LinkAttributes = dict()
     update_network_flag = False
+    timezone = pytz.utc
+    expand_filenames = False
 
     def __init__(self):
         self.cli = PluginLib.connect()
-        self.node_id = self.temp_ids()
-        self.link_id = self.temp_ids()
-        self.attr_id = self.temp_ids()
+        self.node_id = PluginLib.temp_ids()
+        self.link_id = PluginLib.temp_ids()
+        self.attr_id = PluginLib.temp_ids()
 
     def create_project(self, ID=None):
         if ID is not None:
@@ -179,7 +187,7 @@ class ImportCSV(object):
 
             # We assume a standard order of the network information (Name,
             # Description, attributes,...).
-            id_idx   = 0
+            id_idx = 0
             name_idx = 1
             desc_idx = 2
             # If the file does not follow the standard, we can at least try to
@@ -366,12 +374,11 @@ class ImportCSV(object):
                     link.node_1_id = fromnode.id
                     link.node_2_id = tonode.id
 
-
                 except KeyError:
                     logging.info(('Start or end node not found (%s -- %s).' +
-                                ' No link created.') %
-                                (linedata[from_idx].strip(),
-                                linedata[to_idx].strip()))
+                                  ' No link created.') %
+                                 (linedata[from_idx].strip(),
+                                  linedata[to_idx].strip()))
             link = self.add_data(link, attrs, linedata, units=units)
             self.Links.update({link.name: link})
 
@@ -445,15 +452,34 @@ class ImportCSV(object):
         dataset.attr_id = resource_attr.attr_id
         dataset.resource_attr_id = resource_attr.id
 
+        value = value.strip()
+
         try:
             float(value)
             dataset.type = 'scalar'
             scal = self.create_scalar(value)
             dataset.value = scal
         except ValueError:
-            dataset.type = 'descriptor'
-            desc = self.create_descriptor(value)
-            dataset.value = desc
+            try:
+                if self.expand_filenames:
+                    f = open(value)
+                    logging.info('Reading data from %s ...' % value)
+                    filedata = f.read()
+                    f.close()
+                    if self.is_timeseries(filedata):
+                        dataset.type = 'timeseries'
+                        ts = self.create_timeseries(filedata)
+                        dataset.value = ts
+                    else:
+                        dataset.type = 'array'
+                        arr = self.create_array(filedata)
+                        dataset.value = arr
+                else:
+                    raise IOError
+            except IOError:
+                dataset.type = 'descriptor'
+                desc = self.create_descriptor(value)
+                dataset.value = desc
 
         return dataset
 
@@ -467,21 +493,58 @@ class ImportCSV(object):
         descriptor.desc_val = value
         return descriptor
 
+    def create_timeseries(self, data):
+        date = data.split(',', 1)[0].strip()
+        timeformat = PluginLib.guess_timefmt(date)
+
+        timeseries = self.cli.factory.create('hyd:TimeSeries')
+        #timeseries.ts_values = []
+
+        timedata = data.split('\n')
+        for line in timedata:
+            if line != '':
+                dataset = line.split(',')
+                tsdata = self.cli.factory.create('hyd:TimeSeriesData')
+                tstime = datetime.strptime(dataset[0].strip(), timeformat)
+                tstime = self.timezone.localize(tstime)
+
+                tsdata.ts_time = PluginLib.date_to_string(tstime)
+
+                value_length = len(dataset) - 1
+                tsdata.ts_value = []
+                for i in range(value_length):
+                    tsdata.ts_value.append(float(dataset[i + 1].strip()))
+
+                timeseries.ts_values.TimeSeriesData.append(tsdata)
+
+        return timeseries
+
+    def create_array(self, data):
+        arraystring = '[[' + data.strip().replace('\n', '], [') + ']]'
+        array = self.cli.factory.create('hyd:Array')
+        array.arr_data.anyType.append(arraystring)
+
+        return array
+
+    def is_timeseries(self, data):
+        date = data.split(',', 1)[0].strip()
+        timeformat = PluginLib.guess_timefmt(date)
+        if timeformat is None:
+            return False
+        else:
+            return True
+
     def commit(self):
         for node in self.Nodes.values():
             self.Network.nodes.Node.append(node)
         for link in self.Links.values():
             self.Network.links.Link.append(link)
         self.Network.scenarios.Scenario.append(self.Scenario)
+
         if self.update_network_flag:
             self.Network = self.cli.service.update_network(self.Network)
         else:
             self.Network = self.cli.service.add_network(self.Network)
-
-    def temp_ids(self, n=-1):
-        while True:
-            yield n
-            n -= 1
 
 
 def commandline_parser():
@@ -514,6 +577,12 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-r', '--rules', nargs='+',
                         help='''File(s) containing rules or constraints as
                         mathematical expressions.''')
+    parser.add_argument('-z', '--timezone',
+                        help='''Specify a timezone as a string following the
+                        Area/Location pattern (e.g. Europe/London). This
+                        timezone will be used for all timeseries data that is
+                        imported. If you don't specify a timezone, it defaults
+                        to UTC.''')
     parser.add_argument('-x', '--expand-filenames', action='store_true',
                         help='''If the import function encounters something
                         that looks like a filename, it tries to read the file.
@@ -526,6 +595,12 @@ if __name__ == '__main__':
     parser = commandline_parser()
     args = parser.parse_args()
     csv = ImportCSV()
+
+    if args.expand_filenames:
+        csv.expand_filenames = True
+
+    if args.timezone is not None:
+        csv.timezone = pytz.timezone(args.timezone)
 
     if args.nodes is not None:
         # Create project and network only when there is actual data to import.

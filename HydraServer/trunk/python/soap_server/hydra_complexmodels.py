@@ -1,6 +1,6 @@
-from spyne.model.complex import Array as SpyneArray, ComplexModel 
+from spyne.model.complex import Array as SpyneArray, ComplexModel
 from spyne.model.primitive import String, Integer, Decimal, DateTime, Boolean, AnyDict
-from datetime import datetime 
+import datetime
 from spyne.util.odict import odict
 
 #This is on hold until we come up with a solution
@@ -26,6 +26,7 @@ global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 #"2013-08-13T15:55:43.468886Z"
 
+
 def parse_value(data_type, data):
     """
     Turn a complex model object into a hydraiface - friendly value.
@@ -42,11 +43,36 @@ def parse_value(data_type, data):
     if data_type == 'descriptor':
         return value[0][0]
     elif data_type == 'timeseries':
+        # The brand new way to parse time series data:
+        ns = '{soap_server.hydra_complexmodels}'
         ts = []
-        for ts_val in value[0]:
-            ts_time = datetime.strptime(ts_val[0][0], FORMAT) 
-            series = eval(ts_val[1][0])
+        for ts_val in value[0][0][ns + 'TimeSeriesData']:
+            timestamp = ts_val[ns + 'ts_time'][0]
+            try:
+                ts_time = datetime.datetime.strptime(timestamp, FORMAT)
+            except ValueError as e:
+                if e.message.split(' ', 1)[0].strip() == 'unconverted':
+                    utcoffset = e.message.split()[3].strip()
+                    timestamp = timestamp.replace(utcoffset, '')
+                    ts_time = datetime.datetime.strptime(timestamp, FORMAT)
+                    # Apply offset
+                    tzoffset = datetime.timedelta(hours=int(utcoffset[0:3]),
+                                                  minutes=int(utcoffset[3:5]))
+                    print ts_time, tzoffset, utcoffset
+                    ts_time -= tzoffset
+                else:
+                    raise e
+
+            series = []
+            for val in ts_val[ns + 'ts_value']:
+                series.append(eval(val))
             ts.append((ts_time, series))
+        # The old way:
+        #for ts_val in value[0][0]:
+        #    print value
+        #    ts_time = datetime.strptime(ts_val[0][0], FORMAT)
+        #    series = eval(ts_val[1][0])
+        #    ts.append((ts_time, series))
         return ts
     elif data_type == 'eqtimeseries':
         start_time = datetime.strptime(value[0][0], FORMAT)
@@ -54,17 +80,20 @@ def parse_value(data_type, data):
         arr_data   = eval(value[2][0])
         return (start_time, frequency, arr_data)
     elif data_type == 'scalar':
-       return value[0][0] 
+       return value[0][0]
     elif data_type == 'array':
-        val = eval(value[0][0])
+        print
+        print value[0][0].values()[0][0]
+        print
+        val = eval(value[0][0].values()[0][0])
         return val
 
 
 def get_array(arr):
-    
+
     if len(arr) == 0:
         return []
-    
+
     #am I a dictionary? If so, i'm only iterested in the values
     if type(arr) is odict:
         arr = arr[0]
@@ -89,7 +118,8 @@ class Descriptor(HydraComplexModel):
 
 class TimeSeriesData(HydraComplexModel):
  _type_info = [
-        ('ts_time', DateTime),
+        #('ts_time', DateTime),
+        ('ts_time', String),
         ('ts_value', AnyDict),
     ]
 
@@ -97,7 +127,7 @@ class TimeSeries(HydraComplexModel):
     _type_info = [
         ('ts_values', SpyneArray(TimeSeriesData)),
     ]
-    
+
 class EqTimeSeries(HydraComplexModel):
     _type_info = [
         ('start_time', DateTime),
@@ -253,7 +283,7 @@ class ConstraintGroup(HydraComplexModel):
         ('id',            Integer),
         ('constraint_id', Integer),
         ('op',            String),
-        ('items',         SpyneArray(ConstraintItem, default=[])) 
+        ('items',         SpyneArray(ConstraintItem, default=[]))
     ]
 
 ConstraintGroup._type_info['groups'] = SpyneArray(ConstraintGroup, default=[])
