@@ -272,6 +272,9 @@ class TestSoap(unittest.TestCase):
 
         dataset = self.c.factory.create('ns1:Dataset')
         dataset.type = 'descriptor'
+        dataset.name = 'Max Capacity'
+        dataset.unit = 'metres / second'
+        dataset.dimension = 'number of units per time unit'
         
         descriptor = self.c.factory.create('ns1:Descriptor')
         descriptor.desc_val = 'test'
@@ -294,6 +297,9 @@ class TestSoap(unittest.TestCase):
         dataset = self.c.factory.create('ns1:Dataset')
         
         dataset.type = 'timeseries'
+        dataset.name = 'my time series'
+        dataset.unit = 'feet cubed'
+        dataset.dimension = 'cubic capacity'
 
         ts1 = self.c.factory.create('ns1:TimeSeriesData')
         ts1.ts_time  = datetime.datetime.now()
@@ -336,6 +342,9 @@ class TestSoap(unittest.TestCase):
         
         dataset = self.c.factory.create('ns1:Dataset')
         dataset.type = 'array'
+        dataset.name = 'my array'
+        dataset.unit = 'joules'
+        dataset.dimension = 'pressure'
 
         arr1 = self.c.factory.create('ns1:Array')
         arr1.arr_data = [1, 2, 3]

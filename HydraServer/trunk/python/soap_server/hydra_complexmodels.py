@@ -29,8 +29,6 @@ FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 def parse_value(data):
     """
     Turn a complex model object into a hydraiface - friendly value.
-    returns a tuple containing:
-    (data_type, units, name, dimension, value)
     """
     
     data_type = data.type
@@ -69,12 +67,6 @@ def parse_value(data):
             for val in ts_val[ns + 'ts_value']:
                 series.append(eval(val))
             ts.append((ts_time, series))
-        # The old way:
-        #for ts_val in value[0][0]:
-        #    print value
-        #    ts_time = datetime.strptime(ts_val[0][0], FORMAT)
-        #    series = eval(ts_val[1][0])
-        #    ts.append((ts_time, series))
         return ts
     elif data_type == 'eqtimeseries':
         start_time = datetime.strptime(value[0][0], FORMAT)
@@ -118,6 +110,7 @@ class Dataset(ComplexModel):
         ('type',             String),
         ('dimension',        String(default=None)),
         ('unit',             String(default=None)),
+        ('name',             String(default=None)),
         ('value',            AnyDict),
     ]
 
