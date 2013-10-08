@@ -121,7 +121,7 @@ def bulk_insert(objs, table_name=""):
         return
 
     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-    base_insert = "insert into %(table)s (%(cols)s) values (%(vals)s);"
+    base_insert = "insert into %(table)s (%(cols)s) values (%(vals)s)"
 
     vals = []
     for obj in objs:
@@ -139,6 +139,8 @@ def bulk_insert(objs, table_name=""):
 
     logging.info("Running bulk insert: %s with vals %s", complete_insert, vals)
     
+    logging.info(complete_insert)
+
     cursor.executemany(complete_insert, vals)
    
     #the executemany seems to return the bottom index, rather than the top,
