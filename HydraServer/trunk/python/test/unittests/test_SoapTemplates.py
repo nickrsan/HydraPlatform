@@ -10,9 +10,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_add_group(self):
 
-        attr_1 = self.create_attr() 
-        attr_2 = self.create_attr() 
-        attr_3 = self.create_attr() 
+        attr_1 = self.create_attr("attr1") 
+        attr_2 = self.create_attr("attr2") 
+        attr_3 = self.create_attr("attr3") 
         
         group = self.client.factory.create('hyd:ResourceTemplateGroup')
         group.name = 'Test Group'
@@ -55,9 +55,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_update_group(self):
 
-        attr_1 = self.create_attr() 
-        attr_2 = self.create_attr() 
-        attr_3 = self.create_attr() 
+        attr_1 = self.create_attr("attr1") 
+        attr_2 = self.create_attr("attr2") 
+        attr_3 = self.create_attr("attr3") 
         
         group = self.client.factory.create('hyd:ResourceTemplateGroup')
         group.name = 'Test Group'
@@ -117,9 +117,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_add_template(self):
 
-        attr_1 = self.create_attr() 
-        attr_2 = self.create_attr() 
-        attr_3 = self.create_attr() 
+        attr_1 = self.create_attr("attr1") 
+        attr_2 = self.create_attr("attr2") 
+        attr_3 = self.create_attr("attr3") 
         
         template = self.client.factory.create('hyd:ResourceTemplate')
         template.name = "Test template name"
@@ -150,9 +150,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_update_template(self):
 
-        attr_1 = self.create_attr() 
-        attr_2 = self.create_attr() 
-        attr_3 = self.create_attr() 
+        attr_1 = self.create_attr("attr1") 
+        attr_2 = self.create_attr("attr2") 
+        attr_3 = self.create_attr("attr3") 
         
         template = self.client.factory.create('hyd:ResourceTemplate')
         template.name = "Test template name"
@@ -197,9 +197,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_add_item(self):
 
-        attr_1 = self.create_attr() 
-        attr_2 = self.create_attr() 
-        attr_3 = self.create_attr() 
+        attr_1 = self.create_attr("attr1") 
+        attr_2 = self.create_attr("attr2") 
+        attr_3 = self.create_attr("attr3") 
         
         template = self.client.factory.create('hyd:ResourceTemplate')
         template.name = "Test template name"
@@ -230,8 +230,8 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_delete_item(self):
 
-        attr_1 = self.create_attr() 
-        attr_2 = self.create_attr() 
+        attr_1 = self.create_attr("attr1") 
+        attr_2 = self.create_attr("attr2") 
         
         template = self.client.factory.create('hyd:ResourceTemplate')
         template.name = "Test template name"

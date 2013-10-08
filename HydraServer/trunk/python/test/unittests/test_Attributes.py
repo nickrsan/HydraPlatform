@@ -15,6 +15,7 @@ class AttributeTest(test_HydraIface.HydraIfaceTest):
         x.save()
         x.commit()
         assert x.db.attr_name == "test_new", "Attr did not update correctly"
+        self.x = x
 
     def test_delete(self):
         x = HydraIface.Attr()
@@ -25,6 +26,7 @@ class AttributeTest(test_HydraIface.HydraIfaceTest):
 
         x.delete()
         assert x.load() == False, "Delete did not work correctly."
+        self.x = x
 
     def test_load(self):
         x = HydraIface.Attr()
@@ -35,16 +37,9 @@ class AttributeTest(test_HydraIface.HydraIfaceTest):
 
         y = HydraIface.Attr(attr_id=x.db.attr_id)
         assert y.load() == True, "Load did not work correctly"
+        self.x = x
 
 class AttrMapTest(test_HydraIface.HydraIfaceTest):
-
-    def create_attribute(self, name):
-        x = HydraIface.Attr()
-        x.db.attr_name = name
-        x.db.attr_description = "test description"
-        x.save()
-        x.commit()
-        return x
 
     def test_update(self):
         a1 = self.create_attribute("Attr1")
@@ -58,10 +53,18 @@ class AttrMapTest(test_HydraIface.HydraIfaceTest):
         am.save()
         am.commit()
 
-        am.db.attr_id_b = a3.db.attr_id
-        am.save()
-        am.commit()
-        assert am.db.attr_id_b == a3.db.attr_id, "AttrMap did not update correctly"
+        assert am.load(), "Attr map was not created"
+        
+        am.delete()
+        
+        am1 = HydraIface.AttrMap()
+        am1.db.attr_id_a = a2.db.attr_id
+        am1.db.attr_id_b = a3.db.attr_id
+        am1.save()
+        am1.commit()
+
+        assert am1.load(), "AttrMap did not update correctly"
+        self.am = am1
 
     def test_delete(self):
         a1 = self.create_attribute("Attr1")
@@ -90,7 +93,8 @@ class AttrMapTest(test_HydraIface.HydraIfaceTest):
 
         am = HydraIface.AttrMap(attr_id_a=a1.db.attr_id, attr_id_b=a2.db.attr_id)
         assert am.load() == True, "AttrMap did not load correctly"
-    
+        self.am = am
+
     def test_fk(self):
         a1 = self.create_attribute("Attr1")
         a2 = self.create_attribute("Attr2")
@@ -103,11 +107,27 @@ class AttrMapTest(test_HydraIface.HydraIfaceTest):
 class ResourceAttrTest(test_HydraIface.HydraIfaceTest):
 
     def create_attribute(self, name):
-        x = HydraIface.Attr()
-        x.db.attr_name = name
-        x.db.attr_description = "test description"
-        x.save()
-        x.commit()
+        sql = """
+            select
+                attr_id
+            from
+                tAttr
+            where
+                attr_name = '%s'
+        """ % name
+        
+        rs = HydraIface.execute(sql)
+
+        if len(rs) == 0:
+            x = HydraIface.Attr()
+            x.db.attr_name = name
+            x.db.attr_description = "test description"
+            x.save()
+            x.commit()
+        else:
+            x = HydraIface.Attr(attr_id=rs[0].attr_id)
+            x.load()
+
         return x
 
     def test_create(self):

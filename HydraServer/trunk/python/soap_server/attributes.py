@@ -1,4 +1,5 @@
 from spyne.model.primitive import Integer, Boolean, String
+from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Attr
 from db import HydraIface
@@ -8,6 +9,7 @@ from hydra_complexmodels import ResourceTemplateGroup,\
 
 from hydra_base import RequestHeader 
 from spyne.service import ServiceBase
+from HydraLib.HydraException import HydraError
 
 from HydraLib import hdb
 
@@ -49,8 +51,142 @@ class AttributeService(ServiceBase):
         x.db.attr_name = attr.name
         x.db.attr_dimen = attr.dimen
         x.save()
-        hdb.commit()
         return x.get_as_complexmodel()
+
+    @rpc(SpyneArray(Attr), _returns=SpyneArray(Attr))
+    def add_attributes(ctx, attrs):
+        """
+            Add a generic attribute, which can then be used in creating
+            a resource attribute, and put into a template.
+            (Attr){
+                id = 1020
+                name = "Test Attr"
+                dimen = "very big"
+            }
+
+        """
+
+        #Check to see if any of the attributs being added are already there.
+        #If they are there already, don't add a new one. If an attribute
+        #with the same name is there already but with a different dimension,
+        #throw an error to that effect.
+        sql = """
+            select
+                attr_id,
+                attr_name,
+                attr_dimen
+            from
+                tAttr
+        """
+
+        rs = HydraIface.execute(sql)
+
+        attrs_to_add = []
+        for potential_new_attr in attrs:
+            for r in rs:
+                if potential_new_attr.name == r.attr_name:
+                    if potential_new_attr.dimen != r.attr_dimen:
+                        raise HydraError("Attribute %s already exists but "
+                                         "with a different dimension: %s",\
+                                         r.attr_name, r.attr_dimen)
+                    break
+            else:
+                attrs_to_add.append(potential_new_attr)
+
+        iface_attrs = []
+        for attr in attrs_to_add:
+            x = HydraIface.Attr()
+            x.db.attr_name = attr.name
+            x.db.attr_dimen = attr.dimen
+            iface_attrs.append(x)
+
+        HydraIface.bulk_insert(iface_attrs, 'tAttr')
+    
+
+        sql = """
+            select
+                attr_id,
+                attr_name,
+                attr_dimen
+            from
+                tAttr
+        """
+
+        rs = HydraIface.execute(sql)
+
+        all_attrs = []
+        for r in rs:
+            x = Attr()
+            x.name  = r.attr_name
+            x.dimen = r.attr_dimen
+            x.id    = r.attr_id
+            all_attrs.append(x)
+
+        new_attrs = []
+        for attr in all_attrs:
+            for new_attr in attrs:
+                if new_attr.name == attr.name:
+                    new_attrs.append(attr)
+                    break
+
+        return new_attrs 
+
+    @rpc(_returns=SpyneArray(Attr))
+    def get_attributes(ctx):
+        """
+            Get all attributes
+        """
+
+
+        sql = """
+            select
+                attr_id,
+                attr_name,
+                attr_dimen
+            from
+                tAttr
+        """
+
+        rs = HydraIface.execute(sql)
+
+        attrs = []
+        for r in rs:
+            x = Attr()
+            x.name  = r.attr_name
+            x.dimen = r.attr_dimen
+            x.id    = r.attr_id
+            attrs.append[x]
+
+        return attrs 
+
+    @rpc(String, _returns=Attr)
+    def get_attribute(ctx, name):
+        """
+            Get a specific attribute by its name.
+        """
+
+        sql = """
+            select
+                attr_id,
+                attr_name,
+                attr_dimen
+            from
+                tAttr
+            where
+                attr_name = '%s'
+        """ % name
+        
+        rs = HydraIface.execute(sql)
+
+        if len(rs) == 0:
+           return None 
+        else:
+            x = Attr()
+            x.name  = rs[0].attr_name
+            x.dimen = rs[0].attr_dimen
+            x.id    = rs[0].attr_id
+            return x
+
 
     @rpc(Integer, _returns=Boolean)
     def delete_attribute(ctx, attr_id):

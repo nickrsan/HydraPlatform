@@ -68,12 +68,13 @@ class TestSoap(unittest.TestCase):
         link.node_2_id = "%s,%s,%s"%(node_2_name, node_2_x, node_2_y)
         return link
 
-    def create_attr(self):
-        attr = self.c.factory.create('ns1:Attr')
-        attr.name = 'Test Attr'
-        attr.dimen = 'very big'
-        attr = self.c.service.add_attribute(attr)
-
+    def create_attr(self, name):
+        attr = self.c.service.get_attribute(name)
+        if attr is None:
+            attr       = self.c.factory.create('ns1:Attr')
+            attr.name  = name
+            attr.dimen = 'dimensionless'
+            attr       = self.c.service.add_attribute(attr)
         return attr
 
     def create_network(self, project_id, name, desc=None, nodes=None, links=None, scenarios=None):
@@ -91,7 +92,6 @@ class TestSoap(unittest.TestCase):
         return network
 
     def test_add_project(self):
-
         (project) = {
             'name' : 'New Project',
             'description' : 'New Project Description',
@@ -107,7 +107,7 @@ class TestSoap(unittest.TestCase):
         }
 
         p2 = self.c.service.update_project(project1)
-        print self.c.last_sent()
+        #print self.c.last_sent()
         print p2
 
     def test_network(self):
@@ -136,6 +136,13 @@ class TestSoap(unittest.TestCase):
         LinkArray = self.c.factory.create('ns1:LinkArray')
         LinkArray.Link.append(link1)
         LinkArray.Link.append(link2)
+        
+        attr1 = self.create_attr("testattr_1")
+        network_attrs = self.c.factory.create('ns1:ResourceAttrArray')
+        net_attr1  = self.c.factory.create('ns1:ResourceAttr')
+        net_attr1.id = -1
+        net_attr1.attr_id = attr1.id
+        network_attrs.ResourceAttr.append(net_attr1)
 
         (Network) = {
             'name'        : 'Network1',
@@ -143,6 +150,8 @@ class TestSoap(unittest.TestCase):
             'project_id'  : p['id'],
             'links'       : LinkArray,
             'nodes'       : NodeArray,
+            'attributes'  : network_attrs
+ 
         }
         print "Time until network creation: %s"%(datetime.datetime.now()-start)
 
@@ -162,9 +171,9 @@ class TestSoap(unittest.TestCase):
         start = datetime.datetime.now()
 
         #Create some attributes, which we can then use to put data on our nodes
-        attr1 = self.create_attr()
-        attr2 = self.create_attr()
-        attr3 = self.create_attr()
+        attr1 = self.create_attr("testattr_1")
+        attr2 = self.create_attr("testattr_2")
+        attr3 = self.create_attr("testattr_3")
 
         print "Attribute creation took: %s"%(datetime.datetime.now()-start)
         start = datetime.datetime.now()
@@ -225,11 +234,12 @@ class TestSoap(unittest.TestCase):
         #A time series, where the value may be a 1-D array
         #A multi-dimensional array.
         descriptor = self.create_descriptor(node_attrs.ResourceAttr[0])
-        timeseries = self.create_timeseries(node_attrs.ResourceAttr[1])
+        descriptor2 = self.create_descriptor(node_attrs.ResourceAttr[1])
+        #timeseries = self.create_timeseries(node_attrs.ResourceAttr[1])
         array      = self.create_array(node_attrs.ResourceAttr[2])
 
         scenario_data.ResourceScenario.append(descriptor)
-        scenario_data.ResourceScenario.append(timeseries)
+        scenario_data.ResourceScenario.append(descriptor2)
         scenario_data.ResourceScenario.append(array)
 
 
@@ -259,12 +269,16 @@ class TestSoap(unittest.TestCase):
 
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.id
-        scenario_attr.type = 'descriptor'
 
+        dataset = self.c.factory.create('ns1:Dataset')
+        dataset.type = 'descriptor'
+        
         descriptor = self.c.factory.create('ns1:Descriptor')
         descriptor.desc_val = 'test'
 
-        scenario_attr.value = descriptor
+        dataset.value = descriptor
+
+        scenario_attr.value = dataset
 
         return scenario_attr
 
@@ -276,7 +290,10 @@ class TestSoap(unittest.TestCase):
 
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.id
-        scenario_attr.type = 'timeseries'
+
+        dataset = self.c.factory.create('ns1:Dataset')
+        
+        dataset.type = 'timeseries'
 
         ts1 = self.c.factory.create('ns1:TimeSeriesData')
         ts1.ts_time  = datetime.datetime.now()
@@ -290,19 +307,21 @@ class TestSoap(unittest.TestCase):
         ts3.ts_values.TimeSeriesData.append(ts1)
         ts3.ts_values.TimeSeriesData.append(ts2)
 
-        scenario_attr.value = ts3
-        #scenario_attr.value = {
-        #    'value'            : [
-        #        {
-        #           'ts_time'   :  datetime.datetime.now(),
-        #           'ts_value' : str([1, 2, 3, 4, 5]),
-        #        },
-        #        {
-        #            'ts_time'  : datetime.datetime.now() + datetime.timedelta(hours=1),
-        #            'ts_value' : str([2, 3, 4, 5, 6]),
-        #        }
-        #    ]
-        #}
+        #scenario_attr.value = ts3
+        dataset.value = {
+            'value'            : [
+                {
+                   'ts_time'   :  datetime.datetime.now(),
+                   'ts_value' : str([1, 2, 3, 4, 5]),
+                },
+                {
+                    'ts_time'  : datetime.datetime.now() + datetime.timedelta(hours=1),
+                    'ts_value' : str([2, 3, 4, 5, 6]),
+                }
+            ]
+        }
+
+        scenario_attr.value = dataset
 
         return scenario_attr
         #return ts3
@@ -314,7 +333,9 @@ class TestSoap(unittest.TestCase):
 
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.id
-        scenario_attr.type = 'array'
+        
+        dataset = self.c.factory.create('ns1:Dataset')
+        dataset.type = 'array'
 
         arr1 = self.c.factory.create('ns1:Array')
         arr1.arr_data = [1, 2, 3]
@@ -336,9 +357,11 @@ class TestSoap(unittest.TestCase):
         arr6.arr_data = [arr, arr5]
 
         #scenario_attr.value = arr6
-        scenario_attr.value = {
+        dataset.value = {
            'arr_data' : str([[[1, 2, 3], [4, 5, 6]], [[10, 20, 30],[40, 50, 60]]])
         }
+
+        scenario_attr.value = dataset
 
         return scenario_attr
 

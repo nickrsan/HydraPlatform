@@ -20,8 +20,11 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         attr_a = self.create_attribute("Flow")
 
         ra = node_a.add_attribute(attr_a.db.attr_id)
+        ra.save()
         rb = node_b.add_attribute(attr_a.db.attr_id)
+        rb.save()
         rc = node_c.add_attribute(attr_a.db.attr_id)
+        rc.save()
 
         rsa = node_a.assign_value(scenario.db.scenario_id, ra.db.resource_attr_id, 'scalar' ,1, 'm3', 'flow', 'int')
         rsb = node_a.assign_value(scenario.db.scenario_id, rb.db.resource_attr_id, 'scalar' ,2, 'm3', 'flow', 'int')

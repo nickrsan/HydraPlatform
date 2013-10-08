@@ -75,7 +75,9 @@ def init(cnx):
             information_schema.key_column_usage
         where
         table_schema  = '%s'
+        and referenced_table_name is not null
         and constraint_name != 'PRIMARY'
+        and constraint_name != column_name
     """%(config.get('mysqld', 'db_name'),)
 
     cursor.execute(fk_qry)
@@ -90,6 +92,63 @@ def execute(sql):
     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
     rs = cursor.execute_sql(sql)
     return rs
+
+def get_val(attr, db_type):
+    """
+        This function differs from the one in the 
+        hydraiface DB object as it is used for the bulk insert
+        function, which requires different string formatting.
+    """
+    val = attr
+
+    if val is None:
+        return None
+    elif db_type.find('varchar') != -1 or db_type in ('blob', 'datetime', 'timestamp') :
+        return '%s'%val
+    else:
+        return val
+
+
+
+def bulk_insert(objs, table_name=""):
+    """
+        Insert all objects into the DB using a single query.
+        to_insert is a list of objects, which much be the same type.
+    """
+
+    if len(objs) == 0:
+        logging.info("Cannot bulk insert to %s. Nothing to insert!", table_name)
+        return
+
+    cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
+    base_insert = "insert into %(table)s (%(cols)s) values (%(vals)s);"
+
+    vals = []
+    for obj in objs:
+        if 'cr_date' in obj.db.db_attrs:
+            del(obj.db.db_attrs[obj.db.db_attrs.index('cr_date')])
+
+        val = [get_val(getattr(obj.db, n), obj.db.attr_types[n]) for n in obj.db.db_attrs]
+        vals.append(tuple(val))
+
+    complete_insert = base_insert % dict(
+        table = objs[0].db.table_name,
+        cols  = ",".join([n for n in objs[0].db.db_attrs]),
+        vals  = ",".join('%s' for v in objs[0].db.db_attrs),
+    )
+
+    logging.info("Running bulk insert: %s with vals %s", complete_insert, vals)
+    
+    cursor.executemany(complete_insert, vals)
+   
+    #the executemany seems to return the bottom index, rather than the top,
+    #so we have to work out the top index.
+    last_row_id = cursor.lastrowid + cursor.rowcount-1
+
+    cursor.close()
+
+    return last_row_id
+
 
 class IfaceBase(object):
     """
@@ -159,6 +218,21 @@ class IfaceBase(object):
             self.db.insert()
             self.in_db = True
 
+    def bulk_save_children(self):
+        children_to_insert = []
+        children_to_update = []
+
+        for child in self.children:
+            if child.in_db == False:
+                children_to_insert.append(child)
+            else:
+                children_to_update.append(child)
+       
+        self.db.bulk_insert(children_to_insert)
+
+        for child in children_to_update:
+            child.save()
+        
     def get_children(self):
         children = DB_STRUCT[self.db.table_name.lower()]['child_info']
         for name, rows in children.items():
@@ -185,7 +259,8 @@ class IfaceBase(object):
                 child_obj.__setattr__(self.name.lower(), self)
                 for col, val in row:
                     child_obj.db.__setattr__(col, val)
-
+                
+                child_obj.in_db = True
                 child_obj.in_db = True
                 child_objs.append(child_obj)
 
@@ -213,7 +288,6 @@ class IfaceBase(object):
         start = datetime.datetime.now()
         #first create the appropriate soap complex model
         cm = getattr(hydra_complexmodels, self.name)()
-
         #If self is not in the DB, then return an empty
         #complex model.
         if self.in_db is False:
@@ -242,7 +316,8 @@ class IfaceBase(object):
                 child_cm = obj.get_as_complexmodel()
                 child_objs.append(child_cm)
             setattr(cm, name, child_objs)
-
+        if self.name == 'Link':
+            logging.info("So far, time is: %s " % (datetime.datetime.now()-start))
         #if I have attributes, convert them
         #and assign them to the new object too.
         if hasattr(self, 'attributes'):
@@ -421,6 +496,7 @@ class IfaceDB(object):
         else:
             super(IfaceDB, self).__setattr__(name, value)
 
+
     def insert(self):
         """
             If this object has not been stored in the DB as yet, then insert it.
@@ -552,11 +628,16 @@ class GenericResource(IfaceBase):
 
     def load(self):
         result = super(GenericResource, self).load()
-
-        pk = self.db.__getattr__(self.db.pk_attrs[0])
-        self.ref_id = pk
+        
+        self.get_ref_id()
 
         return result
+
+    def get_ref_id(self):
+        pk = self.db.__getattr__(self.db.pk_attrs[0])
+        self.ref_id = pk
+        return self.ref_id
+
 
     def delete(self, purge_data=True):
         for attr in self.attributes:
@@ -579,8 +660,9 @@ class GenericResource(IfaceBase):
                     and ref_key = '%(ref_key)s'
             """ % dict(ref_key = self.ref_key, ref_id = self.ref_id)
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-
+        now = datetime.datetime.now()
         rs = cursor.execute_sql(sql)
+        logging.info("Getting attributes took: %s"%(datetime.datetime.now()-now))
         cursor.close()
 
         for r in rs:
@@ -597,8 +679,8 @@ class GenericResource(IfaceBase):
         attr.db.attr_id = attr_id
         attr.db.attr_is_var = attr_is_var
         attr.db.ref_key = self.ref_key
-        attr.db.ref_id  = self.ref_id
-        attr.save()
+        attr.db.ref_id  = self.get_ref_id()
+    #    attr.save()
         self.attributes.append(attr)
 
         return attr
@@ -692,7 +774,7 @@ class Network(GenericResource):
         l.db.node_1_id = node_1_id
         l.db.node_2_id = node_2_id
         l.db.network_id = self.db.network_id
-        l.save()
+        #l.save()
         self.links.append(l)
         return l
 
@@ -707,7 +789,7 @@ class Network(GenericResource):
         n.db.node_x = node_x
         n.db.node_y = node_y
         n.db.network_id = self.db.network_id
-        n.save()
+        #n.save()
         self.nodes.append(n)
         return n
 
@@ -884,7 +966,6 @@ class ResourceTemplate(IfaceBase):
 
         return item_i
 
-
     def remove_item(self, attr_id):
         """
             remove a resource template item from a resource template.
@@ -895,7 +976,7 @@ class ResourceTemplate(IfaceBase):
                 self.resourcetemplateitems.remove(item_i)
                 item_i.save()
 
-        return item_i
+        return item_i 
 
     def get_as_complexmodel(self):
         tmp =  hydra_complexmodels.ResourceTemplate()

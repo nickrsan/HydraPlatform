@@ -26,13 +26,15 @@ global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 #"2013-08-13T15:55:43.468886Z"
 
-
-def parse_value(data_type, data):
+def parse_value(data):
     """
     Turn a complex model object into a hydraiface - friendly value.
     returns a tuple containing:
     (data_type, units, name, dimension, value)
     """
+    
+    data_type = data.type
+
     #attr_data.value is a dictionary,
     #but the keys have namespaces which must be stripped.
     val_names = data.value.keys()
@@ -83,9 +85,9 @@ def parse_value(data_type, data):
        return value[0][0]
     elif data_type == 'array':
         print
-        print value[0][0].values()[0][0]
+        print value[0][0]
         print
-        val = eval(value[0][0].values()[0][0])
+        val = eval(value[0][0])
         return val
 
 
@@ -110,6 +112,14 @@ def get_array(arr):
 
 class HydraComplexModel(ComplexModel):
     error = String()
+
+class Dataset(ComplexModel):
+    _type_info = [
+        ('type',             String),
+        ('dimension',        String(default=None)),
+        ('unit',             String(default=None)),
+        ('value',            AnyDict),
+    ]
 
 class Descriptor(HydraComplexModel):
    _type_info = [
@@ -190,6 +200,7 @@ class Node(Resource):
         ('id',          Integer),
         ('name',        String),
         ('description', String),
+        ('layout',      String),
         ('x',           Decimal),
         ('y',           Decimal),
         ('status',      String),
@@ -207,6 +218,7 @@ class Link(Resource):
         ('id',          Integer),
         ('name',        String),
         ('description', String),
+        ('layout',      String),
         ('node_1_id',   Integer),
         ('node_2_id',   Integer),
         ('status',      String),
@@ -217,8 +229,7 @@ class ResourceScenario(Resource):
     _type_info = [
         ('resource_attr_id', Integer),
         ('attr_id',          Integer),
-        ('type',             String),
-        ('value',            AnyDict),
+        ('value',            Dataset),
     ]
 
 class Scenario(Resource):
@@ -238,9 +249,10 @@ class Network(Resource):
         ('id',                  Integer),
         ('name',                String),
         ('description',         String),
+        ('layout',              String),
         ('status',              String),
-        ('attributes',          SpyneArray(ResourceAttr)),
-        ('scenarios',           SpyneArray(Scenario)),
+        ('attributes',          SpyneArray(ResourceAttr, default=[])),
+        ('scenarios',           SpyneArray(Scenario, default=[])),
         ('nodes',               SpyneArray(Node, default=[])),
         ('links',               SpyneArray(Link, default=[])),
     ]
@@ -354,8 +366,3 @@ class DatasetOwner(HydraComplexModel):
         ('dataset_id',   Integer),
         ('user_id',   Integer),
     ]
-
-
-
-
-

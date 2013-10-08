@@ -1,3 +1,4 @@
+#!/usr/local/bin/python
 import sys
 if "./python" not in sys.path:
     sys.path.append("./python")
@@ -13,6 +14,8 @@ from spyne.server.wsgi import WsgiApplication
 from spyne.service import ServiceBase
 from spyne.decorator import rpc
 
+import spyne.decorator
+
 from spyne.error import Fault, ArgumentError
 import bcrypt
 
@@ -24,6 +27,7 @@ from soap_server.plugins import PluginService
 from soap_server.users import UserService
 from soap_server.template import TemplateService
 from soap_server.constraints import ConstraintService
+from soap_server.static import ImageService
 from soap_server.hydra_base import AuthenticationService,\
     LogoutService,\
     get_session_db,\
@@ -55,7 +59,7 @@ def _on_method_call(ctx):
 def _on_method_context_closed(ctx):
     hdb.commit()
 
-class HydraApplication(Application):
+class HydraSoapApplication(Application):
     """
         Subclass of the base spyne Application class.
 
@@ -86,11 +90,13 @@ class HydraApplication(Application):
             logging.info("Call took: %s"%(datetime.datetime.now()-start))
             return res
         except HydraError, e:
+            logging.critical(e)
             raise HydraServiceError(e.message)
         except ObjectNotFoundError, e:
+            logging.critical(e)
             raise
         except Fault, e:
-            logging.error(e)
+            logging.critical(e)
             raise
         except Exception, e:
             logging.critical(e)
@@ -131,14 +137,16 @@ class HydraServer():
             PluginService,
             ConstraintService,
             TemplateService,
+            ImageService,
         ]
 
-        application = HydraApplication(applications, 'hydra.authentication',
+        application = HydraSoapApplication(applications, 'hydra.authentication',
                     in_protocol=Soap11(validator='lxml'),
                     out_protocol=Soap11()
                 )
-        wsgi_application = WsgiApplication(application, max_content_length=10 * 0x100000)
-        wsgi_application.max_content_length = 10 * 0x100000 # 10 MB
+        wsgi_application = WsgiApplication(application)
+        wsgi_application.max_content_length = 100 * 0x100000 # 10 MB
+
         return wsgi_application
 
     def run_server(self):

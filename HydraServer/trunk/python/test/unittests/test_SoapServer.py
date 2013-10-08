@@ -100,11 +100,13 @@ class SoapServerTest(unittest.TestCase):
 
         return node
 
-    def create_attr(self):
-        attr = self.client.factory.create('hyd:Attr')
-        attr.name = 'Test attribute'
-        attr.dimen = 'dimensionless'
-        attr = self.client.service.add_attribute(attr)
+    def create_attr(self, name="Test attribute"):
+        attr = self.client.service.get_attribute(name)
+        if attr is None:
+            attr       = self.client.factory.create('hyd:Attr')
+            attr.name  = name 
+            attr.dimen = 'dimensionless'
+            attr = self.client.service.add_attribute(attr)
         return attr
 
 

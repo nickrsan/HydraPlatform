@@ -12,10 +12,8 @@ import scenario
 import datetime
 
 def _add_attributes(resource_i, attributes):
-    resource_attr_id_map = dict()
     if attributes is None:
-        return dict()
-
+        return []
     #ra is for ResourceAttr
     for ra in attributes:
         attr_is_var = 'N'
@@ -25,14 +23,32 @@ def _add_attributes(resource_i, attributes):
         if ra.id < 0:
             ra_i = resource_i.add_attribute(ra.attr_id, attr_is_var)
         else:
-            #ra = HydraIface.ResourceAttr(resource_attr_id=ra.id)
-            #ra.db.attr_is_var = attr_is_var
             ra_i = HydraIface.ResourceAttr(resource_attr_id=ra.id)
             ra_i.db.attr_is_var = attr_is_var
 
+    return resource_i.attributes
+
+def _update_attributes(resource_i, attributes):
+    resource_attr_id_map = dict()
+    if attributes is None:
+        return dict() 
+    #ra is for ResourceAttr
+    for ra in attributes:
+        attr_is_var = 'N'
+        if ra.is_var is True:
+            attr_is_var = 'Y'
+
+        if ra.id < 0:
+            ra_i = resource_i.add_attribute(ra.attr_id, attr_is_var)
+        else:
+            ra_i = HydraIface.ResourceAttr(resource_attr_id=ra.id)
+            ra_i.db.attr_is_var = attr_is_var
+
+        ra_i.save()
+
         resource_attr_id_map[ra.id] = ra_i.db.resource_attr_id
 
-    return resource_attr_id_map
+    return resource_attr_id_map 
 
 class NetworkService(ServiceBase):
     """
@@ -60,6 +76,7 @@ class NetworkService(ServiceBase):
             The returned object will have positive IDS
 
         """
+
         logging.info("Adding network")
 
         return_value = None
@@ -71,28 +88,42 @@ class NetworkService(ServiceBase):
         x.db.network_description = network.description
         x.save()
         network.network_id = x.db.network_id
+        
+        resource_attrs = []
 
-        resource_attr_id_map = _add_attributes(x, network.attributes)
+        network_attrs = _add_attributes(x, network.attributes)
+
+        resource_attrs.extend(network_attrs)
+
+        all_attributes     = []
+        all_attributes.extend(network.attributes)
 
         #Maps temporary node_ids to real node_ids
         node_ids = dict()
 
          #First add all the nodes
+        logging.info("Adding nodes to network")
         for node in network.nodes:
-            logging.info("Adding nodes to network")
             n = x.add_node(node.name, node.description, node.x, node.y)
-
-            node_attr_id_map = _add_attributes(n, node.attributes)
-            resource_attr_id_map.update(node_attr_id_map)
-            #If a temporary ID was given to the node
-            #store the mapping to the real node_id
-            if node.id is not None:
-                node_ids[node.id] = n.db.node_id
-
-
+            
+        HydraIface.bulk_insert(x.nodes, 'tNode')
+        x.load_all()
+        
+        for n_i in x.nodes:
+            for node in network.nodes:
+                if node.id not in node_ids and node.x == n_i.db.node_x and node.y == n_i.db.node_y and node.name == n_i.db.node_name:
+                    node_attrs = _add_attributes(n_i, node.attributes)
+                    resource_attrs.extend(node_attrs)
+                    all_attributes.extend(node.attributes)
+                    #If a temporary ID was given to the node
+                    #store the mapping to the real node_id
+                    if node.id is not None and node.id <= 0:
+                            node_ids[node.id] = n_i.db.node_id
+                    break
+           
         #Then add all the links.
+        logging.info("Adding links to network")
         for link in network.links:
-            logging.info("Adding links to network")
             node_1_id = link.node_1_id
             if link.node_1_id in node_ids:
                 node_1_id = node_ids[link.node_1_id]
@@ -105,8 +136,28 @@ class NetworkService(ServiceBase):
                 raise HydraError("Node IDS (%s, %s)are incorrect!"%(node_1_id, node_2_id))
 
             l = x.add_link(link.name, link.description, node_1_id, node_2_id)
-            link_attr_id_map = _add_attributes(l, link.attributes)
-            resource_attr_id_map.update(link_attr_id_map)
+
+        HydraIface.bulk_insert(x.links, 'tLink')
+        x.load_all()
+        for l_i in x.links:
+            for link in network.links:
+                node_1_from_map = node_ids[link.node_1_id]
+                node_2_from_map = node_ids[link.node_2_id]
+                if l_i.db.node_1_id == node_1_from_map and l_i.db.node_2_id == node_2_from_map:
+                    resource_attrs.extend(_add_attributes(l_i, link.attributes))
+                    all_attributes.extend(link.attributes)
+                    break
+
+        #insert all the resource attributes in one go!
+        last_resource_attr_id = HydraIface.bulk_insert(resource_attrs, "tResourceAttr")
+
+        #import pudb; pudb.set_trace()
+        if last_resource_attr_id is not None: 
+            next_ra_id = last_resource_attr_id - len(all_attributes) + 1
+            resource_attr_id_map = {}
+            for attribute in all_attributes:
+                resource_attr_id_map[attribute.id] = next_ra_id
+                next_ra_id = next_ra_id + 1
 
         if network.scenarios is not None:
             logging.info("Adding scenarios to network")
@@ -116,10 +167,32 @@ class NetworkService(ServiceBase):
                 scen.db.scenario_description = s.description
                 scen.db.network_id           = x.db.network_id
                 scen.save()
-
+                
                 for r_scen in s.resourcescenarios:
                     r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
-                    scenario._update_resourcescenario(scen.db.scenario_id, r_scen, new=True)
+                
+                #extract the data from each resourcescenario
+                data = [r.value for r in s.resourcescenarios]
+
+                dataset_ids = scenario.DataService.bulk_insert_data(ctx, data)
+
+                #record all the resource attribute ids
+                resource_attr_ids = [r.resource_attr_id for r in s.resourcescenarios]
+                
+                resource_scenarios = []
+                for i, ra_id in enumerate(resource_attr_ids):
+                    rs_i = HydraIface.ResourceScenario()
+                    rs_i.db.resource_attr_id = ra_id
+                    rs_i.db.dataset_id       = dataset_ids[i]
+                    rs_i.db.scenario_id      = scen.db.scenario_id
+                    resource_scenarios.append(rs_i)
+
+                HydraIface.bulk_insert(resource_scenarios, 'tResourceScenario')
+               
+                #This is to get the resource scenarios into the scenario
+                #object, so they are included into the scenario's complex model
+                scen.load_all()
+
                 x.scenarios.append(scen)
 
         logging.info("Insertion of network took: %s",(datetime.datetime.now()-insert_start))
@@ -155,7 +228,7 @@ class NetworkService(ServiceBase):
         x.db.network_name        = network.name
         x.db.network_description = network.description
 
-        resource_attr_id_map = _add_attributes(x, network.attributes)
+        resource_attr_id_map = _update_attributes(x, network.attributes)
 
         #Maps temporary node_ids to real node_ids
         node_id_map = dict()
@@ -172,12 +245,13 @@ class NetworkService(ServiceBase):
                 n.db.node_description = node.description
                 n.db.node_x           = node.x
                 n.db.node_y           = node.y
+                n.db.status           = node.status
             else:
                 is_new = True
                 n = x.add_node(node.name, node.description, node.x, node.y)
             n.save()
 
-            node_attr_id_map = _add_attributes(n, node.attributes)
+            node_attr_id_map = _update_attributes(n, node.attributes)
             resource_attr_id_map.update(node_attr_id_map)
 
             #If a temporary ID was given to the node
@@ -205,7 +279,7 @@ class NetworkService(ServiceBase):
 
             l.save()
 
-            link_attr_id_map = _add_attributes(l, link.attributes)
+            link_attr_id_map = _update_attributes(l, link.attributes)
             resource_attr_id_map.update(link_attr_id_map)
 
 

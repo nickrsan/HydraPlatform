@@ -94,14 +94,6 @@ class ResourceTemplateTest(test_HydraIface.HydraIfaceTest):
         assert y.load() == True, "Load did not work correctly"
 
 class ResourceTemplateItemTest(test_HydraIface.HydraIfaceTest):
-    def create_attribute(self, name):
-        x = HydraIface.Attr()
-        x.db.attr_name = name
-        x.db.attr_description = "test description"
-        x.save()
-        x.commit()
-        x.load()
-        return x
 
 
     def create_template(self, name):

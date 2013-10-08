@@ -34,9 +34,9 @@ class TestConstraint(test_SoapServer.SoapServerTest):
         start = datetime.datetime.now()
         
         #Create some attributes, which we can then use to put data on our nodes
-        attr1 = self.create_attr() 
-        attr2 = self.create_attr() 
-        attr3 = self.create_attr() 
+        attr1 = self.create_attr("attr1") 
+        attr2 = self.create_attr("attr2") 
+        attr3 = self.create_attr("attr3") 
 
        # print "Attribute creation took: %s"%(datetime.datetime.now()-start)
         start = datetime.datetime.now()
@@ -128,12 +128,15 @@ class TestConstraint(test_SoapServer.SoapServerTest):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
         scenario_attr = self.client.factory.create('ns1:ResourceScenario')
-
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.id
-        scenario_attr.type = 'scalar'
+        
+        dataset = self.client.factory.create('ns1:Dataset')
+        dataset.value = {'param_value' : value}
+        dataset.type = 'scalar'
 
-        scenario_attr.value = {'param_value' : value}
+        scenario_attr.value = dataset
+
 
         return scenario_attr
 

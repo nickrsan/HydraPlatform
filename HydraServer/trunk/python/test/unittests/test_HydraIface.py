@@ -10,10 +10,24 @@ import logging
 
 class HydraIfaceTest(unittest.TestCase):
     def setUp(self):
+        self.am = None
+        self.x = None
         hydra_logging.init(level='INFO')
         HydraIface.init(hdb.connect())
 
     def tearDown(self):
+
+        if self.am is not None:
+            self.am.delete()
+            self.am.save()
+            self.am.commit()
+
+        if self.x is not None:
+            self.x.delete()
+            self.x.save()
+            self.x.commit()
+
+
         hdb.commit()
         logging.debug("Tearing down")
         hdb.disconnect()
@@ -61,13 +75,28 @@ class HydraIfaceTest(unittest.TestCase):
         return x
 
     def create_attribute(self, name):
-        x = HydraIface.Attr()
-        x.db.attr_name = name
-        x.db.attr_description = "test description"
-        x.save()
-        x.commit()
-        return x
+        sql = """
+            select
+                attr_id
+            from
+                tAttr
+            where
+                attr_name = '%s'
+        """ % name
+        
+        rs = HydraIface.execute(sql)
 
+        if len(rs) == 0:
+            x = HydraIface.Attr()
+            x.db.attr_name = name
+            x.db.attr_description = "test description"
+            x.save()
+            x.commit()
+        else:
+            x = HydraIface.Attr(attr_id=rs[0].attr_id)
+            x.load()
+
+        return x
     def create_scenario_data(self, data_id):
         x = HydraIface.ScenarioData()
         x.db.data_id = data_id

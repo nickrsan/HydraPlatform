@@ -1,6 +1,7 @@
 import logging
 from HydraLib.HydraException import HydraError
 from spyne.model.primitive import Integer, Boolean, AnyDict
+from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Scenario,\
         Descriptor,\
@@ -9,6 +10,7 @@ from hydra_complexmodels import Scenario,\
         Scalar,\
         Array as HydraArray,\
         ResourceScenario,\
+        Dataset,\
         parse_value
 
 from db import HydraIface
@@ -99,9 +101,9 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
 
     res = r_a.get_resource()
     
-    data_type = resource_scenario.type.lower()
-   
-    value = parse_value(data_type, resource_scenario)
+    data_type = resource_scenario.value.type.lower()
+  
+    value = parse_value(resource_scenario.value)
 
     res.assign_value(scenario_id, ra_id, data_type, value,
                     "", "", "", new=new)
@@ -114,8 +116,173 @@ class DataService(ServiceBase):
         The data SOAP service
     """
 
-    __tns__ = 'hydra.soap'
-    __in_header__ = RequestHeader
+    @rpc(SpyneArray(Dataset), _returns=SpyneArray(Dataset))
+    def bulk_insert_data(ctx, bulk_data):
+        """
+            Insert sereral pieces of data at once.
+        """
+
+        sql = """
+            select
+                max(dataset_id) as max_dataset_id
+            from
+                tScenarioData
+        """
+
+        rs = HydraIface.execute(sql)
+        dataset_id = rs[0].max_dataset_id
+        if dataset_id is None:
+            dataset_id = 0
+
+        descriptors  = []
+        timeseries   = []
+        timeseriesdata = []
+        eqtimeseries = []
+        scalars      = []
+        arrays       = []
+
+        descriptor_idx   = []
+        timeseries_idx   = []
+        eqtimeseries_idx = []
+        scalar_idx       = []
+        array_idx        = []
+
+        for i, d in enumerate(bulk_data):
+            val = parse_value(d)
+            if d.type == 'descriptor':
+                data = HydraIface.Descriptor()
+                data.db.desc_val = val
+
+                descriptors.append(data)
+                descriptor_idx.append(i)
+            
+            elif d.type == 'scalar':
+                data = HydraIface.Scalar()
+                data.db.param_value = val
+                
+                scalars.append(data)
+                scalar_idx.append(i)
+            
+            elif d.type == 'array':
+                data = HydraIface.Array()
+                data.db.arr_data = val
+                
+                arrays.append(data)
+                array_idx.append(i)
+
+            elif d.type == 'timeseries':
+                data = HydraIface.TimeSeries()
+                data.set_ts_values(val)
+                timeseries.append(data)
+                timeseries_idx.append(i)
+            
+            elif d.type == 'eqtimeseries':
+                data = HydraIface.EqTimeSeries()
+                data.db.start_time = val[0]
+                data.db.frequency  = val[1]
+                data.db.arr_data   = val[2]
+                
+                eqtimeseries.append(data)
+                eqtimeseries_idx.append(i)
+       
+        last_descriptor_id = HydraIface.bulk_insert(descriptors, 'tDescriptor')
+        #work backwards, assigning the IDS to the correct data objects.
+        #We will need this later to ensure the correct dataset_id / data_id mappings
+        if last_descriptor_id:
+            next_id = last_descriptor_id - len(descriptors) + 1
+            idx = 0
+            while idx < len(descriptors):
+                descriptors[idx].db.data_id = next_id
+                next_id          = next_id + 1
+                idx              = idx     + 1
+
+        last_scalar_id     = HydraIface.bulk_insert(scalars, 'tScalar')
+        
+        if last_scalar_id:
+            next_id = last_scalar_id - len(scalars) + 1
+            idx = 0
+            while idx < len(scalars):
+                scalars[idx].db.data_id = next_id
+                next_id                 = next_id + 1
+                idx                     = idx     + 1
+
+        last_array_id      = HydraIface.bulk_insert(arrays, 'tArray')
+
+        if last_array_id:
+            next_id = last_array_id - len(arrays) + 1
+            idx = 0
+            while idx < len(arrays):
+                arrays[idx].db.data_id = next_id
+                next_id                = next_id + 1
+                idx                    = idx     + 1
+
+        last_ts_id         = HydraIface.bulk_insert(timeseries, 'tTimeSeries')
+
+        if last_ts_id:
+            next_id = last_ts_id - len(timeseries) + 1 
+            idx = 0 
+            while idx < len(timeseries):
+                timeseries[idx].db.data_id      = next_id
+            
+                for d in timeseries[idx].timeseriesdatas:
+                    d.db.data_id = next_id
+
+                next_id       = next_id + 1
+                idx              = idx  + 1
+
+            #Now that the data_ids have been generated, we need to add the actual
+            #timeseries data, which is stored in a separate table.
+            timeseriesdata = []
+            for idx, ts in enumerate(timeseries):
+                timeseriesdata.extend(ts.timeseriesdatas)
+        
+            HydraIface.bulk_insert(timeseriesdata, 'tTimeSeriesData')
+
+        last_eq_id         = HydraIface.bulk_insert(eqtimeseries, 'tEqTimeSeries')
+
+        if last_eq_id:
+            next_id = last_eq_id - len(eqtimeseries) + 1
+            idx = 0
+            while idx < len(eqtimeseries):
+                eqtimeseries[idx].db.data_id = next_id
+                next_id        = next_id + 1
+                idx            = idx  + 1
+
+        #Now that we have data, put it back in the right order, so that
+        #the scenariodata entries can be made.
+        reordered_data = [None for x in bulk_data]
+
+        for i, idx in enumerate(descriptor_idx):
+            reordered_data[idx] = ('descriptor', descriptors[i].db.data_id) 
+        for i, idx in enumerate(scalar_idx):
+            reordered_data[idx] = ('scalar', scalars[i].db.data_id) 
+        for i, idx in enumerate(array_idx):
+            reordered_data[idx] = ('array', arrays[i].db.data_id)
+        for i, idx in enumerate(timeseries_idx):
+            reordered_data[idx] = ('timeseries', timeseries[i].db.data_id)
+        for i, idx in enumerate(eqtimeseries_idx):
+            reordered_data[idx] = ('eqtimeseries', eqtimeseries[i].db.data_id)
+
+        #We now build up a list of scenario data we want to insert
+        scenario_data = []
+        for data_type, data_id in reordered_data:
+            scenario_datum = HydraIface.ScenarioData()
+            scenario_datum.db.data_id = data_id 
+            scenario_datum.db.data_type = data_type 
+            scenario_data.append(scenario_datum)
+
+        last_dataset_id = HydraIface.bulk_insert(scenario_data, 'tScenarioData')
+
+        dataset_ids = []
+        next_id = last_dataset_id - len(reordered_data) + 1 
+        idx = 0 
+ 
+        while idx < len(reordered_data):
+            dataset_ids.append(next_id)
+            next_id        = next_id + 1
+            idx            = idx     + 1
+
+        return dataset_ids
 
     @rpc(AnyDict, _returns=AnyDict)
     def update_dataset(ctx, data):
@@ -134,8 +301,6 @@ class DataService(ServiceBase):
             Removes a piece of data from the DB. 
             CAUTION! Use with care, as this cannot be undone easily.
         """
-
-
 
     @rpc(Descriptor, _returns=Descriptor)
     def echo_descriptor(ctx, x):

@@ -131,9 +131,7 @@ class ImportCSV(object):
     Scenario = None
     Nodes = dict()
     Links = dict()
-    NetworkAttributes = dict()
-    NodeAttributes = dict()
-    LinkAttributes = dict()
+    Attributes = dict()
     update_network_flag = False
     timezone = pytz.utc
     expand_filenames = False
@@ -386,7 +384,7 @@ class ImportCSV(object):
         attribute = self.cli.factory.create('hyd:Attr')
         attribute.name = name
         attribute.dimen = dimension
-        attribute = self.cli.service.add_attribute(attribute)
+        #attribute = self.cli.service.add_attribute(attribute)
 
         return attribute
 
@@ -401,33 +399,23 @@ class ImportCSV(object):
         # Create resource attributes and data coollection
         #res_attr_array = \
         #    self.cli.factory.create('hyd:ResourceAttrArray')
-
+    
+        attributes = self.cli.factory.create('hyd:AttrArray')
+      
         for i in attrs.keys():
-            # Create the attributes if they do not exist already
-            if res_type == '(Network)':
-                if attrs[i] in self.NetworkAttributes.keys():
-                    attribute = self.NetworkAttributes[attrs[i]]
-                else:
-                    attribute = self.create_attribute(attrs[i])
-                    self.NetworkAttributes.update({attrs[i]: attribute})
-
-            elif res_type == '(Node)':
-                if attrs[i] in self.NodeAttributes.keys():
-                    attribute = self.NodeAttributes[attrs[i]]
-                else:
-                    attribute = self.create_attribute(attrs[i])
-                    self.NodeAttributes.update({attrs[i]: attribute})
-
-            elif res_type == '(Link)':
-                if attrs[i] in self.LinkAttributes.keys():
-                    attribute = self.LinkAttributes[attrs[i]]
-                else:
-                    attribute = self.create_attribute(attrs[i])
-                    self.LinkAttributes.update({attrs[i]: attribute})
-
+            if attrs[i] in self.Attributes.keys():
+                attribute = self.create_attribute(attrs[i])
             else:
-                logging.critical('Unknown resource type.')
+                attribute = self.create_attribute(attrs[i])
+                self.Attributes.update({attrs[i]: attribute})
+                attributes.Attr.append(attribute)
+        
+        if len(attributes.Attr) > 0:
+            new_attrs = self.cli.service.add_attributes(attributes)
+            for attr in new_attrs.Attr:
+                self.Attributes.update({attr.name: attr})
 
+        for i, attribute in enumerate(self.Attributes.values()):
             res_attr = self.cli.factory.create('hyd:ResourceAttr')
             res_attr.id = self.attr_id.next()
             res_attr.attr_id = attribute.id
@@ -436,7 +424,7 @@ class ImportCSV(object):
 
             # create dataset and assign to attribute
             if len(data[i]) > 0:
-                dataset = self.create_dataset(data[i], res_attr)
+                dataset = self.create_dataset(data[i], res_attr, units[i])
                 self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
 
         #resource.attributes = res_attr_array
@@ -446,11 +434,12 @@ class ImportCSV(object):
     def read_constraints(self):
         pass
 
-    def create_dataset(self, value, resource_attr):
-        dataset = self.cli.factory.create('hyd:ResourceScenario')
-
-        dataset.attr_id = resource_attr.attr_id
-        dataset.resource_attr_id = resource_attr.id
+    def create_dataset(self, value, resource_attr, unit):
+        resourcescenario = self.cli.factory.create('hyd:ResourceScenario')
+        dataset          = self.cli.factory.create('hyd:Dataset')
+        
+        resourcescenario.attr_id = resource_attr.attr_id
+        resourcescenario.resource_attr_id = resource_attr.id
 
         value = value.strip()
 
@@ -481,7 +470,9 @@ class ImportCSV(object):
                 desc = self.create_descriptor(value)
                 dataset.value = desc
 
-        return dataset
+        resourcescenario.value = dataset
+
+        return resourcescenario 
 
     def create_scalar(self, value):
         scalar = self.cli.factory.create('hyd:Scalar')

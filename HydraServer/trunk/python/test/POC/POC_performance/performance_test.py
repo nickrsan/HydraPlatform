@@ -52,6 +52,7 @@ if __name__ == '__main__':
 
                 startime = time.time()
                 testcase.create_links()
+                
                 endtime = time.time()
                 exectime = endtime - startime
                 print "create_links took %s seconds." % exectime
@@ -65,7 +66,9 @@ if __name__ == '__main__':
 
                 # Commit the network and measure time
                 startime = time.time()
-                testcase.cli.service.add_network(testcase.Network)
+
+                net = testcase.cli.service.add_network(testcase.Network)
+
                 endtime = time.time()
                 exectime = endtime - startime
 
