@@ -109,8 +109,6 @@ TODO
 - Implement updating of existing scenario.
 
 - Implement rules and constraints
-
-- Implement file name expansion and import of time series and arrays
 """
 
 import argparse as ap
