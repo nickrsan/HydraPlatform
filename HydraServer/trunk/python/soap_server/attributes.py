@@ -7,7 +7,7 @@ from hydra_complexmodels import ResourceTemplateGroup,\
         ResourceTemplate, \
         Resource
 
-from hydra_base import RequestHeader 
+from hydra_base import HydraService
 from spyne.service import ServiceBase
 from HydraLib.HydraException import HydraError
 
@@ -27,13 +27,10 @@ def get_resource(ref_key, ref_id):
     else:
         return None
 
-class AttributeService(ServiceBase):
+class AttributeService(HydraService):
     """
         The attribute SOAP service
     """
-
-    __tns__ = 'hydra.soap'
-    __in_header__ = RequestHeader
 
     @rpc(Attr, _returns=Attr)
     def add_attribute(ctx, attr):

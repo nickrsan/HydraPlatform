@@ -48,6 +48,15 @@ class TestSoap(unittest.TestCase):
         node.description = desc
         node.x = x
         node.y = y
+        node_layout = """
+            <ns0:resource_layout>
+                <ns0:layout>
+                    <ns0:name>color</ns0:name>
+                    <ns0:value>#FFFFFF</ns0:value>
+                </ns0:layout>
+            </ns0:resource_layout>
+        """
+        node.layout = node_layout
 
         return node
 
@@ -57,6 +66,15 @@ class TestSoap(unittest.TestCase):
         link.description = 'Link from %s to %s'%(node_1_id, node_2_id)
         link.node_1_id = node_1_id
         link.node_2_id = node_2_id
+        link_layout = """
+            <ns0:resource_layout>
+                <ns0:layout>
+                    <ns0:name>color</ns0:name>
+                    <ns0:value>#FFFFFF</ns0:value>
+                </ns0:layout>
+            </ns0:resource_layout>
+        """
+        link.layout = link_layout
 
         return link
 
@@ -114,6 +132,7 @@ class TestSoap(unittest.TestCase):
         start = datetime.datetime.now()
         print "Time until project creation: %s"%(datetime.datetime.now()-start)
         project_start = datetime.datetime.now()
+
         (project) = {
             'name' : 'New Project',
             'description' : 'New Project Description',
@@ -144,13 +163,23 @@ class TestSoap(unittest.TestCase):
         net_attr1.attr_id = attr1.id
         network_attrs.ResourceAttr.append(net_attr1)
 
+        network_layout = """
+            <ns0:resource_layout>
+                <ns0:layout>
+                    <ns0:name>color</ns0:name>
+                    <ns0:value>#FFFFFF</ns0:value>
+                </ns0:layout>
+            </ns0:resource_layout>
+        """
+
         (Network) = {
             'name'        : 'Network1',
             'description' : 'Test Network with 2 nodes and 1 link',
             'project_id'  : p['id'],
             'links'       : LinkArray,
             'nodes'       : NodeArray,
-            'attributes'  : network_attrs
+            'attributes'  : network_attrs,
+            'layout'      : network_layout
  
         }
         print "Time until network creation: %s"%(datetime.datetime.now()-start)

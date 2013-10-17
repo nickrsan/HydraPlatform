@@ -6,8 +6,7 @@ from spyne.decorator import rpc
 from hydra_complexmodels import Network, Node, Link, Scenario
 from db import HydraIface
 from HydraLib import hdb
-from hydra_base import RequestHeader
-from spyne.service import ServiceBase
+from hydra_base import HydraService, ObjectNotFoundError
 import scenario
 import datetime
 
@@ -50,14 +49,10 @@ def _update_attributes(resource_i, attributes):
 
     return resource_attr_id_map 
 
-class NetworkService(ServiceBase):
+class NetworkService(HydraService):
     """
         The network SOAP service.
     """
-
-    __tns__ = 'hydra.soap'
-    __in_header__ = RequestHeader
-
 
     @rpc(Network, _returns=Network)
     def add_network(ctx, network):
@@ -83,9 +78,12 @@ class NetworkService(ServiceBase):
         insert_start = datetime.datetime.now()
 
         x = HydraIface.Network()
+        
         x.db.project_id          = network.project_id
         x.db.network_name        = network.name
         x.db.network_description = network.description
+        x.db.network_layout      = network.layout
+
         x.save()
         network.network_id = x.db.network_id
         
@@ -104,7 +102,7 @@ class NetworkService(ServiceBase):
          #First add all the nodes
         logging.info("Adding nodes to network")
         for node in network.nodes:
-            n = x.add_node(node.name, node.description, node.x, node.y)
+            n = x.add_node(node.name, node.description, node.layout, node.x, node.y)
             
         HydraIface.bulk_insert(x.nodes, 'tNode')
         x.load_all()
@@ -135,7 +133,7 @@ class NetworkService(ServiceBase):
             if node_1_id is None or node_2_id is None:
                 raise HydraError("Node IDS (%s, %s)are incorrect!"%(node_1_id, node_2_id))
 
-            l = x.add_link(link.name, link.description, node_1_id, node_2_id)
+            l = x.add_link(link.name, link.description, link.layout, node_1_id, node_2_id)
 
         HydraIface.bulk_insert(x.links, 'tLink')
         x.load_all()
@@ -227,6 +225,7 @@ class NetworkService(ServiceBase):
         x.db.project_id          = network.project_id
         x.db.network_name        = network.name
         x.db.network_description = network.description
+        x.db.network_layout      = network.layout
 
         resource_attr_id_map = _update_attributes(x, network.attributes)
 
@@ -248,7 +247,7 @@ class NetworkService(ServiceBase):
                 n.db.status           = node.status
             else:
                 is_new = True
-                n = x.add_node(node.name, node.description, node.x, node.y)
+                n = x.add_node(node.name, node.description, node.layout, node.x, node.y)
             n.save()
 
             node_attr_id_map = _update_attributes(n, node.attributes)
@@ -270,7 +269,7 @@ class NetworkService(ServiceBase):
                 node_2_id = node_id_map[link.node_2_id]
 
             if link.id is None or link.id < 0:
-                l = x.add_link(link.name, link.description, node_1_id, node_2_id)
+                l = x.add_link(link.name, link.description, link.layout, node_1_id, node_2_id)
             else:
                 l = x.get_link(link.id)
                 l.load()

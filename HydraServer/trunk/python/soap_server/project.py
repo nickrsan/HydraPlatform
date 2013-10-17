@@ -6,17 +6,11 @@ from hydra_complexmodels import Project, ProjectSummary, Network
 from hydra_base import HydraService, ObjectNotFoundError, get_user_id
 from HydraLib.HydraException import HydraError
 from hydra_base import RequestHeader 
-from spyne.service import ServiceBase
 
-class ProjectService(ServiceBase):
+class ProjectService(HydraService):
     """
         The project SOAP service
     """
-
-
-    __tns__ = 'hydra.soap'
-    __in_header__ = RequestHeader
-    
 
     @rpc(Project, _returns=Project)
     def add_project(ctx, project):

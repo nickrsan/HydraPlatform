@@ -1,5 +1,5 @@
 from spyne.model.primitive import Mandatory, String 
-from spyne.error import Fault, ResourceNotFoundError
+from spyne.error import Fault
 from spyne.model.complex import ComplexModel
 from spyne.decorator import srpc, rpc
 from db import HydraIface
@@ -18,16 +18,16 @@ def get_user_id(username):
     return _user_map.get(username)
 
 class RequestHeader(ComplexModel):
-    __namespace__ = 'hydra.authentication'
+    __namespace__ = 'hydra.base'
     session_id    = Mandatory.String
     username      = Mandatory.String
 
 class HydraService(ServiceBase):
-    __tns__ = 'hydra.soap'
+    __tns__ = 'hydra.base'
     __in_header__ = RequestHeader
 
 class AuthenticationError(Fault):
-    __namespace__ = 'hydra.authentication'
+    __namespace__ = 'hydra.base'
 
     def __init__(self, user_name):
         Fault.__init__(self,
@@ -97,7 +97,7 @@ class LogoutService(HydraService):
         return "OK"
 
 class AuthenticationService(ServiceBase):
-    __tns__      = 'hydra.authentication'
+    __tns__      = 'hydra.base'
 
     @srpc(Mandatory.String, String, _returns=String,
                                                     _throws=AuthenticationError)

@@ -7,7 +7,6 @@ from hydra_complexmodels import Constraint,\
 
 from hydra_base import HydraService
 from hydra_base import RequestHeader 
-from spyne.service import ServiceBase
 from HydraLib.HydraException import HydraError
 import logging
 
@@ -37,7 +36,7 @@ def create_constraint_struct(constraint_id, group):
 
     return group_i
 
-class ConstraintService(ServiceBase):
+class ConstraintService(HydraService):
     """
         The user soap service
     """

@@ -192,8 +192,8 @@ class Node(Resource):
     _type_info = [
         ('id',          Integer),
         ('name',        String),
-        ('description', String),
-        ('layout',      String),
+        ('description', String(default="")),
+        ('layout',      String(default="")),
         ('x',           Decimal),
         ('y',           Decimal),
         ('status',      String),
@@ -210,8 +210,8 @@ class Link(Resource):
     _type_info = [
         ('id',          Integer),
         ('name',        String),
-        ('description', String),
-        ('layout',      String),
+        ('description', String(Default="")),
+        ('layout',      String(Default="")),
         ('node_1_id',   Integer),
         ('node_2_id',   Integer),
         ('status',      String),

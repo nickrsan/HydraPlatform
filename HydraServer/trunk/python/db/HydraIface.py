@@ -764,33 +764,35 @@ class Network(GenericResource):
         if network_id is not None:
             self.load()
 
-    def add_link(self, name, desc, node_1_id, node_2_id):
+    def add_link(self, name, desc, layout, node_1_id, node_2_id):
         """
             Add a link to a network. Links are what effectively
             define the network topology, by associating two already
             existing nodes.
         """
         l = Link()
-        l.db.link_name = name
+        l.db.link_name        = name
         l.db.link_description = desc
-        l.db.node_1_id = node_1_id
-        l.db.node_2_id = node_2_id
-        l.db.network_id = self.db.network_id
+        l.db.link_layout      = layout
+        l.db.node_1_id        = node_1_id
+        l.db.node_2_id        = node_2_id
+        l.db.network_id       = self.db.network_id
         #l.save()
         self.links.append(l)
         return l
 
 
-    def add_node(self, name, desc, node_x, node_y):
+    def add_node(self, name, desc, layout, node_x, node_y):
         """
             Add a node to a network.
         """
         n = Node()
-        n.db.node_name = name
+        n.db.node_name        = name
         n.db.node_description = desc
-        n.db.node_x = node_x
-        n.db.node_y = node_y
-        n.db.network_id = self.db.network_id
+        n.db.node_layout      = layout
+        n.db.node_x           = node_x
+        n.db.node_y           = node_y
+        n.db.network_id       = self.db.network_id
         #n.save()
         self.nodes.append(n)
         return n

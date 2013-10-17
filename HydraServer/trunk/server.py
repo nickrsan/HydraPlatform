@@ -140,7 +140,7 @@ class HydraServer():
             ImageService,
         ]
 
-        application = HydraSoapApplication(applications, 'hydra.authentication',
+        application = HydraSoapApplication(applications, 'hydra.base',
                     in_protocol=Soap11(validator='lxml'),
                     out_protocol=Soap11()
                 )

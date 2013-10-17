@@ -7,19 +7,19 @@ import base64
 class ImageTest(test_SoapServer.SoapServerTest):
 
     def test_upload(self):
-        imageFile = open('/home/stephen/Pictures/test.png','rb')
+        imageFile = open('hydra.jpg','rb')
         imageData = imageFile.read()
         encodedData = base64.b64encode(imageData)
 
-        add_result = self.client.service.add_image("test1.png", encodedData)
+        add_result = self.client.service.add_image("hydra.jpg", encodedData)
 
         assert add_result is True, "Image was not added correctly!"
         
-        img = self.client.service.get_image("test1.png")
+        img = self.client.service.get_image("hydra.jpg")
         
         assert img is not None, "Image was not saved or retrieved correctly!"
 
-        result = self.client.service.remove_image("test1.png")
+        result = self.client.service.remove_image("hydra.jpg")
         
         assert result is True, "Image was not deletd correctly!"
 

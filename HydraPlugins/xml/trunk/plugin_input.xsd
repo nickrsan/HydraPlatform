@@ -18,7 +18,7 @@
                         </xs:sequence>
                     </xs:complexType>
                 </xs:element>
-               <xs:element name="mandatory_args">
+               <xs:element name="non_mandatory_args">
                     <xs:complexType>
                         <xs:sequence>
                             <xs:element name="arg" minOccurs="0" maxOccurs="unbounded">
