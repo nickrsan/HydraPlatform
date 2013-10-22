@@ -16,7 +16,8 @@ class UsersTest(test_SoapServer.SoapServerTest):
         new_user = self.client.service.add_user(user)
 
         assert new_user.username == user.username, "Usernames are not the same!"
-        assert bcrypt.hashpw(user.password, new_user.password) == new_user.password
+
+        assert bcrypt.hashpw(user.password, new_user.password.encode('utf-8')) == new_user.password
 
         delete_result = self.client.service.delete_user(new_user)
 

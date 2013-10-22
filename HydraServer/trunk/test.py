@@ -11,19 +11,7 @@ import shutil
 from tempfile import gettempdir as tmp
 shutil.rmtree(os.path.join(tmp(), 'suds'), True)
 from suds.client import Client
-from suds.plugin import MessagePlugin
 from HydraLib import util
-
-class FixNamespace(MessagePlugin):
-    def marshalled(self, context):
-        self.fix_ns(context.envelope)
-
-    def fix_ns(self, element):
-        if element.prefix == 'xs':
-            element.prefix = 'ns1'
-
-        for e in element.getChildren():
-            self.fix_ns(e)
 
 class TestSoap(unittest.TestCase):
     def setUp(self):
@@ -32,7 +20,7 @@ class TestSoap(unittest.TestCase):
         url = config.get('hydra_client', 'url')
         print "Connecting to %s"%url
 
-        self.c = Client(url, plugins=[FixNamespace()])
+        self.c = Client(url)
         session_id = self.c.service.login('root', '')
 
         token = self.c.factory.create('RequestHeader')
@@ -42,6 +30,9 @@ class TestSoap(unittest.TestCase):
         self.c.set_options(soapheaders=token)
 
     def create_node(self,node_id,name,desc="Node Description", x=0, y=0, attributes=None):
+        """
+            Create a node using the suds library
+        """
         node = self.c.factory.create('ns1:Node')
         node.id = node_id
         node.name = name
@@ -61,6 +52,9 @@ class TestSoap(unittest.TestCase):
         return node
 
     def create_link(self,name,node_1_id, node_2_id):
+        """
+            Create a link using the suds library
+        """
         link = self.c.factory.create('ns1:Link')
         link.name = name
         link.description = 'Link from %s to %s'%(node_1_id, node_2_id)
@@ -78,15 +72,12 @@ class TestSoap(unittest.TestCase):
 
         return link
 
-    def create_link_without_ids(self,name,node_1_name, node_1_x, node_1_y, node_2_name, node_2_x, node_2_y):
-        link = self.c.factory.create('ns1:Link')
-        link.name = name
-        link.description = 'Link from node %s at %s, %s to node %s at %s, %s'%(node_1_name, node_1_x, node_2_x, node_2_name, node_2_x, node_2_y)
-        link.node_1_id = "%s,%s,%s"%(node_1_name, node_1_x, node_1_y)
-        link.node_2_id = "%s,%s,%s"%(node_2_name, node_2_x, node_2_y)
-        return link
-
     def create_attr(self, name):
+        """
+            Create an attribute. No two attributes can have the same name,
+            so first check if the attribute exists. If it does, just return it. 
+            If not, create and save a new one.
+        """
         attr = self.c.service.get_attribute(name)
         if attr is None:
             attr       = self.c.factory.create('ns1:Attr')
@@ -96,6 +87,9 @@ class TestSoap(unittest.TestCase):
         return attr
 
     def create_network(self, project_id, name, desc=None, nodes=None, links=None, scenarios=None):
+        """
+            Create an entire suds network including nodes, links & scenarios
+        """
         (network) = {
             'name'        : name,
             'description' : desc,
@@ -110,6 +104,9 @@ class TestSoap(unittest.TestCase):
         return network
 
     def test_add_project(self):
+        """
+            Test adding a new project.
+        """
         (project) = {
             'name' : 'New Project',
             'description' : 'New Project Description',
@@ -129,6 +126,10 @@ class TestSoap(unittest.TestCase):
         print p2
 
     def test_network(self):
+        """
+            Test adding a new network. 
+        """
+
         start = datetime.datetime.now()
         print "Time until project creation: %s"%(datetime.datetime.now()-start)
         project_start = datetime.datetime.now()
@@ -189,6 +190,12 @@ class TestSoap(unittest.TestCase):
         assert Network is not None, "Network did not create correctly"
 
     def test_scenario(self):
+        """
+            Test adding data to a network through a scenario.
+            This test adds attributes to one node and then assignes data to them.
+            It assigns a descriptor, array and timeseries to the 
+            attributes node. 
+        """
         start = datetime.datetime.now()
         (project) = {
             'name'        : 'New Project',
@@ -263,12 +270,11 @@ class TestSoap(unittest.TestCase):
         #A time series, where the value may be a 1-D array
         #A multi-dimensional array.
         descriptor = self.create_descriptor(node_attrs.ResourceAttr[0])
-        descriptor2 = self.create_descriptor(node_attrs.ResourceAttr[1])
-        #timeseries = self.create_timeseries(node_attrs.ResourceAttr[1])
+        timeseries = self.create_timeseries(node_attrs.ResourceAttr[1])
         array      = self.create_array(node_attrs.ResourceAttr[2])
 
         scenario_data.ResourceScenario.append(descriptor)
-        scenario_data.ResourceScenario.append(descriptor2)
+        scenario_data.ResourceScenario.append(timeseries)
         scenario_data.ResourceScenario.append(array)
 
 
@@ -342,24 +348,10 @@ class TestSoap(unittest.TestCase):
         ts3.ts_values.TimeSeriesData.append(ts1)
         ts3.ts_values.TimeSeriesData.append(ts2)
 
-        #scenario_attr.value = ts3
-        dataset.value = {
-            'value'            : [
-                {
-                   'ts_time'   :  datetime.datetime.now(),
-                   'ts_value' : str([1, 2, 3, 4, 5]),
-                },
-                {
-                    'ts_time'  : datetime.datetime.now() + datetime.timedelta(hours=1),
-                    'ts_value' : str([2, 3, 4, 5, 6]),
-                }
-            ]
-        }
-
+        dataset.value = ts3
         scenario_attr.value = dataset
 
         return scenario_attr
-        #return ts3
 
     def create_array(self, ResourceAttr):
         #A scenario attribute is a piece of data associated
@@ -375,29 +367,10 @@ class TestSoap(unittest.TestCase):
         dataset.unit = 'joules'
         dataset.dimension = 'pressure'
 
-        arr1 = self.c.factory.create('ns1:Array')
-        arr1.arr_data = [1, 2, 3]
-        arr2 = self.c.factory.create('ns1:Array')
-        arr2.arr_data = [4, 5, 6]
-
         arr = self.c.factory.create('ns1:Array')
-        arr.arr_data = [arr1, arr2]
-
-        arr3 = self.c.factory.create('ns1:Array')
-        arr3.arr_data = [10, 20, 30]
-        arr4 = self.c.factory.create('ns1:Array')
-        arr4.arr_data = [40, 50, 60]
-
-        arr5 = self.c.factory.create('ns1:Array')
-        arr5.arr_data = [arr3, arr4]
-
-        arr6 = self.c.factory.create('ns1:Array')
-        arr6.arr_data = [arr, arr5]
-
-        #scenario_attr.value = arr6
-        dataset.value = {
-           'arr_data' : str([[[1, 2, 3], [4, 5, 6]], [[10, 20, 30],[40, 50, 60]]])
-        }
+        arr.arr_data = str([[[1, 2, 3], [5, 4, 6]],[[10, 20, 30], [40, 50, 60]]])
+        
+        dataset.value = arr
 
         scenario_attr.value = dataset
 

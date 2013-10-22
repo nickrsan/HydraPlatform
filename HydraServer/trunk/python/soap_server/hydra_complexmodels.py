@@ -3,24 +3,6 @@ from spyne.model.primitive import String, Integer, Decimal, DateTime, Boolean, A
 import datetime
 from spyne.util.odict import odict
 
-#This is on hold until we come up with a solution
-#for dynamically generating the classes below.
-#global typemap
-#typemap = {
-#    'varchar'    : String,
-#    'int'       : Integer,
-#    'double'    : Decimal,
-#    'blob'      : SpyneArray,
-#    'timestamp' : DateTime,
-#}
-#
-#def get_spyne_type(db_type_dict):
-#    type_info = []
-#    for col_name, col_type in db_type_dict.items():
-#        base_type = col_type.split('(')[0]
-#        spyne_type = typemap[base_type]
-#        type_info.append((col_name, spyne_type))
-#    return type_info
 
 global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
@@ -145,7 +127,7 @@ class Scalar(HydraComplexModel):
 
 class Array(HydraComplexModel):
     _type_info = [
-        ('arr_data', SpyneArray(AnyDict)),
+        ('arr_data', AnyDict),
     ]
 
 class Attr(HydraComplexModel):
@@ -342,9 +324,9 @@ class PluginParam(HydraComplexModel):
 
 class Plugin(HydraComplexModel):
     _type_info = [
-        ('plugin_name',        String),
-        ('plugin_description', String),
-        ('params',           SpyneArray(PluginParam, default=[])),
+        ('name',        String),
+        ('location',    String),
+        ('params',      SpyneArray(PluginParam, default=[])),
     ]
 
 
