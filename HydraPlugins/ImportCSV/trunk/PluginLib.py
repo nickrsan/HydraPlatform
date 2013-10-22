@@ -19,6 +19,7 @@ def connect():
     token.session_id = session_id
     token.username = user
     cli.set_options(soapheaders=token)
+    #cli.add_prefix('hyd', 'hydra.base')
     cli.add_prefix('hyd', 'soap_server.hydra_complexmodels')
 
     return cli

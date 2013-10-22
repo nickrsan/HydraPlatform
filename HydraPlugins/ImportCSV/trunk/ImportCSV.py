@@ -15,7 +15,7 @@ Basic usage::
 
        ImportCSV.py [-h] [-p PROJECT] [-s SCENARIO] [-t NETWORK]
                     -n NODES [NODES ...] -l LINKS [LINKS ...]
-                    [-r RULES [RULES ...]] [-x]
+                    [-r RULES [RULES ...]] [-z TIMEZONE] [-x]
 
 Options
 ~~~~~~~
@@ -122,7 +122,8 @@ from suds import WebFault
 
 
 class ImportCSV(object):
-    """"""
+    """
+    """
 
     Project = None
     Network = None
@@ -178,8 +179,9 @@ class ImportCSV(object):
             with open(file, mode='r') as csv_file:
                 self.net_data = csv_file.read()
             keys = self.net_data.split('\n', 1)[0].split(',')
+            units = self.net_data.split('\n')[1].split(',')
             # A network file should only have one line of data
-            data = self.net_data.split('\n')[1].split(',')
+            data = self.net_data.split('\n')[2].split(',')
 
             # We assume a standard order of the network information (Name,
             # Description, attributes,...).
@@ -216,12 +218,16 @@ class ImportCSV(object):
                     # load existing links
                     for link in self.Network.links.Link:
                         self.Links.update({link.name: link})
-                    # Nodes and links are now deleted from the noetwork, they
+                    # Nodes and links are now deleted from the network, they
                     # will be added later...
                     self.Network.nodes = \
                         self.cli.factory.create('hyd:NodeArray')
                     self.Network.links = \
                         self.cli.factory.create('hyd:LinkArray')
+                    # The scenario loaded with the network will be deleted as
+                    # well, we create a new one.
+                    self.Network.scenarios = \
+                        self.cli.factory.create('hyd:ScenarioArray')
                 except WebFault:
                     logging.info('Network ID not found. Creating new network.')
                     ID = None
@@ -230,12 +236,12 @@ class ImportCSV(object):
                 # Create a new network
                 self.Network = self.cli.factory.create('hyd:Network')
                 self.Network.project_id = self.Project.id
-                self.Network.nodes = \
-                    self.cli.factory.create('hyd:NodeArray')
-                self.Network.links = \
-                    self.cli.factory.create('hyd:LinkArray')
-                self.Network.scenarios = \
-                    self.cli.factory.create('hyd:ScenarioArray')
+                #self.Network.nodes = \
+                #    self.cli.factory.create('hyd:NodeArray')
+                #self.Network.links = \
+                #    self.cli.factory.create('hyd:LinkArray')
+                #self.Network.scenarios = \
+                #    self.cli.factory.create('hyd:ScenarioArray')
                 self.Network.name = data[name_idx].strip()
                 self.Network.description = data[desc_idx].strip()
 
@@ -252,10 +258,10 @@ class ImportCSV(object):
             # Create a new network
             self.Network = self.cli.factory.create('hyd:Network')
             self.Network.project_id = self.Project.id
-            self.Network.nodes = self.cli.factory.create('hyd:NodeArray')
-            self.Network.links = self.cli.factory.create('hyd:LinkArray')
-            self.Network.scenarios = \
-                self.cli.factory.create('hyd:ScenarioArray')
+            #self.Network.nodes = self.cli.factory.create('hyd:NodeArray')
+            #self.Network.links = self.cli.factory.create('hyd:LinkArray')
+            #self.Network.scenarios = \
+            #    self.cli.factory.create('hyd:ScenarioArray')
             self.Network.name = "CSV import"
             self.Network.description = \
                 "Network created by the %s plug-in, %s." % \
@@ -391,38 +397,45 @@ class ImportCSV(object):
         creating the attributes, resource attributes and a scenario which holds
         the data.'''
 
-        # Guess resource type
-        res_type = str(resource).split('{', 1)[0]
-
-        # Create resource attributes and data coollection
-        #res_attr_array = \
-        #    self.cli.factory.create('hyd:ResourceAttrArray')
-    
         attributes = self.cli.factory.create('hyd:AttrArray')
-      
+
+        # Collect existing resource attributes:
+        resource_attrs = dict()
+        for res_attr in resource.attributes.ResourceAttr:
+            resource_attrs.update({res_attr.attr_id: res_attr})
+
         for i in attrs.keys():
             if attrs[i] in self.Attributes.keys():
-                attribute = self.create_attribute(attrs[i])
+                attribute = self.Attributes[attrs[i]]
+                #attribute = self.create_attribute(attrs[i])
             else:
                 attribute = self.create_attribute(attrs[i])
                 self.Attributes.update({attrs[i]: attribute})
-                attributes.Attr.append(attribute)
-        
-        if len(attributes.Attr) > 0:
-            new_attrs = self.cli.service.add_attributes(attributes)
-            for attr in new_attrs.Attr:
-                self.Attributes.update({attr.name: attr})
+            attributes.Attr.append(attribute)
 
-        for i, attribute in enumerate(self.Attributes.values()):
-            res_attr = self.cli.factory.create('hyd:ResourceAttr')
-            res_attr.id = self.attr_id.next()
-            res_attr.attr_id = attribute.id
-            #self.Scenario.attributes.ResourceAttr.append(res_attr)
-            resource.attributes.ResourceAttr.append(res_attr)
+        # Add all attributes. If they exixt already, we retrieve the real id.
+        attributes = self.cli.service.add_attributes(attributes)
+        for attr in attributes.Attr:
+            self.Attributes.update({attr.name: attr})
 
-            # create dataset and assign to attribute
+        # Add data to each attribute
+        for i in attrs.keys():
+            attr = self.Attributes[attrs[i]]
+            # Attribute might already exist for resource, use it if it does
+            if attr.id in resource_attrs.keys():
+                res_attr = resource_attrs[attr.id]
+            else:
+                res_attr = self.cli.factory.create('hyd:ResourceAttr')
+                res_attr.id = self.attr_id.next()
+                res_attr.attr_id = attr.id
+                resource.attributes.ResourceAttr.append(res_attr)
+
+            # create dataset and assign to attribute (if not empty)
             if len(data[i]) > 0:
-                dataset = self.create_dataset(data[i], res_attr, units[i])
+                if units is not None:
+                    dataset = self.create_dataset(data[i], res_attr, units[i])
+                else:
+                    dataset = self.create_dataset(data[i], res_attr, None)
                 self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
 
         #resource.attributes = res_attr_array
@@ -435,7 +448,7 @@ class ImportCSV(object):
     def create_dataset(self, value, resource_attr, unit):
         resourcescenario = self.cli.factory.create('hyd:ResourceScenario')
         dataset          = self.cli.factory.create('hyd:Dataset')
-        
+
         resourcescenario.attr_id = resource_attr.attr_id
         resourcescenario.resource_attr_id = resource_attr.id
 
@@ -470,7 +483,7 @@ class ImportCSV(object):
 
         resourcescenario.value = dataset
 
-        return resourcescenario 
+        return resourcescenario
 
     def create_scalar(self, value):
         scalar = self.cli.factory.create('hyd:Scalar')
@@ -511,7 +524,7 @@ class ImportCSV(object):
     def create_array(self, data):
         arraystring = '[[' + data.strip().replace('\n', '], [') + ']]'
         array = self.cli.factory.create('hyd:Array')
-        array.arr_data.anyType.append(arraystring)
+        array.arr_data = arraystring
 
         return array
 
