@@ -23,14 +23,11 @@ def parse_value(data):
     for name in val_names:
         value.append(data.value[name])
 
-    print value[0][0]
-
     if data_type == 'descriptor':
         return value[0][0]
     elif data_type == 'timeseries':
         # The brand new way to parse time series data:
         ts = []
-        print
         for ts_val in value[0][0][ns + 'TimeSeriesData']:
             timestamp = ts_val[ns + 'ts_time'][0]
             try:
