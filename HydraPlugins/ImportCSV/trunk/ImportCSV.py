@@ -481,6 +481,7 @@ class ImportCSV(object):
                 desc = self.create_descriptor(value)
                 dataset.value = desc
 
+        dataset.unit = unit
         resourcescenario.value = dataset
 
         return resourcescenario
