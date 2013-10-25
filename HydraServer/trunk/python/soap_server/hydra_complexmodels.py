@@ -21,7 +21,8 @@ def parse_value(data):
     val_names = data.value.keys()
     value = []
     for name in val_names:
-        value.append(data.value[name])
+        if name.find('error') == -1:
+            value.append(data.value[name])
 
     if data_type == 'descriptor':
         return value[0][0]
