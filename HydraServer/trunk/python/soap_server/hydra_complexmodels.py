@@ -104,38 +104,50 @@ class Dataset(ComplexModel):
         ('value',            AnyDict),
     ]
 
-class Descriptor(HydraComplexModel):
+class Descriptor(ComplexModel):
    _type_info = [
         ('desc_val', String),
     ]
 
-class TimeSeriesData(HydraComplexModel):
+class TimeSeriesData(ComplexModel):
  _type_info = [
         #('ts_time', DateTime),
         ('ts_time', String),
         ('ts_value', AnyDict),
     ]
 
-class TimeSeries(HydraComplexModel):
+class TimeSeries(ComplexModel):
     _type_info = [
         ('ts_values', SpyneArray(TimeSeriesData)),
     ]
 
-class EqTimeSeries(HydraComplexModel):
+class EqTimeSeries(ComplexModel):
     _type_info = [
         ('start_time', DateTime),
         ('frequency', Decimal),
         ('arr_data', AnyDict),
     ]
 
-class Scalar(HydraComplexModel):
+class Scalar(ComplexModel):
     _type_info = [
         ('param_value', Decimal),
     ]
 
-class Array(HydraComplexModel):
+class Array(ComplexModel):
     _type_info = [
         ('arr_data', AnyDict),
+    ]
+
+class DatasetGroup(ComplexModel):
+    _type_info = [
+        ('group_name', String),
+        ('group_id'  , Integer),
+    ]
+
+class DatasetGroupItem(ComplexModel):
+    _type_info = [
+        ('group_id', Integer),
+        ('dataset_id', Integer),
     ]
 
 class Attr(HydraComplexModel):

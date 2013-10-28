@@ -1238,6 +1238,56 @@ class ScenarioData(IfaceBase):
         }
         return cm_array
 
+    def get_groups(self):
+        """
+            Get the dataset groups that this datset is in
+        """
+
+        sql = """
+            select
+                group_id
+            from
+                tDatasetGroupItem
+            where
+                dataset_id = %s
+        """ % self.db.dataset_id
+
+        rs = execute(sql)
+
+        groups = []
+        for r in rs:
+            g = DatasetGroup(group_id=r.group_id)
+            groups.append(g)
+
+        return groups
+
+
+
+class DatasetGroup(IfaceBase):
+    """
+        Groups data together to make it easier to find
+    """
+    def __init__(self, group_id=None):
+        IfaceBase.__init__(self, None, self.__class__.__name__)
+        
+        self.db.group_id = group_id
+        
+        if group_id is not None:
+            self.load()
+
+class DatasetGroupItem(IfaceBase):
+    """
+        Each data item in a dataset group
+    """
+    def __init__(self, group_id=None, dataset_id=None):
+        IfaceBase.__init__(self, None, self.__class__.__name__)
+        
+        self.db.group_id = group_id
+        self.db.dataset_id = dataset_id
+
+        if None not in (group_id, dataset_id):
+            self.load()
+
 class DataAttr(IfaceBase):
     """
         Holds additional information on data.
@@ -1728,6 +1778,18 @@ db_hierarchy = dict(
         parent = None,
         table_name = 'tScenarioData',
         pk     = ['dataset_id']
+    ),
+    datasetgroup = dict(
+        obj        = DatasetGroup,
+        parent     = None,
+        table_name = 'tDatasetGroup',
+        pk         = ['group_id'] 
+    ),
+    datasetgroupitem = dict(
+        obj        = DatasetGroupItem,
+        parent     = DatasetGroup,
+        table_name = 'tDatasetGroupItem',
+        pk         = ['group_id', 'dataset_id'],
     ),
     dataattr  = dict(
         obj   = DataAttr,
