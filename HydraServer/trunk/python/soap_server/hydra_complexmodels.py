@@ -3,10 +3,10 @@ from spyne.model.primitive import String, Integer, Decimal, DateTime, Boolean, A
 import datetime
 from spyne.util.odict import odict
 
-
 global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 #"2013-08-13T15:55:43.468886Z"
+
 
 def parse_value(data):
     """

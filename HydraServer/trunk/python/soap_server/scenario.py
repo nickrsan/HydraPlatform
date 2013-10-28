@@ -15,6 +15,7 @@ from hydra_complexmodels import Scenario,\
 
 from db import HydraIface
 from HydraLib import hdb
+from HydraLib import units
 
 from hydra_base import HydraService
 
@@ -39,13 +40,13 @@ class ScenarioService(HydraService):
             scenario._update_resourcescenario(x.db.scenario_id, r_scen, new=True)
 
         hdb.commit()
-        
+
         return x.get_as_complexmodel()
 
     @rpc(Integer, _returns=Boolean)
     def delete_scenario(ctx, scenario_id):
         """
-            Set the status of a scenario to 'X'. 
+            Set the status of a scenario to 'X'.
         """
         success = True
         try:
@@ -89,17 +90,17 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
     """
         Insert or Update the value of a resource's attribute by first getting the
         resource, then parsing the input data, then assigning the value.
-        
+
         returns a HydraIface.ResourceScenario object.
     """
     ra_id = resource_scenario.resource_attr_id
-    
+
     r_a = HydraIface.ResourceAttr(resource_attr_id=ra_id)
 
     res = r_a.get_resource()
-    
+
     data_type = resource_scenario.value.type.lower()
-  
+
     value = parse_value(resource_scenario.value)
 
     res.assign_value(scenario_id, ra_id, data_type, value,
@@ -108,10 +109,11 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
     return res
 
 class DataService(HydraService):
-  
+
     """
         The data SOAP service
     """
+
 
     @rpc(SpyneArray(Dataset), _returns=SpyneArray(Dataset))
     def bulk_insert_data(ctx, bulk_data):
@@ -125,6 +127,8 @@ class DataService(HydraService):
             from
                 tScenarioData
         """
+
+        unit = units.Units()
 
         rs = HydraIface.execute(sql)
         dataset_id = rs[0].max_dataset_id
@@ -153,7 +157,12 @@ class DataService(HydraService):
             scenario_datum.db.data_type  = d.type
             scenario_datum.db.data_name  = d.name
             scenario_datum.db.data_units = d.unit
-            scenario_datum.db.data_dimen = d.dimension
+
+            # Assign dimension if necessary
+            if d.unit is not None and d.dimension is None:
+                scenario_datum.db.data_dimen = unit.get_dimension(d.unit)
+            else:
+                scenario_datum.db.data_dimen = d.dimension
             scenario_data.append(scenario_datum)
 
             if d.type == 'descriptor':
@@ -162,18 +171,18 @@ class DataService(HydraService):
 
                 descriptors.append(data)
                 descriptor_idx.append(i)
-            
+
             elif d.type == 'scalar':
                 data = HydraIface.Scalar()
                 data.db.param_value = val
-                
+
                 scalars.append(data)
                 scalar_idx.append(i)
-            
+
             elif d.type == 'array':
                 data = HydraIface.Array()
                 data.db.arr_data = val
-                
+
                 arrays.append(data)
                 array_idx.append(i)
 
@@ -182,16 +191,16 @@ class DataService(HydraService):
                 data.set_ts_values(val)
                 timeseries.append(data)
                 timeseries_idx.append(i)
-            
+
             elif d.type == 'eqtimeseries':
                 data = HydraIface.EqTimeSeries()
                 data.db.start_time = val[0]
                 data.db.frequency  = val[1]
                 data.db.arr_data   = val[2]
-                
+
                 eqtimeseries.append(data)
                 eqtimeseries_idx.append(i)
-       
+
         last_descriptor_id = HydraIface.bulk_insert(descriptors, 'tDescriptor')
         #work backwards, assigning the IDS to the correct data objects.
         #We will need this later to ensure the correct dataset_id / data_id mappings
@@ -204,7 +213,7 @@ class DataService(HydraService):
                 idx              = idx     + 1
 
         last_scalar_id     = HydraIface.bulk_insert(scalars, 'tScalar')
-        
+
         if last_scalar_id:
             next_id = last_scalar_id - len(scalars) + 1
             idx = 0
@@ -226,11 +235,11 @@ class DataService(HydraService):
         last_ts_id         = HydraIface.bulk_insert(timeseries, 'tTimeSeries')
 
         if last_ts_id:
-            next_id = last_ts_id - len(timeseries) + 1 
-            idx = 0 
+            next_id = last_ts_id - len(timeseries) + 1
+            idx = 0
             while idx < len(timeseries):
                 timeseries[idx].db.data_id      = next_id
-            
+
                 for d in timeseries[idx].timeseriesdatas:
                     d.db.data_id = next_id
 
@@ -242,7 +251,7 @@ class DataService(HydraService):
             timeseriesdata = []
             for idx, ts in enumerate(timeseries):
                 timeseriesdata.extend(ts.timeseriesdatas)
-        
+
             HydraIface.bulk_insert(timeseriesdata, 'tTimeSeriesData')
 
         last_eq_id         = HydraIface.bulk_insert(eqtimeseries, 'tEqTimeSeries')
@@ -269,9 +278,9 @@ class DataService(HydraService):
         last_dataset_id = HydraIface.bulk_insert(scenario_data, 'tScenarioData')
 
         dataset_ids = []
-        next_id = last_dataset_id - len(scenario_data) + 1 
-        idx = 0 
- 
+        next_id = last_dataset_id - len(scenario_data) + 1
+        idx = 0
+
         while idx < len(scenario_data):
             dataset_ids.append(next_id)
             next_id        = next_id + 1
@@ -293,7 +302,7 @@ class DataService(HydraService):
     @rpc(Integer, _returns=Boolean)
     def delete_dataset(dataset_id):
         """
-            Removes a piece of data from the DB. 
+            Removes a piece of data from the DB.
             CAUTION! Use with care, as this cannot be undone easily.
         """
 

@@ -453,6 +453,10 @@ class ImportCSV(object):
         resourcescenario.resource_attr_id = resource_attr.id
 
         value = value.strip()
+        if unit is not None:
+            unit = unit.strip()
+            if len(unit) == 0:
+                unit = None
 
         try:
             float(value)

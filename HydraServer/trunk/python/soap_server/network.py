@@ -30,7 +30,7 @@ def _add_attributes(resource_i, attributes):
 def _update_attributes(resource_i, attributes):
     resource_attr_id_map = dict()
     if attributes is None:
-        return dict() 
+        return dict()
     #ra is for ResourceAttr
     for ra in attributes:
         attr_is_var = 'N'
@@ -47,7 +47,7 @@ def _update_attributes(resource_i, attributes):
 
         resource_attr_id_map[ra.id] = ra_i.db.resource_attr_id
 
-    return resource_attr_id_map 
+    return resource_attr_id_map
 
 class NetworkService(HydraService):
     """
@@ -78,7 +78,7 @@ class NetworkService(HydraService):
         insert_start = datetime.datetime.now()
 
         x = HydraIface.Network()
-        
+
         x.db.project_id          = network.project_id
         x.db.network_name        = network.name
         x.db.network_description = network.description
@@ -86,7 +86,7 @@ class NetworkService(HydraService):
 
         x.save()
         network.network_id = x.db.network_id
-        
+
         resource_attrs = []
 
         network_attrs = _add_attributes(x, network.attributes)
@@ -103,10 +103,10 @@ class NetworkService(HydraService):
         logging.info("Adding nodes to network")
         for node in network.nodes:
             n = x.add_node(node.name, node.description, node.layout, node.x, node.y)
-            
+
         HydraIface.bulk_insert(x.nodes, 'tNode')
         x.load_all()
-        
+
         for n_i in x.nodes:
             for node in network.nodes:
                 if node.id not in node_ids and node.x == n_i.db.node_x and node.y == n_i.db.node_y and node.name == n_i.db.node_name:
@@ -118,7 +118,7 @@ class NetworkService(HydraService):
                     if node.id is not None and node.id <= 0:
                             node_ids[node.id] = n_i.db.node_id
                     break
-           
+
         #Then add all the links.
         logging.info("Adding links to network")
         for link in network.links:
@@ -150,7 +150,7 @@ class NetworkService(HydraService):
         last_resource_attr_id = HydraIface.bulk_insert(resource_attrs, "tResourceAttr")
 
         #import pudb; pudb.set_trace()
-        if last_resource_attr_id is not None: 
+        if last_resource_attr_id is not None:
             next_ra_id = last_resource_attr_id - len(all_attributes) + 1
             resource_attr_id_map = {}
             for attribute in all_attributes:
@@ -165,10 +165,10 @@ class NetworkService(HydraService):
                 scen.db.scenario_description = s.description
                 scen.db.network_id           = x.db.network_id
                 scen.save()
-                
+
                 for r_scen in s.resourcescenarios:
                     r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
-                
+
                 #extract the data from each resourcescenario
                 data = [r.value for r in s.resourcescenarios]
 
@@ -176,7 +176,7 @@ class NetworkService(HydraService):
 
                 #record all the resource attribute ids
                 resource_attr_ids = [r.resource_attr_id for r in s.resourcescenarios]
-                
+
                 resource_scenarios = []
                 for i, ra_id in enumerate(resource_attr_ids):
                     rs_i = HydraIface.ResourceScenario()
@@ -186,7 +186,7 @@ class NetworkService(HydraService):
                     resource_scenarios.append(rs_i)
 
                 HydraIface.bulk_insert(resource_scenarios, 'tResourceScenario')
-               
+
                 #This is to get the resource scenarios into the scenario
                 #object, so they are included into the scenario's complex model
                 scen.load_all()
