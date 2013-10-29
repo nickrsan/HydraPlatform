@@ -1095,8 +1095,17 @@ class ResourceScenario(IfaceBase):
         cm.attr_id = self.resourceattr.db.attr_id
 
         if self.scenariodata is not None:
-            cm.type = self.scenariodata.db.data_type
-            cm.value = self.scenariodata.get_as_complexmodel()
+            sd_i              = self.scenariodata
+
+            dataset           = hydra_complexmodels.Dataset()
+            dataset.id        = sd_i.db.dataset_id
+            dataset.type      = sd_i.db.data_type
+            dataset.unit      = sd_i.db.data_units
+            dataset.name      = sd_i.db.data_name
+            dataset.dimension = sd_i.db.data_dimen
+            dataset.value     = sd_i.get_as_complexmodel()
+            
+            cm.value          = dataset
 
         return cm
 

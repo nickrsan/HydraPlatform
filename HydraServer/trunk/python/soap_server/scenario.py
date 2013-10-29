@@ -104,10 +104,10 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
 
     value = parse_value(resource_scenario.value)
 
-    res.assign_value(scenario_id, ra_id, data_type, value,
+    rs_i = res.assign_value(scenario_id, ra_id, data_type, value,
                     "", "", "", new=new)
 
-    return res
+    return rs_i
 
 class DataService(HydraService):
 
@@ -289,24 +289,46 @@ class DataService(HydraService):
 
         return dataset_ids
 
+    @rpc(Integer, Integer, Dataset, _returns=ResourceScenario)
+    def add_data_to_attribute(ctx, scenario_id, resource_attr_id, dataset):
+        """
+                Add data to a resource scenario outside of a network update
+        """
+        r_a = HydraIface.ResourceAttr(resource_attr_id=resource_attr_id)
+
+        res = r_a.get_resource()
+
+        data_type = dataset.type.lower()
+
+        value = parse_value(dataset)
+
+        rs_i = res.assign_value(scenario_id, resource_attr_id, data_type, value,
+                        dataset.unit, dataset.name, dataset.dimension, new=False)
+        
+        rs_i.load_all()
+        
+        x = rs_i.get_as_complexmodel()
+        logging.info(x)
+        return x
+
     @rpc(String, _returns=DatasetGroup)
     def get_dataset_group(ctx, group_name):
-        grp = HydraIface.DatasetGroup()
-        grp.db.group_name = name
+        grp_i = HydraIface.DatasetGroup()
+        grp_i.db.group_name = group_name
 
-        grp.load()
-        grp.commit()
+        grp_i.load()
+        grp_i.commit()
 
-        return grp.get_as_complexmodel()
+        return grp_i.get_as_complexmodel()
 
     @rpc(DatasetGroup, _returns=DatasetGroup)
     def add_dataset_group(ctx, group):
-        grp = HydraIface.DatasetGroup()
-        grp.db.group_name = group.group_name
+        grp_i = HydraIface.DatasetGroup()
+        grp_i.db.group_name = group.group_name
 
-        grp.save()
-        grp.commit()
-        grp.load()
+        grp_i.save()
+        grp_i.commit()
+        grp_i.load()
 
         for item in group.datasetgroupitems:
             datasetitem = HydraIface.DatasetGroupItem()
