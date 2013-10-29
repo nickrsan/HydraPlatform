@@ -1,6 +1,7 @@
 import test_HydraIface
 from db import HydraIface
 from decimal import Decimal
+import datetime
 
 class DatasetGroupTest(test_HydraIface.HydraIfaceTest):
 
@@ -30,7 +31,7 @@ class DatasetGroupTest(test_HydraIface.HydraIfaceTest):
         sd2 = self.create_sd("1.02")
 
         group = HydraIface.DatasetGroup()
-        group.db.group_name = "Test Group"
+        group.db.group_name = "Test Group @ %s"%(datetime.datetime.now())
 
         group.save()
         group.commit()

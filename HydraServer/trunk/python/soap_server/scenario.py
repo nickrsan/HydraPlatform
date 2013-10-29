@@ -1,6 +1,6 @@
 import logging
 from HydraLib.HydraException import HydraError
-from spyne.model.primitive import Integer, Boolean, AnyDict
+from spyne.model.primitive import Integer, Boolean, String, AnyDict
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Scenario,\
@@ -11,6 +11,7 @@ from hydra_complexmodels import Scenario,\
         Array as HydraArray,\
         ResourceScenario,\
         Dataset,\
+        DatasetGroup,\
         parse_value
 
 from db import HydraIface
@@ -287,6 +288,130 @@ class DataService(HydraService):
             idx            = idx     + 1
 
         return dataset_ids
+
+    @rpc(String, _returns=DatasetGroup)
+    def get_dataset_group(ctx, group_name):
+        grp = HydraIface.DatasetGroup()
+        grp.db.group_name = name
+
+        grp.load()
+        grp.commit()
+
+        return grp.get_as_complexmodel()
+
+    @rpc(DatasetGroup, _returns=DatasetGroup)
+    def add_dataset_group(ctx, group):
+        grp = HydraIface.DatasetGroup()
+        grp.db.group_name = group.group_name
+
+        grp.save()
+        grp.commit()
+        grp.load()
+
+        for item in group.datasetgroupitems:
+            datasetitem = HydraIface.DatasetGroupItem()
+            datasetitem.db.group_id = grp.db.group_id
+            datasetitem.db.dataset_id = item.dataset_id
+            datasetitem.save()
+            datasetitem.commit()
+
+        grp.load_all()
+
+        return grp.get_as_complexmodel()
+
+    @rpc(String, _returns=SpyneArray(DatasetGroup))
+    def get_groups_like_name(ctx, group_name):
+        """
+            Get all the datsets from the group with the specified name
+        """
+        groups = []
+
+        sql = """
+            select
+                group_id,
+                group_name
+            from
+                tDatasetGroup
+            where
+                lower(group_name) like '%%%s%%'
+        """ % group_name.lower()
+
+         
+        rs = HydraIface.execute(sql)
+
+        for r in rs:
+            g = DatasetGroup()
+            g.group_id   = r.group_id
+            g.group_name = r.group_name
+            groups.append(g)
+
+        return groups
+
+    @rpc(Integer, _returns=SpyneArray(Dataset))
+    def get_group_datasets(ctx, group_id):
+        """
+            Get all the datsets from the group with the specified name
+        """
+        scenario_data = []
+
+        sql = """
+            select
+                item.dataset_id
+            from
+                tDatasetGroup as grp,
+                tDatasetGroupItem as item
+            where
+                item.group_id = grp.group_id
+            and grp.group_id = %s
+        """ % group_id
+
+         
+        rs = HydraIface.execute(sql)
+
+        for r in rs:
+            sd = HydraIface.ScenarioData(dataset_id=r.dataset_id)
+            d           = Dataset()
+            d.id        = sd.db.dataset_id
+            d.type      = sd.db.data_type
+            d.dimension = sd.db.data_dimen
+            d.unit      = sd.db.data_units
+            d.name      = sd.db.data_name
+            d.value     = sd.get_as_complexmodel()
+            scenario_data.append(d)
+
+        return scenario_data
+
+    @rpc(Integer, _returns=SpyneArray(Dataset))
+    def get_scenario_data(ctx, scenario_id):
+        """
+            Get all the datsets from the group with the specified name
+        """
+        scenario_data = []
+
+        sql = """
+            select
+                dataset_id
+            from
+                tResourceScenario
+            where
+                scenario_id = %s
+        """ % scenario_id
+
+         
+        rs = HydraIface.execute(sql)
+
+        for r in rs:
+            sd = HydraIface.ScenarioData(dataset_id=r.dataset_id)
+            d           = Dataset()
+            d.id        = sd.db.dataset_id
+            d.type      = sd.db.data_type
+            d.dimension = sd.db.data_dimen
+            d.unit      = sd.db.data_units
+            d.name      = sd.db.data_name
+            d.value     = sd.get_as_complexmodel()
+            scenario_data.append(d)
+
+        return scenario_data
 
     @rpc(AnyDict, _returns=AnyDict)
     def update_dataset(ctx, data):

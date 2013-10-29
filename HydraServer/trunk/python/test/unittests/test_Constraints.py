@@ -81,5 +81,7 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         assert eval(condition_string) == True, \
                     "Condition %s did not evaluate"%condition_string
 
+        return network
+
 if __name__ == "__main__":
     test_HydraIface.run() # run all tests

@@ -1217,26 +1217,11 @@ class ScenarioData(IfaceBase):
             }
         elif self.db.data_type == 'array':
             a = Array(data_id = self.db.data_id)
-            #complexmodel = self.make_complexmodel_array(a.db.arr_data)
             complexmodel = {
                 'arr_data' : a.db.arr_data
             }
 
         return complexmodel
-
-    def make_complexmodel_array(self, value):
-#        cm_array = hydra_complexmodels.Array()
-
-        cm_arr_data = []
-        for v in value:
-            if type(v) is list:
-                cm_arr_data.append(self.make_complexmodel_array(v))
-            else:
-                cm_arr_data.append(v)
-        cm_array = {
-            'arr_data' : cm_arr_data
-        }
-        return cm_array
 
     def get_groups(self):
         """

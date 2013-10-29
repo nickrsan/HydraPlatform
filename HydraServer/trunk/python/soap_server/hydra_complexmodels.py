@@ -12,8 +12,7 @@ def parse_value(data):
     """
     Turn a complex model object into a hydraiface - friendly value.
     """
-
-    ns = '{soap_server.hydra_complexmodels}'
+    
     data_type = data.type
 
     #attr_data.value is a dictionary,
@@ -21,13 +20,13 @@ def parse_value(data):
     val_names = data.value.keys()
     value = []
     for name in val_names:
-        if name.find('error') == -1:
-            value.append(data.value[name])
+        value.append(data.value[name])
 
     if data_type == 'descriptor':
         return value[0][0]
     elif data_type == 'timeseries':
         # The brand new way to parse time series data:
+        ns = '{soap_server.hydra_complexmodels}'
         ts = []
         for ts_val in value[0][0][ns + 'TimeSeriesData']:
             timestamp = ts_val[ns + 'ts_time'][0]
@@ -41,24 +40,15 @@ def parse_value(data):
                     # Apply offset
                     tzoffset = datetime.timedelta(hours=int(utcoffset[0:3]),
                                                   minutes=int(utcoffset[3:5]))
+                    print ts_time, tzoffset, utcoffset
                     ts_time -= tzoffset
                 else:
                     raise e
 
-            # Convert time to Gregorian ordinal (1 = January 1st, year 1)
-            ordinal_ts_time = ts_time.toordinal()
-            fraction = (ts_time -
-                        datetime.datetime(ts_time.year,
-                                          ts_time.month,
-                                          ts_time.day,
-                                          0, 0, 0)).total_seconds()
-            fraction = fraction / (86400)
-            ordinal_ts_time += fraction
-
             series = []
             for val in ts_val[ns + 'ts_value']:
                 series.append(eval(val))
-            ts.append((ordinal_ts_time, series))
+            ts.append((ts_time, series))
         return ts
     elif data_type == 'eqtimeseries':
         start_time = datetime.strptime(value[0][0], FORMAT)
@@ -68,8 +58,10 @@ def parse_value(data):
     elif data_type == 'scalar':
        return value[0][0]
     elif data_type == 'array':
+        print
+        print value[0][0]
+        print
         val = eval(value[0][0])
-        #val = eval(value[0][0][ns + 'anyType'][0])
         return val
 
 
@@ -97,6 +89,7 @@ class HydraComplexModel(ComplexModel):
 
 class Dataset(ComplexModel):
     _type_info = [
+        ('id',               Integer(default=None)),
         ('type',             String),
         ('dimension',        String(default=None)),
         ('unit',             String(default=None)),
@@ -138,16 +131,17 @@ class Array(ComplexModel):
         ('arr_data', AnyDict),
     ]
 
-class DatasetGroup(ComplexModel):
-    _type_info = [
-        ('group_name', String),
-        ('group_id'  , Integer),
-    ]
-
 class DatasetGroupItem(ComplexModel):
     _type_info = [
         ('group_id', Integer),
         ('dataset_id', Integer),
+    ]
+
+class DatasetGroup(ComplexModel):
+    _type_info = [
+        ('group_name', String),
+        ('group_id'  , Integer),
+        ('datasetgroupitems', SpyneArray(DatasetGroupItem)),
     ]
 
 class Attr(HydraComplexModel):
