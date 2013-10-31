@@ -2,11 +2,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import util, hydra_logging
+import util
+import hydra_logging
 from suds.client import Client
 
 from datetime import datetime
 import os
+
 
 def connect():
     hydra_logging.init(level='INFO')
@@ -43,13 +45,20 @@ def temp_ids(n=-1):
         n -= 1
 
 
-def date_to_string(date):
+def date_to_string(date, seasonal=False):
     """Convert a date to a standard string used by Hydra. The resulting string
     looks like this::
 
         '2013-10-03 00:49:17.568960-0400'
+
+    Hydra also accepts seasonal time series (yearly recurring). If the flag
+    ``seasonal`` is set to ``True``, this function will generate a string
+    recognised by Hydra as seasonal time stamp.
     """
-    FORMAT = '%Y-%m-%d %H:%M:%S.%f%z'
+    if seasonal:
+        FORMAT = 'XXXX-%m-%d %H:%M:%S.%f%z'
+    else:
+        FORMAT = '%Y-%m-%d %H:%M:%S.%f%z'
     return date.strftime(FORMAT)
 
 
@@ -89,7 +98,7 @@ def guess_timefmt(datestr):
             `%H:%M:%S`. A complete date and time should therefore look like
             this::
 
-                2002-04-21 15:29:37
+                2002-04-21 15:29:37.5224
 
         - Be aware that in a file with comma separated values you should not
           use a date format that contains commas.
@@ -138,6 +147,7 @@ def guess_timefmt(datestr):
 
     return None
 
+
 def create_xml_response(plugin_name, network_id, errors=[], warnings=[], message=None):
     xml_string = """
         <plugin_result>
@@ -166,18 +176,19 @@ def create_xml_response(plugin_name, network_id, errors=[], warnings=[], message
 
     return xml_string
 
+
 def write_xml_result(plugin_name, xml_string, file_path=None):
-    config = util.load_config() 
+    config = util.load_config()
     if file_path is None:
         file_path = config.get('plugin', 'result_file')
-    
+
     home = os.path.expanduser('~')
 
     output_file = os.path.join(home, file_path, plugin_name)
 
     f = open(output_file, 'a')
 
-    output_string = "%%%s%%%s%%%s%%"%(os.getpid(), xml_string, os.getpid())
+    output_string = "%%%s%%%s%%%s%%" % (os.getpid(), xml_string, os.getpid())
 
     f.write(output_string)
 

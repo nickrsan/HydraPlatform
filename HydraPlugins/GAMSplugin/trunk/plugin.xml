@@ -1,6 +1,6 @@
 <plugin_info>
     <plugin_name>GAMS Plugin</plugin_name>
-    <plugin_dir>GAMS-Plugin/trunk/GAMS-Plugin.py</plugin_dir>
+    <plugin_dir>GAMSplugin/trunk/GAMSplugin.py</plugin_dir>
     <plugin_description>Import a network saved in a set of GAMS files into Hydra.
 
 Written by Philipp Meier philipp@diemeiers.ch

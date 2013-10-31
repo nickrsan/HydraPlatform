@@ -110,7 +110,7 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
     return rs_i
 
 def hash_incoming_data(data):
-    
+
     unit = units.Units()
 
     hashes = []
@@ -191,7 +191,7 @@ class DataService(HydraService):
 
         #A list of all the scenariodata objects
         scenario_data = []
-        
+
         #Lists of all the data objects
         descriptors  = []
         timeseries   = []
@@ -222,16 +222,22 @@ class DataService(HydraService):
             scenario_datum.db.data_units = d.unit
 
             # Assign dimension if necessary
-            if d.unit is not None and d.dimension is None:
+            # It happens that d.dimension is and empty string. We set it to
+            # None to achieve consistency in the DB.
+            if d.unit is not None and d.dimension is None or \
+                    d.unit is not None and len(d.dimension) == 0:
                 scenario_datum.db.data_dimen = unit.get_dimension(d.unit)
             else:
-                scenario_datum.db.data_dimen = d.dimension
+                if d.dimension is None or len(d.dimension) == 0:
+                    scenario_datum.db.data_dimen = None
+                else:
+                    scenario_datum.db.data_dimen = d.dimension
 
             current_hash = scenario_datum.set_hash(val)
-            
+
             scenario_data.append(scenario_datum)
 
-            #if this piece of data is already in the DB, then 
+            #if this piece of data is already in the DB, then
             #there is no need to insert it!
             if current_hash in existing_hashes.keys():
                 dataset_id = existing_hashes[current_hash][0]
@@ -356,7 +362,7 @@ class DataService(HydraService):
             scenario_data[idx].db.data_id = timeseries[i].db.data_id
         for i, idx in enumerate(eqtimeseries_idx):
             scenario_data[idx].db.data_id = eqtimeseries[i].db.data_id
-       
+
         #Isolate only the new datasets and insert them
         new_scenario_data = []
         for sd in scenario_data:
@@ -374,7 +380,7 @@ class DataService(HydraService):
             new_scenario_data[idx].db.dataset_id = dataset_id
             next_id        = next_id + 1
             idx            = idx     + 1
-        
+
         #using the has of the new scenario data, find the placeholder in dataset_ids
         #and replace it with the dataset_id.
         for sd in new_scenario_data:
@@ -398,9 +404,9 @@ class DataService(HydraService):
 
         rs_i = res.assign_value(scenario_id, resource_attr_id, data_type, value,
                         dataset.unit, dataset.name, dataset.dimension, new=False)
-        
+
         rs_i.load_all()
-        
+
         x = rs_i.get_as_complexmodel()
         logging.info(x)
         return x
@@ -452,7 +458,7 @@ class DataService(HydraService):
                 lower(group_name) like '%%%s%%'
         """ % group_name.lower()
 
-         
+
         rs = HydraIface.execute(sql)
 
         for r in rs:
@@ -481,7 +487,7 @@ class DataService(HydraService):
             and grp.group_id = %s
         """ % group_id
 
-         
+
         rs = HydraIface.execute(sql)
 
         for r in rs:
@@ -513,7 +519,7 @@ class DataService(HydraService):
                 scenario_id = %s
         """ % scenario_id
 
-         
+
         rs = HydraIface.execute(sql)
 
         for r in rs:

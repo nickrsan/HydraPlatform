@@ -109,6 +109,9 @@ TODO
 - Implement updating of existing scenario.
 
 - Implement rules and constraints
+
+API docs
+~~~~~~~~
 """
 
 import argparse as ap
@@ -116,7 +119,7 @@ import logging
 from datetime import datetime
 import pytz
 
-import PluginLib
+from HydraLib import PluginLib
 
 from suds import WebFault
 

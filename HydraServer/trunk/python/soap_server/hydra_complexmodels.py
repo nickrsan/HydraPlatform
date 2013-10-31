@@ -12,7 +12,7 @@ def parse_value(data):
     """
     Turn a complex model object into a hydraiface - friendly value.
     """
-    
+
     data_type = data.type
 
     #attr_data.value is a dictionary,
@@ -30,6 +30,11 @@ def parse_value(data):
         ts = []
         for ts_val in value[0][0][ns + 'TimeSeriesData']:
             timestamp = ts_val[ns + 'ts_time'][0]
+            # Check if we have received a seasonal time series first
+            if timestamp[0:4] == 'XXXX':
+                # Do seasonal time series stuff...
+                timestamp = timestamp.replace('XXXX', '0001')
+            # and proceed as usual
             try:
                 ts_time = datetime.datetime.strptime(timestamp, FORMAT)
             except ValueError as e:
@@ -45,10 +50,21 @@ def parse_value(data):
                 else:
                     raise e
 
+            # Convert time to Gregorian ordinal (1 = January 1st, year 1)
+            ordinal_ts_time = ts_time.toordinal()
+            fraction = (ts_time -
+                        datetime.datetime(ts_time.year,
+                                          ts_time.month,
+                                          ts_time.day,
+                                          0, 0, 0)).total_seconds()
+            fraction = fraction / (86400)
+            ordinal_ts_time += fraction
+
             series = []
             for val in ts_val[ns + 'ts_value']:
                 series.append(eval(val))
-            ts.append((ts_time, series))
+            ts.append((ordinal_ts_time, series))
+
         return ts
     elif data_type == 'eqtimeseries':
         start_time = datetime.strptime(value[0][0], FORMAT)
