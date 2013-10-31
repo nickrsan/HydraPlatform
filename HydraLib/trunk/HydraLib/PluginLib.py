@@ -49,7 +49,7 @@ def date_to_string(date, seasonal=False):
     """Convert a date to a standard string used by Hydra. The resulting string
     looks like this::
 
-        '2013-10-03 00:49:17.568960-0400'
+        '2013-10-03 00:49:17.568-0400'
 
     Hydra also accepts seasonal time series (yearly recurring). If the flag
     ``seasonal`` is set to ``True``, this function will generate a string
@@ -68,37 +68,40 @@ def guess_timefmt(datestr):
 
     The following formats are supported:
 
-    ================ ============== ===============
-    Format           Example        Python format
-    ---------------- -------------- ---------------
-    `YYYY-MM-DD`     2002-04-21     %Y-%m-%d
-    `YYYY.MM.DD`     2002.04.21     %Y.%m.%d
-    `YYYY MM DD`     2002 04 21     %Y %m %d
-    `DD-MM-YYYY`     21-04-2002     %d-%m-%Y
-    `DD.MM.YYYY`     21.04.2002     %d.%m.%Y
-    `DD MM YYYY`     21 04 2002     %d %m %Y
-    `MM/DD/YYYY`     04/21/2002     %m/%d/%Y
-    ================ ============== ===============
+    ================= ============== ===============
+    Format            Example        Python format
+    ----------------- -------------- ---------------
+    ``YYYY-MM-DD``    2002-04-21     %Y-%m-%d
+    ``YYYY.MM.DD``    2002.04.21     %Y.%m.%d
+    ``YYYY MM DD``    2002 04 21     %Y %m %d
+    ``DD-MM-YYYY``    21-04-2002     %d-%m-%Y
+    ``DD.MM.YYYY``    21.04.2002     %d.%m.%Y
+    ``DD MM YYYY``    21 04 2002     %d %m %Y
+    ``MM/DD/YYYY``    04/21/2002     %m/%d/%Y
+    ================= ============== ===============
+
+    These formats can also be used for seasonal (yearly recurring) time series.
+    The year needs to be replaced by ``XXXX``.
 
     The following formats are recognised depending on your locale setting.
     There is no guarantee that this will work.
 
-    ================ ============== ===============
-    Format           Example        Python format
-    ---------------- -------------- ---------------
-    `DD-mmm-YYYY`    21-Apr-2002    %d-%b-%Y
-    `DD.mmm.YYYY`    21.Apr.2002    %d.%b.%Y
-    `DD mmm YYYY`    21 Apr 2002    %d %b %Y
-    `mmm DD YYYY`    Apr 21 2002    %b %d %Y
-    `Mmmmm DD YYYY`  April 21 2002  %B %d %Y
-    ================ ============== ===============
+    ================= ============== ===============
+    Format            Example        Python format
+    ----------------- -------------- ---------------
+    ``DD-mmm-YYYY``   21-Apr-2002    %d-%b-%Y
+    ``DD.mmm.YYYY``   21.Apr.2002    %d.%b.%Y
+    ``DD mmm YYYY``   21 Apr 2002    %d %b %Y
+    ``mmm DD YYYY``   Apr 21 2002    %b %d %Y
+    ``Mmmmm DD YYYY`` April 21 2002  %B %d %Y
+    ================= ============== ===============
 
     .. note::
         - The time needs to follow this definition without exception:
-            `%H:%M:%S`. A complete date and time should therefore look like
+            `%H:%M:%S.%f`. A complete date and time should therefore look like
             this::
 
-                2002-04-21 15:29:37.5224
+                2002-04-21 15:29:37.522
 
         - Be aware that in a file with comma separated values you should not
           use a date format that contains commas.
@@ -107,7 +110,10 @@ def guess_timefmt(datestr):
     delimiters = ['-', '.', ' ']
     formatstrings = [['%Y', '%m', '%d'],
                      ['%d', '%m', '%Y'],
-                     ['%d', '%b', '%Y']]
+                     ['%d', '%b', '%Y'],
+                     ['XXXX', '%m', '%d'],
+                     ['%d', '%m', 'XXXX'],
+                     ['%d', '%b', 'XXXX']]
 
     timefmt = '%H:%M:%S'
 
@@ -131,7 +137,7 @@ def guess_timefmt(datestr):
                 pass
 
     # Check for other formats:
-    custom_formats = ['%m/%d/%Y', '%b %d %Y', '%B %d %Y']
+    custom_formats = ['%m/%d/%Y', '%b %d %Y', '%B %d %Y', '%m/%d/XXXX']
 
     for fmt in custom_formats:
         if usetime:

@@ -506,6 +506,9 @@ class ImportCSV(object):
     def create_timeseries(self, data):
         date = data.split(',', 1)[0].strip()
         timeformat = PluginLib.guess_timefmt(date)
+        seasonal = False
+        if 'XXXX' in timeformat:
+            seasonal = True
 
         timeseries = self.cli.factory.create('hyd:TimeSeries')
         #timeseries.ts_values = []
@@ -518,7 +521,8 @@ class ImportCSV(object):
                 tstime = datetime.strptime(dataset[0].strip(), timeformat)
                 tstime = self.timezone.localize(tstime)
 
-                tsdata.ts_time = PluginLib.date_to_string(tstime)
+                tsdata.ts_time = PluginLib.date_to_string(tstime,
+                                                          seasonal=seasonal)
 
                 value_length = len(dataset) - 1
                 tsdata.ts_value = []
