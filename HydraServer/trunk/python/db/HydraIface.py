@@ -687,6 +687,23 @@ class GenericResource(IfaceBase):
 
         return attr
 
+    def get_data_from_hash(self, data_hash):
+        sql = """
+            select
+                dataset_id
+            from
+                tScenarioData
+            where
+                data_hash = %s
+        """ % (data_hash)
+
+        rs = execute(sql)
+        
+        if len(rs) > 0:
+            return rs[0].dataset_id
+        else:
+            return None
+
     def assign_value(self, scenario_id, resource_attr_id, data_type, val,
                      units, name, dimension, new=False):
         """
@@ -696,31 +713,40 @@ class GenericResource(IfaceBase):
             will be performed in the DB for its existance.
         """
 
+        hash_string = "%s %s %s %s %s"
+        data_hash  = hash(hash_string%(name, units, dimension, data_type, str(val)))
+
+        existing_dataset_id = self.get_data_from_hash(data_hash)
+
         rs = ResourceScenario()
         rs.db.scenario_id=scenario_id
         rs.db.resource_attr_id=resource_attr_id
-
-        dataset_id = None
-        if new is not True:
-            data_in_db = rs.load()
-            if data_in_db is True:
-                dataset_id = rs.db.dataset_id
-
-        if dataset_id is not None:
-            sd = ScenarioData(dataset_id = rs.db.dataset_id)
+        rs.load()
+        if existing_dataset_id is not None:
+            rs.db.dataset_id = existing_dataset_id
         else:
-            sd = ScenarioData()
+            dataset_id = None
+            if new is not True:
+                data_in_db = rs.load()
+                if data_in_db is True:
+                    dataset_id = rs.db.dataset_id
 
-        sd.set_val(data_type, val)
+            if dataset_id is not None:
+                sd = ScenarioData(dataset_id = rs.db.dataset_id)
+            else:
+                sd = ScenarioData()
 
-        sd.db.data_type  = data_type
-        sd.db.data_units = units
-        sd.db.data_name  = name
-        sd.db.data_dimen = dimension
-        sd.save()
+            sd.set_val(data_type, val)
 
-        if dataset_id is None:
-            rs.db.dataset_id       = sd.db.dataset_id
+            sd.db.data_type  = data_type
+            sd.db.data_units = units
+            sd.db.data_name  = name
+            sd.db.data_dimen = dimension
+            sd.db.data_hash  = data_hash
+            sd.save()
+
+            if dataset_id is None:
+                rs.db.dataset_id       = sd.db.dataset_id
 
         rs.save()
 
@@ -1170,7 +1196,6 @@ class ScenarioData(IfaceBase):
         data.save()
         data.commit()
         data.load()
-        self.db.data_type = data_type
         self.db.data_id = data.db.data_id
         return data
 
@@ -1256,6 +1281,16 @@ class ScenarioData(IfaceBase):
         return groups
 
 
+    def set_hash(self, val):
+        hash_string = "%s %s %s %s %s"
+        data_hash  = hash(hash_string%(self.db.data_name, 
+                                       self.db.data_units,
+                                       self.db.data_dimen,
+                                       self.db.data_type,
+                                       str(val)))
+        
+        self.db.data_hash = data_hash
+        return data_hash
 
 class DatasetGroup(IfaceBase):
     """
