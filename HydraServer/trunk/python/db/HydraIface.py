@@ -722,6 +722,7 @@ class GenericResource(IfaceBase):
         rs.db.scenario_id=scenario_id
         rs.db.resource_attr_id=resource_attr_id
         rs.load()
+        
         if existing_dataset_id is not None:
             rs.db.dataset_id = existing_dataset_id
         else:
@@ -1175,23 +1176,21 @@ class ScenarioData(IfaceBase):
     def set_val(self, data_type, val):
         data = None
         if data_type == 'descriptor':
-            data = Descriptor(data_id=self.db.data_id)
+            data = Descriptor()
             data.db.desc_val = val
         elif data_type == 'timeseries':
-            data = TimeSeries(data_id=self.db.data_id)
+            data = TimeSeries()
             data.set_ts_values(val)
-            #data.db.ts_time  = val[0]
-            #data.db.ts_value = val[1]
         elif data_type == 'eqtimeseries':
-            data = EqTimeSeries(data_id = self.db.data_id)
+            data = EqTimeSeries()
             data.db.start_time = val[0]
             data.db.frequency  = val[1]
             data.db.arr_data = val[2]
         elif data_type == 'scalar':
-            data = Scalar(data_id = self.db.data_id)
+            data = Scalar()
             data.db.param_value = val
         elif data_type == 'array':
-            data = Array(data_id = self.db.data_id)
+            data = Array()
             data.db.arr_data = val
         data.save()
         data.commit()
