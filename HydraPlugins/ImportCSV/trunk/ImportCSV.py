@@ -120,6 +120,7 @@ from datetime import datetime
 import pytz
 
 from HydraLib import PluginLib
+from HydraLib import units
 
 from suds import WebFault
 
@@ -137,6 +138,7 @@ class ImportCSV(object):
     update_network_flag = False
     timezone = pytz.utc
     expand_filenames = False
+    unit_class = units.Units()
 
     def __init__(self):
         self.cli = PluginLib.connect()
@@ -255,7 +257,8 @@ class ImportCSV(object):
                 if i != id_idx and i != name_idx and i != desc_idx:
                     attrs.update({i: key.strip()})
 
-            self.Network = self.add_data(self.Network, attrs, data)
+            if len(attrs.keys()) > 0:
+                self.Network = self.add_data(self.Network, attrs, data)
 
         else:
             # Create a new network
@@ -387,10 +390,11 @@ class ImportCSV(object):
             link = self.add_data(link, attrs, linedata, units=units)
             self.Links.update({link.name: link})
 
-    def create_attribute(self, name, dimension=None):
+    def create_attribute(self, name, unit=None):
         attribute = self.cli.factory.create('hyd:Attr')
         attribute.name = name
-        attribute.dimen = dimension
+        if unit is not None and len(unit.strip()) > 0:
+            attribute.dimen = self.unit_class.get_dimension(unit.strip())
         #attribute = self.cli.service.add_attribute(attribute)
 
         return attribute
@@ -412,7 +416,10 @@ class ImportCSV(object):
                 attribute = self.Attributes[attrs[i]]
                 #attribute = self.create_attribute(attrs[i])
             else:
-                attribute = self.create_attribute(attrs[i])
+                if units is not None:
+                    attribute = self.create_attribute(attrs[i], units[i])
+                else:
+                    attribute = self.create_attribute(attrs[i])
                 self.Attributes.update({attrs[i]: attribute})
             attributes.Attr.append(attribute)
 
@@ -434,8 +441,8 @@ class ImportCSV(object):
                 resource.attributes.ResourceAttr.append(res_attr)
 
             # create dataset and assign to attribute (if not empty)
-            if len(data[i]) > 0:
-                if units is not None:
+            if len(data[i].strip()) > 0:
+                if units[i] is not None:
                     dataset = self.create_dataset(data[i], res_attr, units[i])
                 else:
                     dataset = self.create_dataset(data[i], res_attr, None)
@@ -489,6 +496,8 @@ class ImportCSV(object):
                 dataset.value = desc
 
         dataset.unit = unit
+        if unit is not None:
+            dataset.dimension = self.unit_class.get_dimension(unit)
         resourcescenario.value = dataset
 
         return resourcescenario

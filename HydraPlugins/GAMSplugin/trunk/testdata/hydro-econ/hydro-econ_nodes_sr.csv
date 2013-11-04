@@ -1,0 +1,6 @@
+Name  , X               , Y               , group, maxStor, minStor, BC           , IC, Description
+Units ,                 ,                 ,      ,   hm^3 ,   hm^3 ,              ,   ,
+SR1   , 507046.845211248, 169181.147656871, sr   ,  500.0 ,   50.0 , TS/SR1_BC.csv, TS/SR1_IC.csv,
+SR2   , 507076.010100673, 159136.791289709, sr   ,  200.0 ,   20.0 , TS/SR2_BC.csv, TS/SR2_IC.csv,
+SR3   , 495097.226875602, 158933.761065556, sr   ,  300.0 ,   30.0 , TS/SR3_BC.csv, TS/SR3_IC.csv,
+SR4   , 501188.133600215, 151827.703220175, sr   ,  600.0 ,   60.0 , TS/SR4_BC.csv, TS/SR4_IC.csv,

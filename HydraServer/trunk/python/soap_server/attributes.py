@@ -66,7 +66,7 @@ class AttributeService(HydraService):
         #Check to see if any of the attributs being added are already there.
         #If they are there already, don't add a new one. If an attribute
         #with the same name is there already but with a different dimension,
-        #throw an error to that effect.
+        #add a new attribute.
         sql = """
             select
                 attr_id,
@@ -81,11 +81,11 @@ class AttributeService(HydraService):
         attrs_to_add = []
         for potential_new_attr in attrs:
             for r in rs:
-                if potential_new_attr.name == r.attr_name:
-                    if potential_new_attr.dimen != r.attr_dimen:
-                        raise HydraError("Attribute %s already exists but "
-                                         "with a different dimension: %s",\
-                                         r.attr_name, r.attr_dimen)
+                if potential_new_attr.name == r.attr_name and \
+                   potential_new_attr.dimen == r.attr_dimen:
+                    #raise HydraError("Attribute %s already exists but "
+                    #                    "with a different dimension: %s",\
+                    #                    r.attr_name, r.attr_dimen)
                     break
             else:
                 attrs_to_add.append(potential_new_attr)
@@ -98,7 +98,6 @@ class AttributeService(HydraService):
             iface_attrs.append(x)
 
         HydraIface.bulk_insert(iface_attrs, 'tAttr')
-    
 
         sql = """
             select
@@ -122,11 +121,11 @@ class AttributeService(HydraService):
         new_attrs = []
         for attr in all_attrs:
             for new_attr in attrs:
-                if new_attr.name == attr.name:
+                if new_attr.name == attr.name and new_attr.dimen == attr.dimen:
                     new_attrs.append(attr)
                     break
 
-        return new_attrs 
+        return new_attrs
 
     @rpc(_returns=SpyneArray(Attr))
     def get_attributes(ctx):
@@ -154,7 +153,7 @@ class AttributeService(HydraService):
             x.id    = r.attr_id
             attrs.append[x]
 
-        return attrs 
+        return attrs
 
     @rpc(String, _returns=Attr)
     def get_attribute(ctx, name):
@@ -172,11 +171,11 @@ class AttributeService(HydraService):
             where
                 attr_name = '%s'
         """ % name
-        
+
         rs = HydraIface.execute(sql)
 
         if len(rs) == 0:
-           return None 
+           return None
         else:
             x = Attr()
             x.name  = rs[0].attr_name
@@ -196,7 +195,7 @@ class AttributeService(HydraService):
         x.save()
         hdb.commit()
         return success
-        
+
 
     @rpc(String, Integer, Integer, Boolean, _returns=Resource)
     def add_resource_attribute(ctx,resource_type, resource_id, attr_id, is_var):
@@ -261,7 +260,7 @@ class AttributeService(HydraService):
         """
         template_i = ResourceTemplate()
 
-        #Check if the resourcetemplate is in a group  
+        #Check if the resourcetemplate is in a group
         if hasattr('group_id', resourcetemplate) and\
            resourcetemplate.group_id is not None:
             template_i.db.group_id = resourcetemplate.group_id
@@ -273,7 +272,7 @@ class AttributeService(HydraService):
             template_i.add_item(item.attr_id)
 
         return template_i.get_as_complexmodel()
- 
+
 
     @rpc(ResourceTemplate, _returns=ResourceTemplate)
     def update_resource_template(ctx, resourcetemplate):
@@ -281,8 +280,8 @@ class AttributeService(HydraService):
             Add a resource template
         """
         template_i = HydraIface.ResourceTemplate(template_id=resourcetemplate.id)
-       
-        #Check if the resourcetemplate is in a group  
+
+        #Check if the resourcetemplate is in a group
         if hasattr('group_id', resourcetemplate) and\
            resourcetemplate.group_id is not None:
             template_i.db.group_id = resourcetemplate.group_id

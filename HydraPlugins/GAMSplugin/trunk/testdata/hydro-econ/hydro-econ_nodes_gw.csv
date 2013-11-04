@@ -1,0 +1,4 @@
+Name  , X               , Y               , group, maxStor, minStor, BC           , IC           , Description
+Units ,                 ,                 ,      ,   hm^3 ,   hm^3 ,              ,              ,
+GW1   , 518039.642204975, 165430.728238476, gw   , 2000.0 ,  300.0 , TS/GW1_BC.csv, TS/GW1_IC.csv, 
+GW2   , 490359.854978682, 146819.624357716, gw   , 2000.0 ,  300.0 , TS/GW2_BC.csv, TS/GW2_IC.csv, 

@@ -45,6 +45,7 @@
         <unit name="centiliter"          abbr="cl"    lf="0.01"          cf="0" />
         <unit name="cubic centimeter"    abbr="cm^3"   lf="0.001"         cf="0" />
         <unit name="cubic decimeter"     abbr="dm^3"   lf="1"             cf="0" />
+        <unit name="cubic hectometer"    abbr="hm^3"   lf="1e9"           cf="0" />
         <unit name="cubic foot"          abbr="ft^3"   lf="28.316846592"  cf="0" />
         <unit name="cubic inch"          abbr="in^3"   lf="0.016387064"   cf="0" />
         <unit name="cubic meter"         abbr="m^3"    lf="1000"          cf="0" />
@@ -205,7 +206,12 @@
         <unit name="cubic meters per minute" abbr="m^3 min^-1"   lf="0.0166666667" cf="0" info=""/>
         <unit name="cubic meters per hour"   abbr="m^3 h^-1"     lf="0.000277777778" cf="0" info=""/>
         <unit name="cubic meters per day"    abbr="m^3 day^-1"   lf="1.15740741e-05" cf="0" info=""/>
-        <unit name="cubic meters per month"  abbr="m^3 mon^-1"   lf="0" cf="0" info=""/>
+        <unit name="cubic meters per month"  abbr="m^3 mon^-1"   lf="3.80265176e-7" cf="0" info=""/>
+        <unit name="cubic hectometers per second" abbr="hm^3 s^-1"     lf="1e6" cf="0" info="SI unit for volumetric flow rate."/>
+        <unit name="cubic hectometers per minute" abbr="hm^3 min^-1"   lf="16666.6667" cf="0" info=""/>
+        <unit name="cubic hectometers per hour"   abbr="hm^3 h^-1"     lf="277.777778" cf="0" info=""/>
+        <unit name="cubic hectometers per day"    abbr="hm^3 day^-1"   lf="11.5740741" cf="0" info=""/>
+        <unit name="cubic hectometers per month"  abbr="hm^3 mon^-1"   lf="0.380265176" cf="0" info=""/>
         <unit name="cubic foot per second"   abbr="ft^3 s^-1"    lf="0.0283168466" cf="0" info=""/>
         <unit name="cubic foot per minute"   abbr="ft^3 min^-1"  lf="0.000471947443" cf="0" info=""/>
         <unit name="cubic foot per hour"     abbr="ft^3 h^-1"    lf="7.86579072e-06" cf="0" info=""/>
