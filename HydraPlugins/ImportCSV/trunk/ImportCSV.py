@@ -442,7 +442,7 @@ class ImportCSV(object):
 
             # create dataset and assign to attribute (if not empty)
             if len(data[i].strip()) > 0:
-                if units[i] is not None:
+                if units is not None:
                     dataset = self.create_dataset(data[i], res_attr, units[i])
                 else:
                     dataset = self.create_dataset(data[i], res_attr, None)
