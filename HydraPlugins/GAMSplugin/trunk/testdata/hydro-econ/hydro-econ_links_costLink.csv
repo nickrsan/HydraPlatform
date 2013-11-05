@@ -1,3 +1,4 @@
+# Hydro-econ cost links
 Name       , From   , To    , group   , cost, minFlow    , maxFlow    , lossCoeff, Description
 Units      ,        ,       ,         ,    $, hm^3 mon^-1, hm^3 mon^-1,        % ,
 GW1_Urb1   , GW1    , Urb1  , costLink, 10.0,        0.0 ,       80.0 ,      1.0 ,

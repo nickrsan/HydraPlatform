@@ -78,8 +78,13 @@ For links, the following is a valid file::
 It is optional to supply a network file. If you decide to do so, it needs to
 follow this structure::
 
+    # A test network created as a set of CSV files
     ID, Name            , attribute_1, ..., Description
+    Units,              ,            ,    ,
     1 , My first network, test       ,    , A network create from CSV files
+
+
+Lines starting with the ``#`` character are ignored.
 
 .. note::
 
@@ -182,11 +187,15 @@ class ImportCSV(object):
 
         if file is not None:
             with open(file, mode='r') as csv_file:
-                self.net_data = csv_file.read()
-            keys = self.net_data.split('\n', 1)[0].split(',')
-            units = self.net_data.split('\n')[1].split(',')
+                self.net_data = csv_file.read().split('\n')
+            # Ignore comments
+            for i, line in enumerate(self.net_data):
+                if len(line) >0 and line.strip()[0] == '#':
+                    self.net_data.pop(i)
+            keys = self.net_data[0].split(',')
+            units = self.net_data[1].split(',')
             # A network file should only have one line of data
-            data = self.net_data.split('\n')[2].split(',')
+            data = self.net_data[2].split(',')
 
             # We assume a standard order of the network information (Name,
             # Description, attributes,...).
@@ -275,13 +284,17 @@ class ImportCSV(object):
 
     def read_nodes(self, file):
         with open(file, mode='r') as csv_file:
-            self.node_data = csv_file.read()
+            self.node_data = csv_file.read().split('\n')
+            # Ignore comments
+            for i, line in enumerate(self.node_data):
+                if len(line) >0 and line.strip()[0] == '#':
+                    self.node_data.pop(i)
         self.create_nodes()
 
     def create_nodes(self):
-        keys = self.node_data.split('\n', 1)[0].split(',')
-        units = self.node_data.split('\n')[1].split(',')
-        data = self.node_data.split('\n')[2:-1]
+        keys = self.node_data[0].split(',')
+        units = self.node_data[1].split(',')
+        data = self.node_data[2:-1]
 
         name_idx = 0
         desc_idx = -1  # Should be the last one
@@ -334,13 +347,17 @@ class ImportCSV(object):
 
     def read_links(self, file):
         with open(file, mode='r') as csv_file:
-            self.link_data = csv_file.read()
+            self.link_data = csv_file.read().split('\n')
+            # Ignore comments
+            for i, line in enumerate(self.link_data):
+                if len(line) >0 and line.strip()[0] == '#':
+                    self.link_data.pop(i)
         self.create_links()
 
     def create_links(self):
-        keys = self.link_data.split('\n', 1)[0].split(',')
-        units = self.link_data.split('\n')[1].split(',')
-        data = self.link_data.split('\n')[2:-1]
+        keys = self.link_data[0].split(',')
+        units = self.link_data[1].split(',')
+        data = self.link_data[2:-1]
 
         name_idx = 0
         desc_idx = -1  # Should be the last one
@@ -480,6 +497,11 @@ class ImportCSV(object):
                     logging.info('Reading data from %s ...' % value)
                     filedata = f.read()
                     f.close()
+                    tmp_filedata = filedata.split('\n')
+                    filedata = ''
+                    for i, line in enumerate(tmp_filedata):
+                        if len(line) > 0 and line.strip()[0] != '#':
+                            filedata = filedata + line + '\n'
                     if self.is_timeseries(filedata):
                         dataset.type = 'timeseries'
                         ts = self.create_timeseries(filedata)
