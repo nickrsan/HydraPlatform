@@ -197,6 +197,14 @@ class ResourceTemplateGroup(HydraComplexModel):
         ('resourcetemplates', SpyneArray(ResourceTemplate, default=[])),
     ]
 
+
+class ResourceGroupSummary(HydraComplexModel):
+    _type_info = [
+        ('name',    String),
+        ('templates', SpyneArray(String)),
+    ]
+
+
 class Resource(HydraComplexModel):
     pass
 
@@ -210,7 +218,7 @@ class Node(Resource):
         ('y',           Decimal(min_occurs=1, default=0)),
         ('status',      String(default='A')),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
-        ('templates',   SpyneArray(String, default=[])),
+        ('templates',   SpyneArray(ResourceGroupSummary, default=[])),
     ]
     def __eq__(self, other):
         if self.node_x == other.node_x and self.node_y == other.node_y \
@@ -229,7 +237,7 @@ class Link(Resource):
         ('node_2_id',   Integer(default=None)),
         ('status',      String(default='A')),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
-        ('templates',   SpyneArray(String, default=[])),
+        ('templates',   SpyneArray(ResourceGroupSummary, default=[])),
     ]
 
 class ResourceScenario(Resource):
@@ -274,9 +282,9 @@ class Scenario(Resource):
         ('network_id',           Integer(default=None)),
         ('status',               String(default='A')),
         ('attributes',           SpyneArray(ResourceAttr, default=[])),
-        ('templates',            SpyneArray(String, default=[])),
         ('resourcescenarios',    SpyneArray(ResourceScenario, default=[])),
         ('constraints',          SpyneArray(Constraint, default=[])),
+        ('templates',            SpyneArray(ResourceGroupSummary, default=[])),
     ]
 
 class Network(Resource):
@@ -288,10 +296,10 @@ class Network(Resource):
         ('layout',              String(min_occurs=1, default=None)),
         ('status',              String(default='A')),
         ('attributes',          SpyneArray(ResourceAttr, default=[])),
-        ('templates',           SpyneArray(String, default=[])),
         ('scenarios',           SpyneArray(Scenario, default=[])),
         ('nodes',               SpyneArray(Node, default=[])),
         ('links',               SpyneArray(Link, default=[])),
+        ('templates',           SpyneArray(ResourceGroupSummary, default=[])),
     ]
 
 class NetworkSummary(Resource):
@@ -310,7 +318,7 @@ class Project(Resource):
         ('cr_date',     String(default=None)),
         ('created_by',  Integer(default=None)),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
-        ('templates',   SpyneArray(String, default=[])),
+        ('templates',   SpyneArray(ResourceGroupSummary, default=[])),
 
     ]
 

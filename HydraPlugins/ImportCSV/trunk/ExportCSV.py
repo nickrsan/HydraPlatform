@@ -332,6 +332,10 @@ class ExportCSV(object):
         return resource_attribute_ids, attribute_names
 
     def get_attr_unit(self, scenario, r_attr_id):
+        """
+            Returns the unit of a given resource attribute within a scenario
+        """
+
         for rs in scenario.resourcescenarios.ResourceScenario:
             if rs.resource_attr_id == r_attr_id:
                 if rs.value.unit is not None:
@@ -341,6 +345,10 @@ class ExportCSV(object):
         return 'NULL'
 
     def get_attr_value(self, scenario, resource_attr):
+        """
+            Returns the value of a given resource attribute within a scenario
+        """
+
         r_attr_id = resource_attr.id
 
         if resource_attr.attr_is_var == 'Y':

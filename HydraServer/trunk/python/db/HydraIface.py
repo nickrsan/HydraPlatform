@@ -329,8 +329,16 @@ class IfaceBase(object):
             for attr in self.get_attributes():
                 attributes.append(attr.get_as_complexmodel())
             setattr(cm, 'attributes', attributes)
-            templates = self.get_templates()
-            setattr(cm, 'templates', [tmpl[1] for tmpl in templates])
+            template_groups = self.get_templates()
+            
+            template_list = []
+            for grp_name, templates in template_groups.items():
+                grp_summary = hydra_complexmodels.ResourceGroupSummary()
+                grp_summary.name = grp_name
+                grp_summary.templates = templates
+                template_list.append(grp_summary)
+
+            setattr(cm, 'templates', template_list)
 
         logging.info("Complex model conversion of %s took: %s " % (self.name, datetime.datetime.now()-start))
         return cm
@@ -765,33 +773,40 @@ class GenericResource(IfaceBase):
         """
             Using the attributes of the resource, get all the
             templates that this resource is in.
+            @returns a dictionary, keyed on the group name, with the
+            value being the list of template names which match the resources
+            attributes.
         """
+
         template_sql = """
             select
+                grp.group_name,
                 tmpl.template_id,
                 tmpl.template_name,
                 item.attr_id
             from
+                tResourceTemplateGroup grp,
                 tResourceTemplate tmpl,
                 tResourceTemplateItem item
             where
-                tmpl.template_id = item.template_id
+                grp.group_id   = tmpl.group_id
+                and tmpl.template_id = item.template_id
         """
         rs = execute(template_sql)
-        template_dict = {}
-        template_name_map = {}
-        #first create an empty list for all the template IDS.
-        for r in rs:
-            template_dict[r.template_id] = []
-            template_name_map[r.template_id] = r.template_name
-        
-        #Then fill in all the attributes for each template
-        for r in rs:
-            template_dict[r.template_id].append(r.attr_id)
 
-        #THen convert each list to a set for comparison later
-        for k, v in template_dict.items():
-            template_dict[k] = set(v)
+        group_dict   = {}
+        template_name_map = {}
+        for r in rs:
+            
+            template_name_map[r.template_id] = r.template_name
+            
+            if group_dict.get(r.group_name):
+                if group_dict[r.group_name].get(r.template_id):
+                    group_dict[r.group_name][r.template_id].add(r.attr_id)
+                else:
+                    group_dict[r.group_name][r.template_id] = set([r.attr_id]) 
+            else:
+                group_dict[r.group_name] = {r.template_id:set([r.attr_id])}
 
         #Create a list of all of this resources attributes.
         attr_ids = []
@@ -799,15 +814,19 @@ class GenericResource(IfaceBase):
             attr_ids.append(attr.db.attr_id)
         attr_ids = set(attr_ids)
 
+        resource_template_groups = {}
         #Find which template IDS this resources matches by checking if all
         #the templates attributes are in the resources attribute list.
-        resource_templates = []
-        for k, v in template_dict.items():
-            if v.issubset(attr_ids):
-                resource_templates.append((k, template_name_map[k]))
+        for grp_name, grp in group_dict.items():
+            resource_templates = []
+            for k, v in grp.items():
+                if v.issubset(attr_ids):
+                    resource_templates.append(template_name_map[k])
 
+            if len(resource_templates) > 0:
+                resource_template_groups[grp_name] = resource_templates
 
-        return resource_templates
+        return resource_template_groups
 
 class Project(GenericResource):
     """
