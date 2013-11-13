@@ -52,6 +52,8 @@ class SoapServerTest(unittest.TestCase):
 
     def setUp(self):
         hydra_logging.init(level='INFO')
+        logging.getLogger('suds').setLevel(logging.ERROR)
+        logging.getLogger('suds.client').setLevel(logging.CRITICAL)
         # Clear SUDS cache:
         shutil.rmtree(os.path.join(tmp(), 'suds'), True)
         global CLIENT
@@ -66,18 +68,19 @@ class SoapServerTest(unittest.TestCase):
 
     def create_project(self, name):
         project = self.client.factory.create('hyd:Project')
-        project.name = 'SOAP test'
+        project.name = 'SOAP test %s'%(datetime.datetime.now())
         project = self.client.service.add_project(project)
         return project
 
     def create_network(self, project):
         network = self.client.factory.create('hyd:Network')
-        network.name = 'Test network'
+        network.name = 'Test network @ %s'% datetime.datetime.now()
         network.description = 'A test network.'
         network.project_id = project.id
         network.nodes = []
         network.links = []
         network.scenarios = []
+        network.layout = ""
         network = self.client.service.add_network(network)
         return network
 
@@ -119,7 +122,7 @@ class SoapServerTest(unittest.TestCase):
         """
         start = datetime.datetime.now()
         (project) = {
-            'name'        : 'New Project',
+            'name'        : 'New Project %s'%(datetime.datetime.now()),
             'description' : 'New Project Description',
         }
         p =  self.client.service.add_project(project)
@@ -131,6 +134,7 @@ class SoapServerTest(unittest.TestCase):
         attr1 = self.create_attr("testattr_1")
         attr2 = self.create_attr("testattr_2")
         attr3 = self.create_attr("testattr_3")
+        attr4 = self.create_attr("testattr_4")
 
         print "Attribute creation took: %s"%(datetime.datetime.now()-start)
         start = datetime.datetime.now()
@@ -157,9 +161,14 @@ class SoapServerTest(unittest.TestCase):
         node_attr3  = self.client.factory.create('ns1:ResourceAttr')
         node_attr3.attr_id = attr3.id
         node_attr3.id = -3
+        node_attr4  = self.client.factory.create('ns1:ResourceAttr')
+        node_attr4.attr_id = attr4.id
+        node_attr4.id = -4
+        node_attr4.attr_is_var = 'Y'
         attr_array.ResourceAttr.append(node_attr1)
         attr_array.ResourceAttr.append(node_attr2)
         attr_array.ResourceAttr.append(node_attr3)
+        attr_array.ResourceAttr.append(node_attr4)
 
         node1.attributes = attr_array
 
@@ -216,6 +225,7 @@ class SoapServerTest(unittest.TestCase):
             'project_id'  : p['id'],
             'links'       : link_array,
             'nodes'       : node_array,
+            'layout'      : "color: red",
             'scenarios'   : scenario_array,
         }
         #print network

@@ -83,7 +83,7 @@ class LinkTest(test_HydraIface.HydraIfaceTest):
         net = self.create_network("Test Net", proj.db.project_id)
         node_a = self.create_node("Node A", net.db.network_id)
         node_b = self.create_node("Node B", net.db.network_id)
-        node_c = self.create_node("Node B", net.db.network_id)
+        node_c = self.create_node("Node C", net.db.network_id)
         x = HydraIface.Link()
         x.db.link_name = "test"
         x.db.link_description = "test description"

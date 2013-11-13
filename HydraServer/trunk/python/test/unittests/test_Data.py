@@ -13,14 +13,8 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = HydraIface.ScenarioData()
-        sd.db.data_id = data.db.data_id
-        sd.db.data_type  = 'scalar'
-        sd.db.data_units = 'metres-cubes'
-        sd.db.data_name  = 'volume'
-        sd.db.data_dimen = 'metres-cubed'
-        sd.save()
-        sd.commit()
+
+        sd = self.create_scenario_data(data.db.data_id) 
 
         assert sd.load() == True, "ScenarioData did not create correctly"
 
@@ -32,14 +26,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = HydraIface.ScenarioData()
-        sd.db.data_id = data.db.data_id
-        sd.db.data_type  = 'scalar'
-        sd.db.data_units = 'metres-cubes'
-        sd.db.data_name  = 'volume'
-        sd.db.data_dimen = 'metres-cubed'
-        sd.save()
-        sd.commit()
+        sd = self.create_scenario_data(data.db.data_id) 
 
         sd.db.data_type  = 'scalar_updated'
         sd.db.data_units = 'metres-cubes_updated'
@@ -59,15 +46,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = HydraIface.ScenarioData()
-        sd.db.data_id = data.db.data_id
-        sd.db.data_type = 'scalar'
-        sd.db.data_units = 'metres-cubes'
-        sd.db.data_name  = 'volume'
-        sd.db.data_dimen = 'metres-cubed'
-
-        sd.save()
-        sd.commit()
+        sd = self.create_scenario_data(data.db.data_id) 
 
         sd.delete()
         sd.save()
@@ -83,16 +62,8 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = HydraIface.ScenarioData()
-        sd.db.data_id = data.db.data_id
-        sd.db.data_type  = 'scalar'
-        sd.db.data_units = 'metres-cubes'
-        sd.db.data_name  = 'volume'
-        sd.db.data_dimen = 'metres-cubed'
-        sd.save()
-        sd.commit()
-        sd.load()
-
+        sd = self.create_scenario_data(data.db.data_id) 
+        
         y = HydraIface.ScenarioData(dataset_id=sd.db.dataset_id)
         assert y.load() == True, "Load did not work correctly"
 
@@ -171,31 +142,40 @@ class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         x = HydraIface.TimeSeries()
 
+        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        t2 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 01, 00))
+        t3 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 02, 00))
+
         ts_values = [
-            (datetime.datetime(2013, 07, 31, 9, 00, 00), 1),
-            (datetime.datetime(2013, 07, 31, 9, 01, 00), 2),
-            (datetime.datetime(2013, 07, 31, 9, 02, 00), 3),
+            (t1, 1),
+            (t2, 2),
+            (t3, 3),
         ]
 
         x.set_ts_values(ts_values)
         x.save()
         x.commit()
 
-        x.set_ts_value(datetime.datetime(2013, 07, 31, 9, 00, 00), 4)
+        x.set_ts_value(t1, 4)
         x.save()
         x.commit()
+        x.load()
 
-        assert x.get_ts_value(datetime.datetime(2013, 07, 31, 9, 00, 00)) == Decimal("4"), "TimeSeries did not update correctly"
+        assert x.get_ts_value(t1) == Decimal("4"), "TimeSeries did not update correctly"
 
     def test_delete(self):
         x = HydraIface.TimeSeries()
 
-        ts_values = [
-            (datetime.datetime(2013, 07, 31, 9, 00, 00), 1),
-            (datetime.datetime(2013, 07, 31, 9, 01, 00), 2),
-            (datetime.datetime(2013, 07, 31, 9, 02, 00), 3),
-        ]
+        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        t2 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 01, 00))
+        t3 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 02, 00))
 
+        ts_values = [
+            (t1, 1),
+            (t2, 2),
+            (t3, 3),
+        ]        
+        
         x.set_ts_values(ts_values)
         x.save()
         x.commit()
@@ -206,11 +186,15 @@ class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
     def test_load(self):
         x = HydraIface.TimeSeries()
 
+        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        t2 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 01, 00))
+        t3 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 02, 00))
+
         ts_values = [
-            (datetime.datetime(2013, 07, 31, 9, 00, 00), 1),
-            (datetime.datetime(2013, 07, 31, 9, 01, 00), 2),
-            (datetime.datetime(2013, 07, 31, 9, 02, 00), 3),
-        ]
+            (t1, 1),
+            (t2, 2),
+            (t3, 3),
+        ]   
 
         x.set_ts_values(ts_values)
 
@@ -229,7 +213,8 @@ class EqTimeSeriesTest(test_HydraIface.HydraIfaceTest):
 
         x.db.arr_data = [1, 2, 3, 4, 5]
 
-        x.db.start_time = datetime.datetime.now()
+        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        x.db.start_time = t1
         x.db.frequency = 1
         x.save()
         x.commit()
@@ -246,7 +231,8 @@ class EqTimeSeriesTest(test_HydraIface.HydraIfaceTest):
 
         x.db.arr_data = [1, 2, 3, 4, 5]
 
-        x.db.start_time = datetime.datetime.now()
+        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        x.db.start_time = t1
         x.db.frequency = 1
         x.save()
         x.commit()
@@ -261,7 +247,8 @@ class EqTimeSeriesTest(test_HydraIface.HydraIfaceTest):
 
         x.db.arr_data = [1, 2, 3, 4, 5]
 
-        x.db.start_time = datetime.datetime.now()
+        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        x.db.start_time = t1
         x.db.frequency = 1
         x.save()
         x.commit()
@@ -335,6 +322,8 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         sd.db.data_units = 'metres-cubes'
         sd.db.data_name  = 'volume'
         sd.db.data_dimen = 'metres-cubed'
+        sd.load_all()
+        sd.set_hash(sd.get_val())
         sd.save()
         sd.commit()
         return sd

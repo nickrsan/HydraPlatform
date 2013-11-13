@@ -5,7 +5,6 @@ from hydra_complexmodels import ResourceTemplate, ResourceTemplateGroup, Resourc
 
 from db import HydraIface
 from hydra_base import HydraService
-from hydra_base import RequestHeader 
 
 class TemplateService(HydraService):
     """
@@ -133,18 +132,24 @@ class TemplateService(HydraService):
         grp_i.load_all()
 
         for template in group.resourcetemplates:
-            if hasattr(template, 'id') and template.id is not None:
-                tmpl = HydraIface.ResourceTemplate(template_id=template.id)
-                tmpl.db.name = template.name
+            if template.id is not None:
+                for tmpl_i in grp_i.resourcetemplates:
+                    if tmpl_i.db.template_id == template.id:
+                        tmpl_i.db.template_name = template.name
+                        tmpl_i.save()
+                        tmpl_i.load_all()
+                        break
             else:
-                rt_i = grp_i.add_template(template.name)
+                tmpl_i = grp_i.add_template(template.name)
 
             for item in template.resourcetemplateitems:
-                for item_i in rt_i.resourcetemplateitems:
+                for item_i in tmpl_i.resourcetemplateitems:
                     if item_i.db.attr_id == item.attr_id:
                         break
                 else:
-                    rt_i.add_item(item.attr_id)
+                    tmpl_i.add_item(item.attr_id)
+                    tmpl_i.save()
 
+        grp_i.commit()
         return grp_i.get_as_complexmodel()
 

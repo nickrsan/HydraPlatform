@@ -129,6 +129,8 @@ from HydraLib import units
 
 from suds import WebFault
 
+import re
+
 
 class ImportCSV(object):
     """
@@ -166,7 +168,7 @@ class ImportCSV(object):
                 logging.info('Project ID not valid. Creating new project')
 
         self.Project = self.cli.factory.create('hyd:Project')
-        self.Project.name = "CSV import"
+        self.Project.name = "CSV import at %s"%(datetime.now())
         self.Project.description = \
             "Project created by the %s plug-in, %s." % \
             (self.__class__.__name__, datetime.now())
@@ -340,8 +342,9 @@ class ImportCSV(object):
                     node.y = 0
                     logging.info('Y coordinate of node %s is not a number.'
                                  % node.name)
-
-            node = self.add_data(node, attrs, linedata, units=units)
+            
+            if len(attrs) > 0:
+                node = self.add_data(node, attrs, linedata, units=units)
 
             self.Nodes.update({node.name: node})
 
@@ -404,7 +407,8 @@ class ImportCSV(object):
                                   ' No link created.') %
                                  (linedata[from_idx].strip(),
                                   linedata[to_idx].strip()))
-            link = self.add_data(link, attrs, linedata, units=units)
+            if len(attrs) > 0:
+                link = self.add_data(link, attrs, linedata, units=units)
             self.Links.update({link.name: link})
 
     def create_attribute(self, name, unit=None):
@@ -440,7 +444,7 @@ class ImportCSV(object):
                 self.Attributes.update({attrs[i]: attribute})
             attributes.Attr.append(attribute)
 
-        # Add all attributes. If they exixt already, we retrieve the real id.
+        # Add all attributes. If they exist already, we retrieve the real id.
         attributes = self.cli.service.add_attributes(attributes)
         for attr in attributes.Attr:
             self.Attributes.update({attr.name: attr})
@@ -455,22 +459,166 @@ class ImportCSV(object):
                 res_attr = self.cli.factory.create('hyd:ResourceAttr')
                 res_attr.id = self.attr_id.next()
                 res_attr.attr_id = attr.id
+
                 resource.attributes.ResourceAttr.append(res_attr)
 
             # create dataset and assign to attribute (if not empty)
             if len(data[i].strip()) > 0:
-                if units is not None:
-                    dataset = self.create_dataset(data[i], res_attr, units[i])
-                else:
-                    dataset = self.create_dataset(data[i], res_attr, None)
-                self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
+
+                if data[i] in ('NULL', 'I AM NOT A NUMBER, I AM A FREE MAN!'):
+
+                    res_attr.attr_is_var = 'Y'
+
+                else:    
+
+                    if units is not None:
+                        dataset = self.create_dataset(data[i], res_attr, units[i])
+                    else:
+                        dataset = self.create_dataset(data[i], res_attr, None)
+
+                    self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
 
         #resource.attributes = res_attr_array
 
         return resource
 
-    def read_constraints(self):
-        pass
+    def read_constraints(self, constraint_file):
+        """
+            Read constraints which should be in the format:
+            (ITEM op (ITEM op (ITEM op ITEM))...)
+        """
+        with open(constraint_file, mode='r') as csv_file:
+            self.constraint_data = csv_file.read()
+
+        constraints = self.constraint_data.split('\n')
+
+        for constraint_str in constraints:
+            if constraint_str.strip() == "":
+                continue
+            #parse the constraint string. that meanse:
+            #1: identify the constant
+            #2: identify the operation
+            #3: identify the individual elements and their structure.
+
+            split_str = constraint_str.split(' ')
+            logging.info(constraint_str)
+            constant  = split_str[-1]
+            op        = split_str[-2]
+           
+            constraint = self.cli.factory.create("hyd:Constraint")
+            constraint.constant = constant
+            constraint.op       = op
+            
+            main_group = self.get_group(constraint_str)
+
+            group = self.parse_constraint_group(main_group)
+
+            group_complexmodel = self.convert_to_complexmodel(group)
+
+            constraint.constraintgroup = group_complexmodel
+
+            self.Scenario.constraints.Constraint.append(constraint)
+
+    def convert_to_complexmodel(self, group):
+
+            regex = re.compile('[\[\]]')
+            
+            constraint_grp = self.cli.factory.create('hyd:ConstraintGroup')
+           
+            op = group[1]
+            constraint_grp.op = op
+            
+            lhs = group[0]
+            rhs = group[2]
+
+            for grp in (lhs, rhs):
+                if isinstance(grp, list):
+                    grp_cm = self.convert_to_complexmodel(grp)
+                    constraint_grp.constraintgroups.ConstraintGroup.append(grp_cm)
+                else:
+
+                    constraint_item = self.cli.factory.create('hyd:ConstraintItem')
+                    
+                    grp_parts = regex.split(grp)
+                    item_type = grp_parts[0]
+                    item_name = grp_parts[1]
+                    item_attr = grp_parts[3]
+
+                    if item_type == 'NODE':
+                        n = self.Nodes.get(item_name)
+                        
+                        if n is None:
+                            raise Exception('Node %s not found!'%(item_name))
+
+                        for ra in n.attributes.ResourceAttr:
+                            
+                            attr = self.Attributes.get(item_attr)
+                            if attr is None:
+                                raise Exception('Attr %s not found!'%(item_attr))
+
+                            if ra.attr_id == attr.id:
+                                constraint_item.resource_attr_id = ra.id
+
+                    constraint_grp.constraintitems.ConstraintItem.append(constraint_item)
+
+            return constraint_grp
+
+
+    def parse_constraint_group(self, group_str):
+        if group_str[0] == '(' and group_str[-1] == ')':
+            group_str = group_str[1:-1]
+
+        grp = [None, None, None]
+        
+        regex = re.compile('[\+\-\*\/]')
+
+        eq = regex.split(group_str)
+         
+        lhs = None
+        if group_str.startswith('('):
+            lhs = self.get_group(group_str)
+            grp[0] = self.parse_constraint_group(self.get_group(group_str))
+        else:
+            lhs = eq[0].strip()
+            grp[0] = lhs
+
+        group_str = group_str.replace(lhs, '', 1)
+
+        op = regex.findall(group_str)[0]
+        
+        grp[1] = op
+
+        group_str = group_str.replace(op, '').strip()
+
+        if group_str.startswith('('):
+            grp[2] = self.parse_constraint_group(self.get_group(group_str))
+        else:
+            grp[2] = group_str.strip()
+
+        return grp
+
+    def get_group(self, group_str):
+        #When this count equals 0, we have reached
+        #the end of the group,
+        count = 0
+        
+        for i, c in enumerate(group_str):
+            #found a sub-group, add 1 to count
+            if c == '(':
+                count = count + 1
+            elif c == ')':
+                #found the end of a group.
+                count = count - 1
+                #is the end of a sub-group or not?
+                if count == 0:
+                    #not, return the group.
+                    return group_str[0:i+1].strip() 
+
+        return group_str
+
+
+    def parse_constraint_item(self, item_str):
+        return item_str
 
     def create_dataset(self, value, resource_attr, unit):
         resourcescenario = self.cli.factory.create('hyd:ResourceScenario')
@@ -659,6 +807,10 @@ if __name__ == '__main__':
         if args.links is not None:
             for linkfile in args.links:
                 csv.read_links(linkfile)
+        
+        if args.rules is not None:
+            for constraintfile in args.rules:
+                csv.read_constraints(constraintfile)
 
         csv.commit()
 

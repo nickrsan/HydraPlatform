@@ -8,7 +8,7 @@ import copy
 class NetworkTest(test_SoapServer.SoapServerTest):
 
     def test_update(self):
-        project = test_SoapServer.SoapServerTest.create_project(self, 'test')
+        project = self.create_project('test')
         network = self.client.factory.create('hyd:Network')
         nodes = self.client.factory.create('hyd:NodeArray')
         links = self.client.factory.create('hyd:LinkArray')
@@ -68,7 +68,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
 
     def test_load(self):
-        project = test_SoapServer.SoapServerTest.create_project(self, 'test')
+        project = self.create_project('test')
         network = self.client.factory.create('hyd:Network')
         nodes = self.client.factory.create('hyd:NodeArray')
         links = self.client.factory.create('hyd:LinkArray')
@@ -114,7 +114,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             "project_description did not load correctly"
 
     def test_delete(self):
-        project = test_SoapServer.SoapServerTest.create_project(self, 'test')
+        project = self.create_project('test')
         network = self.client.factory.create('hyd:Network')
         nodes = self.client.factory.create('hyd:NodeArray')
         links = self.client.factory.create('hyd:LinkArray')

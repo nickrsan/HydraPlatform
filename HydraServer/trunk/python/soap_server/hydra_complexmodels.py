@@ -105,11 +105,11 @@ class HydraComplexModel(ComplexModel):
 
 class Dataset(ComplexModel):
     _type_info = [
-        ('id',               Integer(default=None)),
+        ('id',               Integer(min_occurs=1, default=None)),
         ('type',             String),
-        ('dimension',        String(default=None)),
-        ('unit',             String(default=None)),
-        ('name',             String(default=None)),
+        ('dimension',        String(min_occurs=1, default=None)),
+        ('unit',             String(min_occurs=1, default=None)),
+        ('name',             String(min_occurs=1, default=None)),
         ('value',            AnyDict),
     ]
 
@@ -149,51 +149,51 @@ class Array(ComplexModel):
 
 class DatasetGroupItem(ComplexModel):
     _type_info = [
-        ('group_id', Integer),
-        ('dataset_id', Integer),
+        ('group_id', Integer(default=None)),
+        ('dataset_id', Integer(default=None)),
     ]
 
 class DatasetGroup(ComplexModel):
     _type_info = [
-        ('group_name', String),
-        ('group_id'  , Integer),
+        ('group_name', String(default=None)),
+        ('group_id'  , Integer(default=None)),
         ('datasetgroupitems', SpyneArray(DatasetGroupItem)),
     ]
 
 class Attr(HydraComplexModel):
     _type_info = [
-        ('id', Integer),
-        ('name', String),
-        ('dimen', String),
+        ('id', Integer(default=None)),
+        ('name', String(default=None)),
+        ('dimen', String(default=None)),
     ]
 
 class ResourceAttr(HydraComplexModel):
     _type_info = [
-        ('id',      Integer),
-        ('attr_id', Integer),
-        ('ref_id',  Integer),
-        ('ref_key', String),
-        ('is_var',  Boolean),
+        ('id',      Integer(default=None)),
+        ('attr_id', Integer(default=None)),
+        ('ref_id',  Integer(default=None)),
+        ('ref_key', String(default=None)),
+        ('attr_is_var',  String(min_occurs=1, default='N')),
     ]
 
 class ResourceTemplateItem(HydraComplexModel):
     _type_info = [
-        ('attr_id', Integer),
+        ('attr_id',     Integer),
         ('template_id', Integer),
     ]
 
 class ResourceTemplate(HydraComplexModel):
     _type_info = [
-        ('name', String),
-        ('id', Integer),
-        ('group_id',    Integer(default=None)),
+        ('id',                    Integer(default=None)),
+        ('name',                  String(default=None)),
+        ('group_id',              Integer(min_occurs=1, default=None)),
         ('resourcetemplateitems', SpyneArray(ResourceTemplateItem, default=[])),
     ]
 
 class ResourceTemplateGroup(HydraComplexModel):
     _type_info = [
-        ('id',   Integer),
-        ('name', String),
+        ('id',                Integer(default=None)),
+        ('name',              String(default=None)),
         ('resourcetemplates', SpyneArray(ResourceTemplate, default=[])),
     ]
 
@@ -202,14 +202,15 @@ class Resource(HydraComplexModel):
 
 class Node(Resource):
     _type_info = [
-        ('id',          Integer),
-        ('name',        String),
-        ('description', String(default="")),
-        ('layout',      String(default="")),
-        ('x',           Decimal),
-        ('y',           Decimal),
-        ('status',      String),
+        ('id',          Integer(default=None)),
+        ('name',        String(default=None)),
+        ('description', String(min_occurs=1, default="")),
+        ('layout',      String(min_occurs=1, default="")),
+        ('x',           Decimal(min_occurs=1, default=0)),
+        ('y',           Decimal(min_occurs=1, default=0)),
+        ('status',      String(default='A')),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
+        ('templates',   SpyneArray(String, default=[])),
     ]
     def __eq__(self, other):
         if self.node_x == other.node_x and self.node_y == other.node_y \
@@ -220,43 +221,74 @@ class Node(Resource):
 
 class Link(Resource):
     _type_info = [
-        ('id',          Integer),
-        ('name',        String),
-        ('description', String(Default="")),
-        ('layout',      String(Default="")),
-        ('node_1_id',   Integer),
-        ('node_2_id',   Integer),
-        ('status',      String),
+        ('id',          Integer(default=None)),
+        ('name',        String(default=None)),
+        ('description', String(min_occurs=1, default="")),
+        ('layout',      String(min_occurs=1, default="")),
+        ('node_1_id',   Integer(default=None)),
+        ('node_2_id',   Integer(default=None)),
+        ('status',      String(default='A')),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
+        ('templates',   SpyneArray(String, default=[])),
     ]
 
 class ResourceScenario(Resource):
     _type_info = [
-        ('resource_attr_id', Integer),
-        ('attr_id',          Integer),
+        ('resource_attr_id', Integer(default=None)),
+        ('attr_id',          Integer(default=None)),
         ('value',            Dataset),
+    ]
+
+class ConstraintItem(HydraComplexModel):
+    _type_info = [
+        ('id',               Integer(default=None)),
+        ('constraint_id',    Integer(default=None)),
+        ('resource_attr_id', Integer(default=None)),
+    ]
+
+class ConstraintGroup(HydraComplexModel):
+    _type_info = [
+        ('id',            Integer(default=None)),
+        ('constraint_id', Integer(default=None)),
+        ('op',            String(default=None)),
+        ('constraintitems', SpyneArray(ConstraintItem, default=[]))
+    ]
+
+ConstraintGroup._type_info['constraintgroups'] = SpyneArray(ConstraintGroup, default=[])
+
+class Constraint(HydraComplexModel):
+    _type_info = [
+        ('id',            Integer(default=None)),
+        ('scenario_id',   Integer(default=None)),
+        ('constant',      Decimal(default=None)),
+        ('op',            String(default=None)),
+        ('value',         String(default=None)),
+        ('constraintgroup', ConstraintGroup),
     ]
 
 class Scenario(Resource):
     _type_info = [
-        ('id',                   Integer),
-        ('name',                 String),
-        ('description',          String),
-        ('network_id',           Integer),
-        ('status',               String),
+        ('id',                   Integer(default=None)),
+        ('name',                 String(default=None)),
+        ('description',          String(min_occurs=1, default="")),
+        ('network_id',           Integer(default=None)),
+        ('status',               String(default='A')),
         ('attributes',           SpyneArray(ResourceAttr, default=[])),
+        ('templates',            SpyneArray(String, default=[])),
         ('resourcescenarios',    SpyneArray(ResourceScenario, default=[])),
+        ('constraints',          SpyneArray(Constraint, default=[])),
     ]
 
 class Network(Resource):
     _type_info = [
-        ('project_id',          Integer),
-        ('id',                  Integer),
-        ('name',                String),
-        ('description',         String),
-        ('layout',              String),
-        ('status',              String),
+        ('project_id',          Integer(default=None)),
+        ('id',                  Integer(default=None)),
+        ('name',                String(default=None)),
+        ('description',         String(min_occurs=1, default=None)),
+        ('layout',              String(min_occurs=1, default=None)),
+        ('status',              String(default='A')),
         ('attributes',          SpyneArray(ResourceAttr, default=[])),
+        ('templates',           SpyneArray(String, default=[])),
         ('scenarios',           SpyneArray(Scenario, default=[])),
         ('nodes',               SpyneArray(Node, default=[])),
         ('links',               SpyneArray(Link, default=[])),
@@ -264,55 +296,31 @@ class Network(Resource):
 
 class NetworkSummary(Resource):
     _type_info = [
-        ('project_id',          Integer),
-        ('id',                  Integer),
-        ('name',                String),
+        ('project_id',          Integer(default=None)),
+        ('id',                  Integer(default=None)),
+        ('name',                String(default=None)),
     ]
 
 class Project(Resource):
     _type_info = [
-        ('id',          Integer),
-        ('name',        String),
-        ('description', String),
-        ('status',      String),
-        ('cr_date',     String),
-        ('created_by',  Integer),
+        ('id',          Integer(default=None)),
+        ('name',        String(default=None)),
+        ('description', String(default=None)),
+        ('status',      String(default='A')),
+        ('cr_date',     String(default=None)),
+        ('created_by',  Integer(default=None)),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
+        ('templates',   SpyneArray(String, default=[])),
 
     ]
 
 class ProjectSummary(Resource):
     _type_info = [
-        ('id',          Integer),
-        ('name',        String),
-        ('cr_date',     String),
+        ('id',          Integer(default=None)),
+        ('name',        String(default=None)),
+        ('cr_date',     String(default=None)),
     ]
 
-class ConstraintItem(HydraComplexModel):
-    _type_info = [
-        ('id',               Integer),
-        ('constraint_id',    Integer),
-        ('resource_attr_id', Integer),
-    ]
-
-class ConstraintGroup(HydraComplexModel):
-    _type_info = [
-        ('id',            Integer),
-        ('constraint_id', Integer),
-        ('op',            String),
-        ('items',         SpyneArray(ConstraintItem, default=[]))
-    ]
-
-ConstraintGroup._type_info['groups'] = SpyneArray(ConstraintGroup, default=[])
-
-class Constraint(HydraComplexModel):
-    _type_info = [
-        ('id',            Integer),
-        ('scenario_id',   Integer),
-        ('constant',      Decimal),
-        ('op',            String),
-        ('group',         ConstraintGroup),
-    ]
 
 class User(HydraComplexModel):
     _type_info = [

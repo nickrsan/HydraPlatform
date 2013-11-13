@@ -369,23 +369,24 @@ class DataService(HydraService):
             if sd.db.dataset_id is None:
                 new_scenario_data.append(sd)
 
-        last_dataset_id = HydraIface.bulk_insert(new_scenario_data, 'tScenarioData')
+        if len(new_scenario_data) > 0:
+            last_dataset_id = HydraIface.bulk_insert(new_scenario_data, 'tScenarioData')
 
-        #set the dataset ids on the new scenario data objects
-        next_id = last_dataset_id - len(new_scenario_data) + 1
-        idx = 0
+            #set the dataset ids on the new scenario data objects
+            next_id = last_dataset_id - len(new_scenario_data) + 1
+            idx = 0
 
-        while idx < len(new_scenario_data):
-            dataset_id     = next_id
-            new_scenario_data[idx].db.dataset_id = dataset_id
-            next_id        = next_id + 1
-            idx            = idx     + 1
+            while idx < len(new_scenario_data):
+                dataset_id     = next_id
+                new_scenario_data[idx].db.dataset_id = dataset_id
+                next_id        = next_id + 1
+                idx            = idx     + 1
 
-        #using the has of the new scenario data, find the placeholder in dataset_ids
-        #and replace it with the dataset_id.
-        for sd in new_scenario_data:
-            dataset_idx = dataset_ids.index(sd.db.data_hash)
-            dataset_ids[dataset_idx] = sd.db.dataset_id
+            #using the has of the new scenario data, find the placeholder in dataset_ids
+            #and replace it with the dataset_id.
+            for sd in new_scenario_data:
+                dataset_idx = dataset_ids.index(sd.db.data_hash)
+                dataset_ids[dataset_idx] = sd.db.dataset_id
 
         return dataset_ids
 

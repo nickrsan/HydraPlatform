@@ -15,7 +15,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         attr_3 = self.create_attr("attr3") 
         
         group = self.client.factory.create('hyd:ResourceTemplateGroup')
-        group.name = 'Test Group'
+        group.name = 'Test Group @ %s'%datetime.datetime.now()
 
         
         templates = self.client.factory.create('hyd:ResourceTemplateArray')
@@ -60,8 +60,8 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         attr_3 = self.create_attr("attr3") 
         
         group = self.client.factory.create('hyd:ResourceTemplateGroup')
-        group.name = 'Test Group'
-
+        
+        group.name = 'Test Group @ %s'%datetime.datetime.now()
         
         templates = self.client.factory.create('hyd:ResourceTemplateArray')
 
@@ -101,19 +101,26 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         
         #update the name of one of the templates
         new_group.resourcetemplates[0][0].name = "Test template 3"
+        updated_template_id = new_group.resourcetemplates[0][0].id
 
         #add an item to one of the templates
         item_3 = self.client.factory.create('hyd:ResourceTemplateItem')
         item_3.attr_id = attr_3.id
         new_group.resourcetemplates[0][0].resourcetemplateitems.ResourceTemplateItem.append(item_3)
 
-        updated_group = self.client.service.add_resourcetemplategroup(new_group)
+        updated_group = self.client.service.update_resourcetemplategroup(new_group)
 
         assert updated_group.name == group.name, "Names are not the same!"
+        
+        updated_template = None
+        for tmpl in new_group.resourcetemplates.ResourceTemplate:
+            if tmpl.id == updated_template_id:
+                updated_template = tmpl
+                break
 
-        assert updated_group.resourcetemplates[0][0].name == "Test template 3", "Resource templates did not add correctly"
+        assert updated_template.name == "Test template 3", "Resource templates did not update correctly"
 
-        assert len(updated_group.resourcetemplates[0][0].resourcetemplateitems[0]) == 2, "Resource template items did not update correctly"
+        assert len(updated_template.resourcetemplateitems[0]) == 2, "Resource template items did not update correctly"
 
     def test_add_template(self):
 

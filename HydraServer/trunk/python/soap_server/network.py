@@ -1,6 +1,6 @@
 import logging
 from HydraLib.HydraException import HydraError
-from spyne.model.primitive import Integer, Boolean
+from spyne.model.primitive import String, Integer, Boolean
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Network, Node, Link, Scenario
@@ -8,6 +8,7 @@ from db import HydraIface
 from HydraLib import hdb
 from hydra_base import HydraService, ObjectNotFoundError
 import scenario
+from constraints import ConstraintService
 import datetime
 
 def _add_attributes(resource_i, attributes):
@@ -15,15 +16,12 @@ def _add_attributes(resource_i, attributes):
         return []
     #ra is for ResourceAttr
     for ra in attributes:
-        attr_is_var = 'N'
-        if ra.is_var is True:
-            attr_is_var = 'Y'
 
         if ra.id < 0:
-            ra_i = resource_i.add_attribute(ra.attr_id, attr_is_var)
+            ra_i = resource_i.add_attribute(ra.attr_id, ra.attr_is_var)
         else:
             ra_i = HydraIface.ResourceAttr(resource_attr_id=ra.id)
-            ra_i.db.attr_is_var = attr_is_var
+            ra_i.db.attr_is_var = ra.attr_is_var
 
     return resource_i.attributes
 
@@ -33,21 +31,25 @@ def _update_attributes(resource_i, attributes):
         return dict()
     #ra is for ResourceAttr
     for ra in attributes:
-        attr_is_var = 'N'
-        if ra.is_var is True:
-            attr_is_var = 'Y'
 
         if ra.id < 0:
-            ra_i = resource_i.add_attribute(ra.attr_id, attr_is_var)
+            ra_i = resource_i.add_attribute(ra.attr_id, ra.attr_is_var)
         else:
             ra_i = HydraIface.ResourceAttr(resource_attr_id=ra.id)
-            ra_i.db.attr_is_var = attr_is_var
+            ra_i.db.attr_is_var = ra.attr_is_var
 
         ra_i.save()
 
         resource_attr_id_map[ra.id] = ra_i.db.resource_attr_id
 
     return resource_attr_id_map
+
+def update_constraint_refs(constraintgroup, resource_attr_map):
+    for item in constraintgroup.constraintitems:
+        item.resource_attr_id = resource_attr_map[item.resource_attr_id]
+
+    for group in constraintgroup.constraintgroups:
+        update_constraint_refs(group, resource_attr_map)
 
 class NetworkService(HydraService):
     """
@@ -190,6 +192,10 @@ class NetworkService(HydraService):
                 #This is to get the resource scenarios into the scenario
                 #object, so they are included into the scenario's complex model
                 scen.load_all()
+                
+                for constraint in s.constraints:
+                    update_constraint_refs(constraint.constraintgroup, resource_attr_id_map)
+                    ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint) 
 
                 x.scenarios.append(scen)
 
@@ -213,6 +219,43 @@ class NetworkService(HydraService):
         net = x.get_as_complexmodel()
 
         return net
+
+    @rpc(String, Integer, _returns=Network)
+    def get_network_by_name(ctx, project_id, network_name):
+        """
+            Return a whole network as a complex model.
+        """
+
+        sql = """
+            select
+                network_id
+            from
+                tNetwork
+            where
+                project_id = %s
+            and lower(network_name) like '%%%s%%'
+        """
+
+        rs = HydraIface.execute(sql)
+        if len(rs) == 0:
+            raise HydraError('No network named %s found in project %s'%(network_name, project_id))
+        elif len(rs) > 1:
+            logging.warning("Multiple networks names %s found in project %s. Choosing first network in rs(network_id=%s)"%(network_name, project_id, rs[0].network_id))
+        
+        network_id = rs[0].network_id
+
+
+        x = HydraIface.Network(network_id = network_id)
+
+        if x.load_all() is False:
+            raise ObjectNotFoundError("Network (network_id=%s) not found." % \
+                                      network_id)
+
+        net = x.get_as_complexmodel()
+
+        return net
+
+
 
     @rpc(Network, _returns=Network)
     def update_network(ctx, network):

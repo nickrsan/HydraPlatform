@@ -1,23 +1,25 @@
 import test_HydraIface
 import mysql.connector
 from db import HydraIface
+import datetime
 
 class ResourceTemplateGroupTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         x = HydraIface.ResourceTemplateGroup()
-        x.db.group_name = "test"
+        x.db.group_name = "test @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
 
-        x.db.group_name = "test_new"
+        new_name = "new test @ %s"%datetime.datetime.now()
+        x.db.group_name = new_name
         x.save()
         x.commit()
         x.load()
-        assert x.db.group_name == "test_new", "ResourceTemplate did not update correctly"
+        assert x.db.group_name == new_name, "ResourceTemplate did not update correctly"
 
     def test_delete(self):
         x = HydraIface.ResourceTemplateGroup()
-        x.db.group_name = "test"
+        x.db.group_name = "test @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
 
@@ -26,7 +28,7 @@ class ResourceTemplateGroupTest(test_HydraIface.HydraIfaceTest):
 
     def test_load(self):
         x = HydraIface.ResourceTemplateGroup()
-        x.db.group_name = "test"
+        x.db.group_name = "test @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
@@ -50,7 +52,7 @@ class ResourceTemplateTest(test_HydraIface.HydraIfaceTest):
 
     def test_delete(self):
         x = HydraIface.ResourceTemplate()
-        x.db.template_name = "test"
+        x.db.template_name = "test @ %s" % datetime.datetime.now()
         x.save()
         x.commit()
 
@@ -59,7 +61,7 @@ class ResourceTemplateTest(test_HydraIface.HydraIfaceTest):
 	
     def test_correct_fk(self):
         x = HydraIface.ResourceTemplateGroup()
-        x.db.group_name = "test"
+        x.db.group_name = "test @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
@@ -74,7 +76,7 @@ class ResourceTemplateTest(test_HydraIface.HydraIfaceTest):
 
     def test_incorrect_fk(self):
         x = HydraIface.ResourceTemplateGroup()
-        x.db.group_name = "test"
+        x.db.group_name = "test @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
@@ -86,7 +88,7 @@ class ResourceTemplateTest(test_HydraIface.HydraIfaceTest):
 
     def test_load(self):
         x = HydraIface.ResourceTemplate()
-        x.db.template_name = "test"
+        x.db.template_name = "test @ %s" % datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
@@ -98,7 +100,7 @@ class ResourceTemplateItemTest(test_HydraIface.HydraIfaceTest):
 
     def create_template(self, name):
         x = HydraIface.ResourceTemplate()
-        x.db.template_name = "test"
+        x.db.template_name = "test @ %s"%(datetime.datetime.now())
         x.save()
         x.commit()
         x.load()

@@ -14,18 +14,18 @@ def create_constraint_struct(constraint_id, group):
     group_i = HydraIface.ConstraintGroup()
     group_i.db.op = group.op
     group_i.db.constraint_id = constraint_id
-    
-    if hasattr(group, 'groups') and group.groups is not None:
-        for ref_num, sub_group in enumerate(group.groups):
+   
+
+
+    for ref_num, sub_element in enumerate(group.constraintgroups + group.constraintitems):
+        if isinstance(sub_element, ConstraintGroup):
             setattr(group_i.db, "ref_key_%s"%(ref_num+1), 'GRP')
-            sub_group_i = create_constraint_struct(constraint_id, sub_group)
+            sub_group_i = create_constraint_struct(constraint_id, sub_element)
             setattr(group_i.db, "ref_id_%s"%(ref_num+1), sub_group_i.db.group_id)
             group_i.groups.append(sub_group_i)
-
-    if hasattr(group, 'items') and group.items is not None:
-        for ref_num, item in enumerate(group.items):
+        else:
             item_i = HydraIface.ConstraintItem()
-            item_i.db.resource_attr_id = item.resource_attr_id
+            item_i.db.resource_attr_id = sub_element.resource_attr_id
             item_i.db.constraint_id    = constraint_id
             item_i.save()
             setattr(group_i.db, "ref_key_%s"%(ref_num+1), 'ITEM')
@@ -57,7 +57,7 @@ class ConstraintService(HydraService):
     
         constraint_i.save()
 
-        group_i = create_constraint_struct(constraint_i.db.constraint_id, constraint.group)
+        group_i = create_constraint_struct(constraint_i.db.constraint_id, constraint.constraintgroup)
 
         constraint_i.db.group_id = group_i.db.group_id
         constraint_i.save()
@@ -73,3 +73,18 @@ class ConstraintService(HydraService):
         
         return constraint_i.get_as_complexmodel()
  
+    @rpc(ConstraintGroup, _returns=ConstraintGroup)
+    def echo_constraintgroup(ctx, constraintgroup):
+        """
+            Echo a constraint group. Needed for the server
+            to publish the ConstraintGroup object correctly
+        """
+        return constraintgroup
+
+    @rpc(ConstraintItem, _returns=ConstraintItem)
+    def echo_constraintgroup(ctx, constraintitem):
+        """
+            Echo a constraint item. Needed for the server
+            to publish the ConstraintItem object correctly
+        """
+        return constraintitem

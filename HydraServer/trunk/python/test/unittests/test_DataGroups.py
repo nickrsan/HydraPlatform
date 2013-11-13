@@ -12,14 +12,7 @@ class DatasetGroupTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = HydraIface.ScenarioData()
-        sd.db.data_id = data.db.data_id
-        sd.db.data_type  = 'scalar'
-        sd.db.data_units = 'metres-cubes'
-        sd.db.data_name  = 'volume'
-        sd.db.data_dimen = 'metres-cubed'
-        sd.save()
-        sd.commit()
+        sd = self.create_scenario_data(data.db.data_id)
 
         assert sd.load() == True, "ScenarioData 1 did not create correctly"
 

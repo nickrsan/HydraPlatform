@@ -1,23 +1,25 @@
 import test_HydraIface
 from db import HydraIface
+import datetime
 
 class ProjectTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         x = HydraIface.Project()
-        x.db.project_name = "test"
+        x.db.project_name = "test @ %s"%datetime.datetime.now()
         x.db.project_description = "test description"
         x.save()
         x.commit()
-
-        x.db.project_name = "test_new"
+        
+        new_name = "test @ %s"%datetime.datetime.now()
+        x.db.project_name = new_name 
         x.save()
         x.commit()
         x.load()
-        assert x.db.project_name == "test_new", "Project did not update correctly"
+        assert x.db.project_name == new_name, "Project did not update correctly"
 
     def test_delete(self):
         x = HydraIface.Project()
-        x.db.project_name = "test"
+        x.db.project_name = "test @ %s"%datetime.datetime.now()
         x.db.project_description = "test description"
         x.save()
         x.commit()
@@ -29,7 +31,7 @@ class ProjectTest(test_HydraIface.HydraIfaceTest):
 
     def test_load(self):
         x = HydraIface.Project()
-        x.db.project_name = "test"
+        x.db.project_name = "test @ %s"%datetime.datetime.now()
         x.db.project_description = "test description"
         x.save()
         x.commit()

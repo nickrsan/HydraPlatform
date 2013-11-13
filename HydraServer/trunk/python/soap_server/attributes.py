@@ -151,7 +151,7 @@ class AttributeService(HydraService):
             x.name  = r.attr_name
             x.dimen = r.attr_dimen
             x.id    = r.attr_id
-            attrs.append[x]
+            attrs.append(x)
 
         return attrs
 

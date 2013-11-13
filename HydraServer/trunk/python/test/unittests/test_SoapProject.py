@@ -3,6 +3,7 @@
 
 import test_SoapServer
 import copy
+import datetime
 
 def setup():
     test_SoapServer.connect()
@@ -15,7 +16,7 @@ class ProjectTest(test_SoapServer.SoapServerTest):
 
     def test_update(self):
         project = self.client.factory.create('hyd:Project')
-        project.name = 'SOAP test'
+        project.name = 'SOAP test %s'%(datetime.datetime.now())
         project.description = \
             'A project created through the SOAP interface.'
         project = self.client.service.add_project(project)
@@ -40,7 +41,7 @@ class ProjectTest(test_SoapServer.SoapServerTest):
 
     def test_load(self):
         project = self.client.factory.create('hyd:Project')
-        project.name = 'SOAP test'
+        project.name = 'SOAP test %s'%(datetime.datetime.now())
         project.description = \
             'A project created through the SOAP interface.'
         project = self.client.service.add_project(project)
@@ -54,7 +55,7 @@ class ProjectTest(test_SoapServer.SoapServerTest):
 
     def test_delete(self):
         project = self.client.factory.create('hyd:Project')
-        project.name = 'SOAP test'
+        project.name = 'SOAP test %s'%(datetime.datetime.now())
         project.description = \
             'A project created through the SOAP interface.'
         project = self.client.service.add_project(project)
@@ -70,7 +71,7 @@ class ProjectTest(test_SoapServer.SoapServerTest):
         
         project = self.client.factory.create('hyd:Project')
 
-        project.name = 'SOAP test'
+        project.name = 'SOAP test %s'%(datetime.datetime.now())
         project.description = \
             'A project created through the SOAP interface.'
         project = self.client.service.add_project(project)

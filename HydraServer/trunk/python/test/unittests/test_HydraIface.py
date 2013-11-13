@@ -7,6 +7,7 @@ import unittest
 from db import HydraIface
 from HydraLib import hydra_logging, hdb
 import logging
+import datetime
 
 class HydraIfaceTest(unittest.TestCase):
     def setUp(self):
@@ -35,7 +36,7 @@ class HydraIfaceTest(unittest.TestCase):
 
     def create_project(self, name):
         x = HydraIface.Project()
-        x.db.project_name = name
+        x.db.project_name =  '%s_%s'%(name, datetime.datetime.now())
         x.save()
         x.commit()
         return x
@@ -103,12 +104,26 @@ class HydraIfaceTest(unittest.TestCase):
         x.db.data_type = "double"
         x.db.data_units = "metres cubed"
         x.db.data_name  = "output"
-        x.db.data_dim   = "metres cubed"
+        x.db.data_dimen = "metres cubed"
+        x.load_all()
+        x.set_hash(x.get_val())
         x.save()
         x.commit()
         return x
 
 
+    def get_ordinal_timestamp(self, ts_time):
+        # Convert time to Gregorian ordinal (1 = January 1st, year 1)
+        ordinal_ts_time = ts_time.toordinal()
+        fraction = (ts_time -
+                    datetime.datetime(ts_time.year,
+                                      ts_time.month,
+                                      ts_time.day,
+                                      0, 0, 0)).total_seconds()
+        fraction = fraction / (86400)
+        ordinal_ts_time += fraction
+
+        return ordinal_ts_time
 
 def run():
    # hydra_logging.init(level='DEBUG')

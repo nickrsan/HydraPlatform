@@ -263,7 +263,9 @@ class IfaceBase(object):
                     child_obj.db.__setattr__(col, val)
                 
                 child_obj.in_db = True
-                child_obj.in_db = True
+
+                child_obj.load_all()
+
                 child_objs.append(child_obj)
 
             #ex: set network.links = [link1, link2, link3]
@@ -314,7 +316,7 @@ class IfaceBase(object):
             objs = getattr(self, name)
             child_objs = []
             for obj in objs:
-                obj.load()
+                obj.load_all()
                 child_cm = obj.get_as_complexmodel()
                 child_objs.append(child_cm)
             setattr(cm, name, child_objs)
@@ -327,6 +329,9 @@ class IfaceBase(object):
             for attr in self.get_attributes():
                 attributes.append(attr.get_as_complexmodel())
             setattr(cm, 'attributes', attributes)
+            templates = self.get_templates()
+            setattr(cm, 'templates', [tmpl[1] for tmpl in templates])
+
         logging.info("Complex model conversion of %s took: %s " % (self.name, datetime.datetime.now()-start))
         return cm
 
@@ -479,12 +484,14 @@ class IfaceDB(object):
             val = str(self.db_data[name])
 
             #Cast the value to the correct DB data type
-            if db_type == "double":
+            if db_type == "double" or db_type == "double unsigned":
                 return Decimal(val)
             elif db_type.find('int') != -1:
                 return int(val)
             elif db_type == 'blob':
                 return eval(val)
+            elif db_type == 'datetime':
+                return self.db_data[name]
 
             return val
 
@@ -554,7 +561,7 @@ class IfaceDB(object):
         #Idenitfy the primary key, which is used to get a single row in the db.
         for pk in self.pk_attrs:
             if self.__getattr__(pk) is None:
-                logging.warning("Primary key is not set. Cannot load row from DB.")
+                logging.warning("%s: Primary key is not set. Cannot load row from DB.", self.table_name)
                 return False
 
         #Create a skeleton query
@@ -752,6 +759,55 @@ class GenericResource(IfaceBase):
         rs.save()
 
         return rs
+
+
+    def get_templates(self):
+        """
+            Using the attributes of the resource, get all the
+            templates that this resource is in.
+        """
+        template_sql = """
+            select
+                tmpl.template_id,
+                tmpl.template_name,
+                item.attr_id
+            from
+                tResourceTemplate tmpl,
+                tResourceTemplateItem item
+            where
+                tmpl.template_id = item.template_id
+        """
+        rs = execute(template_sql)
+        template_dict = {}
+        template_name_map = {}
+        #first create an empty list for all the template IDS.
+        for r in rs:
+            template_dict[r.template_id] = []
+            template_name_map[r.template_id] = r.template_name
+        
+        #Then fill in all the attributes for each template
+        for r in rs:
+            template_dict[r.template_id].append(r.attr_id)
+
+        #THen convert each list to a set for comparison later
+        for k, v in template_dict.items():
+            template_dict[k] = set(v)
+
+        #Create a list of all of this resources attributes.
+        attr_ids = []
+        for attr in self.get_attributes():
+            attr_ids.append(attr.db.attr_id)
+        attr_ids = set(attr_ids)
+
+        #Find which template IDS this resources matches by checking if all
+        #the templates attributes are in the resources attribute list.
+        resource_templates = []
+        for k, v in template_dict.items():
+            if v.issubset(attr_ids):
+                resource_templates.append((k, template_name_map[k]))
+
+
+        return resource_templates
 
 class Project(GenericResource):
     """
@@ -1136,7 +1192,6 @@ class ResourceScenario(IfaceBase):
 
         return cm
 
-
 class ScenarioData(IfaceBase):
     """
         A table recording all pieces of data, including the
@@ -1151,18 +1206,81 @@ class ScenarioData(IfaceBase):
         if dataset_id is not None:
             self.load()
 
-    def get_val(self):
+    def get_val_at_time(self, timestamp, ts_value):
+        """
+            Given a timestamp (or list of timestamps) and some timeseries data,
+            return the values appropriate to the requested times.
+            
+            If the timestamp is *before* the start of the timeseries data, return None
+            If the timestamp is *after* the end of the timeseries data, return the last
+            value.
+        """
+        val = None
+        if timestamp is not None:
+            #get the ts_value most appropriate for the given timestamp
+            ts_val_dict = dict(ts_value)
+            sorted_times = ts_val_dict.keys()
+            sorted_times.sort()
+            sorted_times.reverse()
+
+            if isinstance(timestamp, list):
+                val = []
+                for t in timestamp:
+                    for time in sorted_times:
+                        if t >= time:
+                            val.append(ts_val_dict[time])
+                            break
+                    else:
+                        val.append(None)
+                
+            else:
+                for time in sorted_times:
+                    if timestamp >= time:
+                        val =  ts_val_dict[time]
+                        break
+                else:
+                    val = None
+        return val
+
+
+
+    def get_val(self, timestamp=None):
         val = None
         if self.db.data_type == 'descriptor':
             d = Descriptor(data_id = self.db.data_id)
             val = d.db.desc_val
         elif self.db.data_type == 'timeseries':
             ts = TimeSeries(data_id=self.db.data_id)
+            ts.load_all()
+            
             ts_datas = ts.timeseriesdatas
-            val = [(ts_data.db.time, ts_data.db.ts_value) for ts_data in ts_datas]
+            val = [(ts_data.db.ts_time, ts_data.db.ts_value) for ts_data in ts_datas]
+            
+            if timestamp is not None:
+                val =  self.get_val_at_time(timestamp, val)
+
         elif self.db.data_type == 'eqtimeseries':
             eqts = EqTimeSeries(data_id = self.db.data_id)
             val  = eqts.db.arr_data
+
+            if timestamp is not None:
+                #easiest thing to do is build up a dictionary of timestamp / values
+                val = eval(val) #this should be a multi-dimensional list
+                start_date = eqts.db.start_time
+                val_dict = dict()
+                time_interval = start_date
+                time_delta    = datetime.timedelta(seconds=eqts.db.frequency)
+                for v in val:
+                    val_dict[time_interval] = v
+                    time_interval = time_interval + time_delta 
+
+                for time in val_dict.keys().sort().reverse():
+                    if timestamp >= time:
+                        val = val_dict[time]
+                        break
+                else:
+                    val = None
+
         elif self.db.data_type == 'scalar':
             s = Scalar(data_id = self.db.data_id)
             val = s.db.param_value
@@ -1226,6 +1344,7 @@ class ScenarioData(IfaceBase):
             complexmodel = {'desc_val': [d.db.desc_val]}
         elif self.db.data_type == 'timeseries':
             ts = TimeSeries(data_id=self.db.data_id)
+            ts.load_all()
             ts_datas = ts.timeseriesdatas
             ts_values = []
             for ts in ts_datas:
@@ -1291,6 +1410,7 @@ class ScenarioData(IfaceBase):
         self.db.data_hash = data_hash
         return data_hash
 
+    
 class DatasetGroup(IfaceBase):
     """
         Groups data together to make it easier to find
@@ -1359,7 +1479,7 @@ class TimeSeries(IfaceBase):
         """
 
         for ts in self.timeseriesdatas:
-            if ts.db.data_id == self.db.data_id and ts.db.ts_time == str(time):
+            if ts.db.data_id == self.db.data_id and ts.db.ts_time == time:
                 ts.db.ts_value = value
                 return
         #else:
@@ -1386,7 +1506,7 @@ class TimeSeries(IfaceBase):
         """
         for ts_data in self.timeseriesdatas:
             logging.debug("%s vs %s", ts_data.db.ts_time, time)
-            if ts_data.db.ts_time == str(time):
+            if ts_data.db.ts_time == time:
                 return ts_data.db.ts_value
         logging.info("No value found at %s for data_id %s", time, self.db.data_id)
         return None
@@ -1413,7 +1533,7 @@ class TimeSeriesData(IfaceBase):
         Non-equally spaced time series data
         In other words: a value and a timestamp.
     """
-    def __init__(self, data_id = None):
+    def __init__(self, timeseries=None, data_id = None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.data_id = data_id
@@ -1475,6 +1595,18 @@ class Constraint(IfaceBase):
         condition_string = "%s %s %s"%(grp_1.eval_group(), self.db.op, self.db.constant)
 
         return condition_string
+
+    def get_as_complexmodel(self):
+        cm = hydra_complexmodels.Constraint()
+        cm.id = self.db.constraint_id
+        cm.scenario_id = self.db.scenario_id
+        cm.constant    = self.db.constant
+        cm.op          = self.db.op
+
+        grp_1 = ConstraintGroup(constraint=self, group_id = self.db.group_id)
+        cm.value = grp_1.get_as_complexmodel()
+
+        return cm
 
 
 class ConstraintGroup(IfaceBase):
@@ -1581,21 +1713,25 @@ class ConstraintGroup(IfaceBase):
 
         if self.db.ref_key_1 == 'GRP':
             group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_1)
-            str_1 = group.eval_group()
+            str_1 = group.get_as_complexmodel()
         elif self.db.ref_key_1 == 'ITEM':
             item = ConstraintItem(item_id=self.db.ref_id_1)
 
-            str_1 = item.db.resource_attr_id
+            #str_1 = item.db.resource_attr_id
+            item_details = item.get_item_details()   
+            str_1 = "%s[%s][%s]" % (item_details[1], item_details[3], item_details[0])
 
         if self.db.ref_key_2 == 'GRP':
             group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_2)
-            str_2 = group.eval_group()
+            str_2 = group.get_as_complexmodel()
         elif self.db.ref_key_2 == 'ITEM':
             item = ConstraintItem(item_id=self.db.ref_id_2)
 
-            str_2 = item.db.resource_attr_id
+            #str_2 = item.db.resource_attr_id
+            item_details = item.get_item_details()
+            str_2 = "%s[%s][%s]" % (item_details[1], item_details[3], item_details[0])
 
-        return "(%s %s %s)"%(str_1, self.db.op, str_2)
+        return "(%s %s %s)" % (str_1, self.db.op, str_2)
 
 class ConstraintItem(IfaceBase):
     """
@@ -1608,6 +1744,56 @@ class ConstraintItem(IfaceBase):
         self.db.item_id = item_id
         if item_id is not None:
             self.load()
+
+    def get_item_details(self):
+        """
+            Get the resource name, id and attribute to which 
+            this resource attribute belongs.
+        """
+
+        sql = """
+            select
+                attr.attr_name,
+                ra.ref_key,
+                ra.ref_id,
+                case when node.node_name is not null then node.node_name
+                    when link.link_name is not null then link.link_name
+                    when network.network_name is not null then network.network_name
+                    when project.project_name is not null then project.project_name
+                    else null
+                end as resource_name
+                from
+                    tResourceAttr ra
+                    left join tNode node on (
+                        ra.ref_key = 'NODE'
+                        and ra.ref_id = node.node_id
+                    )
+                    left join tLink link on (
+                        ra.ref_key = 'LINK'
+                        and ra.ref_id = link.link_id
+                    )
+                    left join tNetwork network on (
+                        ra.ref_key = 'NETWORK'
+                        and ra.ref_id = network.network_id
+                    )
+                    left join tProject project on (
+                        ra.ref_key = 'PROJECT'
+                        and ra.ref_id = project.project_id
+                    ),
+                    tAttr attr
+                where
+                    ra.resource_attr_id = %s
+                    and attr.attr_id = ra.attr_id
+        """ % self.db.resource_attr_id
+
+        rs = execute(sql)
+
+        if len(rs) == 0:
+            raise HydraError("Could not find resource for"
+                " resource attribute(%s) in the contraint item!",
+                self.db.resource_attr_id)
+
+        return (rs[0].attr_name, rs[0].ref_key, rs[0].ref_id, rs[0].resource_name)
 
 class User(IfaceBase):
     """
