@@ -204,19 +204,29 @@ class NetworkService(HydraService):
 
         return return_value
 
-
-    @rpc(Integer, _returns=Network)
-    def get_network(ctx, network_id):
+    @rpc(Integer, Integer, _returns=Network)
+    def get_network(ctx, network_id, scenario_id=None):
         """
             Return a whole network as a complex model.
         """
         x = HydraIface.Network(network_id = network_id)
 
         if x.load_all() is False:
-            raise ObjectNotFoundError("Network (network_id=%s) not found." % \
+            raise ObjectNotFoundError("Network (network_id=%s) not found." %
                                       network_id)
 
         net = x.get_as_complexmodel()
+
+        if scenario_id is not None:
+            scenario = []
+            for scen in net.scenarios:
+                if scen.id == scenario_id:
+                    x = HydraIface.Scenario(scenario_id=scenario_id)
+                    x.load_all()
+                    scenario = x.get_as_complexmodel()
+                    break
+            net.scenarios = []
+            net.scenarios.append(scenario)
 
         return net
 

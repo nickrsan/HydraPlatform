@@ -158,10 +158,12 @@ class AttributeService(HydraService):
     @rpc(String, _returns=Attr)
     def get_attribute(ctx, name):
         """
-            Get a specific attribute by its name.
+            Get a specific attribute by its name or by its ID.
         """
 
-        sql = """
+        try:
+            ID = int(name)
+            sql = """
             select
                 attr_id,
                 attr_name,
@@ -169,8 +171,20 @@ class AttributeService(HydraService):
             from
                 tAttr
             where
-                attr_name = '%s'
-        """ % name
+                attr_id = %s
+            """ % ID
+        except ValueError:
+
+            sql = """
+                select
+                    attr_id,
+                    attr_name,
+                    attr_dimen
+                from
+                    tAttr
+                where
+                    attr_name = '%s'
+            """ % name
 
         rs = HydraIface.execute(sql)
 
