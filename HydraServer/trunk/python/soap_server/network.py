@@ -79,19 +79,19 @@ class NetworkService(HydraService):
         return_value = None
         insert_start = datetime.datetime.now()
 
-        x = HydraIface.Network()
+        net_i = HydraIface.Network()
 
-        x.db.project_id          = network.project_id
-        x.db.network_name        = network.name
-        x.db.network_description = network.description
-        x.db.network_layout      = network.layout
+        net_i.db.project_id          = network.project_id
+        net_i.db.network_name        = network.name
+        net_i.db.network_description = network.description
+        net_i.db.network_layout      = network.layout
 
-        x.save()
-        network.network_id = x.db.network_id
+        net_i.save()
+        network.network_id = net_i.db.network_id
 
         resource_attrs = []
 
-        network_attrs = _add_attributes(x, network.attributes)
+        network_attrs = _add_attributes(net_i, network.attributes)
 
         resource_attrs.extend(network_attrs)
 
@@ -104,12 +104,12 @@ class NetworkService(HydraService):
          #First add all the nodes
         logging.info("Adding nodes to network")
         for node in network.nodes:
-            n = x.add_node(node.name, node.description, node.layout, node.x, node.y)
+            n = net_i.add_node(node.name, node.description, node.layout, node.x, node.y)
 
-        HydraIface.bulk_insert(x.nodes, 'tNode')
-        x.load_all()
+        HydraIface.bulk_insert(net_i.nodes, 'tNode')
+        net_i.load_all()
 
-        for n_i in x.nodes:
+        for n_i in net_i.nodes:
             for node in network.nodes:
                 if node.id not in node_ids and node.x == n_i.db.node_x and node.y == n_i.db.node_y and node.name == n_i.db.node_name:
                     node_attrs = _add_attributes(n_i, node.attributes)
@@ -135,11 +135,11 @@ class NetworkService(HydraService):
             if node_1_id is None or node_2_id is None:
                 raise HydraError("Node IDS (%s, %s)are incorrect!"%(node_1_id, node_2_id))
 
-            l = x.add_link(link.name, link.description, link.layout, node_1_id, node_2_id)
+            l = net_i.add_link(link.name, link.description, link.layout, node_1_id, node_2_id)
 
-        HydraIface.bulk_insert(x.links, 'tLink')
-        x.load_all()
-        for l_i in x.links:
+        HydraIface.bulk_insert(net_i.links, 'tLink')
+        net_i.load_all()
+        for l_i in net_i.links:
             for link in network.links:
                 node_1_from_map = node_ids[link.node_1_id]
                 node_2_from_map = node_ids[link.node_2_id]
@@ -165,7 +165,7 @@ class NetworkService(HydraService):
                 scen = HydraIface.Scenario()
                 scen.db.scenario_name        = s.name
                 scen.db.scenario_description = s.description
-                scen.db.network_id           = x.db.network_id
+                scen.db.network_id           = net_i.db.network_id
                 scen.save()
 
                 for r_scen in s.resourcescenarios:
@@ -197,10 +197,10 @@ class NetworkService(HydraService):
                     update_constraint_refs(constraint.constraintgroup, resource_attr_id_map)
                     ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint) 
 
-                x.scenarios.append(scen)
+                net_i.scenarios.append(scen)
 
         logging.info("Insertion of network took: %s",(datetime.datetime.now()-insert_start))
-        return_value = x.get_as_complexmodel()
+        return_value = net_i.get_as_complexmodel()
 
         return return_value
 
@@ -273,14 +273,14 @@ class NetworkService(HydraService):
             Update an entire network, excluding nodes.
         """
         net = None
-        x = HydraIface.Network(network_id = network.id)
-        x.load_all()
-        x.db.project_id          = network.project_id
-        x.db.network_name        = network.name
-        x.db.network_description = network.description
-        x.db.network_layout      = network.layout
+        net_i = HydraIface.Network(network_id = network.id)
+        net_i.load_all()
+        net_i.db.project_id          = network.project_id
+        net_i.db.network_name        = network.name
+        net_i.db.network_description = network.description
+        net_i.db.network_layout      = network.layout
 
-        resource_attr_id_map = _update_attributes(x, network.attributes)
+        resource_attr_id_map = _update_attributes(net_i, network.attributes)
 
         #Maps temporary node_ids to real node_ids
         node_id_map = dict()
@@ -292,7 +292,7 @@ class NetworkService(HydraService):
             #If we get a negative or null node id, we know
             #it is a new node.
             if node.id is not None and node.id > 0:
-                n = x.get_node(node.id)
+                n = net_i.get_node(node.id)
                 n.db.node_name        = node.name
                 n.db.node_description = node.description
                 n.db.node_x           = node.x
@@ -300,7 +300,7 @@ class NetworkService(HydraService):
                 n.db.status           = node.status
             else:
                 is_new = True
-                n = x.add_node(node.name, node.description, node.layout, node.x, node.y)
+                n = net_i.add_node(node.name, node.description, node.layout, node.x, node.y)
             n.save()
 
             node_attr_id_map = _update_attributes(n, node.attributes)
@@ -322,9 +322,9 @@ class NetworkService(HydraService):
                 node_2_id = node_id_map[link.node_2_id]
 
             if link.id is None or link.id < 0:
-                l = x.add_link(link.name, link.description, link.layout, node_1_id, node_2_id)
+                l = net_i.add_link(link.name, link.description, link.layout, node_1_id, node_2_id)
             else:
-                l = x.get_link(link.id)
+                l = net_i.get_link(link.id)
                 l.load()
                 l.db.link_name       = link.name
                 l.db.link_descripion = link.description
@@ -344,7 +344,7 @@ class NetworkService(HydraService):
                     scen = HydraIface.Scenario()
                 scen.db.scenario_name        = s.name
                 scen.db.scenario_description = s.description
-                scen.db.network_id           = x.db.network_id
+                scen.db.network_id           = net_i.db.network_id
                 scen.save()
 
                 for r_scen in s.resourcescenarios:
@@ -352,7 +352,11 @@ class NetworkService(HydraService):
 
                     scenario._update_resourcescenario(scen.db.scenario_id, r_scen)
 
-        net = x.get_as_complexmodel()
+                for constraint in s.constraints:
+                    update_constraint_refs(constraint.constraintgroup, resource_attr_id_map)
+                    ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint) 
+
+        net = net_i.get_as_complexmodel()
 
         hdb.commit()
 
@@ -480,8 +484,6 @@ class NetworkService(HydraService):
     def delete_resourceattr(ctx, resource_attr_id, purge_data):
         """
             Deletes a resource attribute and all associated data.
-
-
         """
         success = True
         ra = HydraIface.ResourceAttr(resource_attr_id = resource_attr_id)

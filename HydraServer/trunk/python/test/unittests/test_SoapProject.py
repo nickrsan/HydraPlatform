@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import test_SoapServer
-import copy
 import datetime
+import copy
 
 def setup():
     test_SoapServer.connect()
@@ -14,30 +14,63 @@ class ProjectTest(test_SoapServer.SoapServerTest):
     #    #super(ProjectTest).__init__(self)
     #    pass
 
+    def add_data(self, proj):
+        #Create some attributes, which we can then use to put data on our nodes
+        attr1 = self.create_attr("testattr_1")
+        attr2 = self.create_attr("testattr_2")
+        attr3 = self.create_attr("testattr_3")
+
+        proj_attr_1  = self.client.factory.create('ns1:ResourceAttr')
+        proj_attr_1.id = -1
+        proj_attr_1.attr_id = attr1.id
+        proj_attr_2  = self.client.factory.create('ns1:ResourceAttr')
+        proj_attr_2.attr_id = attr2.id
+        proj_attr_2.id = -2
+        proj_attr_3  = self.client.factory.create('ns1:ResourceAttr')
+        proj_attr_3.attr_id = attr3.id
+        proj_attr_3.id = -3
+
+        attributes = self.client.factory.create('hyd:ResourceScenarioArray')
+        
+        attributes.ResourceScenario.append(self.create_descriptor(proj_attr_1))
+        attributes.ResourceScenario.append(self.create_array(proj_attr_2))
+        attributes.ResourceScenario.append(self.create_timeseries(proj_attr_3))
+
+        proj.attributes = attributes
+
+        return proj
+
     def test_update(self):
         project = self.client.factory.create('hyd:Project')
         project.name = 'SOAP test %s'%(datetime.datetime.now())
         project.description = \
             'A project created through the SOAP interface.'
-        project = self.client.service.add_project(project)
+      
+        project = self.add_data(project)
 
+        project = self.client.service.add_project(project)
         new_project = copy.deepcopy(project)
+
         new_project.description = \
             'An updated project created through the SOAP interface.'
 
-        new_project = self.client.service.update_project(new_project)
+        updated_project = self.client.service.update_project(new_project)
+    
+        print updated_project
 
-        assert project.id == new_project.id, \
+        assert project.id == updated_project.id, \
             "project_id changed on update."
         assert project.created_by is not None, \
             "created by is null."
-        assert project.name == new_project.name, \
+        assert project.name == updated_project.name, \
             "project_name changed on update."
-        assert project.description != new_project.description,\
+        assert project.description != updated_project.description,\
             "project_description did not update"
-        assert new_project.description == \
+        assert updated_project.description == \
             'An updated project created through the SOAP interface.', \
             "Update did not work correctly."
+
+        assert updated_project.attributes.ResourceScenario[0].value.type == 'descriptor' and updated_project.attributes.ResourceScenario[0].value.value.desc_val == 'test', "There is an inconsistency with the attributes."
 
     def test_load(self):
         project = self.client.factory.create('hyd:Project')

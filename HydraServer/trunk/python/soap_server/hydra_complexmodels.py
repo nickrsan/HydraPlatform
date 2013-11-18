@@ -281,7 +281,6 @@ class Scenario(Resource):
         ('description',          String(min_occurs=1, default="")),
         ('network_id',           Integer(default=None)),
         ('status',               String(default='A')),
-        ('attributes',           SpyneArray(ResourceAttr, default=[])),
         ('resourcescenarios',    SpyneArray(ResourceScenario, default=[])),
         ('constraints',          SpyneArray(Constraint, default=[])),
         ('templates',            SpyneArray(ResourceGroupSummary, default=[])),
@@ -317,9 +316,7 @@ class Project(Resource):
         ('status',      String(default='A')),
         ('cr_date',     String(default=None)),
         ('created_by',  Integer(default=None)),
-        ('attributes',  SpyneArray(ResourceAttr, default=[])),
-        ('templates',   SpyneArray(ResourceGroupSummary, default=[])),
-
+        ('attributes',  SpyneArray(ResourceScenario, default=[])),
     ]
 
 class ProjectSummary(Resource):

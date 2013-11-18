@@ -103,9 +103,13 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
     data_type = resource_scenario.value.type.lower()
 
     value = parse_value(resource_scenario.value)
+   
+    dimension = resource_scenario.value.dimension
+    unit      = resource_scenario.value.unit
+    name      = resource_scenario.value.name
 
     rs_i = res.assign_value(scenario_id, ra_id, data_type, value,
-                    "", "", "", new=new)
+                    unit, name, dimension, new=new)
 
     return rs_i
 
@@ -165,7 +169,7 @@ class DataService(HydraService):
         The data SOAP service
     """
 
-    @rpc(SpyneArray(Dataset), _returns=SpyneArray(Dataset))
+    @rpc(SpyneArray(Dataset), _returns=SpyneArray(Integer))
     def bulk_insert_data(ctx, bulk_data):
         """
             Insert sereral pieces of data at once.
@@ -547,6 +551,7 @@ class DataService(HydraService):
         """
             Get a piece of data directly, rather than through a resource scenario
         """
+
     @rpc(Integer, _returns=Boolean)
     def delete_dataset(dataset_id):
         """

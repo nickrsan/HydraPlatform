@@ -320,14 +320,17 @@ class IfaceBase(object):
                 child_cm = obj.get_as_complexmodel()
                 child_objs.append(child_cm)
             setattr(cm, name, child_objs)
-        if self.name == 'Link':
-            logging.info("So far, time is: %s " % (datetime.datetime.now()-start))
+
         #if I have attributes, convert them
         #and assign them to the new object too.
         if hasattr(self, 'attributes'):
             attributes = []
             for attr in self.get_attributes():
-                attributes.append(attr.get_as_complexmodel())
+                if self.name == 'Project':
+                    rs_i = ResourceScenario(scenario_id = 1, resource_attr_id=attr.db.resource_attr_id)
+                    attributes.append(rs_i.get_as_complexmodel())
+                else:
+                    attributes.append(attr.get_as_complexmodel())
             setattr(cm, 'attributes', attributes)
             template_groups = self.get_templates()
             
@@ -663,6 +666,11 @@ class GenericResource(IfaceBase):
         super(GenericResource, self).delete()
 
     def get_attributes(self):
+        """
+            Get the resource attributes for this resource.
+            @returns list of ResourceAttr objects.
+        """
+
         if self.ref_id is None:
             return []
         attributes = []
@@ -677,9 +685,9 @@ class GenericResource(IfaceBase):
                     and ref_key = '%(ref_key)s'
             """ % dict(ref_key = self.ref_key, ref_id = self.ref_id)
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-        now = datetime.datetime.now()
+        
         rs = cursor.execute_sql(sql)
-        logging.info("Getting attributes took: %s"%(datetime.datetime.now()-now))
+        
         cursor.close()
 
         for r in rs:
@@ -692,6 +700,9 @@ class GenericResource(IfaceBase):
         return attributes
 
     def add_attribute(self, attr_id, attr_is_var='N'):
+        """
+            Get a Resource attribute with give attr ID.
+        """
         attr = ResourceAttr()
         attr.db.attr_id = attr_id
         attr.db.attr_is_var = attr_is_var
@@ -727,6 +738,16 @@ class GenericResource(IfaceBase):
             queries for non-existant data. If this flag is not True, a check
             will be performed in the DB for its existance.
         """
+
+        #cater for a project -- if the scenario ID is null, set it to 1.
+        if scenario_id is None:
+            scenario_id = 1
+
+        if scenario_id == 1 and self.name != 'Project':
+            raise HydraError("An error has occurred while setting"
+                             "resource attribute %s this data." 
+                             "Scenario 1 is reserved for project attributes."
+                             %(resource_attr_id))
 
         hash_string = "%s %s %s %s %s"
         data_hash  = hash(hash_string%(name, units, dimension, data_type, str(val)))
@@ -832,6 +853,11 @@ class Project(GenericResource):
     """
         A logical container for a piece of work.
         Contains networks and scenarios.
+
+        A project cannot have scenarios (that's what networks are for), but
+        they can have attributes. The way around this is to set aside
+        scenario 1 as the container for all project data.
+
     """
     def __init__(self, project_id = None):
         GenericResource.__init__(self, None, self.__class__.__name__, 'PROJECT', ref_id=project_id)
@@ -840,6 +866,7 @@ class Project(GenericResource):
         self.networks = []
         if project_id is not None:
             self.load()
+
 
 class Scenario(GenericResource):
     """
@@ -994,9 +1021,11 @@ class ResourceAttr(IfaceBase):
             'NODE'     : Node,
             'LINK'     : Link,
             'NETWORK'  : Network,
-            'SCENARIO' : Scenario,
             'PROJECT'  : Project,
         }
+
+        if ref_key_map.get(self.db.ref_key) is None:
+            raise HydraError("%s can not have attributes!"%(self.db.ref_key))
 
         obj = ref_key_map[self.db.ref_key]()
         obj.db.__setattr__(obj.db.pk_attrs[0], self.db.ref_id)

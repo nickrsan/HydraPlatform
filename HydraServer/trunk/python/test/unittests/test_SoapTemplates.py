@@ -8,6 +8,16 @@ import datetime
 
 class TemplatesTest(test_SoapServer.SoapServerTest):
 
+    def set_group(self, group):
+        self.group = group
+
+    def get_group(self):
+        if hasattr(self, 'group'):
+            return self.group
+        else:
+            self.test_add_group()
+        return self.group
+
     def test_add_group(self):
 
         attr_1 = self.create_attr("testattr_1") 
@@ -52,6 +62,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         assert len(new_group.resourcetemplates) == 1, "Resource templates did not add correctly"
         assert len(new_group.resourcetemplates[0][0].resourcetemplateitems[0]) == 3, "Resource template items did not add correctly"
 
+        self.set_group(new_group)
 
     def test_update_group(self):
 
@@ -130,7 +141,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         attr_3 = self.create_attr("testattr_3") 
         
         template = self.client.factory.create('hyd:ResourceTemplate')
-        template.name = "Test template name"
+        template.name = "Test template name @ %s"%(datetime.datetime.now())
 
         items = self.client.factory.create('hyd:ResourceTemplateItemArray')
         
@@ -155,16 +166,18 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         assert new_template.id > 0, "New template has incorrect ID!"
 
         assert len(new_template.resourcetemplateitems[0]) == 3, "Resource template items did not add correctly"
+        
+        return new_template
 
     def test_update_template(self):
-
 
         attr_1 = self.create_attr("testattr_1") 
         attr_2 = self.create_attr("testattr_2") 
         attr_3 = self.create_attr("testattr_3") 
         
         template = self.client.factory.create('hyd:ResourceTemplate')
-        template.name = "Test template name"
+        template.name = "Test template name @ %s"%(datetime.datetime.now())
+        template.group_id = self.get_group().id
 
         items = self.client.factory.create('hyd:ResourceTemplateItemArray')
         
@@ -186,7 +199,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         assert len(new_template.resourcetemplateitems[0]) == 2, "Resource template items did not add correctly"
         
-        new_template.name = "Updated template name"
+        new_template.name = "Updated template name @ %s"%(datetime.datetime.now())
         
         items = self.client.factory.create('hyd:ResourceTemplateItemArray')
 
@@ -204,6 +217,17 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         assert len(updated_template.resourcetemplateitems[0]) == 3, "Resource template items did not update correctly"
 
+    def test_get_template(self):
+        new_template = self.get_group().resourcetemplates.ResourceTemplate[0]
+        new_template = self.client.service.get_resourcetemplate(new_template.id)
+        assert new_template is not None, "Resource template items not retrived by ID!"
+
+    def test_get_template_by_name(self):
+        new_template = self.get_group().resourcetemplates.ResourceTemplate[0]
+        new_template = self.client.service.get_resourcetemplate(new_template.group_id, new_template.name)
+        assert new_template is not None, "Resource template items not retrived by name!"
+
+
     def test_add_item(self):
 
 
@@ -212,7 +236,8 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         attr_3 = self.create_attr("testattr_3") 
         
         template = self.client.factory.create('hyd:ResourceTemplate')
-        template.name = "Test template name"
+        template.name = "Test template name @ %s"%(datetime.datetime.now())
+        template.group_id = self.get_group().id
 
         items = self.client.factory.create('hyd:ResourceTemplateItemArray')
         
@@ -245,7 +270,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         attr_2 = self.create_attr("testattr_2") 
         
         template = self.client.factory.create('hyd:ResourceTemplate')
-        template.name = "Test template name"
+        template.name = "Test template name @ %s"%(datetime.datetime.now())
 
         items = self.client.factory.create('hyd:ResourceTemplateItemArray')
         
@@ -270,8 +295,23 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
 
     def test_get_groups(self):
-        groups = self.client.service.get_groups()
+        groups = self.client.service.get_resourcetemplategroups()
         assert len(groups) > 0, "Groups were not retrieved!"
+
+    
+    def test_get_group(self):
+        group = self.get_group()
+        new_group = self.client.service.get_resourcetemplategroup(group.id)
+
+        assert new_group.name == group.name, "Names are not the same! Retrieval by ID did not work!"
+
+
+
+    def test_get_group_by_name(self):
+        group = self.get_group()
+        new_group = self.client.service.get_resourcetemplategroup_by_name(group.name)
+
+        assert new_group.name == group.name, "Names are not the same! Retrieval by name did not work!"
 
 def setup():
     test_SoapServer.connect()

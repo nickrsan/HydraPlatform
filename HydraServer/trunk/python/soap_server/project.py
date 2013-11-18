@@ -5,7 +5,25 @@ from db import HydraIface
 from hydra_complexmodels import Project, ProjectSummary, Network
 from hydra_base import HydraService, ObjectNotFoundError, get_user_id
 from HydraLib.HydraException import HydraError
-from hydra_base import RequestHeader 
+import scenario
+
+def _add_project_attributes(resource_i, attributes):
+    if attributes is None:
+        return []
+    #As projects do not have scenarios (or to be more precise, they can only use
+    #scenario 1, we can put
+    #resource scenarios directly into the 'attributes' attribute
+    #meaning we can add the data directly here.
+
+    for attr in attributes:
+
+        if attr.resource_attr_id < 0:
+            ra_i = resource_i.add_attribute(attr.attr_id)
+            ra_i.save()
+            ra_i.load()
+            attr.resource_attr_id = ra_i.db.resource_attr_id
+    
+        scenario._update_resourcescenario(None, attr)
 
 class ProjectService(HydraService):
     """
@@ -25,6 +43,8 @@ class ProjectService(HydraService):
         proj_i.db.created_by = get_user_id(ctx.in_header.username)
 
         proj_i.save()
+
+        _add_project_attributes(proj_i, project.attributes)
 
         proj_owner_i = HydraIface.ProjectOwner()
         proj_owner_i.db.user_id = get_user_id(ctx.in_header.username)
