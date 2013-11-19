@@ -51,6 +51,7 @@ def update_constraint_refs(constraintgroup, resource_attr_map):
     for group in constraintgroup.constraintgroups:
         update_constraint_refs(group, resource_attr_map)
 
+
 class NetworkService(HydraService):
     """
         The network SOAP service.
@@ -84,7 +85,10 @@ class NetworkService(HydraService):
         net_i.db.project_id          = network.project_id
         net_i.db.network_name        = network.name
         net_i.db.network_description = network.description
-        net_i.db.network_layout      = network.layout
+        
+        if network.layout is not None:
+            net_i.validate_layout(network.layout)
+            net_i.db.network_layout      = network.layout
 
         net_i.save()
         network.network_id = net_i.db.network_id

@@ -7,6 +7,7 @@ import datetime
 
 from HydraLib.HydraException import HydraError
 import sys, traceback
+from lxml import etree
 
 global DB_STRUCT
 DB_STRUCT = {}
@@ -14,11 +15,17 @@ DB_STRUCT = {}
 global CONNECTION
 CONNECTION = None
 
+global LAYOUT_XSD_PATH
+LAYOUT_XSD_PATH = None
+
 def init(cnx):
     config = util.load_config()
 
     global CONNECTION
     global DB_STRUCT
+
+    global LAYOUT_XSD_PATH
+    LAYOUT_XSD_PATH = config.get('hydra_server', 'layout_xsd_path')
 
     CONNECTION = cnx
 
@@ -849,6 +856,25 @@ class GenericResource(IfaceBase):
 
         return resource_template_groups
 
+
+    def validate_layout(self, layout_xml):
+
+        if layout_xml is None or layout_xml == "":
+            logging.info("No layout information to validate")
+            return
+
+        xmlschema_doc = etree.parse(LAYOUT_XSD_PATH)
+                        
+        xmlschema = etree.XMLSchema(xmlschema_doc)
+       
+        logging.info(layout_xml)
+        xml_tree = etree.fromstring(layout_xml)
+        
+        try:
+            xmlschema.assertValid(xml_tree)
+        except etree.LxmlError, e:
+            raise HydraError("Layout XML did not validate!: Error was: %s"%(e))
+
 class Project(GenericResource):
     """
         A logical container for a piece of work.
@@ -902,6 +928,7 @@ class Network(GenericResource):
         l = Link()
         l.db.link_name        = name
         l.db.link_description = desc
+        l.validate_layout(layout)
         l.db.link_layout      = layout
         l.db.node_1_id        = node_1_id
         l.db.node_2_id        = node_2_id
@@ -918,6 +945,7 @@ class Network(GenericResource):
         n = Node()
         n.db.node_name        = name
         n.db.node_description = desc
+        n.validate_layout(layout)
         n.db.node_layout      = layout
         n.db.node_x           = node_x
         n.db.node_y           = node_y

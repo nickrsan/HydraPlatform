@@ -219,13 +219,26 @@ class SoapServerTest(unittest.TestCase):
         print "Scenario definition took: %s"%(datetime.datetime.now()-start)
         start = datetime.datetime.now()
 
+        layout = """
+            <resource_layout>
+                <layout>
+                    <name>color</name>
+                    <value>red</value>
+                </layout>
+                <layout>
+                    <name>shapefile</name>
+                    <value>blah.shp</value>
+                </layout>
+            </resource_layout>
+        """
+
         (network) = {
             'name'        : 'Network 1',
             'description' : 'Test network with 2 nodes and 1 link',
             'project_id'  : p['id'],
             'links'       : link_array,
             'nodes'       : node_array,
-            'layout'      : "color: red",
+            'layout'      : layout,
             'scenarios'   : scenario_array,
         }
         #print network
