@@ -513,14 +513,16 @@ class GAMSexport(object):
             self.output += '\n'
 
             for t in self.time_index:
-                self.output += '%10s' % self.convert_date_to_timeindex(t)
+                self.output += '%10s ' % self.convert_date_to_timeindex(t)
                 for attribute in attributes:
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
-                        #data = self.cli.service.get_val_at_time(
-                        #    attr.dataset_id, PluginLib.date_to_string(t))
-                        data = 1.0
-                        self.output += '%10s' % data
+                        soap_time = self.cli.factory.create('ns0:stringArray')
+                        soap_time.string.append(PluginLib.date_to_string(t))
+                        data = self.cli.service.get_val_at_time(
+                            attr.dataset_id, soap_time)
+                        data = eval(data.data)
+                        self.output += ' '.join([str(d) for d in data]) + ' '
                 self.output += '\n'
             self.output += '\n'
 

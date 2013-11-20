@@ -613,15 +613,16 @@ class DataService(HydraService):
     def echo_array(ctx, x):
         return x
 
-    @rpc(Integer, SpyneArray(String), _returns=SpyneArray(Decimal))
-    def get_val_at_time(ctx, dataset_id, timestamps=None):
-        print dataset_id, timestamps
-        #t = timestamp_to_server_time(timestamps)
+    @rpc(Integer, SpyneArray(String), _returns=AnyDict)
+    #@rpc(Integer, SpyneArray(String), _returns=AnyDict)
+    def get_val_at_time(ctx, dataset_id, timestamps):
         t = []
         for time in timestamps:
             t.append(timestamp_to_server_time(time))
         td = HydraIface.ScenarioData(dataset_id=dataset_id)
-        data = []
-        for time in t:
-            data.append(td.get_val(timestamp=time))
-        return data
+        #for time in t:
+        #    data.append(td.get_val(timestamp=time))
+        data = td.get_val(timestamp=t)
+        dataset = {'data': data}
+
+        return dataset

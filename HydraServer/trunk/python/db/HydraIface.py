@@ -864,12 +864,12 @@ class GenericResource(IfaceBase):
             return
 
         xmlschema_doc = etree.parse(LAYOUT_XSD_PATH)
-                        
+
         xmlschema = etree.XMLSchema(xmlschema_doc)
-       
+
         logging.info(layout_xml)
         xml_tree = etree.fromstring(layout_xml)
-        
+
         try:
             xmlschema.assertValid(xml_tree)
         except etree.LxmlError, e:
@@ -1312,10 +1312,10 @@ class ScenarioData(IfaceBase):
             else:
                 for time in sorted_times:
                     if timestamp >= time:
-                        val =  ts_val_dict[time]
+                        val =  [ts_val_dict[time]]
                         break
                 else:
-                    val = None
+                    val = [None]
         return val
 
 
@@ -1774,7 +1774,7 @@ class ConstraintGroup(IfaceBase):
             str_2 = group.eval_group()
         elif self.db.ref_key_2 == 'ITEM':
             item = ConstraintItem(item_id=self.db.ref_id_2)
-            
+
             if item.db.constant is None:
                 r = ResourceScenario(
                         scenario_id      = self.constraint.db.scenario_id,
@@ -1838,7 +1838,7 @@ class ConstraintItem(IfaceBase):
             Get the resource name, id and attribute to which
             this resource attribute belongs.
         """
-        
+
         if self.db.constant is not None:
             return self.db.constant
 
