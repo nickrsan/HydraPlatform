@@ -155,15 +155,42 @@ class AttributeService(HydraService):
 
         return attrs
 
+    @rpc(Integer, _returns=Attr)
+    def get_attribute_by_id(ctx, ID):
+        """
+            Get a specific attribute by its ID.
+        """
+
+        ID = int(name)
+        sql = """
+        select
+            attr_id,
+            attr_name,
+            attr_dimen
+        from
+            tAttr
+        where
+            attr_id = %s
+        """ % ID
+
+        rs = HydraIface.execute(sql)
+
+        if len(rs) == 0:
+           return None
+        else:
+            x = Attr()
+            x.name  = rs[0].attr_name
+            x.dimen = rs[0].attr_dimen
+            x.id    = rs[0].attr_id
+            return x
+
     @rpc(String, _returns=Attr)
     def get_attribute(ctx, name):
         """
-            Get a specific attribute by its name or by its ID.
+            Get a specific attribute by its name.
         """
 
-        try:
-            ID = int(name)
-            sql = """
+        sql = """
             select
                 attr_id,
                 attr_name,
@@ -171,20 +198,8 @@ class AttributeService(HydraService):
             from
                 tAttr
             where
-                attr_id = %s
-            """ % ID
-        except ValueError:
-
-            sql = """
-                select
-                    attr_id,
-                    attr_name,
-                    attr_dimen
-                from
-                    tAttr
-                where
-                    attr_name = '%s'
-            """ % name
+                attr_name = '%s'
+        """ % name
 
         rs = HydraIface.execute(sql)
 

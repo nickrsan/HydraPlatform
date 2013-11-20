@@ -115,7 +115,7 @@ def guess_timefmt(datestr):
                      ['%d', '%m', 'XXXX'],
                      ['%d', '%b', 'XXXX']]
 
-    timefmt = '%H:%M:%S'
+    timefmt = '%H:%M:%S.%f'
 
     # Check if a time is indicated or not
     try:

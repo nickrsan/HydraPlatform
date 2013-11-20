@@ -1,6 +1,7 @@
 import logging
 from HydraLib.HydraException import HydraError
 from spyne.model.primitive import Integer, Boolean, String, AnyDict
+from spyne.model.primitive import Decimal
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Scenario,\
@@ -17,6 +18,7 @@ from hydra_complexmodels import Scenario,\
 from db import HydraIface
 from HydraLib import hdb
 from HydraLib import units
+from HydraLib.util import timestamp_to_server_time
 
 from hydra_base import HydraService
 
@@ -50,11 +52,11 @@ class ScenarioService(HydraService):
             Set the status of a scenario to 'X'.
         """
 
-        
+
         success = True
         try:
             scen_i = HydraIface.Scenario(scenario_id = scenario_id)
-            
+
             if scen_i.load() is False:
                 raise HydraError("Scenario %s does not exist."%(scenario_id))
 
@@ -80,7 +82,7 @@ class ScenarioService(HydraService):
         cloned_scen.db.scenario_description = scen_i.db.scenario_description
         cloned_scen.save()
         cloned_scen.load()
-      
+
         for rs in scen_i.resourcescenarios:
             new_rs = HydraIface.ResourceScenario()
             new_rs.db.scenario_id = cloned_scen.db.scenario_id
@@ -135,7 +137,7 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
     data_type = resource_scenario.value.type.lower()
 
     value = parse_value(resource_scenario.value)
-   
+
     dimension = resource_scenario.value.dimension
     unit      = resource_scenario.value.unit
     name      = resource_scenario.value.name
@@ -578,8 +580,8 @@ class DataService(HydraService):
             Update a piece of data directly, rather than through a resource scenario
         """
 
-    @rpc(Integer, _returns=AnyDict)
-    def get_dataset(dataset_id):
+    @rpc(Integer, _returns=Dataset)
+    def get_dataset(ctx, dataset_id):
         """
             Get a piece of data directly, rather than through a resource scenario
         """
@@ -610,3 +612,16 @@ class DataService(HydraService):
     @rpc(HydraArray, _returns=HydraArray)
     def echo_array(ctx, x):
         return x
+
+    @rpc(Integer, SpyneArray(String), _returns=SpyneArray(Decimal))
+    def get_val_at_time(ctx, dataset_id, timestamps=None):
+        print dataset_id, timestamps
+        #t = timestamp_to_server_time(timestamps)
+        t = []
+        for time in timestamps:
+            t.append(timestamp_to_server_time(time))
+        td = HydraIface.ScenarioData(dataset_id=dataset_id)
+        data = []
+        for time in t:
+            data.append(td.get_val(timestamp=time))
+        return data
