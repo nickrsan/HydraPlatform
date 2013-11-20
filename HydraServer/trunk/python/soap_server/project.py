@@ -63,13 +63,15 @@ class ProjectService(HydraService):
             returns a project complexmodel
         """
 
-        x = HydraIface.Project(project_id = project.id)
-        x.db.project_name        = project.name
-        x.db.project_description = project.description
+        proj_i = HydraIface.Project(project_id = project.id)
+        proj_i.db.project_name        = project.name
+        proj_i.db.project_description = project.description
 
-        x.save()
+        _add_project_attributes(proj_i, project.attributes)
 
-        return x.get_as_complexmodel()
+        proj_i.save()
+
+        return proj_i.get_as_complexmodel()
 
 
     @rpc(Integer, _returns=Project)
@@ -77,12 +79,12 @@ class ProjectService(HydraService):
         """
             get a project complexmodel
         """
-        x = HydraIface.Project(project_id = project_id)
+        proj_i = HydraIface.Project(project_id = project_id)
         
-        if x.load() is False:
+        if proj_i.load() is False:
             raise ObjectNotFoundError("Project (project_id=%s) not found."%project_id)
 
-        return x.get_as_complexmodel()
+        return proj_i.get_as_complexmodel()
  
     @rpc(Integer, _returns=SpyneArray(ProjectSummary))
     def get_projects(ctx):
