@@ -49,17 +49,48 @@ class ScenarioService(HydraService):
         """
             Set the status of a scenario to 'X'.
         """
+
+        
         success = True
         try:
-            x = HydraIface.Scenario(scenario_id = scenario_id)
-            x.db.status = 'X'
-            x.save()
+            scen_i = HydraIface.Scenario(scenario_id = scenario_id)
+            
+            if scen_i.load() is False:
+                raise HydraError("Scenario %s does not exist."%(scenario_id))
+
+            scen_i.db.status = 'X'
+            scen_i.save()
         except HydraError, e:
             logging.critical(e)
             hdb.rollback()
             success=False
 
         return success
+
+
+    @rpc(Integer, _returns=Scenario)
+    def clone_scenario(ctx, scenario_id):
+        scen_i = HydraIface.Scenario(scenario_id = scenario_id)
+        if scen_i.load_all() is False:
+            raise HydraError("Scenario %s does not exist."%(scenario_id))
+
+        cloned_scen = HydraIface.Scenario()
+        cloned_scen.db.network_id           = scen_i.db.network_id
+        cloned_scen.db.scenario_name        = "%s (clone)"%(scen_i.db.scenario_name)
+        cloned_scen.db.scenario_description = scen_i.db.scenario_description
+        cloned_scen.save()
+        cloned_scen.load()
+      
+        for rs in scen_i.resourcescenarios:
+            new_rs = HydraIface.ResourceScenario()
+            new_rs.db.scenario_id = cloned_scen.db.scenario_id
+            new_rs.db.resource_attr_id = rs.db.resource_attr_id
+            new_rs.db.dataset_id       = rs.db.dataset_id
+            cloned_scen.resourcescenarios.append(new_rs)
+
+        HydraIface.bulk_insert(cloned_scen.resourcescenarios, "tResourceScenario")
+
+        return cloned_scen.get_as_complexmodel()
 
     @rpc(Integer, ResourceScenario, _returns=ResourceScenario)
     def update_resourcedata(ctx,scenario_id, resource_scenario):
@@ -78,6 +109,7 @@ class ScenarioService(HydraService):
             Remove the data associated with a resource in a scenario.
         """
         _delete_resourcescenario(scenario_id, resource_scenario)
+
 
 def _delete_resourcescenario(scenario_id, resource_scenario):
 

@@ -87,6 +87,31 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         assert len(new_datasets.integer) == 2; "Data was not added correctly!"
 
 
+    def test_clone(self):
+
+        network =  self.create_network_with_data()
+       
+
+        assert len(network.scenarios.Scenario) == 1; "The network should have only one scenario!"
+
+        scenario = network.scenarios.Scenario[0]
+        scenario_id = scenario.id
+
+        new_scenario = self.client.service.clone_scenario(scenario_id)
+
+        updated_network = self.client.service.get_network(new_scenario.network_id)
+
+
+        assert len(updated_network.scenarios.Scenario) == 2; "The network should have only one scenario!"
+
+        assert updated_network.scenarios.Scenario[1].resourcescenarios is not None; "Data was not cloned!"
+
+        scen_2_val = updated_network.scenarios.Scenario[1].resourcescenarios.ResourceScenario[0].value
+        scen_1_val = network.scenarios.Scenario[0].resourcescenarios.ResourceScenario[0].value
+        assert scen_2_val == scen_1_val; "Data was not cloned correctly"
+        
+
+
 
 if __name__ == '__main__':
     test_SoapServer.run()
