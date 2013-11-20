@@ -25,7 +25,12 @@ def create_constraint_struct(constraint_id, group):
             group_i.groups.append(sub_group_i)
         else:
             item_i = HydraIface.ConstraintItem()
-            item_i.db.resource_attr_id = sub_element.resource_attr_id
+            
+            if sub_element.constant is None:
+                item_i.db.resource_attr_id = sub_element.resource_attr_id
+            else:
+                item_i.db.constant         = sub_element.constant
+
             item_i.db.constraint_id    = constraint_id
             item_i.save()
             setattr(group_i.db, "ref_key_%s"%(ref_num+1), 'ITEM')
@@ -80,11 +85,3 @@ class ConstraintService(HydraService):
             to publish the ConstraintGroup object correctly
         """
         return constraintgroup
-
-    @rpc(ConstraintItem, _returns=ConstraintItem)
-    def echo_constraintgroup(ctx, constraintitem):
-        """
-            Echo a constraint item. Needed for the server
-            to publish the ConstraintItem object correctly
-        """
-        return constraintitem

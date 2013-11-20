@@ -1,5 +1,5 @@
 from spyne.model.complex import Array as SpyneArray, ComplexModel
-from spyne.model.primitive import String, Integer, Decimal, DateTime, Boolean, AnyDict
+from spyne.model.primitive import Unicode, String, Integer, Decimal, DateTime, AnyDict
 import datetime
 from spyne.util.odict import odict
 
@@ -248,17 +248,28 @@ class ResourceScenario(Resource):
     ]
 
 class ConstraintItem(HydraComplexModel):
+    """
+        A constraint item is the atomic element of a conatraint.
+        The value of a constraint item can be value of a particular resource attribute
+        or an arbitrary static value, such as an integer, so we can support:
+
+        X.attr + Y.attr > 0
+        or
+        (X.attr * 5) + Y.attr > 0
+
+    """
     _type_info = [
         ('id',               Integer(default=None)),
         ('constraint_id',    Integer(default=None)),
         ('resource_attr_id', Integer(default=None)),
+        ('constant',            Unicode(default=None)),
     ]
 
 class ConstraintGroup(HydraComplexModel):
     _type_info = [
         ('id',            Integer(default=None)),
         ('constraint_id', Integer(default=None)),
-        ('op',            String(default=None)),
+        ('op',            String(default=None, values=['+', '-', '*', '/', '^', 'and', 'or', 'not'])),
         ('constraintitems', SpyneArray(ConstraintItem, default=[]))
     ]
 
@@ -269,7 +280,7 @@ class Constraint(HydraComplexModel):
         ('id',            Integer(default=None)),
         ('scenario_id',   Integer(default=None)),
         ('constant',      Decimal(default=None)),
-        ('op',            String(default=None)),
+        ('op',            String(default=None, values=['<', '>', '<=', '>=', '==', '!='])),
         ('value',         String(default=None)),
         ('constraintgroup', ConstraintGroup),
     ]

@@ -1757,28 +1757,34 @@ class ConstraintGroup(IfaceBase):
         elif self.db.ref_key_1 == 'ITEM':
             item = ConstraintItem(item_id=self.db.ref_id_1)
 
-            r = ResourceScenario(
-                    scenario_id      = self.constraint.db.scenario_id,
-                    resource_attr_id = item.db.resource_attr_id
-            )
+            if item.db.constant is None:
 
-            d = ScenarioData(dataset_id=r.db.dataset_id)
-            str_1 = d.get_val()
+                r = ResourceScenario(
+                        scenario_id      = self.constraint.db.scenario_id,
+                        resource_attr_id = item.db.resource_attr_id
+                )
+
+                d = ScenarioData(dataset_id=r.db.dataset_id)
+                str_1 = d.get_val()
+            else:
+                str_1 = item.db.constant
 
         if self.db.ref_key_2 == 'GRP':
             group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_2)
             str_2 = group.eval_group()
         elif self.db.ref_key_2 == 'ITEM':
             item = ConstraintItem(item_id=self.db.ref_id_2)
+            
+            if item.db.constant is None:
+                r = ResourceScenario(
+                        scenario_id      = self.constraint.db.scenario_id,
+                        resource_attr_id = item.db.resource_attr_id
+                )
 
-            r = ResourceScenario(
-                    scenario_id      = self.constraint.db.scenario_id,
-                    resource_attr_id = item.db.resource_attr_id
-            )
-
-            d = ScenarioData(dataset_id=r.db.dataset_id)
-            str_2 = d.get_val()
-
+                d = ScenarioData(dataset_id=r.db.dataset_id)
+                str_2 = d.get_val()
+            else:
+                str_2 = item.db.constant
 
         return "(%s %s %s)"%(str_1, self.db.op, str_2)
 
@@ -1795,7 +1801,10 @@ class ConstraintGroup(IfaceBase):
 
             #str_1 = item.db.resource_attr_id
             item_details = item.get_item_details()   
-            str_1 = "%s[%s][%s]" % (item_details[1], item_details[3], item_details[0])
+            if item.db.constant is None:
+                str_1 = "%s[%s][%s]" % (item_details[1], item_details[3], item_details[0])
+            else:
+                str_1 = item.db.constant
 
         if self.db.ref_key_2 == 'GRP':
             group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_2)
@@ -1805,7 +1814,10 @@ class ConstraintGroup(IfaceBase):
 
             #str_2 = item.db.resource_attr_id
             item_details = item.get_item_details()
-            str_2 = "%s[%s][%s]" % (item_details[1], item_details[3], item_details[0])
+            if item.db.constant is None:
+                str_2 = "%s[%s][%s]" % (item_details[1], item_details[3], item_details[0])
+            else:
+                str_2 = item.db.constant
 
         return "(%s %s %s)" % (str_1, self.db.op, str_2)
 
@@ -1826,6 +1838,9 @@ class ConstraintItem(IfaceBase):
             Get the resource name, id and attribute to which 
             this resource attribute belongs.
         """
+        
+        if self.db.constant is not None:
+            return self.db.constant
 
         sql = """
             select

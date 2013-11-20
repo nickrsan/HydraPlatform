@@ -33,7 +33,7 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
 
         con = HydraIface.Constraint()
         con.db.constraint_name = "Comparative resource allocation"
-        con.db.constraint_description = "AB must be >= C"
+        con.db.constraint_description = "(A+5) * B must be >= C"
         con.db.scenario_id            = scenario.db.scenario_id
         con.db.constant               = 0
         con.db.op                     = "=="
@@ -43,6 +43,11 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         item_a.db.constraint_id = con.db.constraint_id
         item_a.db.resource_attr_id = ra.db.resource_attr_id
         item_a.save()
+
+        item_constant = HydraIface.ConstraintItem(constraint=con)
+        item_constant.db.constraint_id = con.db.constraint_id
+        item_constant.db.constant = 5
+        item_constant.save()
 
         item_b = HydraIface.ConstraintItem(constraint=con)
         item_b.db.constraint_id = con.db.constraint_id
@@ -59,8 +64,8 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         grp_a.db.ref_key_1 = 'ITEM'
         grp_a.db.ref_id_1  = item_a.db.item_id
         grp_a.db.ref_key_2 = 'ITEM'
-        grp_a.db.ref_id_2  = item_b.db.item_id
-        grp_a.db.op        = "+"
+        grp_a.db.ref_id_2  = item_constant.db.item_id
+        grp_a.db.op        = "*"
         grp_a.save()
 
         grp_b = HydraIface.ConstraintGroup()
@@ -68,11 +73,20 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         grp_b.db.ref_key_1 = 'GRP'
         grp_b.db.ref_id_1  = grp_a.db.group_id
         grp_b.db.ref_key_2 = 'ITEM'
-        grp_b.db.ref_id_2  = item_c.db.item_id
-        grp_b.db.op        = '-'
+        grp_b.db.ref_id_2  = item_b.db.item_id
+        grp_b.db.op        = "-"
         grp_b.save()
 
-        con.db.group_id = grp_b.db.group_id
+        grp_c = HydraIface.ConstraintGroup()
+        grp_c.db.constraint_id = con.db.constraint_id
+        grp_c.db.ref_key_1 = 'GRP'
+        grp_c.db.ref_id_1  = grp_b.db.group_id
+        grp_c.db.ref_key_2 = 'ITEM'
+        grp_c.db.ref_id_2  = item_c.db.item_id
+        grp_c.db.op        = '-'
+        grp_c.save()
+
+        con.db.group_id = grp_c.db.group_id
         con.save()
         con.commit()
 
