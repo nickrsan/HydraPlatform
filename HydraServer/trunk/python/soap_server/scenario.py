@@ -22,6 +22,47 @@ from HydraLib.util import timestamp_to_server_time
 
 from hydra_base import HydraService
 
+def clone_constraint_group(constraint_id, grp_i):
+    """
+        This will clone not only the group in question
+        but also any sub-groups and items.
+    """
+    
+    grp_i.load_all()
+
+    new_grp_i = HydraIface.ConstraintGroup()
+    new_grp_i.db.constraint_id = constraint_id
+    new_grp_i.db.op        = grp_i.db.op
+    new_grp_i.db.ref_key_1 = grp_i.db.ref_key_1
+    new_grp_i.db.ref_key_2 = grp_i.db.ref_key_2
+
+    for subgroup in grp_i.get_groups():
+        new_subgroup = clone_constraint_group(constraint_id, subgroup)
+        if grp_i.db.ref_key_1 == 'GRP' and grp_i.db.ref_id_1 == subgroup.db.group_id:
+            new_grp_i.db.ref_id_1 = new_subgroup.db.group_id
+        if grp_i.db.ref_key_2 == 'GRP' and grp_i.db.ref_id_1 == subgroup.db.group_id:
+            new_grp_i.db.ref_id_2 = new_subgroup.db.group_id
+
+    for subitem in grp_i.get_items():
+        new_subitem_i = HydraIface.ConstraintItem()
+        new_subitem_i.db.constraint_id = constraint_id
+        new_subitem_i.db.resource_attr_id = subitem.db.resource_attr_id
+        new_subitem_i.db.constant         = subitem.db.constant
+        new_subitem_i.save()
+        new_subitem_i.load()
+        if grp_i.db.ref_key_1 == 'ITEM' and grp_i.db.ref_id_1 == subitem.db.item_id:
+            new_grp_i.db.ref_id_1 = new_subitem_i.db.item_id
+        if grp_i.db.ref_key_2 == 'ITEM' and grp_i.db.ref_id_2 == subitem.db.item_id:
+            new_grp_i.db.ref_id_2 = new_subitem_i.db.item_id
+
+        new_grp_i.items.append(new_subitem_i)
+       
+    new_grp_i.save()
+    new_grp_i.load()
+
+    return new_grp_i
+
+
 class ScenarioService(HydraService):
     """
         The scenario SOAP service
@@ -92,7 +133,37 @@ class ScenarioService(HydraService):
 
         HydraIface.bulk_insert(cloned_scen.resourcescenarios, "tResourceScenario")
 
+        for constraint_i in scen_i.constraints:
+            new_constraint = HydraIface.Constraint()
+            new_constraint.db.scenario_id = cloned_scen.db.scenario_id
+            new_constraint.db.op          = constraint_i.db.op
+            new_constraint.db.constant    = constraint_i.db.constant
+            new_constraint.save()
+            new_constraint.load()
+            
+            grp_i = HydraIface.ConstraintGroup(constraint=constraint_i, group_id=constraint_i.db.group_id)
+
+            new_grp = clone_constraint_group(new_constraint.db.constraint_id, grp_i)
+
+            new_constraint.db.group_id = new_grp.db.group_id
+            new_constraint.save()
+        
         return cloned_scen.get_as_complexmodel()
+
+    @rpc(Integer, Integer, _returns=Boolean)
+    def compare_scenarios(scenario_id_1, scenario_id_2):
+        scenario_1 = HydraIface.Scenario(scenario_id=scenario_id_1)
+        scenario_1.load_all()
+        
+        scenario_2 = HydraIface.Scenario(scenario_id=scenario_id_2)
+        scenario_2.load_all()
+
+        if scenario_1.db.network_id != scenario_2.db.network_id:
+            raise HydraIface("Cannot compare scenarios that are not in the same network!")
+
+
+
+
 
     @rpc(Integer, ResourceScenario, _returns=ResourceScenario)
     def update_resourcedata(ctx,scenario_id, resource_scenario):

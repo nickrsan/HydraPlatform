@@ -94,6 +94,10 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         assert len(network.scenarios.Scenario) == 1; "The network should have only one scenario!"
 
+        self.create_constraint(network)
+        
+        network = self.client.service.get_network(network.id)
+
         scenario = network.scenarios.Scenario[0]
         scenario_id = scenario.id
 
@@ -106,12 +110,17 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         assert updated_network.scenarios.Scenario[1].resourcescenarios is not None; "Data was not cloned!"
 
-        scen_2_val = updated_network.scenarios.Scenario[1].resourcescenarios.ResourceScenario[0].value
-        scen_1_val = network.scenarios.Scenario[0].resourcescenarios.ResourceScenario[0].value
-        assert scen_2_val == scen_1_val; "Data was not cloned correctly"
+        scen_2_val = updated_network.scenarios.Scenario[1].resourcescenarios.ResourceScenario[0].value.id
+        scen_1_val = network.scenarios.Scenario[0].resourcescenarios.ResourceScenario[0].value.id
         
+        assert scen_2_val == scen_1_val; "Data was not cloned correctly"
 
 
+        scen_1_constraint  = network.scenarios.Scenario[0].constraints.Constraint[0].value
+        scen_2_constraint  = updated_network.scenarios.Scenario[1].constraints.Constraint[0].value
+
+        assert scen_1_constraint == scen_2_constraint; "Constraints did not clone correctly!"
+        
 
 if __name__ == '__main__':
     test_SoapServer.run()

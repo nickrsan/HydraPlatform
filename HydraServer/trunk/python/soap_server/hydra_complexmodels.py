@@ -272,6 +272,13 @@ class Scenario(Resource):
         ('templates',            SpyneArray(ResourceGroupSummary, default=[])),
     ]
 
+class ScenarioDiff(Resource):
+    _type_info = [
+        ('resourcescenarios',    SpyneArray(ResourceScenario, default=[])),
+        ('constraints',          SpyneArray(Constraint, default=[])),
+        ('templates',            SpyneArray(ResourceGroupSummary, default=[])),
+    ]
+
 class Network(Resource):
     _type_info = [
         ('project_id',          Integer(default=None)),
