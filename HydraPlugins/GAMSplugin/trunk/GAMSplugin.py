@@ -460,24 +460,25 @@ class GAMSexport(object):
             if islink:
                 self.output += 'Table ' + obj_type + '_' + datatype + \
                     '_data(i,j,' + obj_type + '_' + datatype + \
-                    's) /\n          '
+                    's) \n\n'
             else:
                 self.output += 'Table ' + obj_type + '_' + datatype + \
-                    '_data(i,' + obj_type + '_' + datatype + 's) /\n          '
+                    '_data(i,' + obj_type + '_' + datatype + 's) \n\n'
 
+            self.output += '                '
             for attribute in attributes:
-                self.output += '%16s' % attribute.name
+                self.output += ' %14s' % attribute.name
             self.output += '\n'
             for resource in resources:
                 if islink:
-                    self.output += '%14s' % resource.gams_name
+                    self.output += '{0:16}'.format(resource.gams_name)
                 else:
-                    self.output += '%14s' % resource.name
+                    self.output += '{0:16}'.format(resource.name)
                 for attribute in attributes:
                     attr = resource.get_attribute(attr_name=attribute.name)
-                    self.output += '%14s' % attr.value.__getitem__(0)
+                    self.output += ' %14s' % attr.value.__getitem__(0)
                 self.output += '\n'
-            self.output += '/\n\n'
+            self.output += '\n\n'
 
     def export_timeseries(self, resources):
         """Export time series.
@@ -497,23 +498,23 @@ class GAMSexport(object):
             if islink:
                 self.output += 'Table ' + obj_type + \
                     '_timeseries_data(t,i,j,' + obj_type + \
-                    '_timeseries) /\n          '
+                    '_timeseries) \n\n          '
             else:
                 self.output += 'Table ' + obj_type + \
                     '_timeseries_data(t,i,' + obj_type + \
-                    '_timeseries) /\n          '
+                    '_timeseries) \n\n          '
             for attribute in attributes:
                 for resource in resources:
                     if islink:
-                        self.output += '%10s' % (resource.gams_name + '.' +
-                                                 attribute.name)
+                        self.output += ' %14s' % (resource.gams_name + '.' +
+                                                  attribute.name)
                     else:
-                        self.output += '%10s' % (resource.name + '.' +
-                                                 attribute.name)
+                        self.output += ' %14s' % (resource.name + '.' +
+                                                  attribute.name)
             self.output += '\n'
 
             for t in self.time_index:
-                self.output += '%10s ' % self.convert_date_to_timeindex(t)
+                self.output += '{0:<10}'.format(convert_date_to_timeindex(t))
                 for attribute in attributes:
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
@@ -522,7 +523,7 @@ class GAMSexport(object):
                         data = self.cli.service.get_val_at_time(
                             attr.dataset_id, soap_time)
                         data = eval(data.data)
-                        self.output += ' '.join([str(d) for d in data]) + ' '
+                        self.output += ' %14s' % data[0]
                 self.output += '\n'
             self.output += '\n'
 
@@ -572,13 +573,20 @@ class GAMSexport(object):
                                 + '_' + attr.name
                             if i < (len(dim) - 1):
                                 self.output += ','
-                        self.output += ') /\n'
-                        arr_index = create_arr_index(dim)
-                        vec_array = arr_to_vector(array, dim)
-                        for n, idx in enumerate(arr_index):
-                            self.output += ' . '.join([str(i) for i in idx])
-                            self.output += '   %s\n' % vec_array[n]
-                        self.output += '/\n\n'
+                        self.output += ') \n\n          '
+                        ydim = dim[-1]
+                        self.output += ''.join(['{0:10}'.format(y)
+                                                for y in range(ydim)])
+                        self.output += '\n'
+                        arr_index = create_arr_index(dim[0:-1])
+                        matr_array = arr_to_matrix(array, dim)
+                        for i, idx in enumerate(arr_index):
+                            for n in range(ydim):
+                                self.output += '{0:<10}'.format(
+                                    ' . '.join([str(k) for k in idx]))
+                                self.output += '{0:10}'.format(matr_array[i][n])
+                            self.output += '\n'
+                        self.output += '\n\n'
 
     def write_time_index(self, start_time, end_time, time_step):
         start_time = ' '.join(start_time)
@@ -592,7 +600,7 @@ class GAMSexport(object):
         self.output += 't time /\n'
         while start_date < end_date:
 
-            self.output += str(self.convert_date_to_timeindex(start_date)) \
+            self.output += str(convert_date_to_timeindex(start_date)) \
                 + '\n'
 
             self.time_index.append(start_date)
@@ -600,10 +608,6 @@ class GAMSexport(object):
             start_date += timedelta(delta_t)
 
         self.output += '/\n\n'
-
-    def convert_date_to_timeindex(self, date):
-        totalseconds = date.hour * 3600 + date.minute * 60 + date.second
-        return date.toordinal() + float(totalseconds) / 86400
 
     def parse_time_step(self, time_step):
         """Read in the time step and convert it to days.
@@ -633,7 +637,14 @@ class GAMSexport(object):
             f.write(self.output)
 
 
+def convert_date_to_timeindex(date):
+    totalseconds = date.hour * 3600 + date.minute * 60 + date.second
+    return date.toordinal() + float(totalseconds) / 86400
+
+
 def array_dim(arr):
+    """Return the size of a multidimansional array.
+    """
     dim = []
     while True:
         try:
@@ -644,8 +655,23 @@ def array_dim(arr):
 
 
 def arr_to_vector(arr, dim):
+    """Reshape a multidimensional array to a vector.
+    """
     tmp_arr = []
     for n in range(len(dim) - 1):
+        for inner in arr:
+            for i in inner:
+                tmp_arr.append(i)
+        arr = tmp_arr
+        tmp_arr = []
+    return arr
+
+
+def arr_to_matrix(arr, dim):
+    """Reshape a multidimensional array to a 2 dimensional matrix.
+    """
+    tmp_arr = []
+    for n in range(len(dim) - 2):
         for inner in arr:
             for i in inner:
                 tmp_arr.append(i)
