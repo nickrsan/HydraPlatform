@@ -610,14 +610,11 @@ class GAMSexport(object):
 
         self.output += '/\n\n'
 
-        self.output += 'ts time stamp variable /\ntimestamp\n/\n\n'
-
-        self.output += '* Time steps\n'
-        self.output += 'Table time(t,ts) \n\n'
-        self.output += '     timestamp\n'
+        self.output += '* define time steps dependent on time index (t)\n\n'
+        self.output += 'Parameter timestamp(t) ;\n\n'
         for t, date in enumerate(self.time_index):
-            self.output += '{0:<5}'.format(t) + \
-                str(convert_date_to_timeindex(date)) + '\n'
+            self.output += '    timestamp("%s") = %s ;\n' % \
+                (t, convert_date_to_timeindex(date))
         self.output += '\n\n'
 
     def parse_time_step(self, time_step):
