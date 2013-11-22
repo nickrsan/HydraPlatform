@@ -498,11 +498,11 @@ class GAMSexport(object):
             if islink:
                 self.output += 'Table ' + obj_type + \
                     '_timeseries_data(t,i,j,' + obj_type + \
-                    '_timeseries) \n\n          '
+                    '_timeseries) \n\n       '
             else:
                 self.output += 'Table ' + obj_type + \
                     '_timeseries_data(t,i,' + obj_type + \
-                    '_timeseries) \n\n          '
+                    '_timeseries) \n\n       '
             for attribute in attributes:
                 for resource in resources:
                     if islink:
@@ -513,13 +513,13 @@ class GAMSexport(object):
                                                   attribute.name)
             self.output += '\n'
 
-            for t in self.time_index:
-                self.output += '{0:<10}'.format(convert_date_to_timeindex(t))
+            for t, timestamp in enumerate(self.time_index):
+                self.output += '{0:<7}'.format(t)
                 for attribute in attributes:
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
                         soap_time = self.cli.factory.create('ns0:stringArray')
-                        soap_time.string.append(PluginLib.date_to_string(t))
+                        soap_time.string.append(PluginLib.date_to_string(timestamp))
                         data = self.cli.service.get_val_at_time(
                             attr.dataset_id, soap_time)
                         data = eval(data.data)
@@ -573,10 +573,12 @@ class GAMSexport(object):
                                 + '_' + attr.name
                             if i < (len(dim) - 1):
                                 self.output += ','
-                        self.output += ') \n\n          '
+                        self.output += ') \n\n'
                         ydim = dim[-1]
-                        self.output += ''.join(['{0:10}'.format(y)
-                                                for y in range(ydim)])
+                        #self.output += ' '.join(['{0:10}'.format(y)
+                        #                        for y in range(ydim)])
+                        for y in range(ydim):
+                            self.output += '{0:20}'.format(y)
                         self.output += '\n'
                         arr_index = create_arr_index(dim[0:-1])
                         matr_array = arr_to_matrix(array, dim)
@@ -596,18 +598,27 @@ class GAMSexport(object):
         delta_t = self.parse_time_step(time_step)
 
         self.output += 'SETS\n\n'
-        self.output += '* Time steps\n'
-        self.output += 't time /\n'
+        self.output += '* Time index\n'
+        self.output += 't time index /\n'
+        t = 0
         while start_date < end_date:
 
-            self.output += str(convert_date_to_timeindex(start_date)) \
-                + '\n'
-
+            self.output += '%s\n' % t
             self.time_index.append(start_date)
-
             start_date += timedelta(delta_t)
+            t += 1
 
         self.output += '/\n\n'
+
+        self.output += 'ts time stamp variable /\ntimestamp\n/\n\n'
+
+        self.output += '* Time steps\n'
+        self.output += 'Table time(t,ts) \n\n'
+        self.output += '     timestamp\n'
+        for t, date in enumerate(self.time_index):
+            self.output += '{0:<5}'.format(t) + \
+                str(convert_date_to_timeindex(date)) + '\n'
+        self.output += '\n\n'
 
     def parse_time_step(self, time_step):
         """Read in the time step and convert it to days.
