@@ -41,25 +41,25 @@
 
 
     <dimension name="Volume">
-        <unit name="barrel(oil)"          abbr="bbl"  lf="158.987295"    cf="0" info="The standard oil barrel is used in the United States for crude oil or other petroleum products. 1 Oil barrel = 42 US gallons"/>
-        <unit name="centiliter"          abbr="cl"    lf="0.01"          cf="0" />
-        <unit name="cubic centimeter"    abbr="cm^3"   lf="0.001"         cf="0" />
-        <unit name="cubic decimeter"     abbr="dm^3"   lf="1"             cf="0" />
-        <unit name="cubic hectometer"    abbr="hm^3"   lf="1e9"           cf="0" />
-        <unit name="cubic foot"          abbr="ft^3"   lf="28.316846592"  cf="0" />
-        <unit name="cubic inch"          abbr="in^3"   lf="0.016387064"   cf="0" />
-        <unit name="cubic meter"         abbr="m^3"    lf="1000"          cf="0" />
-        <unit name="cubic millimeter"    abbr="mm^3"   lf="0.000001"      cf="0" />
-        <unit name="cubic yard"          abbr="yd^3"   lf="764.554857984" cf="0" />
-        <unit name="deciliter"           abbr="dl"    lf="0.1"           cf="0" />
-        <unit name="fluid ounce(US)"     abbr="fl oz" lf="0.029574"      cf="0" />
-        <unit name="gallon, liquid(US)"  abbr="gal"   lf="3.785411784"   cf="0" info="US liquid gallon is 231 in^3 or 128 fl oz or 3.785411784 L."/>
+        <unit name="barrel(oil)"          abbr="bbl"  lf="0.158987295"    cf="0" info="The standard oil barrel is used in the United States for crude oil or other petroleum products. 1 Oil barrel = 42 US gallons"/>
+        <unit name="centiliter"          abbr="cl"    lf="0.00001"          cf="0" />
+        <unit name="cubic centimeter"    abbr="cm^3"   lf="0.000001"         cf="0" />
+        <unit name="cubic decimeter"     abbr="dm^3"   lf=".001"             cf="0" />
+        <unit name="cubic hectometer"    abbr="hm^3"   lf="1e6"           cf="0" />
+        <unit name="cubic foot"          abbr="ft^3"   lf="0.028316846592"  cf="0" />
+        <unit name="cubic inch"          abbr="in^3"   lf="0.000016387064"   cf="0" />
+        <unit name="cubic meter"         abbr="m^3"    lf="1"          cf="0" />
+        <unit name="cubic millimeter"    abbr="mm^3"   lf="0.000000001"      cf="0" />
+        <unit name="cubic yard"          abbr="yd^3"   lf="0.764554857984" cf="0" />
+        <unit name="deciliter"           abbr="dl"    lf="0.0001"           cf="0" />
+        <unit name="fluid ounce(US)"     abbr="fl oz" lf="0.000029574"      cf="0" />
+        <unit name="gallon, liquid(US)"  abbr="gal"   lf="0.003785411784"   cf="0" info="US liquid gallon is 231 in^3 or 128 fl oz or 3.785411784 L."/>
         <unit name="liter"               abbr="L"     lf="1"             cf="0" info="A litre is defined as a special name for a cubic decimetre (1 L = 1 dm^3)."/>
-        <unit name="deciliter"           abbr="dl"    lf="0.1"           cf="0" />
-        <unit name="milliliter"          abbr="ml"    lf="0.001"         cf="0" />
-        <unit name="pint, liquid(US)"    abbr="pt"    lf="0.473176475"   cf="0" />
-        <unit name="acre-foot"           abbr="ac-ft" lf="1233.48184"    cf="0" info="An acre foot is the volume of water that covers one acre in one foot. This unit is popular among irrigation people in the US." />
-        <unit name="acre-inch"           abbr="ac-in" lf="102.790153"    cf="0" info="See acre-foot." />
+        <unit name="deciliter"           abbr="dl"    lf="0.0001"           cf="0" />
+        <unit name="milliliter"          abbr="ml"    lf="0.000001"         cf="0" />
+        <unit name="pint, liquid(US)"    abbr="pt"    lf="0.000473176475"   cf="0" />
+        <unit name="acre-foot"           abbr="ac-ft" lf="1.23348184"    cf="0" info="An acre foot is the volume of water that covers one acre in one foot. This unit is popular among irrigation people in the US." />
+        <unit name="acre-inch"           abbr="ac-in" lf="0.102790153"    cf="0" info="See acre-foot." />
     </dimension>
 
 
