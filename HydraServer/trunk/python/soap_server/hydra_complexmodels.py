@@ -269,14 +269,29 @@ class Scenario(Resource):
         ('status',               String(default='A')),
         ('resourcescenarios',    SpyneArray(ResourceScenario, default=[])),
         ('constraints',          SpyneArray(Constraint, default=[])),
-        ('templates',            SpyneArray(ResourceGroupSummary, default=[])),
     ]
 
-class ScenarioDiff(Resource):
+class ResourceScenarioDiff(HydraComplexModel):
     _type_info = [
-        ('resourcescenarios',    SpyneArray(ResourceScenario, default=[])),
-        ('constraints',          SpyneArray(Constraint, default=[])),
-        ('templates',            SpyneArray(ResourceGroupSummary, default=[])),
+        ('resource_attr_id',     Integer(default=None)),
+        ('scenario_1_dataset',   Dataset),
+        ('scenario_2_dataset',   Dataset),
+    ]
+
+class ConstraintDiff(HydraComplexModel):
+    _type_info = [
+        #Constraints common to both scenarios
+        ('common_constraints',  SpyneArray(Constraint, default=[])),
+        #Constraints in scenario 1 but not in scenario 2
+        ('scenario_1_constraints', SpyneArray(Constraint, default=[])),
+        #Constraints in scenario 2 but not in scenario 1
+        ('scenario_2_constraints', SpyneArray(Constraint, default=[])),
+    ]
+
+class ScenarioDiff(HydraComplexModel):
+    _type_info = [
+        ('resourcescenarios',    SpyneArray(ResourceScenarioDiff, default=[])),
+        ('constraints',          ConstraintDiff),
     ]
 
 class Network(Resource):

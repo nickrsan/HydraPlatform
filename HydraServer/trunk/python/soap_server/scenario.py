@@ -1,7 +1,6 @@
 import logging
 from HydraLib.HydraException import HydraError
 from spyne.model.primitive import Integer, Boolean, String, AnyDict
-from spyne.model.primitive import Decimal
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Scenario,\
@@ -13,12 +12,14 @@ from hydra_complexmodels import Scenario,\
         ResourceScenario,\
         Dataset,\
         DatasetGroup,\
+        ScenarioDiff,\
+        ResourceScenarioDiff,\
+        ConstraintDiff,\
         parse_value
 
 from db import HydraIface
 from HydraLib import hdb
 from HydraLib import units
-from HydraLib.util import timestamp_to_server_time
 
 from hydra_base import HydraService
 
@@ -62,7 +63,6 @@ def clone_constraint_group(constraint_id, grp_i):
 
     return new_grp_i
 
-
 class ScenarioService(HydraService):
     """
         The scenario SOAP service
@@ -93,11 +93,11 @@ class ScenarioService(HydraService):
             Set the status of a scenario to 'X'.
         """
 
-
+        
         success = True
         try:
             scen_i = HydraIface.Scenario(scenario_id = scenario_id)
-
+            
             if scen_i.load() is False:
                 raise HydraError("Scenario %s does not exist."%(scenario_id))
 
@@ -123,7 +123,7 @@ class ScenarioService(HydraService):
         cloned_scen.db.scenario_description = scen_i.db.scenario_description
         cloned_scen.save()
         cloned_scen.load()
-
+      
         for rs in scen_i.resourcescenarios:
             new_rs = HydraIface.ResourceScenario()
             new_rs.db.scenario_id = cloned_scen.db.scenario_id
@@ -150,8 +150,8 @@ class ScenarioService(HydraService):
         
         return cloned_scen.get_as_complexmodel()
 
-    @rpc(Integer, Integer, _returns=Boolean)
-    def compare_scenarios(scenario_id_1, scenario_id_2):
+    @rpc(Integer, Integer, _returns=ScenarioDiff)
+    def compare_scenarios(ctx, scenario_id_1, scenario_id_2):
         scenario_1 = HydraIface.Scenario(scenario_id=scenario_id_1)
         scenario_1.load_all()
         
@@ -160,9 +160,81 @@ class ScenarioService(HydraService):
 
         if scenario_1.db.network_id != scenario_2.db.network_id:
             raise HydraIface("Cannot compare scenarios that are not in the same network!")
+       
+        scenariodiff = ScenarioDiff()
+        resource_diffs = []
 
+        #Make a list of all the resource scenarios (aka data) that are unique
+        #to scenario 1 and that are in both scenarios, but are not the same.
+        for s1_rs in scenario_1.resourcescenarios:
+            for s2_rs in scenario_2.resourcescenarios:
+                if s2_rs.db.resource_attr_id == s1_rs.db.resource_attr_id:
+                    if s1_rs.db.dataset_id != s2_rs.db.dataset_id:
+                        resource_diff = ResourceScenarioDiff()
+                        resource_diff.resource_attr_id = s1_rs.db.resource_attr_id
+                        resource_diff.scenario_1_dataset = s1_rs.get_as_complexmodel().value 
+                        resource_diff.scenario_2_dataset = s2_rs.get_as_complexmodel().value 
+                        resource_diffs.append(resource_diff)
 
+                    break
+            else:
+                resource_diff = ResourceScenarioDiff()
+                resource_diff.resource_attr_id = s1_rs.db.resource_attr_id
+                resource_diff.scenario_1_dataset = s1_rs.get_as_complexmodel().value 
+                resource_diff.scenario_2_dataset = None 
+                resource_diffs.append(resource_diff)
 
+        #make a list of all the resource scenarios (aka data) that are unique
+        #in scenario 2.
+        for s2_rs in scenario_2.resourcescenarios:
+            for s1_rs in scenario_1.resourcescenarios:
+                if s2_rs.db.resource_attr_id == s1_rs.db.resource_attr_id:
+                    break
+            else:
+                resource_diff = ResourceScenarioDiff()
+                resource_diff.resource_attr_id = s1_rs.db.resource_attr_id
+                resource_diff.scenario_1_dataset = None 
+                resource_diff.scenario_2_dataset = s2_rs.get_as_complexmodel().value 
+                resource_diffs.append(resource_diff) 
+    
+        scenariodiff.resourcescenarios = resource_diffs
+
+        #The next comparison is of constraints.
+        
+        constraint_diff = ConstraintDiff()
+        common_constraints = []
+        scenario_1_constraints = []
+        scenario_2_constraints  = []
+        #Make a list of all the constraints that are unique
+        #to scenario 1 and that are in both scenarios, but are not the same.
+        for s1_con in scenario_1.constraints:
+            con1 = s1_con.get_as_complexmodel() 
+            for s2_con in scenario_2.constraints:
+                con2 = s2_con.get_as_complexmodel() 
+                if con1.value == con2.value:
+                    common_constraints.append(con1)
+                    break
+            else:
+                scenario_1_constraints.append(con1)
+
+        #make a list of all the constraints that are unique
+        #in scenario 2.
+        for s2_con in scenario_2.constraints:
+            con2 = s2_con.get_as_complexmodel() 
+            for s1_con in scenario_1.constraints:
+                con1 = s1_con.get_as_complexmodel() 
+                if con1.value == con2.value:
+                    break
+            else:
+                scenario_2_constraints.append(con2)
+        
+        constraint_diff.common_constraints     = common_constraints
+        constraint_diff.scenario_1_constraints  = scenario_1_constraints
+        constraint_diff.scenario_2_constraints = scenario_2_constraints
+
+        scenariodiff.constraints = constraint_diff
+
+        return scenariodiff
 
 
     @rpc(Integer, ResourceScenario, _returns=ResourceScenario)
@@ -183,6 +255,17 @@ class ScenarioService(HydraService):
         """
         _delete_resourcescenario(scenario_id, resource_scenario)
 
+def _get_dataset(dataset_id):
+
+    if dataset_id is None:
+        return None
+
+    import pudb; pudb.set_trace()
+    sd_i = HydraIface.ScenarioData(dataset_id=dataset_id)
+    sd_i.load()
+    dataset = sd_i.get_as_complexmodel()
+
+    return dataset
 
 def _delete_resourcescenario(scenario_id, resource_scenario):
 
@@ -208,7 +291,7 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
     data_type = resource_scenario.value.type.lower()
 
     value = parse_value(resource_scenario.value)
-
+   
     dimension = resource_scenario.value.dimension
     unit      = resource_scenario.value.unit
     name      = resource_scenario.value.name
@@ -651,8 +734,8 @@ class DataService(HydraService):
             Update a piece of data directly, rather than through a resource scenario
         """
 
-    @rpc(Integer, _returns=Dataset)
-    def get_dataset(ctx, dataset_id):
+    @rpc(Integer, _returns=AnyDict)
+    def get_dataset(dataset_id):
         """
             Get a piece of data directly, rather than through a resource scenario
         """
@@ -683,17 +766,3 @@ class DataService(HydraService):
     @rpc(HydraArray, _returns=HydraArray)
     def echo_array(ctx, x):
         return x
-
-    @rpc(Integer, SpyneArray(String), _returns=AnyDict)
-    #@rpc(Integer, SpyneArray(String), _returns=AnyDict)
-    def get_val_at_time(ctx, dataset_id, timestamps):
-        t = []
-        for time in timestamps:
-            t.append(timestamp_to_server_time(time))
-        td = HydraIface.ScenarioData(dataset_id=dataset_id)
-        #for time in t:
-        #    data.append(td.get_val(timestamp=time))
-        data = td.get_val(timestamp=t)
-        dataset = {'data': data}
-
-        return dataset

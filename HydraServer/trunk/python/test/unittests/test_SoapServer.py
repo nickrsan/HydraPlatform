@@ -328,7 +328,7 @@ class SoapServerTest(unittest.TestCase):
         return scenario_attr
 
 
-    def create_constraint(self, net):
+    def create_constraint(self, net, constant=5):
         #We are trying to achieve a structure that looks like:
         #(((A + 5) * B) - C) == 0
         #3 groups
@@ -347,7 +347,7 @@ class SoapServerTest(unittest.TestCase):
         item_1 = self.client.factory.create('ns1:ConstraintItem')
         item_1.resource_attr_id = net.nodes.Node[0].attributes.ResourceAttr[0].id
         item_2 = self.client.factory.create('ns1:ConstraintItem')
-        item_2.constant = 5 
+        item_2.constant = constant
 
         #set the items in group 3 (aka 'A' and 5 from example above)
         group_3_items = self.client.factory.create('ns1:ConstraintItemArray')

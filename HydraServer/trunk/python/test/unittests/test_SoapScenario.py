@@ -122,5 +122,56 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         assert scen_1_constraint == scen_2_constraint; "Constraints did not clone correctly!"
         
 
+    def test_compare(self):
+
+        network =  self.create_network_with_data()
+       
+
+        assert len(network.scenarios.Scenario) == 1; "The network should have only one scenario!"
+
+        self.create_constraint(network)
+        
+        network = self.client.service.get_network(network.id)
+
+        scenario = network.scenarios.Scenario[0]
+        scenario_id = scenario.id
+
+        new_scenario = self.client.service.clone_scenario(scenario_id)
+
+
+        self.create_constraint(network, constant=4)
+
+        resource_scenario = new_scenario.resourcescenarios.ResourceScenario[0]
+        resource_attr_id = resource_scenario.resource_attr_id
+
+        dataset = self.client.factory.create('ns1:Dataset')
+       
+        dataset = self.client.factory.create('ns1:Dataset')
+        dataset.type = 'descriptor'
+        dataset.name = 'Max Capacity'
+        dataset.unit = 'metres / second'
+        dataset.dimension = 'number of units per time unit'
+        
+        descriptor = self.client.factory.create('ns1:Descriptor')
+        descriptor.desc_val = 'I am an updated test!'
+
+        dataset.value = descriptor
+
+        self.client.service.add_data_to_attribute(scenario_id, resource_attr_id, dataset)
+        
+        updated_network = self.client.service.get_network(new_scenario.network_id)
+
+        scenarios = updated_network.scenarios.Scenario
+
+        scenario_diff = self.client.service.compare_scenarios(scenarios[0].id, scenarios[1].id)
+        
+        print "Comparison result: %s"%(scenario_diff)
+
+        assert len(scenario_diff.resourcescenarios.ResourceScenarioDiff) == 1; "Data comparison was not successful!"
+
+        assert len(scenario_diff.constraints.common_constraints) == 1; "Constraint comparison was not successful!"
+        
+        assert len(scenario_diff.constraints.scenario_1_constraints) == 1; "Constraint comparison was not successful!"
+
 if __name__ == '__main__':
     test_SoapServer.run()
