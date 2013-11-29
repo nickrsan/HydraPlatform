@@ -124,6 +124,7 @@ class GAMSexport(object):
                 self.output += node.name + '\n'
             self.output += '/\n\n'
         # Define other groups
+        self.output += '* Node groups\n\n'
         for group in self.network.node_groups:
             self.output += group + '(i) /\n'
             for node in self.network.get_node(group=group):
