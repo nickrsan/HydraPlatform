@@ -1,6 +1,6 @@
 import mysql.connector
 import logging
-import util
+import config
 
 global CNX
 CNX = None
@@ -30,7 +30,6 @@ class HydraRSRow(object):
         return dict(self.rs_zip)
 
 def connect(user=None, password=None, db_name=None):
-    config = util.load_config()
     logging.debug("CONNECTING")
     if user is None:
         user = config.get('mysqld', 'user')

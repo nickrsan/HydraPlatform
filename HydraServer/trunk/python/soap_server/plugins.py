@@ -1,5 +1,4 @@
-from HydraLib import util
-from HydraLib.HydraException import HydraError
+from HydraLib import config
 from spyne.model.complex import Array as SpyneArray
 from spyne.model.primitive import String, Integer
 from hydra_complexmodels import Plugin
@@ -24,8 +23,6 @@ class PluginService(HydraService):
         """
             Get all available plugins
         """
-
-        config = util.load_config()
         
         plugins = []
         plugin_paths = []
@@ -109,9 +106,6 @@ class PluginService(HydraService):
             args.append(p.value)
             plugin_params = plugin_params + param
 
-        config = util.load_config()
-
-
         log_dir = config.get('plugin', 'result_file')
         log_file = os.path.join(home, log_dir, plugin.name)
 
@@ -142,7 +136,6 @@ class PluginService(HydraService):
 
     @rpc(String, Integer, _returns=String)
     def check_plugin_status(ctx, plugin_name, pid):
-        config = util.load_config()
         home = os.path.expanduser('~')
         log_dir = config.get('plugin', 'result_file')
         log_file = os.path.join(home, log_dir, plugin_name)

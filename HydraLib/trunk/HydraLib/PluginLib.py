@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import util
+import config 
 import hydra_logging
 from suds.client import Client
 
@@ -264,7 +264,6 @@ class HydraAttribute(object):
 
 def connect():
     hydra_logging.init(level='INFO')
-    config = util.load_config()
     url = config.get('hydra_client', 'url')
     user = config.get('hydra_client', 'user')
     passwd = config.get('hydra_client', 'password')
@@ -436,7 +435,6 @@ def create_xml_response(plugin_name, network_id, errors=[], warnings=[], message
 
 
 def write_xml_result(plugin_name, xml_string, file_path=None):
-    config = util.load_config()
     if file_path is None:
         file_path = config.get('plugin', 'result_file')
 

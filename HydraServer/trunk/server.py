@@ -37,7 +37,7 @@ from soap_server.hydra_base import AuthenticationService,\
 
 from HydraLib.HydraException import HydraError
 
-from HydraLib import hydra_logging, hdb, util
+from HydraLib import hydra_logging, hdb, config
 from db import HydraIface
 
 import datetime
@@ -156,8 +156,11 @@ class HydraServer():
 
         from wsgiref.simple_server import make_server
 
-        config = util.load_config()
+        #Initialise the config.
+        config.load_config()
+
         port = config.getint('hydra_server', 'port')
+        spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
 
         logging.info("listening to http://127.0.0.1:%s", port)
         logging.info("wsdl is at: http://localhost:%s/?wsdl", port)

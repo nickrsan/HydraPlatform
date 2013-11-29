@@ -110,9 +110,26 @@ def timestamp_to_server_time(timestamp):
                                     ts_time.month,
                                     ts_time.day,
                                     0, 0, 0)).total_seconds()
+
     fraction = fraction / (86400)
+
     ordinal_ts_time += fraction
+
     return ordinal_ts_time
+
+def convert_ordinal_to_datetime(date):
+    day = int(date)
+    time = date - day
+    
+    time_in_secs_ms = time * 86400
+
+    time_in_secs = int(time_in_secs_ms)
+    time_in_ms   = int((time_in_secs_ms - time_in_secs) * 100000)
+
+    td = datetime.timedelta(seconds=int(time_in_secs), microseconds=time_in_ms)
+    d = datetime.datetime.fromordinal(day) + td 
+ 
+    return d
 
 
 if __name__ == '__main__':

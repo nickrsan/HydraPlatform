@@ -20,13 +20,13 @@ class ProjectTest(test_SoapServer.SoapServerTest):
         attr2 = self.create_attr("testattr_2")
         attr3 = self.create_attr("testattr_3")
 
-        proj_attr_1  = self.client.factory.create('ns1:ResourceAttr')
+        proj_attr_1  = self.client.factory.create('hyd:ResourceAttr')
         proj_attr_1.id = -1
         proj_attr_1.attr_id = attr1.id
-        proj_attr_2  = self.client.factory.create('ns1:ResourceAttr')
+        proj_attr_2  = self.client.factory.create('hyd:ResourceAttr')
         proj_attr_2.attr_id = attr2.id
         proj_attr_2.id = -2
-        proj_attr_3  = self.client.factory.create('ns1:ResourceAttr')
+        proj_attr_3  = self.client.factory.create('hyd:ResourceAttr')
         proj_attr_3.attr_id = attr3.id
         proj_attr_3.id = -3
 
@@ -47,15 +47,18 @@ class ProjectTest(test_SoapServer.SoapServerTest):
             'A project created through the SOAP interface.'
       
         project = self.add_data(project)
-
+        
         project = self.client.service.add_project(project)
         new_project = copy.deepcopy(project)
 
         new_project.description = \
             'An updated project created through the SOAP interface.'
-
+ 
+        print self.client.last_sent()
+ 
         updated_project = self.client.service.update_project(new_project)
-    
+ 
+        print self.client.last_sent()
         print updated_project
 
         assert project.id == updated_project.id, \

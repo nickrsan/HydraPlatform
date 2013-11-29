@@ -1,12 +1,13 @@
-from HydraLib import util
+from HydraLib import config
 from HydraLib.hdb import HydraMySqlCursor
 import logging
-from decimal import Decimal
+from decimal import Decimal, getcontext
 from soap_server import hydra_complexmodels
 import datetime
 
+from HydraLib.util import convert_ordinal_to_datetime
+
 from HydraLib.HydraException import HydraError
-import sys, traceback
 from lxml import etree
 
 global DB_STRUCT
@@ -19,7 +20,6 @@ global LAYOUT_XSD_PATH
 LAYOUT_XSD_PATH = None
 
 def init(cnx):
-    config = util.load_config()
 
     global CONNECTION
     global DB_STRUCT
@@ -504,8 +504,8 @@ class IfaceDB(object):
             val = str(self.db_data[name])
 
             #Cast the value to the correct DB data type
-            if db_type == "double" or db_type == "double unsigned":
-                return Decimal(val)
+            if db_type.find("double") != -1:
+                return Decimal(self.db_data[name])
             elif db_type.find('int') != -1:
                 return int(val)
             elif db_type == 'blob':
@@ -1426,19 +1426,20 @@ class ScenarioData(IfaceBase):
             ts_datas = ts.timeseriesdatas
             ts_values = []
             for ts in ts_datas:
-                ts_values.append({
-                    'ts_time'  : [ts.db.ts_time],
-                    'ts_value' : [ts.db.ts_value]
+                ts_values.append(
+                    {
+                    'ts_time'  : [convert_ordinal_to_datetime(ts.db.ts_time)],
+                    'ts_value' : ts.db.ts_value
                 })
             complexmodel = {
-                'ts_values' : ts_values
+                'ts_values' : {'TimeSeriesData': ts_values}
             }
         elif self.db.data_type == 'eqtimeseries':
             eqts = EqTimeSeries(data_id = self.db.data_id)
             complexmodel = {
-                'start_time' : eqts.db.start_time,
+                'start_time' : convert_ordinal_to_datetime(eqts.db.start_time),
                 'frequency'  : eqts.db.frequency,
-                'arr_data'   : eqts.db.arr_data,
+                'arr_data'   : [eqts.db.arr_data],
             }
         elif self.db.data_type == 'scalar':
             s = Scalar(data_id = self.db.data_id)
@@ -1448,7 +1449,7 @@ class ScenarioData(IfaceBase):
         elif self.db.data_type == 'array':
             a = Array(data_id = self.db.data_id)
             complexmodel = {
-                'arr_data' : a.db.arr_data
+                'arr_data' : [a.db.arr_data]
             }
 
         return complexmodel

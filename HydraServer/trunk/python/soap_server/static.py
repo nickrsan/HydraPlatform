@@ -1,11 +1,11 @@
 import logging
 from spyne.model.primitive import String, Boolean, Integer
-from spyne.model.binary import File, ByteArray
+from spyne.model.binary import ByteArray
 from spyne.decorator import rpc
 from hydra_base import HydraService
 import os
 from HydraLib.HydraException import HydraError
-from HydraLib import util
+from HydraLib import config
 import base64
 
 class ImageService(HydraService):
@@ -15,7 +15,6 @@ class ImageService(HydraService):
 
     @rpc(String, ByteArray, _returns=Boolean)
     def add_image(ctx, name, file):
-        config = util.load_config()
         path = config.get('filesys', 'img_src')
         try:
             os.makedirs(path)
@@ -60,7 +59,6 @@ class ImageService(HydraService):
 
     @rpc(String, _returns=ByteArray)
     def get_image(ctx, name):
-        config = util.load_config()
         path = config.get('filesys', 'img_src')
 
         path = os.path.join(path, name)
@@ -82,7 +80,6 @@ class ImageService(HydraService):
 
     @rpc(String, _returns=Boolean)
     def remove_image(ctx, name):
-        config = util.load_config()
         path = config.get('filesys', 'img_src')
 
         path = os.path.join(path, name)
@@ -106,8 +103,6 @@ class FileService(HydraService):
 
     @rpc(String, Integer, String, ByteArray, _returns=Boolean)
     def add_file(ctx, resource_type, resource_id, name, file):
-        config = util.load_config()
-
         path = config.get('filesys', 'file_src')
         path = os.path.join(path, resource_type)
         try:
@@ -159,7 +154,6 @@ class FileService(HydraService):
 
     @rpc(String,Integer,String, _returns=ByteArray)
     def get_file(ctx, resource_type, resource_id, name):
-        config = util.load_config()
         path = config.get('filesys', 'file_src')
 
         path = os.path.join(path, resource_type, str(resource_id), name)
@@ -181,7 +175,6 @@ class FileService(HydraService):
 
     @rpc(String,Integer, String, _returns=Boolean)
     def remove_file(ctx, resource_type, resource_id, name):
-        config = util.load_config()
         path = config.get('filesys', 'file_src')
 
         path = os.path.join(path, resource_type, str(resource_id), name)

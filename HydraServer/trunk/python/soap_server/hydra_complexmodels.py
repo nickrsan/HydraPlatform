@@ -76,9 +76,10 @@ def get_array(arr):
     return current_level
 
 class HydraComplexModel(ComplexModel):
+    __namespace__ = 'soap_server.hydra_complexmodels'
     error = String()
 
-class Dataset(ComplexModel):
+class Dataset(HydraComplexModel):
     _type_info = [
         ('id',               Integer(min_occurs=1, default=None)),
         ('type',             String),
@@ -88,47 +89,47 @@ class Dataset(ComplexModel):
         ('value',            AnyDict),
     ]
 
-class Descriptor(ComplexModel):
+class Descriptor(HydraComplexModel):
    _type_info = [
         ('desc_val', String),
     ]
 
-class TimeSeriesData(ComplexModel):
+class TimeSeriesData(HydraComplexModel):
  _type_info = [
         #('ts_time', DateTime),
         ('ts_time', String),
         ('ts_value', AnyDict),
     ]
 
-class TimeSeries(ComplexModel):
+class TimeSeries(HydraComplexModel):
     _type_info = [
         ('ts_values', SpyneArray(TimeSeriesData)),
     ]
 
-class EqTimeSeries(ComplexModel):
+class EqTimeSeries(HydraComplexModel):
     _type_info = [
         ('start_time', DateTime),
         ('frequency', Decimal),
         ('arr_data', AnyDict),
     ]
 
-class Scalar(ComplexModel):
+class Scalar(HydraComplexModel):
     _type_info = [
         ('param_value', Decimal),
     ]
 
-class Array(ComplexModel):
+class Array(HydraComplexModel):
     _type_info = [
         ('arr_data', AnyDict),
     ]
 
-class DatasetGroupItem(ComplexModel):
+class DatasetGroupItem(HydraComplexModel):
     _type_info = [
         ('group_id', Integer(default=None)),
         ('dataset_id', Integer(default=None)),
     ]
 
-class DatasetGroup(ComplexModel):
+class DatasetGroup(HydraComplexModel):
     _type_info = [
         ('group_name', String(default=None)),
         ('group_id'  , Integer(default=None)),
