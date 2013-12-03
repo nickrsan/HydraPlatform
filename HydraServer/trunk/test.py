@@ -39,12 +39,12 @@ class TestSoap(unittest.TestCase):
         node.x = x
         node.y = y
         node_layout = """
-            <ns0:resource_layout>
-                <ns0:layout>
-                    <ns0:name>color</ns0:name>
-                    <ns0:value>#FFFFFF</ns0:value>
-                </ns0:layout>
-            </ns0:resource_layout>
+            <resource_layout>
+                <layout>
+                    <name>color</name>
+                    <value>#FFFFFF</value>
+                </layout>
+            </resource_layout>
         """
         node.layout = node_layout
 
@@ -60,12 +60,12 @@ class TestSoap(unittest.TestCase):
         link.node_1_id = node_1_id
         link.node_2_id = node_2_id
         link_layout = """
-            <ns0:resource_layout>
-                <ns0:layout>
-                    <ns0:name>color</ns0:name>
-                    <ns0:value>#FFFFFF</ns0:value>
-                </ns0:layout>
-            </ns0:resource_layout>
+            <resource_layout>
+                <layout>
+                    <name>color</name>
+                    <value>#FFFFFF</value>
+                </layout>
+            </resource_layout>
         """
         link.layout = link_layout
 
@@ -89,12 +89,21 @@ class TestSoap(unittest.TestCase):
         """
             Create an entire suds network including nodes, links & scenarios
         """
+
+        network_layout = """ <resource_layout>
+                <layout>
+                    <name>color</name>
+                    <value>#FFFFFF</value>
+                </layout>
+            </resource_layout>"""
+
         (network) = {
-            'name'        : name,
+            'name'        : "%s, %s"%(name, datetime.datetime.now()),
             'description' : desc,
             'project_id'  : project_id,
             'links'       : links,
             'nodes'       : nodes,
+            'layout'      : network_layout,
             'scenarios'   : scenarios,
         }
         #print network
@@ -107,7 +116,7 @@ class TestSoap(unittest.TestCase):
             Test adding a new project.
         """
         (project) = {
-            'name' : 'New Project',
+            'name' : 'New Project at %s'%datetime.datetime.now(),
             'description' : 'New Project Description',
         }
         p =  self.c.service.add_project(project)
@@ -116,7 +125,7 @@ class TestSoap(unittest.TestCase):
         print p1
         (project1) = {
             'id'   : p['id'],
-            'name' : 'Updated Project',
+            'name' : 'Updated Project at %s'%datetime.datetime.now(),
             'description' : 'Updated Project Description',
         }
 
@@ -134,7 +143,7 @@ class TestSoap(unittest.TestCase):
         project_start = datetime.datetime.now()
 
         (project) = {
-            'name' : 'New Project',
+            'name' : 'New Project at %s'%datetime.datetime.now(),
             'description' : 'New Project Description',
         }
         p =  self.c.service.add_project(project)
@@ -164,12 +173,12 @@ class TestSoap(unittest.TestCase):
         network_attrs.ResourceAttr.append(net_attr1)
 
         network_layout = """
-            <ns0:resource_layout>
-                <ns0:layout>
-                    <ns0:name>color</ns0:name>
-                    <ns0:value>#FFFFFF</ns0:value>
-                </ns0:layout>
-            </ns0:resource_layout>
+            <resource_layout>
+                <layout>
+                    <name>color</name>
+                    <value>#FFFFFF</value>
+                </layout>
+            </resource_layout>
         """
 
         (Network) = {
@@ -197,7 +206,7 @@ class TestSoap(unittest.TestCase):
         """
         start = datetime.datetime.now()
         (project) = {
-            'name'        : 'New Project',
+            'name' : 'New Project at %s'%datetime.datetime.now(),
             'description' : 'New Project Description',
         }
         p =  self.c.service.add_project(project)
