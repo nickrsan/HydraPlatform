@@ -272,7 +272,7 @@ class GAMSexport(object):
                         data = self.cli.service.get_val_at_time(
                             attr.dataset_id, soap_time)
                         data = eval(data.data)
-                        self.output += ' %14s' % data[0]
+                        self.output += ' %14f' % data[0]
                 self.output += '\n'
             self.output += '\n'
 
@@ -296,10 +296,7 @@ class GAMSexport(object):
                 for attribute in attributes:
                     attr = resource.get_attribute(attr_name=attribute.name)
                     if attr.value is not None:
-                        raw_array = attr.value.__getitem__(0)
-                        array = []
-                        for a in raw_array:
-                            array.append(eval(a))
+                        array = eval(attr.value.__getitem__(0))
                         dim = array_dim(array)
                         self.output += '* Array %s for node %s, ' % \
                             (attr.name, resource.name)
@@ -406,7 +403,7 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     # Mandatory arguments
     #parser.add_argument('-p', '--project',
     #                    help='''ID of the project that will be exported.''')
-    parser.add_argument('-n', '--network',
+    parser.add_argument('-t', '--network',
                         help='''ID of the network that will be exported.''')
     parser.add_argument('-s', '--scenario',
                         help='''ID of the scenario that will be exported.''')

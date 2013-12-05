@@ -102,7 +102,7 @@ def execute(sql):
 
 def get_val(attr, db_type):
     """
-        This function differs from the one in the 
+        This function differs from the one in the
         hydraiface DB object as it is used for the bulk insert
         function, which requires different string formatting.
     """
@@ -145,11 +145,11 @@ def bulk_insert(objs, table_name=""):
     )
 
     logging.info("Running bulk insert: %s with vals %s", complete_insert, vals)
-    
+
     logging.info(complete_insert)
 
     cursor.executemany(complete_insert, vals)
-   
+
     #the executemany seems to return the bottom index, rather than the top,
     #so we have to work out the top index.
     last_row_id = cursor.lastrowid + cursor.rowcount-1
@@ -236,12 +236,12 @@ class IfaceBase(object):
                 children_to_insert.append(child)
             else:
                 children_to_update.append(child)
-       
+
         self.db.bulk_insert(children_to_insert)
 
         for child in children_to_update:
             child.save()
-        
+
     def get_children(self):
         children = DB_STRUCT[self.db.table_name.lower()]['child_info']
         for name, rows in children.items():
@@ -254,7 +254,7 @@ class IfaceBase(object):
         return children
 
     def load_children(self):
-        
+
         self.children = []
 
         child_rs = self.db.load_children(self.child_info)
@@ -270,7 +270,7 @@ class IfaceBase(object):
                 child_obj.__setattr__(self.name.lower(), self)
                 for col, val in row:
                     child_obj.db.__setattr__(col, val)
-                
+
                 child_obj.in_db = True
 
                 child_obj.load_all()
@@ -342,7 +342,7 @@ class IfaceBase(object):
                     attributes.append(attr.get_as_complexmodel())
             setattr(cm, 'attributes', attributes)
             template_groups = self.get_templates()
-            
+
             template_list = []
             for grp_name, templates in template_groups.items():
                 grp_summary = hydra_complexmodels.ResourceGroupSummary()
@@ -657,7 +657,7 @@ class GenericResource(IfaceBase):
 
     def load(self):
         result = super(GenericResource, self).load()
-        
+
         self.get_ref_id()
 
         return result
@@ -694,9 +694,9 @@ class GenericResource(IfaceBase):
                     and ref_key = '%(ref_key)s'
             """ % dict(ref_key = self.ref_key, ref_id = self.ref_id)
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-        
+
         rs = cursor.execute_sql(sql)
-        
+
         cursor.close()
 
         for r in rs:
@@ -733,7 +733,7 @@ class GenericResource(IfaceBase):
         """ % (data_hash)
 
         rs = execute(sql)
-        
+
         if len(rs) > 0:
             return rs[0].dataset_id
         else:
@@ -754,7 +754,7 @@ class GenericResource(IfaceBase):
 
         if scenario_id == 1 and self.name != 'Project':
             raise HydraError("An error has occurred while setting"
-                             "resource attribute %s this data." 
+                             "resource attribute %s this data."
                              "Scenario 1 is reserved for project attributes."
                              %(resource_attr_id))
 
@@ -767,7 +767,7 @@ class GenericResource(IfaceBase):
         rs.db.scenario_id=scenario_id
         rs.db.resource_attr_id=resource_attr_id
         rs.load()
-        
+
         if existing_dataset_id is not None:
             rs.db.dataset_id = existing_dataset_id
         else:
@@ -827,14 +827,14 @@ class GenericResource(IfaceBase):
         group_dict   = {}
         template_name_map = {}
         for r in rs:
-            
+
             template_name_map[r.template_id] = r.template_name
-            
+
             if group_dict.get(r.group_name):
                 if group_dict[r.group_name].get(r.template_id):
                     group_dict[r.group_name][r.template_id].add(r.attr_id)
                 else:
-                    group_dict[r.group_name][r.template_id] = set([r.attr_id]) 
+                    group_dict[r.group_name][r.template_id] = set([r.attr_id])
             else:
                 group_dict[r.group_name] = {r.template_id:set([r.attr_id])}
 
@@ -866,12 +866,12 @@ class GenericResource(IfaceBase):
             return
 
         xmlschema_doc = etree.parse(LAYOUT_XSD_PATH)
-                        
+
         xmlschema = etree.XMLSchema(xmlschema_doc)
-       
+
         logging.info(layout_xml)
         xml_tree = etree.fromstring(layout_xml)
-        
+
         try:
             xmlschema.assertValid(xml_tree)
         except etree.LxmlError, e:
@@ -1141,7 +1141,7 @@ class ResourceTemplate(IfaceBase):
                 self.resourcetemplateitems.remove(item_i)
                 item_i.save()
 
-        return item_i 
+        return item_i
 
     def get_as_complexmodel(self):
         tmp =  hydra_complexmodels.ResourceTemplate()
@@ -1265,7 +1265,7 @@ class ResourceScenario(IfaceBase):
             dataset.name      = sd_i.db.data_name
             dataset.dimension = sd_i.db.data_dimen
             dataset.value     = sd_i.get_as_complexmodel()
-            
+
             cm.value          = dataset
 
         return cm
@@ -1288,7 +1288,7 @@ class ScenarioData(IfaceBase):
         """
             Given a timestamp (or list of timestamps) and some timeseries data,
             return the values appropriate to the requested times.
-            
+
             If the timestamp is *before* the start of the timeseries data, return None
             If the timestamp is *after* the end of the timeseries data, return the last
             value.
@@ -1310,7 +1310,7 @@ class ScenarioData(IfaceBase):
                             break
                     else:
                         val.append(None)
-                
+
             else:
                 for time in sorted_times:
                     if timestamp >= time:
@@ -1330,10 +1330,10 @@ class ScenarioData(IfaceBase):
         elif self.db.data_type == 'timeseries':
             ts = TimeSeries(data_id=self.db.data_id)
             ts.load_all()
-            
+
             ts_datas = ts.timeseriesdatas
             val = [(ts_data.db.ts_time, ts_data.db.ts_value) for ts_data in ts_datas]
-            
+
             if timestamp is not None:
                 val =  self.get_val_at_time(timestamp, val)
 
@@ -1350,7 +1350,7 @@ class ScenarioData(IfaceBase):
                 time_delta    = datetime.timedelta(seconds=eqts.db.frequency)
                 for v in val:
                     val_dict[time_interval] = v
-                    time_interval = time_interval + time_delta 
+                    time_interval = time_interval + time_delta
 
                 for time in val_dict.keys().sort().reverse():
                     if timestamp >= time:
@@ -1480,25 +1480,25 @@ class ScenarioData(IfaceBase):
 
     def set_hash(self, val):
         hash_string = "%s %s %s %s %s"
-        data_hash  = hash(hash_string%(self.db.data_name, 
+        data_hash  = hash(hash_string%(self.db.data_name,
                                        self.db.data_units,
                                        self.db.data_dimen,
                                        self.db.data_type,
                                        str(val)))
-        
+
         self.db.data_hash = data_hash
         return data_hash
 
-    
+
 class DatasetGroup(IfaceBase):
     """
         Groups data together to make it easier to find
     """
     def __init__(self, group_id=None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
-        
+
         self.db.group_id = group_id
-        
+
         if group_id is not None:
             self.load()
 
@@ -1508,7 +1508,7 @@ class DatasetGroupItem(IfaceBase):
     """
     def __init__(self, group_id=None, dataset_id=None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
-        
+
         self.db.group_id = group_id
         self.db.dataset_id = dataset_id
 
@@ -1777,7 +1777,7 @@ class ConstraintGroup(IfaceBase):
             str_2 = group.eval_group()
         elif self.db.ref_key_2 == 'ITEM':
             item = ConstraintItem(item_id=self.db.ref_id_2)
-            
+
             if item.db.constant is None:
                 r = ResourceScenario(
                         scenario_id      = self.constraint.db.scenario_id,
@@ -1803,7 +1803,7 @@ class ConstraintGroup(IfaceBase):
             item = ConstraintItem(item_id=self.db.ref_id_1)
 
             #str_1 = item.db.resource_attr_id
-            item_details = item.get_item_details()   
+            item_details = item.get_item_details()
             if item.db.constant is None:
                 str_1 = "%s[%s][%s]" % (item_details[1], item_details[3], item_details[0])
             else:
@@ -1838,10 +1838,10 @@ class ConstraintItem(IfaceBase):
 
     def get_item_details(self):
         """
-            Get the resource name, id and attribute to which 
+            Get the resource name, id and attribute to which
             this resource attribute belongs.
         """
-        
+
         if self.db.constant is not None:
             return self.db.constant
 
@@ -2091,7 +2091,7 @@ db_hierarchy = dict(
         obj        = DatasetGroup,
         parent     = None,
         table_name = 'tDatasetGroup',
-        pk         = ['group_id'] 
+        pk         = ['group_id']
     ),
     datasetgroupitem = dict(
         obj        = DatasetGroupItem,
