@@ -6,7 +6,8 @@ includes = ["encodings.utf_8",\
             "lxml._elementpath",\
             "ConfigParser",\
             "mysql.connector",\
-            "suds"]
+            "suds",\
+	    "pytz"]
 
 setup(
     name = "On Dijkstra's Algorithm",
@@ -17,7 +18,6 @@ setup(
                         "build_exe": 
                         {
                             "includes": includes,
-                            "zip_includes": [("C:/Python27/Lib/site-packages/pytz", "pytz")]
                         }
                 }
 )
