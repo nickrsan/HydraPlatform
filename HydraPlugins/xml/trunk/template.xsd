@@ -1,0 +1,42 @@
+ <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+     <xs:element name="template_definition">
+         <xs:complexType>
+             <xs:sequence>
+                <xs:element name="plugin_name" type="xs:string"/>
+                <xs:element name="resource_types">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="type" minOccurs="1" maxOccurs="1">
+                                <xs:simpleType>
+                                    <xs:restriction base="xs:string">
+                                        <xs:enumeration value="NETWORK"/>
+                                        <xs:enumeration value="NODE"/>
+                                        <xs:enumeration value="LINK"/>
+                                    </xs:restriction>
+                                </xs:simpleType>
+                            </xs:element>
+                            <xs:element name="name" minOccurs="1" maxOccurs="1"/>
+                            <xs:element name="attribute" minOccurs="1" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                            <xs:element name="name" type="xs:string"/>
+                                            <xs:element name="is_var">
+                                                <xs:simpleType>
+                                                    <xs:restriction base="xs:char">
+                                                        <xs:enumeration value="Y"/>
+                                                        <xs:enumeration value="N"/>
+                                                    </xs:restriction>
+                                                </xs:simpleType>
+                                            </xs:element>
+                                            <xs:element name="dimension" type="xs:string"/>
+                                            <xs:element name="default" type="xs:string"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+             </xs:sequence>
+         </xs:complexType>
+     </xs:element>
+ </xs:schema>
