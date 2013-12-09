@@ -261,7 +261,6 @@ def _get_dataset(dataset_id):
     if dataset_id is None:
         return None
 
-    import pudb; pudb.set_trace()
     sd_i = HydraIface.ScenarioData(dataset_id=dataset_id)
     sd_i.load()
     dataset = sd_i.get_as_complexmodel()
@@ -294,11 +293,24 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
     value = parse_value(resource_scenario.value)
 
     dimension = resource_scenario.value.dimension
-    unit      = resource_scenario.value.unit
+    data_unit = resource_scenario.value.unit
+    
+    unit = units.Units()
+
+    # Assign dimension if necessary
+    # It happens that dimension is and empty string. We set it to
+    # None to achieve consistency in the DB.
+    if data_unit is not None and dimension is None or \
+            data_unit is not None and len(dimension) == 0:
+        dimension = unit.get_dimension(data_unit)
+    else:
+        if dimension is None or len(dimension) == 0:
+            dimension = None
+
     name      = resource_scenario.value.name
 
     rs_i = res.assign_value(scenario_id, ra_id, data_type, value,
-                    unit, name, dimension, new=new)
+                    data_unit, name, dimension, new=new)
 
     return rs_i
 

@@ -429,6 +429,10 @@ class ImportCSV(object):
 
         # Collect existing resource attributes:
         resource_attrs = dict()
+        
+        if resource.attributes is None:
+            return resource
+
         for res_attr in resource.attributes.ResourceAttr:
             resource_attrs.update({res_attr.attr_id: res_attr})
 
@@ -465,7 +469,7 @@ class ImportCSV(object):
             # create dataset and assign to attribute (if not empty)
             if len(data[i].strip()) > 0:
 
-                if data[i] in ('NULL', 'I AM NOT A NUMBER, I AM A FREE MAN!'):
+                if data[i] in ('NULL', 'I AM NOT A NUMBER! I AM A FREE MAN!'):
 
                     res_attr.attr_is_var = 'Y'
 
@@ -536,28 +540,35 @@ class ImportCSV(object):
                     grp_cm = self.convert_to_complexmodel(grp)
                     constraint_grp.constraintgroups.ConstraintGroup.append(grp_cm)
                 else:
-
-                    constraint_item = self.cli.factory.create('hyd:ConstraintItem')
-                    
-                    grp_parts = regex.split(grp)
-                    item_type = grp_parts[0]
-                    item_name = grp_parts[1]
-                    item_attr = grp_parts[3]
-
-                    if item_type == 'NODE':
-                        n = self.Nodes.get(item_name)
                         
-                        if n is None:
-                            raise Exception('Node %s not found!'%(item_name))
+                    constraint_item = self.cli.factory.create('hyd:ConstraintItem')
+                    #Check to see if the item  is a constant numeric value
+                    if grp.find('[') < 0:
+                        try:
+                            eval(grp)
+                            constraint_item.constant = grp
+                        except:
+                            raise Exception("Expected a constant value. Got: %s"%grp)
+                    else:
+                        grp_parts = regex.split(grp)
+                        item_type = grp_parts[0]
+                        item_name = grp_parts[1]
+                        item_attr = grp_parts[3]
 
-                        for ra in n.attributes.ResourceAttr:
+                        if item_type == 'NODE':
+                            n = self.Nodes.get(item_name)
+                        
+                            if n is None:
+                                raise Exception('Node %s not found!'%(item_name))
+
+                            for ra in n.attributes.ResourceAttr:
                             
-                            attr = self.Attributes.get(item_attr)
-                            if attr is None:
-                                raise Exception('Attr %s not found!'%(item_attr))
+                                attr = self.Attributes.get(item_attr)
+                                if attr is None:
+                                    raise Exception('Attr %s not found!'%(item_attr))
 
-                            if ra.attr_id == attr.id:
-                                constraint_item.resource_attr_id = ra.id
+                                if ra.attr_id == attr.id:
+                                    constraint_item.resource_attr_id = ra.id
 
                     constraint_grp.constraintitems.ConstraintItem.append(constraint_item)
 
@@ -668,6 +679,9 @@ class ImportCSV(object):
         dataset.unit = unit
         if unit is not None:
             dataset.dimension = self.unit_class.get_dimension(unit)
+
+        dataset.name = "Import CSV data"
+
         resourcescenario.value = dataset
 
         return resourcescenario
@@ -736,9 +750,12 @@ class ImportCSV(object):
 
         if self.update_network_flag:
             self.Network = self.cli.service.update_network(self.Network)
+            logging.info("Network updated. Network ID is %s", self.Network.id)
         else:
             self.Network = self.cli.service.add_network(self.Network)
+            logging.info("Network created. Network ID is %s", self.Network.id)
 
+        logging.info("Network Scenarios are: %s",[s.id for s in self.Network.scenarios.Scenario])
 
 def commandline_parser():
     parser = ap.ArgumentParser(

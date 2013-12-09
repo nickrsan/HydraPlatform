@@ -46,10 +46,31 @@ def _update_attributes(resource_i, attributes):
 
 def update_constraint_refs(constraintgroup, resource_attr_map):
     for item in constraintgroup.constraintitems:
-        item.resource_attr_id = resource_attr_map[item.resource_attr_id]
+        if item.resource_attr_id is not None:
+            item.resource_attr_id = resource_attr_map[item.resource_attr_id]
 
     for group in constraintgroup.constraintgroups:
         update_constraint_refs(group, resource_attr_map)
+
+def get_scenario_by_name(network_id, scenario_name):
+    sql = """
+        select
+            scenario_id
+        from
+            tScenario
+        where
+            network_id = %s
+        and lower(scenario_name) = '%s'
+    """ % (network_id, scenario_name.lower())
+
+    rs = HydraIface.execute(sql)
+    if len(rs) == 0:
+        logging.info("No scenario in network %s with name %s" % (network_id, scenario_name))
+        return None
+    else:
+        logging.info("Scenario with name %s found in network %s" % (scenario_name, network_id))
+        return rs[0].scenario_id
+
 
 
 class NetworkService(HydraService):
@@ -345,7 +366,8 @@ class NetworkService(HydraService):
                     scen = HydraIface.Scenario(scenario_id=s.id)
 
                 else:
-                    scen = HydraIface.Scenario()
+                    scenario_id = get_scenario_by_name(network.id, s.name) 
+                    scen = HydraIface.Scenario(scenario_id = scenario_id)
                 scen.db.scenario_name        = s.name
                 scen.db.scenario_description = s.description
                 scen.db.network_id           = net_i.db.network_id

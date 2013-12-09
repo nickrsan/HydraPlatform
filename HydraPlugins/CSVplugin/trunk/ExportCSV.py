@@ -110,7 +110,7 @@ class ExportCSV(object):
         else:
             raise Exception("A network ID must be specified!")
 
-        print self.client.last_received()
+        logging.debug(self.client.last_received())
 
         network_dir = "network_%s"%(network.id)
 
@@ -139,7 +139,7 @@ class ExportCSV(object):
                 csv.export_constraints(scenario)
 
     def export_network(self, network, scenario):
-        logging.info("************NETWORK****************\n")
+        logging.info("\n************NETWORK****************")
        
         scenario.target_dir = os.path.join(network.network_dir, scenario.name.replace(' ', '_'))
 
@@ -148,27 +148,27 @@ class ExportCSV(object):
 
         network_file = open(os.path.join(scenario.target_dir, "network.csv"), 'w')
 
-        network_attribute_ids, network_attribute_names = self.get_resource_attributes([network])
+        network_attributes = self.get_resource_attributes([network])
        
         network_attributes_string = ""
-        if len(network_attribute_names) > 0:
-            network_attributes_string = ',%s'%(','.join(network_attribute_names))
+        if len(network_attributes) > 0:
+            network_attributes_string = ',%s'%(','.join(network_attributes.values()))
 
         network_heading   = "ID, Description, Name %s\n" % (network_attributes_string)
 
         network_attr_units = []
-        for attr_id in network_attribute_ids:
+        for attr_id in self.attributes.keys():
             network_attr_units.append(self.get_attr_unit(scenario, attr_id))
 
         network_units_heading  = "Units,,,%s\n"%(','.join(network_attr_units))
 
-        attrs = [attr_id for attr_id in network_attribute_ids]
-        values = ["" for attr_id in network_attribute_ids]
+        values = ["" for attr_id in network_attributes.keys()]
+
         if network.attributes is not None:
             for r_attr in network.attributes.ResourceAttr:
                 value = self.get_attr_value(scenario, r_attr)
-                values[attrs.index(r_attr.id)] = value
-        print network 
+                values[network_attributes.keys().index(r_attr.attr_id)] = value
+        
         network_entry = "%(id)s,%(description)s,%(name)s,%(values)s\n"%{
             "id"          : network.id,
             "description" : network.description,
@@ -193,8 +193,10 @@ class ExportCSV(object):
         else:
             logging.warning("Network has no links!")
 
+        logging.info("Network export complete")
+
     def export_nodes(self, scenario, nodes):
-        logging.info("************NODES****************\n")
+        logging.info("\n************NODES****************")
 
         #return this so that the link export can easily access 
         #the names of the links.
@@ -204,16 +206,16 @@ class ExportCSV(object):
         #We assume here that fewer files is simpler.
         node_file = open(os.path.join(scenario.target_dir, "nodes.csv"), 'w')
 
-        node_attribute_ids, node_attribute_names = self.get_resource_attributes(nodes)
+        node_attributes = self.get_resource_attributes(nodes)
        
         node_attributes_string = ""
-        if len(node_attribute_names) > 0:
-            node_attributes_string = ',%s'%(','.join(node_attribute_names))
+        if len(node_attributes) > 0:
+            node_attributes_string = ',%s'%(','.join(node_attributes.values()))
 
         node_heading   = "Name, x, y %s, description\n"%(node_attributes_string)
 
         node_attr_units = []
-        for attr_id in node_attribute_ids:
+        for attr_id in node_attributes.keys():
             node_attr_units.append(self.get_attr_unit(scenario, attr_id))
 
         node_units_heading  = "Units,,,%s\n"%(','.join(node_attr_units) if node_attr_units else ',')
@@ -223,14 +225,12 @@ class ExportCSV(object):
 
             id_name_map[node.id] = node.name
 
-            attrs = [attr_id for attr_id in node_attribute_ids]
-            
-            values = ["" for attr_id in node_attribute_ids]
+            values = ["" for attr_id in node_attributes.keys()]
             
             if node.attributes is not None:
                 for r_attr in node.attributes.ResourceAttr:
                     value = self.get_attr_value(scenario, r_attr)
-                    values[attrs.index(r_attr.id)] = value
+                    values[node_attributes.keys().index(r_attr.attr_id)] = value
             
             node_entry = "%(name)s,%(x)s,%(y)s%(values)s,%(description)s\n"%{
                 "name"        : node.name,
@@ -249,35 +249,34 @@ class ExportCSV(object):
         return id_name_map
 
     def export_links(self, scenario, links, node_map):
-        logging.info("\n\n************LINKS****************")
+        logging.info("\n************LINKS****************")
 
         #For simplicity, export to a single link file.
         #We assume here that fewer files is simpler.
         link_file = open(os.path.join(scenario.target_dir, "links.csv"), 'w')
 
-        link_attribute_ids, link_attribute_names = self.get_resource_attributes(links)
+        link_attributes = self.get_resource_attributes(links)
        
         link_attributes_string = ""
-        if len(link_attribute_names) > 0:
-            link_attributes_string = ',%s'%(','.join(link_attribute_names))
+        if len(link_attributes) > 0:
+            link_attributes_string = ',%s'%(','.join(link_attributes.values()))
 
         link_heading   = "Name, from, to %s, description\n" % (link_attributes_string)
 
 
         link_attr_units = []
-        for attr_id in link_attribute_ids:
+        for attr_id in link_attributes.keys():
             link_attr_units.append(self.get_attr_unit(scenario, attr_id))
 
         link_units_heading  = "Units,,,%s\n"%(','.join(link_attr_units) if link_attr_units else ',')
 
         link_entries = []
         for link in links:
-            attrs = [attr_id for attr_id in link_attribute_ids]
-            values = ["" for attr_id in link_attribute_ids]
+            values = ["" for attr_id in link_attributes.keys()]
             if link.attributes is not None:
                 for r_attr in link.attributes.ResourceAttr:
                     value = self.get_attr_value(scenario, r_attr)
-                    values[attrs.index(r_attr.id)] = value
+                    values[link_attributes.keys().index(r_attr.attr_id)] = value
 
             link_entry = "%(name)s,%(from)s,%(to)s%(values)s,%(description)s\n"%{
                 "name"        : link.name,
@@ -308,7 +307,7 @@ class ExportCSV(object):
             ((NODE[Node A][Flow] + NODE[Node B][Flow]) - NODE[Node C][Flow]) == 0.0
         
         """
-        logging.info("\n\n************CONSTRAINTS****************")
+        logging.info("\n************CONSTRAINTS****************")
 
         if scenario.constraints is not None:
             constraint_file = open(os.path.join(scenario.target_dir, "constraints.csv"), 'w')
@@ -319,29 +318,30 @@ class ExportCSV(object):
                 constraint_file.write(constraint_line)
 
             constraint_file.close()
+            logging.info("Constraints written to file: %s", constraint_file.name)
 
     def get_resource_attributes(self, resources):
         #get every attribute across every resource
-        attribute_names = []
-        resource_attribute_ids = []
+        attributes = {}
         for resource in resources:
             if resource.attributes is not None:
                 for r_attr in resource.attributes.ResourceAttr:
-                    attribute_names.append(self.attributes[r_attr.attr_id])
-                    resource_attribute_ids.append(r_attr.id)
-        return resource_attribute_ids, attribute_names
+                    if r_attr.attr_id not in attributes.keys():
+                        attr_name = self.attributes[r_attr.attr_id]
+                        attributes[r_attr.attr_id] = attr_name
+        return attributes 
 
-    def get_attr_unit(self, scenario, r_attr_id):
+    def get_attr_unit(self, scenario, attr_id):
         """
             Returns the unit of a given resource attribute within a scenario
         """
 
         for rs in scenario.resourcescenarios.ResourceScenario:
-            if rs.resource_attr_id == r_attr_id:
+            if rs.attr_id == attr_id:
                 if rs.value.unit is not None:
                     return rs.value.unit
 
-        logging.warning("Unit not found in scenario %s for resource attr: %s"%(scenario.id, r_attr_id))
+        logging.warning("Unit not found in scenario %s for attr: %s"%(scenario.id, attr_id))
         return 'NULL'
 
     def get_attr_value(self, scenario, resource_attr):
@@ -382,12 +382,12 @@ class ExportCSV(object):
                     value = rs.value.value.param_value
                 elif rs.value.type == 'timeseries':
                     value = rs.value.value.ts_values
-                    file_name = "timeseries_%s.csv"%(value[0].ts_time.replace('.','_')) 
+                    file_name = "timeseries_%s.csv"%(rs.value.id) 
                     ts_file = open(os.path.join(scenario.target_dir, file_name), 'w')
-                    for ts in value:
+                    for ts in value[0]:
                         ts_time = ts['ts_time']
                         ts_val  = ts['ts_value']
-                        np_val = numpy.array(eval(ts_val)[0])
+                        np_val = numpy.array(eval(ts_val))
                         shape = np_val.shape
                         n = 1
                         shape_str = []
@@ -405,8 +405,8 @@ class ExportCSV(object):
                 elif rs.value.type == 'eqtimeseries':
                     value = rs.value.value.arr_data
                 return str(value)
-
-        raise Exception("Value not found in scenario %s for resource attr: %s"%(scenario.id, r_attr_id))
+        return ''
+        #raise Exception("Value not found in scenario %s for resource attr: %s"%(scenario.id, r_attr_id))
 
 def commandline_parser():
     parser = ap.ArgumentParser(
