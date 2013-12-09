@@ -146,9 +146,11 @@ def bulk_insert(objs, table_name=""):
 
     logging.info("Running bulk insert: %s with vals %s", complete_insert, vals)
 
-    logging.info(complete_insert)
-
     cursor.executemany(complete_insert, vals)
+
+    warnings = cursor._fetch_warnings()
+    if warnings is not None:
+        raise HydraError("Bulk insert created Warnings: %s"%warnings)
 
     #the executemany seems to return the bottom index, rather than the top,
     #so we have to work out the top index.
@@ -504,8 +506,8 @@ class IfaceDB(object):
             val = str(self.db_data[name])
 
             #Cast the value to the correct DB data type
-            if db_type.find("double") != -1:
-                return Decimal(self.db_data[name])
+            if db_type.lower().find("double") != -1:
+                return Decimal(val)
             elif db_type.find('int') != -1:
                 return int(val)
             elif db_type == 'blob':
@@ -870,9 +872,9 @@ class GenericResource(IfaceBase):
         xmlschema = etree.XMLSchema(xmlschema_doc)
 
         logging.info(layout_xml)
-        xml_tree = etree.fromstring(layout_xml)
-
         try:
+            xml_tree = etree.fromstring(layout_xml)
+
             xmlschema.assertValid(xml_tree)
         except etree.LxmlError, e:
             raise HydraError("Layout XML did not validate!: Error was: %s"%(e))
@@ -1207,6 +1209,21 @@ class ResourceTemplateGroup(IfaceBase):
 
         return grp
 
+
+class ResourceType(IfaceBase):
+    """
+        Records whether a node, link or network has been
+        created based on a particulare template.
+    """
+    def __init__(self, ref_key=None, ref_id=None, template_id=None):
+        IfaceBase.__init__(self, None, self.__class__.__name__)
+        self.db.ref_key = ref_key
+        self.db.ref_id = ref_id
+        self.db.template_id = template_id
+
+        if None not in (ref_key, ref_id, template_id):
+            self.load()
+
 class ResourceScenario(IfaceBase):
     """
         A resource scenario is what links the actual piece of data
@@ -1476,7 +1493,6 @@ class ScenarioData(IfaceBase):
             groups.append(g)
 
         return groups
-
 
     def set_hash(self, val):
         hash_string = "%s %s %s %s %s"
@@ -2074,6 +2090,12 @@ db_hierarchy = dict(
         parent = None,
         table_name = 'tResourceTemplateGroup',
         pk     = ['group_id']
+    ),
+    resourcetype = dict(
+        obj   = ResourceType,
+        parent = None,
+        table_name = 'tResourceType',
+        pk  = ['ref_key', 'ref_id', 'template_id'],
     ),
     resourcescenario  = dict(
         obj   = ResourceScenario,

@@ -1,6 +1,6 @@
 
 from spyne.model.complex import Array as SpyneArray
-from spyne.model.primitive import String, Integer
+from spyne.model.primitive import String, Integer, Unicode
 from spyne.decorator import rpc
 from hydra_complexmodels import ResourceTemplate, ResourceTemplateGroup, ResourceTemplateItem
 
@@ -8,11 +8,33 @@ from db import HydraIface
 from hydra_base import HydraService
 from HydraLib.HydraException import HydraError
 import logging
+from HydraLib import config
+from lxml import etree
 
 class TemplateService(HydraService):
     """
         The template SOAP service
     """
+
+    @rpc(Unicode, _returns=ResourceTemplateGroup)
+    def upload_template_xml(ctx, template_xml):
+        """
+            Add the group, template and items described
+            in an XML file.
+        """
+
+        template_xsd_path = config.get('template', 'template_xsd_path')
+        xmlschema_doc = etree.parse(template_xsd_path)
+                        
+        xmlschema = etree.XMLSchema(xmlschema_doc)
+
+        xml_tree = etree.fromstring(template_xml)
+
+        xmlschema.assertValid(xml_tree)
+                       
+        grp = ResourceTemplateGroup()
+        
+        return grp
 
     @rpc(ResourceTemplateGroup, _returns=ResourceTemplateGroup)
     def add_resourcetemplategroup(ctx, group):
