@@ -2,34 +2,47 @@
      <xs:element name="template_definition">
          <xs:complexType>
              <xs:sequence>
-                <xs:element name="plugin_name" type="xs:string"/>
-                <xs:element name="resource_types">
+                <xs:element name="template_name" type="xs:string"/>
+                <xs:element name="resources">
                     <xs:complexType>
                         <xs:sequence>
-                            <xs:element name="type" minOccurs="1" maxOccurs="1">
-                                <xs:simpleType>
-                                    <xs:restriction base="xs:string">
-                                        <xs:enumeration value="NETWORK"/>
-                                        <xs:enumeration value="NODE"/>
-                                        <xs:enumeration value="LINK"/>
-                                    </xs:restriction>
-                                </xs:simpleType>
-                            </xs:element>
-                            <xs:element name="name" minOccurs="1" maxOccurs="1"/>
-                            <xs:element name="attribute" minOccurs="1" maxOccurs="unbounded">
+                            <xs:element name="resource" minOccurs="1" maxOccurs="unbounded">
                                 <xs:complexType>
                                     <xs:sequence>
-                                            <xs:element name="name" type="xs:string"/>
-                                            <xs:element name="is_var">
-                                                <xs:simpleType>
-                                                    <xs:restriction base="xs:char">
-                                                        <xs:enumeration value="Y"/>
-                                                        <xs:enumeration value="N"/>
-                                                    </xs:restriction>
-                                                </xs:simpleType>
-                                            </xs:element>
-                                            <xs:element name="dimension" type="xs:string"/>
-                                            <xs:element name="default" type="xs:string"/>
+                                        <xs:element name="type" minOccurs="1" maxOccurs="1">
+                                            <xs:simpleType>
+                                                <xs:restriction base="xs:string">
+                                                    <xs:enumeration value="NETWORK"/>
+                                                    <xs:enumeration value="NODE"/>
+                                                    <xs:enumeration value="LINK"/>
+                                                </xs:restriction>
+                                            </xs:simpleType>
+                                        </xs:element>
+                                        <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                                        <xs:element name="attribute" minOccurs="0" maxOccurs="unbounded">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                        <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                                                        <xs:element name="dimension" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                                                        <xs:element name="is_var" minOccurs="0" maxOccurs="1">
+                                                            <xs:simpleType>
+                                                                <xs:restriction base="xs:string">
+                                                                    <xs:enumeration value="Y"/>
+                                                                    <xs:enumeration value="N"/>
+                                                                </xs:restriction>
+                                                            </xs:simpleType>
+                                                        </xs:element>
+                                                        <xs:element name="default" minOccurs="0" maxOccurs="1">
+                                                            <xs:complexType>
+                                                                <xs:sequence>
+                                                                    <xs:element name="value" type="xs:string"/>
+                                                                    <xs:element name="unit" type="xs:string"/>
+                                                                </xs:sequence>
+                                                            </xs:complexType>
+                                                        </xs:element>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
                                     </xs:sequence>
                                 </xs:complexType>
                             </xs:element>

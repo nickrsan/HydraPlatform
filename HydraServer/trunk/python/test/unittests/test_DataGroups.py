@@ -14,7 +14,7 @@ class DatasetGroupTest(test_HydraIface.HydraIfaceTest):
 
         sd = self.create_scenario_data(data.db.data_id)
 
-        assert sd.load() == True, "ScenarioData 1 did not create correctly"
+        assert sd.load() == True, "Dataset 1 did not create correctly"
 
         return sd
 

@@ -545,9 +545,9 @@ class GenericResource(IfaceBase):
         rs = ResourceScenario(scenario_id=scenario_id, resource_attr_id=resource_attr_id)
 
         if rs.db.dataset_id is not None:
-            sd = ScenarioData(dataset_id = rs.db.dataset_id)
+            sd = Dataset(dataset_id = rs.db.dataset_id)
         else:
-            sd = ScenarioData()
+            sd = Dataset()
 
         sd.set_val(data_type, val)
 
@@ -816,7 +816,7 @@ class ResourceScenario(IfaceBase):
         self.db.scenario_id = scenario_id
         self.db.resource_attr_id = resource_attr_id
         self.resourceattr = None
-        self.scenariodata = None
+        self.dataset = None
 
         if scenario_id is not None and resource_attr_id is not None:
             self.load()
@@ -828,18 +828,18 @@ class ResourceScenario(IfaceBase):
         """
         super(ResourceScenario, self).load()
         self.get_resource_attr()
-        self.get_scenariodata()
+        self.get_dataset()
 
     def get_resource_attr(self):
         ra = ResourceAttr(resource_attr_id = self.db.resource_attr_id)
         self.resourceattr = ra
         return ra
 
-    def get_scenariodata(self):
+    def get_dataset(self):
         ds = None
         if self.db.dataset_id is not None:
-            ds = ScenarioData(dataset_id = self.db.dataset_id)
-            self.scenariodata = ds
+            ds = Dataset(dataset_id = self.db.dataset_id)
+            self.dataset = ds
         return ds
 
     def get_as_complexmodel(self):
@@ -853,14 +853,14 @@ class ResourceScenario(IfaceBase):
         cm.resource_attr_id = self.db.resource_attr_id
         cm.attr_id = self.resourceattr.db.attr_id
 
-        if self.scenariodata is not None:
-            cm.type = self.scenariodata.db.data_type
-            cm.value = self.scenariodata.get_as_complexmodel()
+        if self.dataset is not None:
+            cm.type = self.dataset.db.data_type
+            cm.value = self.dataset.get_as_complexmodel()
 
         return cm
 
 
-class ScenarioData(IfaceBase):
+class Dataset(IfaceBase):
     """
         A table recording all pieces of data, including the
         type, units, name and dimension. The actual data value is stored
@@ -1171,7 +1171,7 @@ class ConstraintGroup(IfaceBase):
                     resource_attr_id = item.db.resource_attr_id
             )
 
-            d = ScenarioData(dataset_id=r.db.dataset_id)
+            d = Dataset(dataset_id=r.db.dataset_id)
             str_1 = d.get_val()
 
         if self.db.ref_key_2 == 'GRP':
@@ -1185,7 +1185,7 @@ class ConstraintGroup(IfaceBase):
                     resource_attr_id = item.db.resource_attr_id
             )
 
-            d = ScenarioData(dataset_id=r.db.dataset_id)
+            d = Dataset(dataset_id=r.db.dataset_id)
             str_2 = d.get_val()
 
 
@@ -1336,10 +1336,10 @@ db_hierarchy = dict(
         table_name = 'tResourceScenario',
         pk     = ['resource_attr_id', 'scenario_id']
     ),
-    scenariodata  = dict(
-        obj   = ScenarioData,
+    dataset  = dict(
+        obj   = Dataset,
         parent = None,
-        table_name = 'tScenarioData',
+        table_name = 'tDataset',
         pk     = ['dataset_id']
     ),
     dataattr  = dict(

@@ -16,7 +16,7 @@ class DataGroupTest(test_SoapServer.SoapServerTest):
         
         datasets = self.client.service.get_group_datasets(groups.DatasetGroup[-1].group_id)
  
-        assert len(datasets) > 0, "Datsets were not retrieved correctly!"
+        assert len(datasets) > 0, "Datasets were not retrieved correctly!"
 
     def test_add_group(self):
         

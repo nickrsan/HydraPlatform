@@ -261,7 +261,7 @@ def _get_dataset(dataset_id):
     if dataset_id is None:
         return None
 
-    sd_i = HydraIface.ScenarioData(dataset_id=dataset_id)
+    sd_i = HydraIface.Dataset(dataset_id=dataset_id)
     sd_i.load()
     dataset = sd_i.get_as_complexmodel()
 
@@ -323,7 +323,7 @@ def hash_incoming_data(data):
     for d in data:
         val = parse_value(d)
 
-        scenario_datum = HydraIface.ScenarioData()
+        scenario_datum = HydraIface.Dataset()
         scenario_datum.db.data_type  = d.type
         scenario_datum.db.data_name  = d.name
         scenario_datum.db.data_units = d.unit
@@ -350,7 +350,7 @@ def get_existing_data(hashes):
             data_id,
             data_hash
         from
-            tScenarioData
+            tDataset
         where
             data_hash in (%s)
     """ % (','.join(str_hashes))
@@ -384,7 +384,7 @@ class DataService(HydraService):
             select
                 max(dataset_id) as max_dataset_id
             from
-                tScenarioData
+                tDataset
         """
 
         unit = units.Units()
@@ -394,8 +394,8 @@ class DataService(HydraService):
         if dataset_id is None:
             dataset_id = 0
 
-        #A list of all the scenariodata objects
-        scenario_data = []
+        #A list of all the dataset objects
+        datasets = []
 
         #Lists of all the data objects
         descriptors  = []
@@ -421,7 +421,7 @@ class DataService(HydraService):
         for i, d in enumerate(bulk_data):
             val = parse_value(d)
 
-            scenario_datum = HydraIface.ScenarioData()
+            scenario_datum = HydraIface.Dataset()
             scenario_datum.db.data_type  = d.type
             scenario_datum.db.data_name  = d.name
             scenario_datum.db.data_units = d.unit
@@ -440,7 +440,7 @@ class DataService(HydraService):
 
             current_hash = scenario_datum.set_hash(val)
 
-            scenario_data.append(scenario_datum)
+            datasets.append(scenario_datum)
 
             #if this piece of data is already in the DB, then
             #there is no need to insert it!
@@ -558,24 +558,24 @@ class DataService(HydraService):
         #Now fill in the final piece of data before inserting the new
         #scenario data rows -- the data ids generated from the data inserts.
         for i, idx in enumerate(descriptor_idx):
-            scenario_data[idx].db.data_id = descriptors[i].db.data_id
+            datasets[idx].db.data_id = descriptors[i].db.data_id
         for i, idx in enumerate(scalar_idx):
-            scenario_data[idx].db.data_id = scalars[i].db.data_id
+            datasets[idx].db.data_id = scalars[i].db.data_id
         for i, idx in enumerate(array_idx):
-            scenario_data[idx].db.data_id = arrays[i].db.data_id
+            datasets[idx].db.data_id = arrays[i].db.data_id
         for i, idx in enumerate(timeseries_idx):
-            scenario_data[idx].db.data_id = timeseries[i].db.data_id
+            datasets[idx].db.data_id = timeseries[i].db.data_id
         for i, idx in enumerate(eqtimeseries_idx):
-            scenario_data[idx].db.data_id = eqtimeseries[i].db.data_id
+            datasets[idx].db.data_id = eqtimeseries[i].db.data_id
 
         #Isolate only the new datasets and insert them
         new_scenario_data = []
-        for sd in scenario_data:
+        for sd in datasets:
             if sd.db.dataset_id is None:
                 new_scenario_data.append(sd)
 
         if len(new_scenario_data) > 0:
-            last_dataset_id = HydraIface.bulk_insert(new_scenario_data, 'tScenarioData')
+            last_dataset_id = HydraIface.bulk_insert(new_scenario_data, 'tDataset')
 
             #set the dataset ids on the new scenario data objects
             next_id = last_dataset_id - len(new_scenario_data) + 1
@@ -697,7 +697,7 @@ class DataService(HydraService):
         rs = HydraIface.execute(sql)
 
         for r in rs:
-            sd = HydraIface.ScenarioData(dataset_id=r.dataset_id)
+            sd = HydraIface.Dataset(dataset_id=r.dataset_id)
             d           = Dataset()
             d.id        = sd.db.dataset_id
             d.type      = sd.db.data_type
@@ -729,7 +729,7 @@ class DataService(HydraService):
         rs = HydraIface.execute(sql)
 
         for r in rs:
-            sd = HydraIface.ScenarioData(dataset_id=r.dataset_id)
+            sd = HydraIface.Dataset(dataset_id=r.dataset_id)
             d           = Dataset()
             d.id        = sd.db.dataset_id
             d.type      = sd.db.data_type
@@ -786,7 +786,7 @@ class DataService(HydraService):
         t = []
         for time in timestamps:
             t.append(timestamp_to_server_time(time))
-        td = HydraIface.ScenarioData(dataset_id=dataset_id)
+        td = HydraIface.Dataset(dataset_id=dataset_id)
         #for time in t:
         #    data.append(td.get_val(timestamp=time))
         data = td.get_val(timestamp=t)

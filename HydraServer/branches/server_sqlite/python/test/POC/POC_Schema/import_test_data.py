@@ -294,7 +294,7 @@ def add_attr_from_template(resource, template):
 
 
 def create_scalar(s):
-    dataset = HydraIface.ScenarioData()
+    dataset = HydraIface.Dataset()
 
     dataset.set_val('scalar', s['value'])
     dataset.db.data_units = s['units']
@@ -307,7 +307,7 @@ def create_scalar(s):
 
 
 def create_descriptor(d):
-    dataset = HydraIface.ScenarioData()
+    dataset = HydraIface.Dataset()
 
     dataset.set_val('descriptor', d['value'])
     dataset.db.data_units = d['units']
@@ -320,7 +320,7 @@ def create_descriptor(d):
 
 
 def create_ts(ts):
-    dataset = HydraIface.ScenarioData()
+    dataset = HydraIface.Dataset()
 
     dataset.set_val('timeseries', ts['time_series'])
     dataset.db.data_units = ts['units']
@@ -333,7 +333,7 @@ def create_ts(ts):
 
 
 def create_eq_ts(ts):
-    dataset = HydraIface.ScenarioData()
+    dataset = HydraIface.Dataset()
 
     dataset.set_val('eqtimeseries', [ts['start_time'],
                                      ts['frequency'],
@@ -348,7 +348,7 @@ def create_eq_ts(ts):
 
 
 def create_array(name, array):
-    dataset = HydraIface.ScenarioData()
+    dataset = HydraIface.Dataset()
 
     #try:
     #    arr_x_dim = len(array)

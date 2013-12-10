@@ -122,7 +122,7 @@ class DataService(HydraService):
             select
                 max(dataset_id) as max_dataset_id
             from
-                tScenarioData
+                tDataset
         """
 
         rs = HydraIface.execute(sql)
@@ -196,7 +196,7 @@ class DataService(HydraService):
                 data_type,
                 data_id
             from
-                tScenarioData
+                tDataset
             where
                 dataset_id > %s
         """ % dataset_id

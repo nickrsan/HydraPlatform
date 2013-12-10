@@ -6,29 +6,29 @@
     <dimension name="Length">
         <unit name="angström"           abbr="Å"        lf="1e-10"             cf="0" info="Angstrom sometimes used expressing the size of atoms, and lengths of chemical bonds and visible-light spectra." />
         <unit name="astronomical unit"  abbr="AU"       lf="149598550000"      cf="0" info="Is a unit of length approximately equal to the distance from the Earth to the Sun."/>
-        <unit name="centimeter"         abbr="cm"       lf="0.01"              cf="0" />
-        <unit name="decimeter"          abbr="dm"       lf="0.1"               cf="0" />
-        <unit name="femtometer"         abbr="fm"       lf="1e-15"             cf="0" />
+        <unit name="centimetre"         abbr="cm"       lf="0.01"              cf="0" />
+        <unit name="decimetre"          abbr="dm"       lf="0.1"               cf="0" />
+        <unit name="femtometre"         abbr="fm"       lf="1e-15"             cf="0" />
         <unit name="foot"               abbr="ft"       lf="0.3048"            cf="0" info ="International foot. Foot is a unit of length, in a number of different systems, including English units, Imperial units, and United States customary units. Its size can vary from system to system, but in each is around a quarter to a third of a metre. The most commonly used foot today is the international foot."/>
-        <unit name="hectometer"         abbr="hm"       lf="100"               cf="0" />
+        <unit name="hectometre"         abbr="hm"       lf="100"               cf="0" />
         <unit name="inch"               abbr="in"       lf="0.0254"            cf="0" info="The international inch is defined to be precisely 25.4 mm"/>
-        <unit name="kilometer"          abbr="km"       lf="1000"              cf="0" />
+        <unit name="kilometre"          abbr="km"       lf="1000"              cf="0" />
         <unit name="light-year"         abbr="ly"       lf="9460528405000000"  cf="0" info="A light-year is the distance that light travels in a vacuum in one year. While there is no authoritative decision on which year is used, the International Astronomical Union (IAU) recommends the Julian year."/>
-        <unit name="meter"              abbr="m"        lf="1"                 cf="0" info="Is the fundamental unit of length in the International System of Units (SI). The meter is defined as the length of the path traveled by light in vacuum during a time interval of 1/299,792,458 second."/>
-        <unit name="micrometer"         abbr="µm"       lf="1e-06"             cf="0" />
+        <unit name="metre"              abbr="m"        lf="1"                 cf="0" info="Is the fundamental unit of length in the International System of Units (SI). The metre is defined as the length of the path traveled by light in vacuum during a time interval of 1/299,792,458 second."/>
+        <unit name="micrometre"         abbr="µm"       lf="1e-06"             cf="0" />
         <unit name="mile"               abbr="mi"       lf="1609.344"          cf="0" info="The international mile is defined to be precisely 1760 international yards (by definition, 0.9144 m each) and is therefore exactly 1609.344 metres."/>
         <unit name="mile(nautical)"     abbr="nmi"  lf="1852"              cf="0" info="Corresponds approximately to one minute of latitude along any meridian. It is a non-SI unit used by special interest groups such as navigators in the shipping and aviation industries. It is commonly used in international law and treaties, especially regarding the limits of territorial waters. It developed from the geographical mile."/>
-        <unit name="millimeter"         abbr="mm"       lf="0.001"             cf="0" />
-        <unit name="nanometer"          abbr="nm"       lf="1e-09"             cf="0" />
+        <unit name="millimetre"         abbr="mm"       lf="0.001"             cf="0" />
+        <unit name="nanometre"          abbr="nm"       lf="1e-09"             cf="0" />
         <unit name="parsec"             abbr="pc"       lf="30856776000000000" cf="0" info="The name parsec stands for ''parallax of one second of arc'', and one parsec is defined to be the distance from the Earth to a star that has a parallax of 1 arcsecond."/>
-        <unit name="picometer"          abbr="pm"       lf="1e-12"             cf="0" />
+        <unit name="picometre"          abbr="pm"       lf="1e-12"             cf="0" />
         <unit name="yard"               abbr="yd"       lf="0.9144"            cf="0" info="The international yard is defined as 3 feet, 36 inches, or 1/1760 of a mile, which is exactly 0.9144 metres."/>
     </dimension>
 
 
     <dimension name="Area">
-        <unit name="square meter"        abbr="m^2"    lf="1"              cf="0" />
-        <unit name="square kilometer"    abbr="km^2"   lf="1000000"        cf="0" />
+        <unit name="square metre"        abbr="m^2"    lf="1"              cf="0" />
+        <unit name="square kilometre"    abbr="km^2"   lf="1000000"        cf="0" />
         <unit name="are"                 abbr="a"     lf="100"            cf="0" />
         <unit name="acre"                abbr="ac"    lf="4046.8564224"   cf="0" info="International acre."/>
         <unit name="acre(US)"            abbr="ac (US)"    lf="4046.87261"     cf="0" info="United States survey acre."/>
@@ -43,13 +43,13 @@
     <dimension name="Volume">
         <unit name="barrel(oil)"          abbr="bbl"  lf="0.158987295"    cf="0" info="The standard oil barrel is used in the United States for crude oil or other petroleum products. 1 Oil barrel = 42 US gallons"/>
         <unit name="centiliter"          abbr="cl"    lf="0.00001"          cf="0" />
-        <unit name="cubic centimeter"    abbr="cm^3"   lf="0.000001"         cf="0" />
-        <unit name="cubic decimeter"     abbr="dm^3"   lf=".001"             cf="0" />
-        <unit name="cubic hectometer"    abbr="hm^3"   lf="1e6"           cf="0" />
+        <unit name="cubic centimetre"    abbr="cm^3"   lf="0.000001"         cf="0" />
+        <unit name="cubic decimetre"     abbr="dm^3"   lf=".001"             cf="0" />
+        <unit name="cubic hectometre"    abbr="hm^3"   lf="1e6"           cf="0" />
         <unit name="cubic foot"          abbr="ft^3"   lf="0.028316846592"  cf="0" />
         <unit name="cubic inch"          abbr="in^3"   lf="0.000016387064"   cf="0" />
-        <unit name="cubic meter"         abbr="m^3"    lf="1"          cf="0" />
-        <unit name="cubic millimeter"    abbr="mm^3"   lf="0.000000001"      cf="0" />
+        <unit name="cubic metre"         abbr="m^3"    lf="1"          cf="0" />
+        <unit name="cubic millimetre"    abbr="mm^3"   lf="0.000000001"      cf="0" />
         <unit name="cubic yard"          abbr="yd^3"   lf="0.764554857984" cf="0" />
         <unit name="deciliter"           abbr="dl"    lf="0.0001"           cf="0" />
         <unit name="fluid ounce(US)"     abbr="fl oz" lf="0.000029574"      cf="0" />
@@ -72,12 +72,12 @@
     </dimension>
 
     <dimension name="Speed">
-        <unit name="meter/second"                   abbr="m s^-1"  lf="1"                cf="0" />
+        <unit name="metre/second"                   abbr="m s^-1"  lf="1"                cf="0" />
         <unit name="foot/hour"                      abbr="fph"  lf="8.4666666666e-5"  cf="0" />
         <unit name="inch/minute"                    abbr="ipm"  lf="4.2333333333e-4"  cf="0" />
         <unit name="foot/minute"                    abbr="fpm"  lf="0.00508"          cf="0" />
         <unit name="inch/second"                    abbr="ips"  lf="0.0254"           cf="0" />
-        <unit name="kilometer/hour"                 abbr="km h^-1" lf="0.27777777777778" cf="0" />
+        <unit name="kilometre/hour"                 abbr="km h^-1" lf="0.27777777777778" cf="0" />
         <unit name="foot/second"                    abbr="fps"  lf="0.3048"           cf="0" />
         <unit name="mile/hour"                      abbr="mph"  lf="0.44704"          cf="0" />
         <unit name="knot"                           abbr="kn"   lf="0.514444"         cf="0" info="Knot is a unit of speed, equal to one nautical mile per hour."/>
@@ -132,13 +132,13 @@
     <dimension name="Force">
         <unit name="dyne"                abbr="dyn"         lf="0.00001"                cf="0"  info="The dyne is a unit of force specified in the centimetre-gram-second (cgs) system of units. One dyne is equal to exactly 10-5 newtons. The dyne can be defined as 'the force required to accelerate a mass of one gram at a rate of one centimetre per second squared'"/>
         <unit name="gram-force"          abbr="gf"          lf="0.00980665"             cf="0"  />
-        <unit name="joule/meter"         abbr="J m^-1"         lf="1"                      cf="0"  />
+        <unit name="joule/metre"         abbr="J m^-1"         lf="1"                      cf="0"  />
         <unit name="kg·m/s^2"             abbr="kg m s^-2"     lf="1"                      cf="0"  info="Same as 1 newton"/>
         <unit name="kilogram-force"      abbr="kgf"         lf="9.80665"                cf="0"  />
         <unit name="kilopond"            abbr="kp"          lf="9.80665"                cf="0"  info="The deprecated unit kilogram-force (kgf) or kilopond (kp) is defined as the force exerted by one kilogram of mass in standard Earth gravity. Although the gravitational pull of the Earth varies as a function of position on earth, it is here defined as exactly 9.80665 m/s^2. So one kilogram-force is by definition equal to 9.80665 newtons"/>
         <unit name="kilopound-force"     abbr="kipf"        lf="4448.2216152548"        cf="0"  />
         <unit name="lb·ft/s^2"            abbr="lb ft s^-2"    lf="0.138254954376"         cf="0"  info="Same as 1 poundal"/>
-        <unit name="newton"              abbr="N"           lf="1"                      cf="0"  info="A newton is the amount of force required to accelerate a mass of one kilogram at a rate of one meter per second squared. In addition, 1N is the force of gravity on a small apple on Earth"/>
+        <unit name="newton"              abbr="N"           lf="1"                      cf="0"  info="A newton is the amount of force required to accelerate a mass of one kilogram at a rate of one metre per second squared. In addition, 1N is the force of gravity on a small apple on Earth"/>
         <unit name="ounce-force"         abbr="ozf"         lf="0.27801385095342"       cf="0"  />
         <unit name="pond"                abbr="p"           lf="0.00980665"             cf="0"  />
         <unit name="pound-force"         abbr="lbf"         lf="4.448222"               cf="0"  info="The pound-force is a non-SI unit of force or weight. The pound-force is equal to a mass of one avoirdupois pound (which is currently defined as exactly 0.45359237 kilogram) multiplied by the standard acceleration due to gravity on Earth. (The pound-force is thus roughly the force exerted due to gravity by a mass of one pound at the surface of the Earth)"/>
@@ -174,19 +174,19 @@
 
     <dimension name="Pressure">
         <unit name="atmosphere"           abbr="atm"          lf="101325"         cf="0" info="an atmosphere (symbol: atm) or standard atmosphere is a unit of pressure roughly equal to the average atmospheric pressure at sea level on Earth. It is defined as 101.325 kPa and equal to the pressure under 760 mm of mercury" />
-        <unit name="pascal"               abbr="Pa"           lf="1"              cf="0" info="The pascal is equivalent to one newton per square meter, and was used in SI under that name before the name pascal was adopted by the 14th CGPM in 1971. The same unit is also used for stress, Young's modulus, and tensile strength" />
+        <unit name="pascal"               abbr="Pa"           lf="1"              cf="0" info="The pascal is equivalent to one newton per square metre, and was used in SI under that name before the name pascal was adopted by the 14th CGPM in 1971. The same unit is also used for stress, Young's modulus, and tensile strength" />
         <unit name="bar"                  abbr="bar"          lf="100000"         cf="0" />
         <unit name="hectopascal"          abbr="hPa"          lf="100"            cf="0" />
         <unit name="iches of water"       abbr="inH2O"        lf="249.08891"      cf="0" />
         <unit name="inches of mercury"    abbr="inHg"         lf="3386.388"       cf="0" info="Inches of mercury is a non-SI unit for pressure. It is defined as the pressure exerted by a column of mercury of 1 inch in height at 0 °C at the standard acceleration of gravity. 1 inHg = 3386.389 pascals at 0 °C." />
         <unit name="kilopascal"           abbr="kPa"          lf="1000"           cf="0" />
-        <unit name="meter of water"      abbr="mH2O"         lf="9806.65"        cf="0" />
+        <unit name="metre of water"      abbr="mH2O"         lf="9806.65"        cf="0" />
         <unit name="microbar"             abbr="µbar"         lf="0.1"            cf="0" />
         <unit name="milibar"              abbr="mbar"         lf="100"            cf="0" />
-        <unit name="millimeter of mercury"   abbr="mmHg"     lf="133.322"        cf="0" />
-        <unit name="millimeter of water"     abbr="mmH2O"    lf="9.80665"        cf="0" />
+        <unit name="millimetre of mercury"   abbr="mmHg"     lf="133.322"        cf="0" />
+        <unit name="millimetre of water"     abbr="mmH2O"    lf="9.80665"        cf="0" />
         <unit name="lbf/in^2"              abbr="psi"          lf="6894.76"        cf="0" info="The pound-force per square inch (symbol: lbf/in^2) is a non-SI unit of pressure based on avoirdupois units. In casual English language use it is rendered as 'pounds per square inch', abbreviated to psi with little distinction between 'mass' and 'force'" />
-        <unit name="technical atmosphere" abbr="at"           lf="98066.5"        cf="0" info="A technical atmosphere is a non-SI unit of pressure equal to 1 kilogram-force per square centimeter, i.e. 98.066 5 kilopascals (kPa) or about 0.96784 standard atmospheres"/>
+        <unit name="technical atmosphere" abbr="at"           lf="98066.5"        cf="0" info="A technical atmosphere is a non-SI unit of pressure equal to 1 kilogram-force per square centimetre, i.e. 98.066 5 kilopascals (kPa) or about 0.96784 standard atmospheres"/>
         <unit name="torr"                 abbr="torr"         lf="133.322"        cf="0" info="The torr (symbol: Torr) or millimetre of mercury (mmHg) is a non-SI unit of pressure. It is the atmospheric pressure that supports a column of mercury 1 millimetre high"/>
     </dimension>
 
@@ -202,16 +202,16 @@
     </dimension>
 
     <dimension name="Volumetric flow rate">
-        <unit name="cubic meters per second" abbr="m^3 s^-1"     lf="1" cf="0" info="SI unit for volumetric flow rate."/>
-        <unit name="cubic meters per minute" abbr="m^3 min^-1"   lf="0.0166666667" cf="0" info=""/>
-        <unit name="cubic meters per hour"   abbr="m^3 h^-1"     lf="0.000277777778" cf="0" info=""/>
-        <unit name="cubic meters per day"    abbr="m^3 day^-1"   lf="1.15740741e-05" cf="0" info=""/>
-        <unit name="cubic meters per month"  abbr="m^3 mon^-1"   lf="3.80265176e-7" cf="0" info=""/>
-        <unit name="cubic hectometers per second" abbr="hm^3 s^-1"     lf="1e6" cf="0" info="SI unit for volumetric flow rate."/>
-        <unit name="cubic hectometers per minute" abbr="hm^3 min^-1"   lf="16666.6667" cf="0" info=""/>
-        <unit name="cubic hectometers per hour"   abbr="hm^3 h^-1"     lf="277.777778" cf="0" info=""/>
-        <unit name="cubic hectometers per day"    abbr="hm^3 day^-1"   lf="11.5740741" cf="0" info=""/>
-        <unit name="cubic hectometers per month"  abbr="hm^3 mon^-1"   lf="0.380265176" cf="0" info=""/>
+        <unit name="cubic metres per second" abbr="m^3 s^-1"     lf="1" cf="0" info="SI unit for volumetric flow rate."/>
+        <unit name="cubic metres per minute" abbr="m^3 min^-1"   lf="0.0166666667" cf="0" info=""/>
+        <unit name="cubic metres per hour"   abbr="m^3 h^-1"     lf="0.000277777778" cf="0" info=""/>
+        <unit name="cubic metres per day"    abbr="m^3 day^-1"   lf="1.15740741e-05" cf="0" info=""/>
+        <unit name="cubic metres per month"  abbr="m^3 mon^-1"   lf="3.80265176e-7" cf="0" info=""/>
+        <unit name="cubic hectometres per second" abbr="hm^3 s^-1"     lf="1e6" cf="0" info="SI unit for volumetric flow rate."/>
+        <unit name="cubic hectometres per minute" abbr="hm^3 min^-1"   lf="16666.6667" cf="0" info=""/>
+        <unit name="cubic hectometres per hour"   abbr="hm^3 h^-1"     lf="277.777778" cf="0" info=""/>
+        <unit name="cubic hectometres per day"    abbr="hm^3 day^-1"   lf="11.5740741" cf="0" info=""/>
+        <unit name="cubic hectometres per month"  abbr="hm^3 mon^-1"   lf="0.380265176" cf="0" info=""/>
         <unit name="cubic foot per second"   abbr="ft^3 s^-1"    lf="0.0283168466" cf="0" info=""/>
         <unit name="cubic foot per minute"   abbr="ft^3 min^-1"  lf="0.000471947443" cf="0" info=""/>
         <unit name="cubic foot per hour"     abbr="ft^3 h^-1"    lf="7.86579072e-06" cf="0" info=""/>
@@ -233,5 +233,7 @@
         <unit name="acre-inch per day"       abbr="ac-in day^-1" lf="0.00118970085" cf="0" info=""/>
         <unit name="acre-inch per month"     abbr="ac-in mon^-1" lf="3.90875157e-05" cf="0" info=""/>
     </dimension>
-
+    <dimension name="Energy Cost">
+        <unit name="USDollars per kilojoule" abbr="USD kj^-1"    lf="1" cf="0" info="Cust in US Dollars per energy unit (kilojoule)."/>
+    </dimension>
 </UNITS>

@@ -40,7 +40,7 @@ def dimension_consistency(resource_scenario):
         3. The dimensions of both, dataset and attribute, match.
     """
     res_attr = resource_scenario.get_resource_attr()
-    scen_data = resource_scenario.get_scenariodata()
+    scen_data = resource_scenario.get_dataset()
     attr = HydraIface.Attr(attr_id=res_attr.db.attr_id)
     attr_dim = attr.db.attr_dimen
     if attr_dim == '':

@@ -85,7 +85,7 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
         rsd = node_a.assign_value(scenario.db.scenario_id, rc.db.resource_attr_id, 'scalar' ,10, 'm3', 'flow', 'int')
                                 
         rsa.load_all()
-        val = rsa.scenariodata.get_val(self.get_ordinal_timestamp(datetime.datetime.now() + datetime.timedelta(30)))
+        val = rsa.dataset.get_val(self.get_ordinal_timestamp(datetime.datetime.now() + datetime.timedelta(30)))
         rsd.commit()
 
         assert rsd.db.dataset_id != rsc.db.dataset_id, "A new dataset should have been created but wasn't!"
@@ -126,26 +126,26 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
 
         base_time = datetime.datetime.now()
 
-        val123 = rsa.scenariodata.get_val(self.get_ordinal_timestamp(base_time))
+        val123 = rsa.dataset.get_val(self.get_ordinal_timestamp(base_time))
         assert val123 == [1, 2, 3], "First Value is incorrect!"
-        val1234 = rsa.scenariodata.get_val(
+        val1234 = rsa.dataset.get_val(
             self.get_ordinal_timestamp(base_time + datetime.timedelta(10)))
         assert val1234 == [[1,2],[3,4]], "Second value is incorrect!"
         
-        val1 = rsa.scenariodata.get_val(
+        val1 = rsa.dataset.get_val(
             self.get_ordinal_timestamp(base_time + datetime.timedelta(20)))
         assert val1 == [1], "Third value is incorrect!"
 
-        after_ts_val = rsa.scenariodata.get_val(
+        after_ts_val = rsa.dataset.get_val(
             self.get_ordinal_timestamp(base_time + datetime.timedelta(30)))
         assert after_ts_val == [1], "Value for after range is incorrect!"
 
-        before_ts_val = rsa.scenariodata.get_val(
+        before_ts_val = rsa.dataset.get_val(
             self.get_ordinal_timestamp(base_time - datetime.timedelta(30)))
 
         assert before_ts_val is None, "Value for after range is incorrect!"
 
-        multi_ts_val = rsa.scenariodata.get_val(
+        multi_ts_val = rsa.dataset.get_val(
             [self.get_ordinal_timestamp(base_time), 
              self.get_ordinal_timestamp(base_time - datetime.timedelta(30))])
      

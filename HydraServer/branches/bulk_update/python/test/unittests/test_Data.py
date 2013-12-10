@@ -3,7 +3,7 @@ from db import HydraIface
 from decimal import Decimal
 import datetime
 
-class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
+class DatasetTest(test_HydraIface.HydraIfaceTest):
 
     def test_create(self):
 
@@ -13,7 +13,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = HydraIface.ScenarioData()
+        sd = HydraIface.Dataset()
         sd.db.data_id = data.db.data_id
         sd.db.data_type  = 'scalar'
         sd.db.data_units = 'metres-cubes'
@@ -22,7 +22,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         sd.save()
         sd.commit()
 
-        assert sd.load() == True, "ScenarioData did not create correctly"
+        assert sd.load() == True, "Dataset did not create correctly"
 
     def test_update(self):
 
@@ -32,7 +32,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = HydraIface.ScenarioData()
+        sd = HydraIface.Dataset()
         sd.db.data_id = data.db.data_id
         sd.db.data_type  = 'scalar'
         sd.db.data_units = 'metres-cubes'
@@ -49,7 +49,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         sd.commit()
         sd.load()
 
-        assert sd.db.data_type == "scalar_updated", "ScenarioData did not update correctly"
+        assert sd.db.data_type == "scalar_updated", "Dataset did not update correctly"
 
     def test_delete(self):
 
@@ -59,7 +59,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = HydraIface.ScenarioData()
+        sd = HydraIface.Dataset()
         sd.db.data_id = data.db.data_id
         sd.db.data_type = 'scalar'
         sd.db.data_units = 'metres-cubes'
@@ -73,7 +73,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         sd.save()
         sd.commit()
 
-        assert sd.load() == False, "ScenarioData did not delete correctly"
+        assert sd.load() == False, "Dataset did not delete correctly"
 
     def test_load(self):
 
@@ -83,7 +83,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = HydraIface.ScenarioData()
+        sd = HydraIface.Dataset()
         sd.db.data_id = data.db.data_id
         sd.db.data_type  = 'scalar'
         sd.db.data_units = 'metres-cubes'
@@ -93,7 +93,7 @@ class ScenarioDataTest(test_HydraIface.HydraIfaceTest):
         sd.commit()
         sd.load()
 
-        y = HydraIface.ScenarioData(dataset_id=sd.db.dataset_id)
+        y = HydraIface.Dataset(dataset_id=sd.db.dataset_id)
         assert y.load() == True, "Load did not work correctly"
 
 
@@ -328,8 +328,8 @@ class ArrayTest(test_HydraIface.HydraIfaceTest):
 
 class DataAttrTest(test_HydraIface.HydraIfaceTest):
 
-    def create_scenariodata(self, data_id):
-        sd = HydraIface.ScenarioData()
+    def create_dataset(self, data_id):
+        sd = HydraIface.Dataset()
         sd.db.data_id    = data_id
         sd.db.data_type  = 'scalar'
         sd.db.data_units = 'metres-cubes'
@@ -346,7 +346,7 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = self.create_scenariodata(data.db.data_id)
+        sd = self.create_dataset(data.db.data_id)
 
         dattr = HydraIface.DataAttr()
         dattr.db.dataset_id = sd.db.dataset_id
@@ -372,7 +372,7 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = self.create_scenariodata(data.db.data_id)
+        sd = self.create_dataset(data.db.data_id)
 
         dattr = HydraIface.DataAttr()
         dattr.db.dataset_id = sd.db.dataset_id
@@ -394,7 +394,7 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
         data.commit()
         data.load()
 
-        sd = self.create_scenariodata(data.db.data_id)
+        sd = self.create_dataset(data.db.data_id)
 
         dattr = HydraIface.DataAttr()
         dattr.db.dataset_id = sd.db.dataset_id

@@ -135,25 +135,25 @@ def add_dataset(data_type, val, units, dimension, name="", dataset_id=None):
     if existing_dataset_id is not None:
         return existing_dataset_id
     else:
-        sd = ScenarioData(dataset_id=dataset_id)
+        d = Dataset(dataset_id=dataset_id)
 
-        sd.set_val(data_type, val)
+        d.set_val(data_type, val)
 
-        sd.db.data_type  = data_type
-        sd.db.data_units = units
-        sd.db.data_name  = name
-        sd.db.data_dimen = dimension
-        sd.db.data_hash  = data_hash
-        sd.save()
+        d.db.data_type  = data_type
+        d.db.data_units = units
+        d.db.data_name  = name
+        d.db.data_dimen = dimension
+        d.db.data_hash  = data_hash
+        d.save()
         
-        return sd.db.dataset_id
+        return d.db.dataset_id
 
 def get_data_from_hash(data_hash):
     sql = """
         select
             dataset_id
         from
-            tScenarioData
+            tDataset
         where
             data_hash = %s
     """ % (data_hash)
@@ -780,7 +780,7 @@ class GenericResource(IfaceBase):
             select
                 dataset_id
             from
-                tScenarioData
+                tDataset
             where
                 data_hash = %s
         """ % (data_hash)
@@ -1125,15 +1125,15 @@ class ResourceAttr(IfaceBase):
                 #We can only purge data if there are no other resource
                 #attributes associated with this data.
                 if purge_data == True:
-                    sd = resource_scenario.scenariodata
-                    sd.load()
+                    d = resource_scenario.dataset
+                    d.load()
                     #If there is only 1 resource attribute for this
                     #piece of data, it's OK to remove it.
-                    if len(sd.resourcescenarios) == 1:
+                    if len(d.resourcescenarios) == 1:
                         #Delete the data entry first
-                        resource_scenario.scenariodata.delete_val()
+                        resource_scenario.dataset.delete_val()
                         #then delete the scenario data
-                        sd.delete()
+                        d.delete()
                 #delete the reference to the resource attribute
                 resource_scenario.delete()
             #delete the resource attribute
@@ -1288,7 +1288,7 @@ class ResourceScenario(IfaceBase):
         self.db.scenario_id = scenario_id
         self.db.resource_attr_id = resource_attr_id
         self.resourceattr = None
-        self.scenariodata = None
+        self.dataset = None
 
         if scenario_id is not None and resource_attr_id is not None:
             self.load()
@@ -1300,18 +1300,18 @@ class ResourceScenario(IfaceBase):
         """
         super(ResourceScenario, self).load()
         self.get_resource_attr()
-        self.get_scenariodata()
+        self.get_dataset()
 
     def get_resource_attr(self):
         ra = ResourceAttr(resource_attr_id = self.db.resource_attr_id)
         self.resourceattr = ra
         return ra
 
-    def get_scenariodata(self):
+    def get_dataset(self):
         ds = None
         if self.db.dataset_id is not None:
-            ds = ScenarioData(dataset_id = self.db.dataset_id)
-            self.scenariodata = ds
+            ds = Dataset(dataset_id = self.db.dataset_id)
+            self.dataset = ds
         return ds
 
     def get_as_complexmodel(self):
@@ -1325,8 +1325,8 @@ class ResourceScenario(IfaceBase):
         cm.resource_attr_id = self.db.resource_attr_id
         cm.attr_id = self.resourceattr.db.attr_id
 
-        if self.scenariodata is not None:
-            sd_i              = self.scenariodata
+        if self.dataset is not None:
+            sd_i              = self.dataset
 
             dataset           = hydra_complexmodels.Dataset()
             dataset.id        = sd_i.db.dataset_id
@@ -1340,7 +1340,7 @@ class ResourceScenario(IfaceBase):
 
         return cm
 
-class ScenarioData(IfaceBase):
+class Dataset(IfaceBase):
     """
         A table recording all pieces of data, including the
         type, units, name and dimension. The actual data value is stored
@@ -1836,7 +1836,7 @@ class ConstraintGroup(IfaceBase):
                         resource_attr_id = item.db.resource_attr_id
                 )
 
-                d = ScenarioData(dataset_id=r.db.dataset_id)
+                d = Dataset(dataset_id=r.db.dataset_id)
                 str_1 = d.get_val()
             else:
                 str_1 = item.db.constant
@@ -1853,7 +1853,7 @@ class ConstraintGroup(IfaceBase):
                         resource_attr_id = item.db.resource_attr_id
                 )
 
-                d = ScenarioData(dataset_id=r.db.dataset_id)
+                d = Dataset(dataset_id=r.db.dataset_id)
                 str_2 = d.get_val()
             else:
                 str_2 = item.db.constant
@@ -2069,8 +2069,8 @@ class DatasetOwner(IfaceBase):
     """
         Ownership for a piece of data
     """
-    def __init__(self, scenariodata=None, user_id = None, dataset_id = None):
-        IfaceBase.__init__(self, scenariodata, self.__class__.__name__)
+    def __init__(self, dataset=None, user_id = None, dataset_id = None):
+        IfaceBase.__init__(self, dataset, self.__class__.__name__)
 
         self.db.user_id = user_id
         self.db.dataset_id = dataset_id
@@ -2156,10 +2156,10 @@ db_hierarchy = dict(
         table_name = 'tResourceScenario',
         pk     = ['resource_attr_id', 'scenario_id']
     ),
-    scenariodata  = dict(
-        obj   = ScenarioData,
+    dataset  = dict(
+        obj   = Dataset,
         parent = None,
-        table_name = 'tScenarioData',
+        table_name = 'tDataset',
         pk     = ['dataset_id']
     ),
     datasetgroup = dict(
@@ -2272,7 +2272,7 @@ db_hierarchy = dict(
     ),
     datasetowner  = dict(
         obj   = DatasetOwner,
-        parent = 'scenariodata',
+        parent = 'dataset',
         table_name = 'tDatasetOwner',
         pk     = ['user_id', 'dataset_id']
     ),
