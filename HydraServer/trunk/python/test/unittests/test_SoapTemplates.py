@@ -3,7 +3,6 @@
 # -*- coding: utf-8 -*-
 
 import test_SoapServer
-import bcrypt
 import datetime
 
 class TemplatesTest(test_SoapServer.SoapServerTest):
@@ -17,6 +16,15 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         else:
             self.test_add_group()
         return self.group
+
+    def test_add_xml(self):
+        template_file = open('template.xml', 'r')
+
+        file_contents = template_file.read()
+
+        new_grp = self.client.service.upload_template_xml(file_contents)
+
+        assert new_grp is not None, "Adding template from XML was not successful!"
 
     def test_add_group(self):
 

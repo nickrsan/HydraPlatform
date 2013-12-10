@@ -650,7 +650,7 @@ class DataService(HydraService):
     @rpc(String, _returns=SpyneArray(DatasetGroup))
     def get_groups_like_name(ctx, group_name):
         """
-            Get all the datsets from the group with the specified name
+            Get all the datasets from the group with the specified name
         """
         groups = []
 
@@ -678,7 +678,7 @@ class DataService(HydraService):
     @rpc(Integer, _returns=SpyneArray(Dataset))
     def get_group_datasets(ctx, group_id):
         """
-            Get all the datsets from the group with the specified name
+            Get all the datasets from the group with the specified name
         """
         scenario_data = []
 
@@ -712,7 +712,7 @@ class DataService(HydraService):
     @rpc(Integer, _returns=SpyneArray(Dataset))
     def get_scenario_data(ctx, scenario_id):
         """
-            Get all the datsets from the group with the specified name
+            Get all the datasets from the group with the specified name
         """
         scenario_data = []
 

@@ -10,6 +10,51 @@ from HydraLib.HydraException import HydraError
 import logging
 from HydraLib import config
 from lxml import etree
+import attributes
+from decimal import Decimal
+
+def parse_attribute(attribute):
+
+    dimension = attribute.find('dimension').text
+    name      = attribute.find('name').text
+    
+    attr_cm = attributes.get_attribute_by_name(name)
+
+    if attr_cm is None:
+        attr_i         = HydraIface.Attr()
+        attr_i.db.attr_dimen = attribute.find('dimension').text 
+        attr_i.db.attr_name  = attribute.find('name').text
+        if attribute.find('is_var') is not None:
+            attr_i.db.attr_is_var = 'Y'
+        if attribute.find('default') is not None:
+            default = attribute.find('default')
+            unit = default.find('unit').text
+            val  = default.find('value').text
+            try:
+                Decimal(val)
+                data_type = 'scalar'
+            except:
+                data_type = 'descriptor'
+
+            dataset_id = HydraIface.add_dataset(data_type,
+                                   val,
+                                   unit,
+                                   dimension,
+                                   name="%s Default"%attr_i.db.attr_name,)
+            attr_i.db.default_dataset_id = dataset_id
+
+        attr_i.save()
+    else:
+        attr_i = HydraIface.Attr(attr_id = attr_cm.id)
+        if attr_i.db.attr_dimen != dimension:
+            raise HydraError(
+                "An attribute with name "
+                "%s already exists but with a different"
+                " dimension (%s). Please rename your attribute.",
+                (name, attr_i.db.dimension))
+
+    return attr_i
+
 
 class TemplateService(HydraService):
     """
@@ -21,9 +66,12 @@ class TemplateService(HydraService):
         """
             Add the group, template and items described
             in an XML file.
+
+            Delete template, templateitem entries in the DB that are not in the XML file
+            The assumption is that they have been deleted and are no longer required.
         """
 
-        template_xsd_path = config.get('template', 'template_xsd_path')
+        template_xsd_path = config.get('templates', 'template_xsd_path')
         xmlschema_doc = etree.parse(template_xsd_path)
                         
         xmlschema = etree.XMLSchema(xmlschema_doc)
@@ -31,10 +79,105 @@ class TemplateService(HydraService):
         xml_tree = etree.fromstring(template_xml)
 
         xmlschema.assertValid(xml_tree)
-                       
-        grp = ResourceTemplateGroup()
-        
-        return grp
+         
+        group_name = xml_tree.find('template_name').text
+
+        sql = """
+            select
+                grp.group_id,
+                grp.group_name,
+                tmpl.template_name,
+                tmpl.template_id,
+                attr.attr_name,
+                attr.attr_id
+            from
+                tResourceTemplateGroup grp,
+                tResourceTemplate tmpl,
+                tResourceTemplateItem item,
+                tAttr attr
+            where
+                grp.group_name = '%s'
+            and tmpl.group_id  = grp.group_id
+            and item.template_id = tmpl.template_id
+            and attr.attr_id     = item.attr_id
+        """ % group_name
+
+        rs = HydraIface.execute(sql)
+
+        if len(rs) > 0:
+            grp_i = HydraIface.ResourceTemplateGroup(group_id = rs[0].group_id)
+            grp_i.load_all()
+        else:
+            grp_i = HydraIface.ResourceTemplateGroup()
+            grp_i.db.group_name = group_name 
+            grp_i.save()
+
+        templates = xml_tree.find('resources')
+
+        #Delete any templates which are in the DB but no longer in the XML file
+        template_name_map = {r.template_name:r.template_id for r in rs}
+
+        existing_templates = set([r.template_name for r in rs])
+
+        new_templates = set([r.find('name').text for r in templates.findall('resource')])
+
+        templates_to_delete = existing_templates - new_templates
+
+        for template_to_delete in templates_to_delete:
+            template_id = template_name_map[template_to_delete]
+            template_i = HydraIface.ResourceTemplate(template_id=template_id)
+            template_i.load_all()
+            template_i.delete()
+            template_i.save()
+
+        #Add or update templates.
+        for resource in templates.findall('resource'):
+            template_name = resource.find('name').text
+            #check if the template is already in the DB. If not, create a new one.
+            for r in rs:
+                if r.template_name == template_name:
+                    template_i = HydraIface.ResourceTemplate(template_id=r.template_id)
+                    break
+            else:
+                    template_i = HydraIface.ResourceTemplate()
+                    template_i.db.group_id = grp_i.db.group_id
+                    template_i.db.template_name = resource.find('name').text
+                    template_i.save()
+               
+            #delete any ResourceTemplateItems which are in the DB but not in the XML file
+            existing_attrs = []
+            for r in rs:
+                if r.template_name == template_name:
+                    existing_attrs.append(r.attr_name)
+
+            existing_attrs = set(existing_attrs)
+
+            attr_name_map = {r.attr_name:(r.attr_id,r.template_id) for r in rs}
+
+
+            new_attrs = set([r.find('name').text for r in resource.findall('attribute')])
+
+            attrs_to_delete = existing_attrs - new_attrs
+
+            for attr_to_delete in attrs_to_delete:
+                attr_id, template_id = attr_name_map[attr_to_delete]
+                attr_i = HydraIface.ResourceTemplateItem(attr_id=attr_id, template_id=template_id)
+                attr_i.delete()
+                attr_i.save()
+
+            #Add or update template items
+            for attribute in resource.findall('attribute'):
+                attr_i = parse_attribute(attribute) 
+
+                templateitem_i = HydraIface.ResourceTemplateItem()
+                templateitem_i.db.attr_id = attr_i.db.attr_id
+                templateitem_i.db.template_id = template_i.db.template_id
+                if templateitem_i.load() is False:
+                    templateitem_i.save()
+
+        grp_i.load_all()
+
+        return grp_i.get_as_complexmodel()
 
     @rpc(ResourceTemplateGroup, _returns=ResourceTemplateGroup)
     def add_resourcetemplategroup(ctx, group):

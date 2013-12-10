@@ -1,9 +1,11 @@
 from HydraLib import config
 from HydraLib.hdb import HydraMySqlCursor
 import logging
-from decimal import Decimal, getcontext
+from decimal import Decimal
 from soap_server import hydra_complexmodels
 import datetime
+
+from mysql.connector import IntegrityError
 
 from HydraLib.util import convert_ordinal_to_datetime
 
@@ -98,6 +100,7 @@ def init(cnx):
 def execute(sql):
     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
     rs = cursor.execute_sql(sql)
+    logging.info("Execution returned %s results", len(rs))
     return rs
 
 def get_val(attr, db_type):
@@ -116,6 +119,51 @@ def get_val(attr, db_type):
         return val
 
 
+def add_dataset(data_type, val, units, dimension, name="", dataset_id=None):
+    """
+        Data can exist without scenarios. This is the mechanism whereby
+        single pieces of data can be added without doing it through a scenario.
+        
+        A typical use of this would be for setting default values on template items.
+    """
+
+    hash_string = "%s %s %s %s %s"
+    data_hash  = hash(hash_string%(name, units, dimension, data_type, str(val)))
+
+    existing_dataset_id = get_data_from_hash(data_hash)
+
+    if existing_dataset_id is not None:
+        return existing_dataset_id
+    else:
+        sd = ScenarioData(dataset_id=dataset_id)
+
+        sd.set_val(data_type, val)
+
+        sd.db.data_type  = data_type
+        sd.db.data_units = units
+        sd.db.data_name  = name
+        sd.db.data_dimen = dimension
+        sd.db.data_hash  = data_hash
+        sd.save()
+        
+        return sd.db.dataset_id
+
+def get_data_from_hash(data_hash):
+    sql = """
+        select
+            dataset_id
+        from
+            tScenarioData
+        where
+            data_hash = %s
+    """ % (data_hash)
+
+    rs = execute(sql)
+
+    if len(rs) > 0:
+        return rs[0].dataset_id
+    else:
+        return None
 
 def bulk_insert(objs, table_name=""):
     """
@@ -550,7 +598,10 @@ class IfaceDB(object):
         logging.info("Running insert: %s", complete_insert)
         old_seq = cursor.lastrowid
 
-        cursor.execute(complete_insert)
+        try:
+            cursor.execute(complete_insert)
+        except IntegrityError, e:
+            raise HydraError("Error inserting into %s: %s"%(self.table_name, e.msg))
 
         if self.seq is not None:
             if old_seq is None or old_seq != cursor.lastrowid:
@@ -623,7 +674,7 @@ class IfaceDB(object):
             table_name = self.table_name,
             pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
         )
-        logging.debug("Running delete: %s", complete_delete)
+        logging.info("Running delete: %s", complete_delete)
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         cursor.execute(complete_delete)
 
@@ -760,41 +811,32 @@ class GenericResource(IfaceBase):
                              "Scenario 1 is reserved for project attributes."
                              %(resource_attr_id))
 
-        hash_string = "%s %s %s %s %s"
-        data_hash  = hash(hash_string%(name, units, dimension, data_type, str(val)))
-
-        existing_dataset_id = self.get_data_from_hash(data_hash)
 
         rs = ResourceScenario()
         rs.db.scenario_id=scenario_id
         rs.db.resource_attr_id=resource_attr_id
         rs.load()
 
+
+        hash_string = "%s %s %s %s %s"
+        data_hash  = hash(hash_string%(name, units, dimension, data_type, str(val)))
+
+        existing_dataset_id = get_data_from_hash(data_hash)
+
         if existing_dataset_id is not None:
             rs.db.dataset_id = existing_dataset_id
         else:
             dataset_id = None
+            #if this is definitely not new data, fetch the 
+            #dataset id from the DB. 
             if new is not True:
                 data_in_db = rs.load()
+                #Was the 'new' flag correct?
                 if data_in_db is True:
                     dataset_id = rs.db.dataset_id
 
-            if dataset_id is not None:
-                sd = ScenarioData(dataset_id = rs.db.dataset_id)
-            else:
-                sd = ScenarioData()
-
-            sd.set_val(data_type, val)
-
-            sd.db.data_type  = data_type
-            sd.db.data_units = units
-            sd.db.data_name  = name
-            sd.db.data_dimen = dimension
-            sd.db.data_hash  = data_hash
-            sd.save()
-
-            if dataset_id is None:
-                rs.db.dataset_id       = sd.db.dataset_id
+            dataset_id = add_dataset(data_type, val, units, dimension, name=name, dataset_id=rs.db.dataset_id)
+            rs.db.dataset_id = dataset_id
 
         rs.save()
 
@@ -1103,6 +1145,20 @@ class ResourceAttr(IfaceBase):
 
         return cm
 
+class ResourceTemplateItem(IfaceBase):
+    """
+        A resource template item is a link between a resource template
+        and attributes.
+    """
+    def __init__(self, resourcetemplate=None, attr_id = None, template_id = None):
+        IfaceBase.__init__(self, resourcetemplate, self.__class__.__name__)
+
+        self.db.attr_id = attr_id
+        self.db.template_id = template_id
+
+        if attr_id is not None and template_id is not None:
+            self.load()
+
 class ResourceTemplate(IfaceBase):
     """
         A resource template is a grouping of attributes which define
@@ -1159,19 +1215,11 @@ class ResourceTemplate(IfaceBase):
 
         return tmp
 
-class ResourceTemplateItem(IfaceBase):
-    """
-        A resource template item is a link between a resource template
-        and attributes.
-    """
-    def __init__(self, resourcetemplate=None, attr_id = None, template_id = None):
-        IfaceBase.__init__(self, resourcetemplate, self.__class__.__name__)
+    def delete(self):
+        for tmpl_item in self.resourcetemplateitems:
+            tmpl_item.delete()
 
-        self.db.attr_id = attr_id
-        self.db.template_id = template_id
-
-        if attr_id is not None and template_id is not None:
-            self.load()
+        super(ResourceTemplate, self).delete()
 
 class ResourceTemplateGroup(IfaceBase):
     """
@@ -1208,7 +1256,12 @@ class ResourceTemplateGroup(IfaceBase):
         grp.resourcetemplates = templates
 
         return grp
+    
+    def delete(self):
+        for template in self.resourcetemplates:
+            template.delete()
 
+        super(ResourceTemplateGroup, self).delete()
 
 class ResourceType(IfaceBase):
     """
@@ -1473,7 +1526,7 @@ class ScenarioData(IfaceBase):
 
     def get_groups(self):
         """
-            Get the dataset groups that this datset is in
+            Get the dataset groups that this dataset is in
         """
 
         sql = """

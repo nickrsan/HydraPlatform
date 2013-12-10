@@ -27,6 +27,60 @@ def get_resource(ref_key, ref_id):
     else:
         return None
 
+def get_attribute_by_id(ID):
+    """
+        Get a specific attribute by its ID.
+    """
+
+    sql = """
+    select
+        attr_id,
+        attr_name,
+        attr_dimen
+    from
+        tAttr
+    where
+        attr_id = %s
+    """ % ID
+
+    rs = HydraIface.execute(sql)
+
+    if len(rs) == 0:
+       return None
+    else:
+        x = Attr()
+        x.name  = rs[0].attr_name
+        x.dimen = rs[0].attr_dimen
+        x.id    = rs[0].attr_id
+        return x
+
+def get_attribute_by_name(name):
+    """
+        Get a specific attribute by its name.
+    """
+
+    sql = """
+        select
+            attr_id,
+            attr_name,
+            attr_dimen
+        from
+            tAttr
+        where
+            attr_name = '%s'
+    """ % name
+
+    rs = HydraIface.execute(sql)
+
+    if len(rs) == 0:
+       return None
+    else:
+        x = Attr()
+        x.name  = rs[0].attr_name
+        x.dimen = rs[0].attr_dimen
+        x.id    = rs[0].attr_id
+        return x
+
 class AttributeService(HydraService):
     """
         The attribute SOAP service
@@ -160,58 +214,14 @@ class AttributeService(HydraService):
         """
             Get a specific attribute by its ID.
         """
-
-        ID = int(name)
-        sql = """
-        select
-            attr_id,
-            attr_name,
-            attr_dimen
-        from
-            tAttr
-        where
-            attr_id = %s
-        """ % ID
-
-        rs = HydraIface.execute(sql)
-
-        if len(rs) == 0:
-           return None
-        else:
-            x = Attr()
-            x.name  = rs[0].attr_name
-            x.dimen = rs[0].attr_dimen
-            x.id    = rs[0].attr_id
-            return x
+        return get_attribute_by_id(ID)
 
     @rpc(String, _returns=Attr)
     def get_attribute(ctx, name):
         """
             Get a specific attribute by its name.
         """
-
-        sql = """
-            select
-                attr_id,
-                attr_name,
-                attr_dimen
-            from
-                tAttr
-            where
-                attr_name = '%s'
-        """ % name
-
-        rs = HydraIface.execute(sql)
-
-        if len(rs) == 0:
-           return None
-        else:
-            x = Attr()
-            x.name  = rs[0].attr_name
-            x.dimen = rs[0].attr_dimen
-            x.id    = rs[0].attr_id
-            return x
-
+        return get_attribute_by_name(name)
 
     @rpc(Integer, _returns=Boolean)
     def delete_attribute(ctx, attr_id):
