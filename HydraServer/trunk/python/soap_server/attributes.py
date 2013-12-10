@@ -8,8 +8,8 @@ from hydra_complexmodels import ResourceTemplateGroup,\
         Resource
 
 from hydra_base import HydraService
-from spyne.service import ServiceBase
-from HydraLib.HydraException import HydraError
+from HydraLib import IfaceLib
+
 
 from HydraLib import hdb
 
@@ -151,7 +151,7 @@ class AttributeService(HydraService):
             x.db.attr_dimen = attr.dimen
             iface_attrs.append(x)
 
-        HydraIface.bulk_insert(iface_attrs, 'tAttr')
+        IfaceLib.bulk_insert(iface_attrs, 'tAttr')
 
         sql = """
             select

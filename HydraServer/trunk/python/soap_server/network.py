@@ -5,7 +5,7 @@ from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Network, Node, Link, Scenario
 from db import HydraIface
-from HydraLib import hdb
+from HydraLib import hdb, IfaceLib
 from hydra_base import HydraService, ObjectNotFoundError
 import scenario
 from constraints import ConstraintService
@@ -131,7 +131,7 @@ class NetworkService(HydraService):
         for node in network.nodes:
             n = net_i.add_node(node.name, node.description, node.layout, node.x, node.y)
 
-        HydraIface.bulk_insert(net_i.nodes, 'tNode')
+        IfaceLib.bulk_insert(net_i.nodes, 'tNode')
         net_i.load_all()
 
         for n_i in net_i.nodes:
@@ -162,7 +162,7 @@ class NetworkService(HydraService):
 
             l = net_i.add_link(link.name, link.description, link.layout, node_1_id, node_2_id)
 
-        HydraIface.bulk_insert(net_i.links, 'tLink')
+        IfaceLib.bulk_insert(net_i.links, 'tLink')
         net_i.load_all()
         for l_i in net_i.links:
             for link in network.links:
@@ -174,7 +174,7 @@ class NetworkService(HydraService):
                     break
 
         #insert all the resource attributes in one go!
-        last_resource_attr_id = HydraIface.bulk_insert(resource_attrs, "tResourceAttr")
+        last_resource_attr_id = IfaceLib.bulk_insert(resource_attrs, "tResourceAttr")
 
         #import pudb; pudb.set_trace()
         if last_resource_attr_id is not None:
@@ -212,7 +212,7 @@ class NetworkService(HydraService):
                     rs_i.db.scenario_id      = scen.db.scenario_id
                     resource_scenarios.append(rs_i)
 
-                HydraIface.bulk_insert(resource_scenarios, 'tResourceScenario')
+                IfaceLib.bulk_insert(resource_scenarios, 'tResourceScenario')
 
                 #This is to get the resource scenarios into the scenario
                 #object, so they are included into the scenario's complex model

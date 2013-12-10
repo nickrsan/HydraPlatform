@@ -1,123 +1,24 @@
-from HydraLib import config
-from HydraLib.hdb import HydraMySqlCursor
 import logging
-from decimal import Decimal
 from soap_server import hydra_complexmodels
 import datetime
-
-from mysql.connector import IntegrityError
 
 from HydraLib.util import convert_ordinal_to_datetime
 
 from HydraLib.HydraException import HydraError
+
+from HydraLib import IfaceLib, config
+from HydraLib.IfaceLib import IfaceBase, execute
+
 from lxml import etree
-
-global DB_STRUCT
-DB_STRUCT = {}
-
-global CONNECTION
-CONNECTION = None
 
 global LAYOUT_XSD_PATH
 LAYOUT_XSD_PATH = None
 
 def init(cnx):
-
-    global CONNECTION
-    global DB_STRUCT
+    IfaceLib.init(cnx, db_hierarchy)
 
     global LAYOUT_XSD_PATH
     LAYOUT_XSD_PATH = config.get('hydra_server', 'layout_xsd_path')
-
-    CONNECTION = cnx
-
-    sql = """
-        select
-            table_name,
-            column_name,
-            column_default,
-            is_nullable,
-            column_type,
-            column_key,
-            extra
-        from
-            information_schema.columns
-        where
-            table_schema = '%s'
-    """%(config.get('mysqld', 'db_name'),)
-
-    cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-    #rs = cursor.execute_sql(sql)
-    cursor.execute(sql)
-
-    #Table desc gives us:
-    #[...,(col_name, col_type, nullable, key ('PRI' or 'MUL'), default, auto_increment),...]
-    for r in cursor.fetchall():
-        table_name     = r[0]
-        column_name    = r[1]
-        column_default = r[2]
-        is_nullable    = r[3]
-        column_type    = r[4]
-        column_key     = r[5]
-        extra          = r[6]
-
-        col_info    = {}
-
-        col_info['default']        = column_default
-        col_info['nullable']       = True if is_nullable == 'YES' else False
-        col_info['type']           = column_type
-        col_info['primary_key']    = True if column_key == 'PRI' else False
-        col_info['auto_increment'] = True if extra == 'auto_increment' else False
-
-        tab_info = DB_STRUCT.get(table_name.lower(), {'columns' : {}})
-        tab_info['columns'][column_name] = col_info
-        tab_info['child_info'] = {}
-        DB_STRUCT[table_name.lower()] = tab_info
-
-    fk_qry    = """
-        select
-            table_name,
-            column_name,
-            referenced_table_name,
-            referenced_column_name
-        from
-            information_schema.key_column_usage
-        where
-        table_schema  = '%s'
-        and referenced_table_name is not null
-        and constraint_name != 'PRIMARY'
-        and constraint_name != column_name
-    """%(config.get('mysqld', 'db_name'),)
-
-    cursor.execute(fk_qry)
-    for r in cursor.fetchall():
-        child_dict = {}
-
-        child_dict['column_name'] = r[1]
-        child_dict['referenced_column_name'] = r[3]
-        DB_STRUCT[r[2].lower()]['child_info'][r[0]] = child_dict
-
-def execute(sql):
-    cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-    rs = cursor.execute_sql(sql)
-    logging.info("Execution returned %s results", len(rs))
-    return rs
-
-def get_val(attr, db_type):
-    """
-        This function differs from the one in the
-        hydraiface DB object as it is used for the bulk insert
-        function, which requires different string formatting.
-    """
-    val = attr
-
-    if val is None:
-        return None
-    elif db_type.find('varchar') != -1 or db_type in ('blob', 'datetime', 'timestamp') :
-        return '%s'%val
-    else:
-        return val
-
 
 def add_dataset(data_type, val, units, dimension, name="", dataset_id=None):
     """
@@ -164,530 +65,6 @@ def get_data_from_hash(data_hash):
         return rs[0].dataset_id
     else:
         return None
-
-def bulk_insert(objs, table_name=""):
-    """
-        Insert all objects into the DB using a single query.
-        to_insert is a list of objects, which much be the same type.
-    """
-
-    if len(objs) == 0:
-        logging.info("Cannot bulk insert to %s. Nothing to insert!", table_name)
-        return
-
-    cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-    base_insert = "insert into %(table)s (%(cols)s) values (%(vals)s)"
-
-    vals = []
-    for obj in objs:
-        if 'cr_date' in obj.db.db_attrs:
-            del(obj.db.db_attrs[obj.db.db_attrs.index('cr_date')])
-
-        val = [get_val(getattr(obj.db, n), obj.db.attr_types[n]) for n in obj.db.db_attrs]
-        vals.append(tuple(val))
-
-    complete_insert = base_insert % dict(
-        table = objs[0].db.table_name,
-        cols  = ",".join([n for n in objs[0].db.db_attrs]),
-        vals  = ",".join('%s' for v in objs[0].db.db_attrs),
-    )
-
-    logging.info("Running bulk insert: %s with vals %s", complete_insert, vals)
-
-    cursor.executemany(complete_insert, vals)
-
-    warnings = cursor._fetch_warnings()
-    if warnings is not None:
-        raise HydraError("Bulk insert created Warnings: %s"%warnings)
-
-    #the executemany seems to return the bottom index, rather than the top,
-    #so we have to work out the top index.
-    last_row_id = cursor.lastrowid + cursor.rowcount-1
-
-    cursor.close()
-
-    return last_row_id
-
-
-class IfaceBase(object):
-    """
-        The base database interface class.
-    """
-    def __init__(self, parent, class_name):
-        logging.debug("Initialising %s", class_name)
-
-        self.db = IfaceDB(class_name)
-
-        self.name = class_name
-
-        self.in_db = False
-
-        #Indicates that the 'delete' function has been called on this object
-        self.deleted = False
-
-        self.children   = []
-        self.child_info = self.get_children()
-        self.parent = parent
-
-    def load(self):
-        if self.in_db is False:
-            self.in_db = self.db.load()
-
-            if self.parent is None:
-                self.get_parent()
-
-        return self.in_db
-
-    def load_all(self):
-        self.in_db = self.load()
-
-        if self.in_db:
-            self.load_children()
-
-        return self.in_db
-
-    def commit(self):
-        """
-            Commit any inserts or updates to the DB. No going back from here...
-        """
-        CONNECTION.commit()
-        if self.deleted == True:
-            self.in_db = False
-
-    def delete(self):
-        if self.in_db:
-            self.db.delete()
-        self.deleted = True
-        self.in_db   = False
-
-    def save(self):
-        """
-            Call the appropriate insert or update function, depending on
-            whether the object is already in the DB or not
-        """
-        if self.deleted == True:
-            return
-
-        if self.in_db is True:
-            if self.db.has_changed is True:
-                self.db.update()
-            else:
-                logging.debug("No changes to %s, not continuing", self.db.table_name)
-        else:
-            self.db.insert()
-            self.in_db = True
-
-    def bulk_save_children(self):
-        children_to_insert = []
-        children_to_update = []
-
-        for child in self.children:
-            if child.in_db == False:
-                children_to_insert.append(child)
-            else:
-                children_to_update.append(child)
-
-        self.db.bulk_insert(children_to_insert)
-
-        for child in children_to_update:
-            child.save()
-
-    def get_children(self):
-        children = DB_STRUCT[self.db.table_name.lower()]['child_info']
-        for name, rows in children.items():
-            #turn 'link' into 'links'
-            attr_name              = name[1:].lower() + 's'
-            #if it's not already set, set it to a default []
-            if hasattr(self, attr_name) is False:
-                self.__setattr__(attr_name, [])
-                self.children.append(attr_name)
-        return children
-
-    def load_children(self):
-
-        self.children = []
-
-        child_rs = self.db.load_children(self.child_info)
-        for name, rows in child_rs.items():
-            #turn 'tLink' into 'links'
-            attr_name              = name[1:].lower() + 's'
-
-            child_objs = []
-            for row in rows:
-                child_obj = db_hierarchy[name[1:].lower()]['obj'](self)
-
-                child_obj.parent = self
-                child_obj.__setattr__(self.name.lower(), self)
-                for col, val in row:
-                    child_obj.db.__setattr__(col, val)
-
-                child_obj.in_db = True
-
-                child_obj.load_all()
-
-                child_objs.append(child_obj)
-
-            #ex: set network.links = [link1, link2, link3]
-            self.__setattr__(attr_name, child_objs)
-            #ex: self.children.append('links')
-            self.children.append(attr_name)
-
-    def get_parent(self):
-        if self.parent is None:
-            parent = self.db.get_parent()
-            if parent is None:
-                return None
-            parent_name = parent.__class__.__name__.lower()
-            logging.debug("Parent Name: %s", parent_name)
-            logging.debug("Parent: %s", parent)
-            self.parent = parent
-            self.__setattr__(parent_name, parent)
-
-    def get_as_complexmodel(self):
-        """
-            Converts this object into a spyne.model.ComplexModel type
-            which can be used by the soap library.
-        """
-        start = datetime.datetime.now()
-        #first create the appropriate soap complex model
-        cm = getattr(hydra_complexmodels, self.name)()
-        #If self is not in the DB, then return an empty
-        #complex model.
-        if self.in_db is False:
-            cm.error = "Not in DB"
-            return cm
-
-        #assign values for each database attribute
-        for attr in self.db.db_attrs:
-            value = getattr(self.db, attr)
-            if type(value) == Decimal:
-                value = float(value)
-
-            attr_prefix = "%s_"%self.name.lower()
-            if attr.find(attr_prefix) == 0:
-                attr = attr.replace(attr_prefix, "")
-
-            setattr(cm, attr, value)
-
-        #get my children, convert them and assign them to the new
-        #soap object
-        for name in self.children:
-            objs = getattr(self, name)
-            child_objs = []
-            for obj in objs:
-                obj.load_all()
-                child_cm = obj.get_as_complexmodel()
-                child_objs.append(child_cm)
-            setattr(cm, name, child_objs)
-
-        #if I have attributes, convert them
-        #and assign them to the new object too.
-        if hasattr(self, 'attributes'):
-            attributes = []
-            for attr in self.get_attributes():
-                if self.name == 'Project':
-                    rs_i = ResourceScenario(scenario_id = 1, resource_attr_id=attr.db.resource_attr_id)
-                    attributes.append(rs_i.get_as_complexmodel())
-                else:
-                    attributes.append(attr.get_as_complexmodel())
-            setattr(cm, 'attributes', attributes)
-            template_groups = self.get_templates()
-
-            template_list = []
-            for grp_name, templates in template_groups.items():
-                grp_summary = hydra_complexmodels.ResourceGroupSummary()
-                grp_summary.name = grp_name
-                grp_summary.templates = templates
-                template_list.append(grp_summary)
-
-            setattr(cm, 'templates', template_list)
-
-        logging.info("Complex model conversion of %s took: %s " % (self.name, datetime.datetime.now()-start))
-        return cm
-
-class IfaceDB(object):
-    """
-        The class which represents the actual row in the database. Accessed
-        from the base class using '.db'
-    """
-
-    def __init__(self, class_name):
-
-        self.db_attrs = []
-        self.pk_attrs = []
-        self.db_data  = {}
-        self.nullable_attrs = []
-        self.attr_types = {}
-        self.seq = None
-
-        #This indicates whether any values in this table have changed.
-        self.has_changed = False
-
-        #this turns 'Project' into 'tProject' so it can identify the table
-        self.class_name = class_name.lower()
-        self.table_name = db_hierarchy[self.class_name]['table_name']
-
-        col_dict = DB_STRUCT[self.table_name.lower()]['columns']
-
-        for col_name, col_data in col_dict.items():
-
-            self.db_attrs.append(col_name)
-
-            #[...,(col_name, col_type, nullable, key ('PRI' or 'MUL'), default, auto_increment),...]
-
-            self.db_data[col_name] = col_data['default']
-
-            self.attr_types[col_name] = col_data['type']
-
-            if col_data['nullable'] is True:
-                self.nullable_attrs.append(col_name)
-
-            if col_data['primary_key'] is True:
-                self.pk_attrs.append(col_name)
-
-            if col_data['auto_increment'] is True:
-                self.seq = col_name
-
-    def load_children(self, child_info_dict):
-        child_dict = {}
-        for table_name, ref_cols in child_info_dict.items():
-            column_name = ref_cols['column_name']
-            referenced_column_name = ref_cols['referenced_column_name']
-
-            logging.debug("Loading child %s", table_name)
-
-            base_child_sql = """
-                select
-                    *
-                from
-                    %(table)s
-                where
-                %(fk_col)s = %(fk_val)s
-            """
-
-            if self.__getattr__(referenced_column_name) is None:
-                continue
-
-            complete_child_sql = base_child_sql % dict(
-                table  = table_name,
-                fk_col = column_name,
-                fk_val = self.__getattr__(referenced_column_name)
-            )
-
-            cursor = CONNECTION.cursor()
-            #rs = cursor.execute_sql(complete_child_sql)
-            cursor.execute(complete_child_sql)
-            rs = cursor.fetchall()
-            child_rs = []
-            for r in rs:
-                child_rs.append(zip(cursor.column_names, r))
-
-            cursor.close()
-
-            child_dict[table_name] = child_rs
-        return child_dict
-
-    def get_parent(self):
-        parent_key = db_hierarchy[self.class_name]['parent']
-
-        if parent_key is None:
-            return None
-
-        logging.debug("PARENT: %s", parent_key)
-
-        parent_class = db_hierarchy[parent_key]['obj']
-        parent_table = db_hierarchy[parent_key]['table_name']
-        parent_pk    = db_hierarchy[parent_key]['pk']
-
-        for k in parent_pk:
-            if self.__getattr__(k) is None:
-                logging.debug("Cannot load parent. %s is None", k)
-                return
-
-        logging.debug("Loading parent %s", self.table_name)
-
-        base_parent_sql = """
-            select
-                *
-            from
-                %(table)s
-            where
-                %(pk)s
-        """
-
-        complete_parent_sql = base_parent_sql % dict(
-                table = parent_table,
-                pk    = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in parent_pk]),
-        )
-
-        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-        rs = cursor.execute_sql(complete_parent_sql)
-        cursor.close()
-
-        if len(rs) == 0:
-            logging.info("Object %s has no parent with pk: %s", self.table_name, parent_pk)
-            return None
-
-        parent_obj = parent_class()
-        logging.debug(rs[0].get_as_dict())
-        for k, v in rs[0].get_as_dict().items():
-            parent_obj.db.__setattr__(k, v)
-
-        parent_obj.load()
-
-        return parent_obj
-
-    def __getattr__(self, name):
-        """
-            Return the value containe id db_data if it exists as
-            a key in this dictionary. Return the value as the appropriate
-            type, based on the type specified in the table
-        """
-        db_type = self.attr_types[name]
-
-        if name in self.db_attrs:
-
-            #Don't do a cast if there is no value to cast...
-            if self.db_data[name] is None:
-                return None
-
-            val = str(self.db_data[name])
-
-            #Cast the value to the correct DB data type
-            if db_type.lower().find("double") != -1:
-                return Decimal(val)
-            elif db_type.find('int') != -1:
-                return int(val)
-            elif db_type == 'blob':
-                return eval(val)
-            elif db_type == 'datetime':
-                return self.db_data[name]
-
-            return val
-
-        else:
-            raise AttributeError("Attribute %s not set."%name)
-
-    def __setattr__(self, name, value):
-        if name != 'db_attrs' and name in self.db_attrs:
-            self.db_data[name] = value
-            self.has_changed = True
-        else:
-            super(IfaceDB, self).__setattr__(name, value)
-
-
-    def insert(self):
-        """
-            If this object has not been stored in the DB as yet, then insert it.
-            Generates an insert statement and runs it.
-        """
-
-        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-        base_insert = "insert into %(table)s (%(cols)s) values (%(vals)s);"
-
-
-        if 'cr_date' in self.db_attrs:
-            del(self.db_attrs[self.db_attrs.index('cr_date')])
-
-        complete_insert = base_insert % dict(
-            table = self.table_name,
-            cols  = ",".join([n for n in self.db_attrs]),
-            vals  = ",".join([self.get_val(n) for n in self.db_attrs]),
-        )
-
-        logging.info("Running insert: %s", complete_insert)
-        old_seq = cursor.lastrowid
-
-        try:
-            cursor.execute(complete_insert)
-        except IntegrityError, e:
-            raise HydraError("Error inserting into %s: %s"%(self.table_name, e.msg))
-
-        if self.seq is not None:
-            if old_seq is None or old_seq != cursor.lastrowid:
-                setattr(self, self.seq, cursor.lastrowid)
-        cursor.close()
-
-    def update(self):
-        """
-            Updates all the values for a table in the DB..
-            Generates an update statement and runs it.
-        """
-
-        base_update = "update %(table)s set %(sets)s where %(pk)s;"
-        complete_update = base_update % dict(
-            table = self.table_name,
-            sets  = ",".join(["%s = %s"%(n, self.get_val(n)) for n in self.db_attrs]),
-            pk    = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
-        )
-        logging.debug("Running update: %s", complete_update)
-        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-        cursor.execute(complete_update)
-        cursor.close()
-
-    def load(self):
-        """
-            Loads a row from the DB and assigns the values as entries to
-            the self.db_data dictionary. These are accessible direcly from
-            the object, without any need to look in the db_data dictionary.
-        """
-        #Idenitfy the primary key, which is used to get a single row in the db.
-        for pk in self.pk_attrs:
-            if self.__getattr__(pk) is None:
-                logging.warning("%s: Primary key is not set. Cannot load row from DB.", self.table_name)
-                return False
-
-        #Create a skeleton query
-        base_load = "select * from %(table_name)s where %(pk)s;"
-
-        #Fill in the query with the appropriate table name and PK values.
-        complete_load = base_load % dict(
-            table_name = self.table_name,
-            pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
-        )
-
-        logging.debug("Running load: %s", complete_load)
-
-        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-        rs = cursor.execute_sql(complete_load)
-        cursor.close()
-
-        if len(rs) == 0:
-            logging.warning("No entry found for table %s", self.table_name)
-
-            return False
-
-        for r in rs:
-            for k, v in r.get_as_dict().items():
-                logging.debug("Setting column %s to %s", k, v)
-                self.db_data[k] = v
-
-
-        return True
-
-    def delete(self):
-        """
-            Deletes this object's row from the DB.
-        """
-        base_load = "delete from %(table_name)s where %(pk)s;"
-        complete_delete = base_load % dict(
-            table_name = self.table_name,
-            pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
-        )
-        logging.info("Running delete: %s", complete_delete)
-        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-        cursor.execute(complete_delete)
-
-    def get_val(self, attr):
-        val = self.__getattr__(attr)
-        db_type = self.attr_types[attr]
-
-        if val is None:
-            return 'null'
-        elif db_type.find('varchar') != -1 or db_type in ('blob', 'datetime', 'timestamp') :
-            return "'%s'"%val
-        else:
-            return str(val)
 
 class GenericResource(IfaceBase):
     """
@@ -746,11 +123,8 @@ class GenericResource(IfaceBase):
                         ref_id = %(ref_id)s
                     and ref_key = '%(ref_key)s'
             """ % dict(ref_key = self.ref_key, ref_id = self.ref_id)
-        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
 
-        rs = cursor.execute_sql(sql)
-
-        cursor.close()
+        rs = execute(sql)
 
         for r in rs:
             ra = ResourceAttr(resource_attr_id=r.resource_attr_id)
@@ -920,6 +294,37 @@ class GenericResource(IfaceBase):
             xmlschema.assertValid(xml_tree)
         except etree.LxmlError, e:
             raise HydraError("Layout XML did not validate!: Error was: %s"%(e))
+
+    def get_as_complexmodel(self):
+        """
+            Converts this object into a spyne.model.ComplexModel type
+            which can be used by the soap library.
+        """
+        cm = super(GenericResource, self).get_as_complexmodel()
+
+        #if I have attributes, convert them
+        #and assign them to the new object too.
+        if hasattr(self, 'attributes'):
+            attributes = []
+            for attr in self.get_attributes():
+                if self.name == 'Project':
+                    rs_i = ResourceScenario(scenario_id = 1, resource_attr_id=attr.db.resource_attr_id)
+                    attributes.append(rs_i.get_as_complexmodel())
+                else:
+                    attributes.append(attr.get_as_complexmodel())
+            setattr(cm, 'attributes', attributes)
+            template_groups = self.get_templates()
+
+            template_list = []
+            for grp_name, templates in template_groups.items():
+                grp_summary = hydra_complexmodels.ResourceGroupSummary()
+                grp_summary.name = grp_name
+                grp_summary.templates = templates
+                template_list.append(grp_summary)
+
+            setattr(cm, 'templates', template_list)
+
+        return cm
 
 class Project(GenericResource):
     """
@@ -1995,8 +1400,7 @@ class User(IfaceBase):
                 username = '%s'
         """ % self.db.username
 
-        cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
-        user_rs =cursor.execute_sql(sql)
+        user_rs = execute(sql)
 
         if len(user_rs) > 0:
             self.db.user_id = user_rs[0].user_id

@@ -18,11 +18,11 @@ from hydra_complexmodels import Scenario,\
         parse_value
 
 from db import HydraIface
-from HydraLib import hdb
-from HydraLib import units
+from HydraLib import units, IfaceLib
 from HydraLib.util import timestamp_to_server_time
 
 from hydra_base import HydraService
+
 
 def clone_constraint_group(constraint_id, grp_i):
     """
@@ -84,8 +84,6 @@ class ScenarioService(HydraService):
         for r_scen in scenario.resourcescenarios:
             scenario._update_resourcescenario(x.db.scenario_id, r_scen, new=True)
 
-        hdb.commit()
-
         return x.get_as_complexmodel()
 
     @rpc(Integer, _returns=Boolean)
@@ -96,18 +94,13 @@ class ScenarioService(HydraService):
 
 
         success = True
-        try:
-            scen_i = HydraIface.Scenario(scenario_id = scenario_id)
+        scen_i = HydraIface.Scenario(scenario_id = scenario_id)
 
-            if scen_i.load() is False:
-                raise HydraError("Scenario %s does not exist."%(scenario_id))
+        if scen_i.load() is False:
+            raise HydraError("Scenario %s does not exist."%(scenario_id))
 
-            scen_i.db.status = 'X'
-            scen_i.save()
-        except HydraError, e:
-            logging.critical(e)
-            hdb.rollback()
-            success=False
+        scen_i.db.status = 'X'
+        scen_i.save()
 
         return success
 
@@ -132,7 +125,7 @@ class ScenarioService(HydraService):
             new_rs.db.dataset_id       = rs.db.dataset_id
             cloned_scen.resourcescenarios.append(new_rs)
 
-        HydraIface.bulk_insert(cloned_scen.resourcescenarios, "tResourceScenario")
+        IfaceLib.bulk_insert(cloned_scen.resourcescenarios, "tResourceScenario")
 
         for constraint_i in scen_i.constraints:
             new_constraint = HydraIface.Constraint()
@@ -491,7 +484,7 @@ class DataService(HydraService):
                 eqtimeseries.append(data)
                 eqtimeseries_idx.append(i)
 
-        last_descriptor_id = HydraIface.bulk_insert(descriptors, 'tDescriptor')
+        last_descriptor_id = IfaceLib.bulk_insert(descriptors, 'tDescriptor')
 
         #assign the data_ids to the correct data objects.
         #We will need this later to ensure the correct dataset_id / data_id mappings
@@ -503,7 +496,7 @@ class DataService(HydraService):
                 next_id          = next_id + 1
                 idx              = idx     + 1
 
-        last_scalar_id     = HydraIface.bulk_insert(scalars, 'tScalar')
+        last_scalar_id     = IfaceLib.bulk_insert(scalars, 'tScalar')
 
         if last_scalar_id:
             next_id = last_scalar_id - len(scalars) + 1
@@ -513,7 +506,7 @@ class DataService(HydraService):
                 next_id                 = next_id + 1
                 idx                     = idx     + 1
 
-        last_array_id      = HydraIface.bulk_insert(arrays, 'tArray')
+        last_array_id      = IfaceLib.bulk_insert(arrays, 'tArray')
 
         if last_array_id:
             next_id = last_array_id - len(arrays) + 1
@@ -523,7 +516,7 @@ class DataService(HydraService):
                 next_id                = next_id + 1
                 idx                    = idx     + 1
 
-        last_ts_id         = HydraIface.bulk_insert(timeseries, 'tTimeSeries')
+        last_ts_id         = IfaceLib.bulk_insert(timeseries, 'tTimeSeries')
 
         if last_ts_id:
             next_id = last_ts_id - len(timeseries) + 1
@@ -543,9 +536,9 @@ class DataService(HydraService):
             for idx, ts in enumerate(timeseries):
                 timeseriesdata.extend(ts.timeseriesdatas)
 
-            HydraIface.bulk_insert(timeseriesdata, 'tTimeSeriesData')
+            IfaceLib.bulk_insert(timeseriesdata, 'tTimeSeriesData')
 
-        last_eq_id         = HydraIface.bulk_insert(eqtimeseries, 'tEqTimeSeries')
+        last_eq_id         = IfaceLib.bulk_insert(eqtimeseries, 'tEqTimeSeries')
 
         if last_eq_id:
             next_id = last_eq_id - len(eqtimeseries) + 1
@@ -575,7 +568,7 @@ class DataService(HydraService):
                 new_scenario_data.append(sd)
 
         if len(new_scenario_data) > 0:
-            last_dataset_id = HydraIface.bulk_insert(new_scenario_data, 'tDataset')
+            last_dataset_id = IfaceLib.bulk_insert(new_scenario_data, 'tDataset')
 
             #set the dataset ids on the new scenario data objects
             next_id = last_dataset_id - len(new_scenario_data) + 1

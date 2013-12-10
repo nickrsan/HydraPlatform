@@ -105,7 +105,7 @@ class HydraServer():
 
     def __init__(self):
 
-        hydra_logging.init(level='INFO')
+        hydra_logging.init(level='DEBUG')
         #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
         connection = hdb.connect()
         HydraIface.init(connection)
