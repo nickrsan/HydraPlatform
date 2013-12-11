@@ -1410,6 +1410,10 @@ class User(IfaceBase):
             logging.info("User %s does not exist."%self.db.username)
             return None
 
+    def update_alter_time(self):
+        self.db.last_edit = datetime.datetime.now()
+        self.db.save()
+
 class Role(IfaceBase):
     """
         Roles for hydra users

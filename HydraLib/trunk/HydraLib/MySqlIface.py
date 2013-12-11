@@ -366,7 +366,7 @@ class DBIface(object):
             sets  = ",".join(["%s = %s"%(n, self.get_val(n)) for n in self.db_attrs]),
             pk    = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
         )
-        logging.debug("Running update: %s", complete_update)
+        logging.info("Running update: %s", complete_update)
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         cursor.execute(complete_update)
         cursor.close()

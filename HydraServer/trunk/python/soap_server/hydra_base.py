@@ -4,6 +4,8 @@ from spyne.model.complex import ComplexModel
 from spyne.decorator import srpc, rpc
 from db import HydraIface
 
+import datetime
+
 import bcrypt
 import random
 
@@ -109,6 +111,9 @@ class AuthenticationService(ServiceBase):
         if user_id is None:
            raise AuthenticationError(username)
 
+        user_i.db.user_id = user_id
+        user_i.load()
+
         _user_map[username] = user_id
         
         if bcrypt.hashpw(password, user_i.db.password) == user_i.db.password:
@@ -116,6 +121,9 @@ class AuthenticationService(ServiceBase):
             _session_db.add(session_id)
         else:
            raise AuthenticationError(username)
+
+        user_i.db.last_login = datetime.datetime.now()
+        user_i.save()
 
         return session_id[1]
 
