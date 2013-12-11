@@ -33,7 +33,7 @@ Options
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== ======================================
---network              -n     NETWORK    ID of the network that will be
+--network              -f     NETWORK    ID of the network that will be
                                          exported.
 --scenario             -s     SCENARIO   ID of the scenario that will be
                                          exported.
