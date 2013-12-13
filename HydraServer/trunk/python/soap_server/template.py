@@ -24,25 +24,6 @@ def parse_attribute(attribute):
         attr_i         = HydraIface.Attr()
         attr_i.db.attr_dimen = attribute.find('dimension').text 
         attr_i.db.attr_name  = attribute.find('name').text
-        if attribute.find('is_var') is not None:
-            attr_i.db.attr_is_var = 'Y'
-        if attribute.find('default') is not None:
-            default = attribute.find('default')
-            unit = default.find('unit').text
-            val  = default.find('value').text
-            try:
-                Decimal(val)
-                data_type = 'scalar'
-            except:
-                data_type = 'descriptor'
-
-            dataset_id = HydraIface.add_dataset(data_type,
-                                   val,
-                                   unit,
-                                   dimension,
-                                   name="%s Default"%attr_i.db.attr_name,)
-            attr_i.db.default_dataset_id = dataset_id
-
         attr_i.save()
     else:
         attr_i = HydraIface.Attr(attr_id = attr_cm.id)
@@ -55,6 +36,41 @@ def parse_attribute(attribute):
 
     return attr_i
 
+def parse_templateitem(template_id, attribute):
+    
+    attr_i = parse_attribute(attribute)
+    
+    dimension = attribute.find('dimension').text
+
+    templateitem_i = HydraIface.ResourceTemplateItem()
+    templateitem_i.db.attr_id = attr_i.db.attr_id
+    templateitem_i.db.template_id = template_id
+    
+    templateitem_i.load()
+    
+    if attribute.find('is_var') is not None:
+        templateitem_i.db.attr_is_var = attribute.find('is_var').text 
+
+    if attribute.find('default') is not None:
+        default = attribute.find('default')
+        unit = default.find('unit').text
+        val  = default.find('value').text
+        try:
+            Decimal(val)
+            data_type = 'scalar'
+        except:
+            data_type = 'descriptor'
+
+        dataset_id = HydraIface.add_dataset(data_type,
+                               val,
+                               unit,
+                               dimension,
+                               name="%s Default"%attr_i.db.attr_name,)
+        templateitem_i.db.default_dataset_id = dataset_id
+
+    templateitem_i.save()
+
+    return templateitem_i 
 
 class TemplateService(HydraService):
     """
@@ -167,13 +183,7 @@ class TemplateService(HydraService):
 
             #Add or update template items
             for attribute in resource.findall('attribute'):
-                attr_i = parse_attribute(attribute) 
-
-                templateitem_i = HydraIface.ResourceTemplateItem()
-                templateitem_i.db.attr_id = attr_i.db.attr_id
-                templateitem_i.db.template_id = template_i.db.template_id
-                if templateitem_i.load() is False:
-                    templateitem_i.save()
+                parse_templateitem(template_i.db.template_id, attribute) 
 
         grp_i.load_all()
 
