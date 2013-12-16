@@ -25,6 +25,52 @@ def _add_attributes(resource_i, attributes):
 
     return resource_i.attributes
 
+def _add_resource_types(resource_i, groups):
+    """
+        Save a reference to the templates used for this resource.
+        
+        Template references in the DB but not passed into this 
+        function are considered obsolete and are deleted.
+        
+        @returns a list of template_ids representing the template ids
+        on the resource.
+
+    """
+    if groups is None:
+        return []
+
+    existing_groups = resource_i.get_templates()
+    
+    existing_template_ids = []
+    for group_id, group in existing_groups.items():
+        for template_id, template_name in group['templates']:
+            existing_template_ids.append(template_id)
+    
+    new_template_ids = []
+    for group in groups:
+        
+        templates = group.templates
+
+        for template in templates:
+            if template.id in existing_template_ids:
+                continue
+
+            new_template_ids.append(template.id)        
+            
+            rt_i = HydraIface.ResourceType()
+            rt_i.db.template_id = template.id
+            rt_i.db.ref_key     = resource_i.ref_key
+            rt_i.db.ref_id      = resource_i.ref_id
+            rt_i.save()
+
+    for obsolete_template_id in set(existing_template_ids) - set(new_template_ids):
+        rt_i = HydraIface.ResourceType(template_id=obsolete_template_id,
+                                      ref_id = resource_i.ref_id,
+                                      ref_key = resource_i.ref_key)
+        rt_i.delete()
+    
+    return new_template_ids
+
 def _update_attributes(resource_i, attributes):
     resource_attr_id_map = dict()
     if attributes is None:
@@ -71,8 +117,6 @@ def get_scenario_by_name(network_id, scenario_name):
         logging.info("Scenario with name %s found in network %s" % (scenario_name, network_id))
         return rs[0].scenario_id
 
-
-
 class NetworkService(HydraService):
     """
         The network SOAP service.
@@ -116,7 +160,8 @@ class NetworkService(HydraService):
 
         resource_attrs = []
 
-        network_attrs = _add_attributes(net_i, network.attributes)
+        network_attrs  = _add_attributes(net_i, network.attributes)
+        _add_resource_types(net_i, network.templates)
 
         resource_attrs.extend(network_attrs)
 
@@ -129,7 +174,7 @@ class NetworkService(HydraService):
          #First add all the nodes
         logging.info("Adding nodes to network")
         for node in network.nodes:
-            n = net_i.add_node(node.name, node.description, node.layout, node.x, node.y)
+            net_i.add_node(node.name, node.description, node.layout, node.x, node.y)
 
         IfaceLib.bulk_insert(net_i.nodes, 'tNode')
         net_i.load_all()
@@ -138,6 +183,7 @@ class NetworkService(HydraService):
             for node in network.nodes:
                 if node.id not in node_ids and node.x == n_i.db.node_x and node.y == n_i.db.node_y and node.name == n_i.db.node_name:
                     node_attrs = _add_attributes(n_i, node.attributes)
+                    _add_resource_types(n_i, node.templates)
                     resource_attrs.extend(node_attrs)
                     all_attributes.extend(node.attributes)
                     #If a temporary ID was given to the node
@@ -160,7 +206,11 @@ class NetworkService(HydraService):
             if node_1_id is None or node_2_id is None:
                 raise HydraError("Node IDS (%s, %s)are incorrect!"%(node_1_id, node_2_id))
 
-            l = net_i.add_link(link.name, link.description, link.layout, node_1_id, node_2_id)
+            net_i.add_link(link.name,
+                           link.description,
+                           link.layout,
+                           node_1_id,
+                           node_2_id)
 
         IfaceLib.bulk_insert(net_i.links, 'tLink')
         net_i.load_all()
@@ -169,6 +219,7 @@ class NetworkService(HydraService):
                 node_1_from_map = node_ids[link.node_1_id]
                 node_2_from_map = node_ids[link.node_2_id]
                 if l_i.db.node_1_id == node_1_from_map and l_i.db.node_2_id == node_2_from_map:
+                    _add_resource_types(l_i, link.templates)
                     resource_attrs.extend(_add_attributes(l_i, link.attributes))
                     all_attributes.extend(link.attributes)
                     break
@@ -290,12 +341,10 @@ class NetworkService(HydraService):
 
         return net
 
-
-
     @rpc(Network, _returns=Network)
     def update_network(ctx, network):
         """
-            Update an entire network, excluding nodes.
+            Update an entire network
         """
         net = None
         net_i = HydraIface.Network(network_id = network.id)
@@ -306,6 +355,7 @@ class NetworkService(HydraService):
         net_i.db.network_layout      = network.layout
 
         resource_attr_id_map = _update_attributes(net_i, network.attributes)
+        _add_resource_types(net_i, network.templates)
 
         #Maps temporary node_ids to real node_ids
         node_id_map = dict()
@@ -325,17 +375,21 @@ class NetworkService(HydraService):
                 n.db.status           = node.status
             else:
                 is_new = True
-                n = net_i.add_node(node.name, node.description, node.layout, node.x, node.y)
+                n = net_i.add_node(node.name,
+                                   node.description,
+                                   node.layout,
+                                   node.x,
+                                   node.y)
             n.save()
 
             node_attr_id_map = _update_attributes(n, node.attributes)
+            _add_resource_types(n, node.templates)
             resource_attr_id_map.update(node_attr_id_map)
 
             #If a temporary ID was given to the node
             #store the mapping to the real node_id
             if is_new is True:
                 node_id_map[node.id] = n.db.node_id
-
 
         for link in network.links:
             node_1_id = link.node_1_id
@@ -347,7 +401,11 @@ class NetworkService(HydraService):
                 node_2_id = node_id_map[link.node_2_id]
 
             if link.id is None or link.id < 0:
-                l = net_i.add_link(link.name, link.description, link.layout, node_1_id, node_2_id)
+                l = net_i.add_link(link.name,
+                                   link.description,
+                                   link.layout,
+                                   node_1_id,
+                                   node_2_id)
             else:
                 l = net_i.get_link(link.id)
                 l.load()
@@ -357,8 +415,8 @@ class NetworkService(HydraService):
             l.save()
 
             link_attr_id_map = _update_attributes(l, link.attributes)
+            _add_resource_types(l, link.templates)
             resource_attr_id_map.update(link_attr_id_map)
-
 
         if network.scenarios is not None:
             for s in network.scenarios:

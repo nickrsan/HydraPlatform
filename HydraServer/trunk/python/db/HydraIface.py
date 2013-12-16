@@ -191,7 +191,6 @@ class GenericResource(IfaceBase):
         rs.db.resource_attr_id=resource_attr_id
         rs.load()
 
-
         hash_string = "%s %s %s %s %s"
         data_hash  = hash(hash_string%(name, units, dimension, data_type, str(val)))
 
@@ -209,7 +208,13 @@ class GenericResource(IfaceBase):
                 if data_in_db is True:
                     dataset_id = rs.db.dataset_id
 
-            dataset_id = add_dataset(data_type, val, units, dimension, name=name, dataset_id=rs.db.dataset_id)
+            dataset_id = add_dataset(data_type,
+                                     val,
+                                     units,
+                                     dimension,
+                                     name=name,
+                                     dataset_id=dataset_id)
+
             rs.db.dataset_id = dataset_id
 
         rs.save()
@@ -217,7 +222,7 @@ class GenericResource(IfaceBase):
         return rs
 
 
-    def get_templates(self):
+    def get_templates_by_attr(self):
         """
             Using the attributes of the resource, get all the
             templates that this resource is in.
@@ -226,9 +231,17 @@ class GenericResource(IfaceBase):
             attributes.
         """
 
+        #Create a list of all of this resources attributes.
+        attr_ids = []
+        for attr in self.get_attributes():
+            attr_ids.append(attr.db.attr_id)
+        all_attr_ids = set(attr_ids)
+
+        #Get all template information.
         template_sql = """
             select
                 grp.group_name,
+                grp.group_id,
                 tmpl.template_id,
                 tmpl.template_name,
                 item.attr_id
@@ -245,37 +258,68 @@ class GenericResource(IfaceBase):
         group_dict   = {}
         template_name_map = {}
         for r in rs:
-
             template_name_map[r.template_id] = r.template_name
-
-            if group_dict.get(r.group_name):
-                if group_dict[r.group_name].get(r.template_id):
-                    group_dict[r.group_name][r.template_id].add(r.attr_id)
+            
+            if group_dict.get(r.group_id):
+                if group_dict[r.group_id].get(r.template_id):
+                    group_dict[r.group_id]['templates'][r.template_id].add(r.attr_id)
                 else:
-                    group_dict[r.group_name][r.template_id] = set([r.attr_id])
+                    group_dict[r.group_id]['templates'][r.template_id] = set([r.attr_id])
             else:
-                group_dict[r.group_name] = {r.template_id:set([r.attr_id])}
-
-        #Create a list of all of this resources attributes.
-        attr_ids = []
-        for attr in self.get_attributes():
-            attr_ids.append(attr.db.attr_id)
-        attr_ids = set(attr_ids)
+                group_dict[r.group_id] = {
+                                            'group_name' : r.group_name,
+                                            'templates'  : {r.template_id:set([r.attr_id])}
+                                         }
 
         resource_template_groups = {}
         #Find which template IDS this resources matches by checking if all
         #the templates attributes are in the resources attribute list.
-        for grp_name, grp in group_dict.items():
+        for grp_id, grp in group_dict.items():
+            group_name = grp['group_name']
+            grp_templates = grp['templates']
             resource_templates = []
-            for k, v in grp.items():
-                if v.issubset(attr_ids):
-                    resource_templates.append(template_name_map[k])
+            for template_id, template_items in grp_templates.items():
+                if template_items.issubset(all_attr_ids):
+                    resource_templates.append((template_id, template_name_map[template_id]))
 
             if len(resource_templates) > 0:
-                resource_template_groups[grp_name] = resource_templates
+                resource_template_groups[grp_id] = {'group_name' : group_name,
+                                                    'templates'  : resource_templates
+                                                   }
 
         return resource_template_groups
 
+    def get_templates(self):
+        sql = """
+            select
+                rt.template_id,
+                tmp.template_name,
+                grp.group_name,
+                grp.group_id
+            from
+                tResourceType rt,
+                tResourceTemplate tmp,
+                tResourceTemplateGroup grp
+            where
+                rt.ref_key = '%s'
+            and rt.ref_id  = %s
+            and rt.template_id = tmp.template_id
+            and grp.group_id   = tmp.group_id
+        """ % (self.ref_key, self.ref_id)
+
+        rs = execute(sql)
+
+        group_dict   = {}
+        for r in rs:
+            if group_dict.get(r.group_id):
+                group_dict[r.group_id]['templates'].append((r.template_id, r.template_name))
+            else:
+                group_dict[r.group_id] = {
+                                            'group_name' : r.group_name,
+                                            'templates'  : [(r.template_id, r.template_name)]
+                                         }
+
+        return group_dict
 
     def validate_layout(self, layout_xml):
 
@@ -316,11 +360,22 @@ class GenericResource(IfaceBase):
             template_groups = self.get_templates()
 
             template_list = []
-            for grp_name, templates in template_groups.items():
-                grp_summary = hydra_complexmodels.ResourceGroupSummary()
-                grp_summary.name = grp_name
-                grp_summary.templates = templates
-                template_list.append(grp_summary)
+            for group_id, group in template_groups.items():
+                group_name = group['group_name']
+                templates  = group['templates']
+
+                group_summary = hydra_complexmodels.ResourceGroupSummary()
+                group_summary.id   = group_id
+                group_summary.name = group_name
+                group_summary.templates = []
+                
+                for template_id, template_name in templates:
+                    template_summary = hydra_complexmodels.ResourceTemplateSummary()
+                    template_summary.id = template_id
+                    template_summary.name = template_name
+                    group_summary.templates.append(template_summary)
+                
+                template_list.append(group_summary)
 
             setattr(cm, 'templates', template_list)
 

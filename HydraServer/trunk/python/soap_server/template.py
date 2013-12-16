@@ -2,7 +2,7 @@
 from spyne.model.complex import Array as SpyneArray
 from spyne.model.primitive import String, Integer, Unicode
 from spyne.decorator import rpc
-from hydra_complexmodels import ResourceTemplate, ResourceTemplateGroup, ResourceTemplateItem
+from hydra_complexmodels import ResourceTemplate, ResourceTemplateGroup, ResourceTemplateItem,ResourceGroupSummary, ResourceTemplateSummary
 
 from db import HydraIface
 from hydra_base import HydraService
@@ -188,6 +188,43 @@ class TemplateService(HydraService):
         grp_i.load_all()
 
         return grp_i.get_as_complexmodel()
+
+    @rpc(String, Integer, _returns=SpyneArray(ResourceGroupSummary))
+    def get_matching_resource_templates(ctx, resource_type, resource_id):
+        """
+            Get the possible types (templates) of a resource by checking its attributes 
+            against all available templates.
+
+            @returns A list of ResourceGroupSummary objects.
+        """
+        resource_i = None
+        if resource_type == 'NETWORK':
+            resource_i = HydraIface.Network(network_id=resource_id)
+        elif resource_type == 'NODE':
+            resource_i = HydraIface.Node(node_id=resource_id)
+        elif resource_type == 'LINK':
+            resource_i = HydraIface.Link(link_id=resource_id)
+
+        template_groups = resource_i.get_templates_by_attr()
+        template_list = []
+        for group_id, group in template_groups.items():
+            group_name = group['group_name']
+            templates  = group['templates']
+
+            group_summary = ResourceGroupSummary()
+            group_summary.id   = group_id
+            group_summary.name = group_name
+            group_summary.templates = []
+            
+            for template_id, template_name in templates:
+                template_summary = ResourceTemplateSummary()
+                template_summary.id = template_id
+                template_summary.name = template_name
+                group_summary.templates.append(template_summary)
+            
+            template_list.append(group_summary)
+
+        return template_list
 
     @rpc(ResourceTemplateGroup, _returns=ResourceTemplateGroup)
     def add_resourcetemplategroup(ctx, group):

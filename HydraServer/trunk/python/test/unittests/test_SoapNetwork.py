@@ -67,6 +67,77 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             "Update did not work correctly."
 
 
+    def test_add_node(self):
+        project = self.create_project('test')
+        network = self.client.factory.create('hyd:Network')
+        nodes = self.client.factory.create('hyd:NodeArray')
+        links = self.client.factory.create('hyd:LinkArray')
+
+        nnodes = 3
+        nlinks = 2
+        x = [0, 0, 1]
+        y = [0, 1, 0]
+
+        for i in range(nnodes):
+            node = self.client.factory.create('hyd:Node')
+            node.id = i * -1
+            node.name = 'Node ' + str(i)
+            node.description = 'Test node ' + str(i)
+            node.x = x[i]
+            node.y = y[i]
+
+            nodes.Node.append(node)
+
+        for i in range(nlinks):
+            link = self.client.factory.create('hyd:Link')
+            link.id = i * -1
+            link.name = 'Link ' + str(i)
+            link.description = 'Test link ' + str(i)
+            link.node_1_id = nodes.Node[i].id
+            link.node_2_id = nodes.Node[i + 1].id
+
+            links.Link.append(link)
+
+        network.project_id = project.id
+        network.name = 'Test'
+        network.description = 'A network for SOAP unit tests.'
+        network.nodes = nodes
+        network.links = links
+
+        network = self.client.service.add_network(network)
+
+        old_network = copy.deepcopy(network)
+
+        node = self.client.factory.create('hyd:Node')
+        new_node_num = nnodes + 1
+        node.id = new_node_num * -1
+        node.name = 'Node ' + str(new_node_num)
+        node.description = 'Test node ' + str(new_node_num)
+        node.x = 100
+        node.y = 101
+
+        link = self.client.factory.create('hyd:Link')
+        new_link_num = nlinks+1
+        link.id = new_link_num * -1
+        link.name = 'Link ' + str(new_link_num)
+        link.description = 'Test link ' + str(new_link_num)
+        link.node_1_id = node.id
+        link.node_2_id = network.nodes.Node[0].id
+
+        links.Link.append(link)
+
+        network.nodes.Node.append(node)
+
+        network.description = \
+            'A different network for SOAP unit tests.'
+
+        new_network = self.client.service.update_network(network)
+
+        assert network.id == old_network.id, \
+            'network_id has changed on update.'
+
+        assert len(new_network.nodes.Node) == len(old_network.nodes.Node)+1; "New node was not added correctly"
+
     def test_load(self):
         project = self.create_project('test')
         network = self.client.factory.create('hyd:Network')

@@ -173,13 +173,18 @@ class ResourceTemplateGroup(HydraComplexModel):
         ('resourcetemplates', SpyneArray(ResourceTemplate, default=[])),
     ]
 
+class ResourceTemplateSummary(HydraComplexModel):
+    _type_info = [
+        ('name',    String),
+        ('id',      Integer),
+    ]
 
 class ResourceGroupSummary(HydraComplexModel):
     _type_info = [
         ('name',    String),
-        ('templates', SpyneArray(String)),
+        ('id',      Integer),
+        ('templates', SpyneArray(ResourceTemplateSummary)),
     ]
-
 
 class Resource(HydraComplexModel):
     pass
