@@ -128,20 +128,20 @@ class ResourceAttr(ComplexModel):
         ('is_var',  Boolean),
     ]
 
-class ResourceTemplateGroup(ComplexModel):
+class TemplateGroup(ComplexModel):
     _type_info = [
         ('id',   Integer),
         ('name', String),
     ]
 
-class ResourceTemplate(ComplexModel):
+class Template(ComplexModel):
     _type_info = [
         ('name', Integer),
         ('id', Integer),
         ('group_id',    Integer)
     ]
 
-class ResourceTemplateItem(ComplexModel):
+class TemplateItem(ComplexModel):
     _type_info = [
         ('attr_id', Integer),
         ('template_id', Integer),

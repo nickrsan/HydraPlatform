@@ -2,8 +2,8 @@ from spyne.model.primitive import Integer, Boolean, String
 from spyne.decorator import rpc
 from hydra_complexmodels import Attr
 from db import HydraIface
-from hydra_complexmodels import ResourceTemplateGroup,\
-        ResourceTemplate, \
+from hydra_complexmodels import TemplateGroup,\
+        Template, \
         Resource
 
 from hydra_base import HydraService
@@ -80,89 +80,89 @@ class AttributeService(HydraService):
 
         return resource_i.get_as_complexmodel()
 
-    @rpc(ResourceTemplateGroup, _returns=ResourceTemplateGroup)
+    @rpc(TemplateGroup, _returns=TemplateGroup)
     def add_template_group(ctx, group):
         """
             Add a template group
         """
 
-        g_i = HydraIface.ResourceTemplateGroup()
+        g_i = HydraIface.TemplateGroup()
         g_i.db.group_name = group.name
 
         g_i.save()
 
-        for template in group.resourcetemplates:
+        for template in group.templates:
             t_i = g_i.add_template(template.name)
-            for item in template.resourcetemplateitmes:
+            for item in template.templateitmes:
                 t_i.add_item(item.attr_id)
 
         return g_i.get_as_complexmodel()
 
-    @rpc(ResourceTemplateGroup, _returns=ResourceTemplateGroup)
+    @rpc(TemplateGroup, _returns=TemplateGroup)
     def update_template_group(ctx, group):
         """
             Add a template group
         """
-        g_i = HydraIface.ResourceTemplateGroup(group_id=group.id)
+        g_i = HydraIface.TemplateGroup(group_id=group.id)
         g_i.db.group_name = group.name
 
         g_i.save()
 
-        for template in group.resourcetemplates:
+        for template in group.templates:
             t_i = g_i.add_template(template.name)
-            for item in template.resourcetemplateitmes:
+            for item in template.templateitmes:
                 t_i.add_item(item.attr_id)
 
         return g_i.get_as_complexmodel()
 
-    @rpc(ResourceTemplate, _returns=ResourceTemplate)
-    def add_resource_template(ctx, resourcetemplate):
+    @rpc(Template, _returns=Template)
+    def add_resource_template(ctx, template):
         """
             Add a resource template
             A group_id may or may not be specified in the
             resource template complex model, as the template
             does not necessarily need to be in a group.
         """
-        template_i = ResourceTemplate()
+        template_i = Template()
 
-        #Check if the resourcetemplate is in a group  
-        if hasattr('group_id', resourcetemplate) and\
-           resourcetemplate.group_id is not None:
-            template_i.db.group_id = resourcetemplate.group_id
+        #Check if the template is in a group  
+        if hasattr('group_id', template) and\
+           template.group_id is not None:
+            template_i.db.group_id = template.group_id
 
-        template_i.db.template_name = resourcetemplate.name
+        template_i.db.template_name = template.name
         template_i.save()
 
-        for item in resourcetemplate.resourcetemplateitmes:
+        for item in template.templateitmes:
             template_i.add_item(item.attr_id)
 
         return template_i.get_as_complexmodel()
  
 
-    @rpc(ResourceTemplate, _returns=ResourceTemplate)
-    def update_resource_template(ctx, resourcetemplate):
+    @rpc(Template, _returns=Template)
+    def update_resource_template(ctx, template):
         """
             Add a resource template
         """
-        template_i = HydraIface.ResourceTemplate(template_id=resourcetemplate.id)
+        template_i = HydraIface.Template(template_id=template.id)
        
-        #Check if the resourcetemplate is in a group  
-        if hasattr('group_id', resourcetemplate) and\
-           resourcetemplate.group_id is not None:
-            template_i.db.group_id = resourcetemplate.group_id
+        #Check if the template is in a group  
+        if hasattr('group_id', template) and\
+           template.group_id is not None:
+            template_i.db.group_id = template.group_id
 
-        for item in resourcetemplate.resourcetemplateitmes:
+        for item in template.templateitmes:
             template_i.add_item(item.attr_id)
 
         return template_i.get_as_complexmodel()
 
-    @rpc(Integer, Integer, _returns=ResourceTemplate)
+    @rpc(Integer, Integer, _returns=Template)
     def remove_attr_from_template(ctx, template_id, attr_id):
         """
 
-            Remove an attribute from a resourcetemplate
+            Remove an attribute from a template
         """
-        templateitem_i = HydraIface.ResourceTemplateItem(template_id=template_id, attr_id=attr_id)
+        templateitem_i = HydraIface.TemplateItem(template_id=template_id, attr_id=attr_id)
         templateitem_i.delete()
 
     @rpc(Integer, String, Integer, _returns=Resource)
@@ -170,12 +170,12 @@ class AttributeService(HydraService):
         """
             adds all the attributes defined by a template to a node.
         """
-        template_i = HydraIface.ResourceTemplate(template_id)
+        template_i = HydraIface.Template(template_id)
         template_i.load()
 
         resource_i = get_resource(resource_type, resource_id)
 
-        for item in template_i.resourcetemplateitems:
+        for item in template_i.templateitems:
             resource_i.add_attribute(item.db.attr_id)
 
         return resource_i.get_as_complexmodel()

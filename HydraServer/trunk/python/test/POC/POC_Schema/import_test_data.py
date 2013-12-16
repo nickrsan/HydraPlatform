@@ -251,7 +251,7 @@ def create_attribute(name, dimen):
 
 def create_template_group(name):
     'Create a resource template group.'
-    tgroup = HydraIface.ResourceTemplateGroup()
+    tgroup = HydraIface.TemplateGroup()
     tgroup.db.group_name = name
     tgroup.save()
     tgroup.commit()
@@ -261,7 +261,7 @@ def create_template_group(name):
 
 def create_node_template(name, group):
     'Create a node template.'
-    template = HydraIface.ResourceTemplate()
+    template = HydraIface.Template()
     template.db.template_name = name
     template.db.group_id = group.db.group_id
     template.save()
@@ -272,7 +272,7 @@ def create_node_template(name, group):
 
 def add_attribute_to_template(attr, template):
     'Add an attribute to a template.'
-    templ_item = HydraIface.ResourceTemplateItem()
+    templ_item = HydraIface.TemplateItem()
     templ_item.db.attr_id = attr.db.attr_id
     templ_item.db.template_id = template.db.template_id
     templ_item.save()
@@ -286,7 +286,7 @@ def add_attr_from_template(resource, template):
     template.load()
     resource.load()
 
-    for t in template.resourcetemplateitems:
+    for t in template.templateitems:
         resource.add_attribute(t.db.attr_id)
 
     resource.save()

@@ -10,8 +10,8 @@ from hydra_complexmodels import Network,\
         Link,\
         Project,\
         Scenario,\
-        ResourceTemplateGroup,\
-        ResourceTemplate
+        TemplateGroup,\
+        Template
 
 from HydraLib import hdb
 
@@ -103,46 +103,46 @@ class AttributeService(ServiceBase):
             Add an attribute to a project.
         """
 
-    @rpc(ResourceTemplateGroup, _returns=ResourceTemplateGroup)
+    @rpc(TemplateGroup, _returns=TemplateGroup)
     def add_template_group(ctx, group):
         """
             Add a template group
         """
         pass
 
-    @rpc(ResourceTemplateGroup, _returns=ResourceTemplateGroup)
+    @rpc(TemplateGroup, _returns=TemplateGroup)
     def update_template_group(ctx, group):
         """
             Add a template group
         """
         pass
 
-    @rpc(ResourceTemplate, _returns=ResourceTemplate)
-    def add_resource_template(ctx, resourcetemplate):
+    @rpc(Template, _returns=Template)
+    def add_resource_template(ctx, template):
         """
             Add a resource template
         """
         pass
 
-    @rpc(ResourceTemplate, _returns=ResourceTemplate)
-    def update_resource_template(ctx, resourcetemplate):
+    @rpc(Template, _returns=Template)
+    def update_resource_template(ctx, template):
         """
             Add a resource template
         """
         pass
 
-    @rpc(Integer, ResourceTemplate, _returns=ResourceTemplateGroup)
+    @rpc(Integer, Template, _returns=TemplateGroup)
     def add_resource_template_to_group(ctx, group_id, template):
         """
             Add a template to a group
         """
         pass
 
-    @rpc(Integer, Attr, _returns=ResourceTemplate)
+    @rpc(Integer, Attr, _returns=Template)
     def add_attr_to_template(ctx, template_id, attr):
         """
 
-            Add an attribute to a resourcetemplate, creating a resourcetemplateitem.
+            Add an attribute to a template, creating a templateitem.
         """
         pass
 

@@ -854,17 +854,17 @@ class ResourceAttr(IfaceBase):
 
         return cm
 
-class ResourceTemplate(IfaceBase):
+class template(IfaceBase):
     """
         A resource template is a grouping of attributes which define
         a resource. For example, a "reservoir" template may have "volume",
         "discharge" and "daily throughput".
     """
-    def __init__(self, resourcetemplategroup = None, template_id = None):
-        IfaceBase.__init__(self, resourcetemplategroup, self.__class__.__name__)
+    def __init__(self, templategroup = None, template_id = None):
+        IfaceBase.__init__(self, templategroup, self.__class__.__name__)
 
         self.db.template_id = template_id
-        self.resourcetemplateitems = []
+        self.templateitems = []
 
         if template_id is not None:
             self.load()
@@ -873,14 +873,14 @@ class ResourceTemplate(IfaceBase):
         """
             Add a resource template item to a resource template.
         """
-        item_i = ResourceTemplateItem()
+        item_i = templateItem()
         item_i.db.attr_id = attr_id
         item_i.db.template_id = self.db.template_id
 
         #If the item already exists, there's no need to add it again.
         if item_i.load() == False:
             item_i.save()
-            self.resourcetemplateitems.append(item_i)
+            self.templateitems.append(item_i)
 
         return item_i
 
@@ -890,34 +890,34 @@ class ResourceTemplate(IfaceBase):
             remove a resource template item from a resource template.
         """
         #Only remove the item if it is there.
-        for item_i in self.resourcetemplateitems:
+        for item_i in self.templateitems:
             if attr_id == item_i.db.attr_id:
-                self.resourcetemplateitems.remove(item_i)
+                self.templateitems.remove(item_i)
                 item_i.save()
 
         return item_i 
 
     def get_as_complexmodel(self):
-        tmp =  hydra_complexmodels.ResourceTemplate()
+        tmp =  hydra_complexmodels.template()
         tmp.name = self.db.template_name
         tmp.id = self.db.template_id
         tmp.group_id   = self.db.group_id
 
         items = []
-        for item in self.resourcetemplateitems:
+        for item in self.templateitems:
             items.append(item.get_as_complexmodel())
 
-        tmp.resourcetemplateitems = items
+        tmp.templateitems = items
 
         return tmp
 
-class ResourceTemplateItem(IfaceBase):
+class templateItem(IfaceBase):
     """
         A resource template item is a link between a resource template
         and attributes.
     """
-    def __init__(self, resourcetemplate=None, attr_id = None, template_id = None):
-        IfaceBase.__init__(self, resourcetemplate, self.__class__.__name__)
+    def __init__(self, template=None, attr_id = None, template_id = None):
+        IfaceBase.__init__(self, template, self.__class__.__name__)
 
         self.db.attr_id = attr_id
         self.db.template_id = template_id
@@ -925,7 +925,7 @@ class ResourceTemplateItem(IfaceBase):
         if attr_id is not None and template_id is not None:
             self.load()
 
-class ResourceTemplateGroup(IfaceBase):
+class templateGroup(IfaceBase):
     """
         A resource template group is a set of templates, usually categorised
         by the plugin which they were defined for.
@@ -939,25 +939,25 @@ class ResourceTemplateGroup(IfaceBase):
 
 
     def add_template(self, name):
-        template_i = ResourceTemplate()
+        template_i = template()
         template_i.db.group_id = self.db.group_id
         template_i.db.template_name = name
         template_i.save()
 
-        self.resourcetemplates.append(template_i)
+        self.templates.append(template_i)
 
         return template_i
 
     def get_as_complexmodel(self):
-        grp =  hydra_complexmodels.ResourceTemplateGroup()
+        grp =  hydra_complexmodels.templateGroup()
         grp.name = self.db.group_name
         grp.id   = self.db.group_id
 
         templates = []
-        for template in self.resourcetemplates:
+        for template in self.templates:
             templates.append(template.get_as_complexmodel())
 
-        grp.resourcetemplates = templates
+        grp.templates = templates
 
         return grp
 
@@ -1614,22 +1614,22 @@ db_hierarchy = dict(
         table_name = 'tResourceAttr',
         pk     = ['resource_attr_id']
     ),
-    resourcetemplate  = dict(
-        obj   = ResourceTemplate,
-        parent = 'resourcetemplategroup',
-        table_name = 'tResourceTemplate',
+    template  = dict(
+        obj   = template,
+        parent = 'templategroup',
+        table_name = 'ttemplate',
         pk     = ['template_id']
     ),
-    resourcetemplateitem  = dict(
-        obj   = ResourceTemplateItem,
-        parent = 'resourcetemplate',
-        table_name = 'tResourceTemplateItem',
+    templateitem  = dict(
+        obj   = templateItem,
+        parent = 'template',
+        table_name = 'ttemplateItem',
         pk     = ['attr_id', 'template_id'],
     ),
-    resourcetemplategroup  = dict(
-        obj   = ResourceTemplateGroup,
+    templategroup  = dict(
+        obj   = templateGroup,
         parent = None,
-        table_name = 'tResourceTemplateGroup',
+        table_name = 'ttemplateGroup',
         pk     = ['group_id']
     ),
     resourcescenario  = dict(

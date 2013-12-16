@@ -152,28 +152,28 @@ class ResourceAttr(HydraComplexModel):
         ('attr_is_var',  String(min_occurs=1, default='N')),
     ]
 
-class ResourceTemplateItem(HydraComplexModel):
+class TemplateItem(HydraComplexModel):
     _type_info = [
         ('attr_id',     Integer),
         ('template_id', Integer),
     ]
 
-class ResourceTemplate(HydraComplexModel):
+class Template(HydraComplexModel):
     _type_info = [
         ('id',                    Integer(default=None)),
         ('name',                  String(default=None)),
         ('group_id',              Integer(min_occurs=1, default=None)),
-        ('resourcetemplateitems', SpyneArray(ResourceTemplateItem, default=[])),
+        ('templateitems', SpyneArray(TemplateItem, default=[])),
     ]
 
-class ResourceTemplateGroup(HydraComplexModel):
+class TemplateGroup(HydraComplexModel):
     _type_info = [
         ('id',                Integer(default=None)),
         ('name',              String(default=None)),
-        ('resourcetemplates', SpyneArray(ResourceTemplate, default=[])),
+        ('templates', SpyneArray(Template, default=[])),
     ]
 
-class ResourceTemplateSummary(HydraComplexModel):
+class TemplateSummary(HydraComplexModel):
     _type_info = [
         ('name',    String),
         ('id',      Integer),
@@ -183,7 +183,7 @@ class ResourceGroupSummary(HydraComplexModel):
     _type_info = [
         ('name',    String),
         ('id',      Integer),
-        ('templates', SpyneArray(ResourceTemplateSummary)),
+        ('templates', SpyneArray(TemplateSummary)),
     ]
 
 class Resource(HydraComplexModel):

@@ -765,27 +765,27 @@ class ResourceAttr(IfaceBase):
         obj.load()
         return obj
 
-class ResourceTemplate(IfaceBase):
+class Template(IfaceBase):
     """
         A resource template is a grouping of attributes which define
         a resource. For example, a "reservoir" template may have "volume",
         "discharge" and "daily throughput".
     """
-    def __init__(self, resourcetemplategroup  = None, template_id = None):
-        IfaceBase.__init__(self, resourcetemplategroup, self.__class__.__name__)
+    def __init__(self, templategroup  = None, template_id = None):
+        IfaceBase.__init__(self, templategroup, self.__class__.__name__)
 
         self.db.template_id = template_id
 
         if template_id is not None:
             self.load()
 
-class ResourceTemplateItem(IfaceBase):
+class TemplateItem(IfaceBase):
     """
         A resource template item is a link between a resource template
         and attributes.
     """
-    def __init__(self, resourcetemplate=None, attr_id = None, template_id = None):
-        IfaceBase.__init__(self, resourcetemplate, self.__class__.__name__)
+    def __init__(self, template=None, attr_id = None, template_id = None):
+        IfaceBase.__init__(self, template, self.__class__.__name__)
 
         self.db.attr_id = attr_id
         self.db.template_id = template_id
@@ -793,7 +793,7 @@ class ResourceTemplateItem(IfaceBase):
         if attr_id is not None and template_id is not None:
             self.load()
 
-class ResourceTemplateGroup(IfaceBase):
+class TemplateGroup(IfaceBase):
     """
         A resource template group is a set of templates, usually categorised
         by the plugin which they were defined for.
@@ -1312,22 +1312,22 @@ db_hierarchy = dict(
         table_name = 'tResourceAttr',
         pk     = ['resource_attr_id']
     ),
-    resourcetemplate  = dict(
-        obj   = ResourceTemplate,
-        parent = 'resourcetemplategroup',
-        table_name = 'tResourceTemplate',
+    template  = dict(
+        obj   = Template,
+        parent = 'templategroup',
+        table_name = 'tTemplate',
         pk     = ['template_id']
     ),
-    resourcetemplateitem  = dict(
-        obj   = ResourceTemplateItem,
-        parent = 'resourcetemplate',
-        table_name = 'tResourceTemplateItem',
+    templateitem  = dict(
+        obj   = TemplateItem,
+        parent = 'template',
+        table_name = 'tTemplateItem',
         pk     = ['attr_id', 'template_id'],
     ),
-    resourcetemplategroup  = dict(
-        obj   = ResourceTemplateGroup,
+    templategroup  = dict(
+        obj   = TemplateGroup,
         parent = None,
-        table_name = 'tResourceTemplateGroup',
+        table_name = 'tTemplateGroup',
         pk     = ['group_id']
     ),
     resourcescenario  = dict(

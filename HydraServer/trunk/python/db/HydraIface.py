@@ -246,9 +246,9 @@ class GenericResource(IfaceBase):
                 tmpl.template_name,
                 item.attr_id
             from
-                tResourceTemplateGroup grp,
-                tResourceTemplate tmpl,
-                tResourceTemplateItem item
+                tTemplateGroup grp,
+                tTemplate tmpl,
+                tTemplateItem item
             where
                 grp.group_id   = tmpl.group_id
                 and tmpl.template_id = item.template_id
@@ -298,8 +298,8 @@ class GenericResource(IfaceBase):
                 grp.group_id
             from
                 tResourceType rt,
-                tResourceTemplate tmp,
-                tResourceTemplateGroup grp
+                tTemplate tmp,
+                tTemplateGroup grp
             where
                 rt.ref_key = '%s'
             and rt.ref_id  = %s
@@ -370,7 +370,7 @@ class GenericResource(IfaceBase):
                 group_summary.templates = []
                 
                 for template_id, template_name in templates:
-                    template_summary = hydra_complexmodels.ResourceTemplateSummary()
+                    template_summary = hydra_complexmodels.TemplateSummary()
                     template_summary.id = template_id
                     template_summary.name = template_name
                     group_summary.templates.append(template_summary)
@@ -605,13 +605,13 @@ class ResourceAttr(IfaceBase):
 
         return cm
 
-class ResourceTemplateItem(IfaceBase):
+class TemplateItem(IfaceBase):
     """
         A resource template item is a link between a resource template
         and attributes.
     """
-    def __init__(self, resourcetemplate=None, attr_id = None, template_id = None):
-        IfaceBase.__init__(self, resourcetemplate, self.__class__.__name__)
+    def __init__(self, template=None, attr_id = None, template_id = None):
+        IfaceBase.__init__(self, template, self.__class__.__name__)
 
         self.db.attr_id = attr_id
         self.db.template_id = template_id
@@ -619,17 +619,17 @@ class ResourceTemplateItem(IfaceBase):
         if attr_id is not None and template_id is not None:
             self.load()
 
-class ResourceTemplate(IfaceBase):
+class Template(IfaceBase):
     """
         A resource template is a grouping of attributes which define
         a resource. For example, a "reservoir" template may have "volume",
         "discharge" and "daily throughput".
     """
-    def __init__(self, resourcetemplategroup = None, template_id = None):
-        IfaceBase.__init__(self, resourcetemplategroup, self.__class__.__name__)
+    def __init__(self, templategroup = None, template_id = None):
+        IfaceBase.__init__(self, templategroup, self.__class__.__name__)
 
         self.db.template_id = template_id
-        self.resourcetemplateitems = []
+        self.templateitems = []
 
         if template_id is not None:
             self.load()
@@ -638,14 +638,14 @@ class ResourceTemplate(IfaceBase):
         """
             Add a resource template item to a resource template.
         """
-        item_i = ResourceTemplateItem()
+        item_i = TemplateItem()
         item_i.db.attr_id = attr_id
         item_i.db.template_id = self.db.template_id
 
         #If the item already exists, there's no need to add it again.
         if item_i.load() == False:
             item_i.save()
-            self.resourcetemplateitems.append(item_i)
+            self.templateitems.append(item_i)
 
         return item_i
 
@@ -654,34 +654,34 @@ class ResourceTemplate(IfaceBase):
             remove a resource template item from a resource template.
         """
         #Only remove the item if it is there.
-        for item_i in self.resourcetemplateitems:
+        for item_i in self.templateitems:
             if attr_id == item_i.db.attr_id:
-                self.resourcetemplateitems.remove(item_i)
+                self.templateitems.remove(item_i)
                 item_i.save()
 
         return item_i
 
     def get_as_complexmodel(self):
-        tmp =  hydra_complexmodels.ResourceTemplate()
+        tmp =  hydra_complexmodels.Template()
         tmp.name = self.db.template_name
         tmp.id = self.db.template_id
         tmp.group_id   = self.db.group_id
 
         items = []
-        for item in self.resourcetemplateitems:
+        for item in self.templateitems:
             items.append(item.get_as_complexmodel())
 
-        tmp.resourcetemplateitems = items
+        tmp.templateitems = items
 
         return tmp
 
     def delete(self):
-        for tmpl_item in self.resourcetemplateitems:
+        for tmpl_item in self.templateitems:
             tmpl_item.delete()
 
-        super(ResourceTemplate, self).delete()
+        super(Template, self).delete()
 
-class ResourceTemplateGroup(IfaceBase):
+class TemplateGroup(IfaceBase):
     """
         A resource template group is a set of templates, usually categorised
         by the plugin which they were defined for.
@@ -695,33 +695,33 @@ class ResourceTemplateGroup(IfaceBase):
 
 
     def add_template(self, name):
-        template_i = ResourceTemplate()
+        template_i = Template()
         template_i.db.group_id = self.db.group_id
         template_i.db.template_name = name
         template_i.save()
 
-        self.resourcetemplates.append(template_i)
+        self.templates.append(template_i)
 
         return template_i
 
     def get_as_complexmodel(self):
-        grp =  hydra_complexmodels.ResourceTemplateGroup()
+        grp =  hydra_complexmodels.TemplateGroup()
         grp.name = self.db.group_name
         grp.id   = self.db.group_id
 
         templates = []
-        for template in self.resourcetemplates:
+        for template in self.templates:
             templates.append(template.get_as_complexmodel())
 
-        grp.resourcetemplates = templates
+        grp.templates = templates
 
         return grp
     
     def delete(self):
-        for template in self.resourcetemplates:
+        for template in self.templates:
             template.delete()
 
-        super(ResourceTemplateGroup, self).delete()
+        super(TemplateGroup, self).delete()
 
 class ResourceType(IfaceBase):
     """
@@ -1589,22 +1589,22 @@ db_hierarchy = dict(
         table_name = 'tResourceAttr',
         pk     = ['resource_attr_id']
     ),
-    resourcetemplate  = dict(
-        obj   = ResourceTemplate,
-        parent = 'resourcetemplategroup',
-        table_name = 'tResourceTemplate',
+    template  = dict(
+        obj   = Template,
+        parent = 'templategroup',
+        table_name = 'tTemplate',
         pk     = ['template_id']
     ),
-    resourcetemplateitem  = dict(
-        obj   = ResourceTemplateItem,
-        parent = 'resourcetemplate',
-        table_name = 'tResourceTemplateItem',
+    templateitem  = dict(
+        obj   = TemplateItem,
+        parent = 'template',
+        table_name = 'tTemplateItem',
         pk     = ['attr_id', 'template_id'],
     ),
-    resourcetemplategroup  = dict(
-        obj   = ResourceTemplateGroup,
+    templategroup  = dict(
+        obj   = TemplateGroup,
         parent = None,
-        table_name = 'tResourceTemplateGroup',
+        table_name = 'tTemplateGroup',
         pk     = ['group_id']
     ),
     resourcetype = dict(
