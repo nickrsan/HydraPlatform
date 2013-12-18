@@ -17,6 +17,8 @@ API docs
 ~~~~~~~~
 """
 
+import os
+
 from HydraLib.PluginLib import HydraResource
 from HydraLib.PluginLib import HydraNetwork
 
@@ -152,3 +154,22 @@ def create_arr_index(dim):
         K = K * d
 
     return arr_idx
+
+
+def import_gms_data(filename):
+    """Read whole .gms file and expand all $ input statements found.
+    """
+    basepath = os.path.dirname(filename)
+    gms_data = ''
+    with open(filename) as f:
+        while True:
+            line = f.readline()
+            if line == '':
+                break
+            lineparts = line.split()
+            if len(lineparts) > 2 and \
+                    lineparts[0] == '$' \
+                    and lineparts[1] == 'include':
+                line = import_gms_data(os.path.join(basepath, lineparts[2]))
+            gms_data += line
+    return gms_data

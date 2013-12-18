@@ -44,12 +44,16 @@ import os
 import logging
 import argparse
 
+from operator import mul
+
 from HydraLib.HydraException import HydraPluginError
 from HydraLib.util import convert_ordinal_to_datetime
 from HydraLib import hydra_logging
 from HydraLib import PluginLib
 
 from gamsAPI import gdxcc
+
+from GAMSplugin import import_gms_data
 
 
 class GDXvariable(object):
@@ -81,29 +85,40 @@ class GAMSimport(object):
         self.symbol_count = 0
         self.element_count = 0
         self.gdx_variables = dict()
+        self.gdx_ts_vars = dict()
         self.network = None
+        self.res_scenario = None
         self.attrs = dict()
         self.time_axis = dict()
+        self.gms_data = []
 
         self.cli = PluginLib.connect()
 
     def load_network(self, network_id, scenario_id):
+        """Load network and scenario from the server.
+        """
         self.network = self.cli.service.get_network(network_id, scenario_id)
+        self.res_scenario = \
+                self.network.scenarios.Scenario[0].resourcescenarios.ResourceScenario
         attrslist = self.cli.service.get_attributes()
         for attr in attrslist.Attr:
             self.attrs.update({attr.id: attr.name})
 
     def open_gdx_file(self, filename):
+        """Open the GDX file and read some basic information.
+        """
         filename = os.path.abspath(filename)
         gdxcc.gdxOpenRead(self.gdx_handle, filename)
         x, self.symbol_count, self.element_count = \
             gdxcc.gdxSystemInfo(self.gdx_handle)
         if x != 1:
             raise HydraPluginError('GDX file could not be opened.')
-        logging.info('Import %s symbols and %s elements.' %
+        logging.info('Importing %s symbols and %s elements.' %
                      (self.symbol_count, self.element_count))
 
     def read_gdx_data(self):
+        """Read variables and data from GDX file.
+        """
         for i in range(self.symbol_count):
             gdx_variable = GDXvariable()
             info = gdxcc.gdxSymbolInfo(self.gdx_handle, i + 1)
@@ -116,73 +131,265 @@ class GAMSimport(object):
                 gdx_variable.data.append(data[0])
             self.gdx_variables.update({gdx_variable.name: gdx_variable})
 
-    def parse_time_index(self, data_file):
-        data_file = os.path.abspath(data_file)
-        line = ''
-        with open(data_file) as f:
-            while line[0:24] != 'Parameter timestamp(t) ;':
-                line = f.readline()
-            line = f.readline()
-            line = f.readline()
-            while line.split('(', 1)[0].strip() == 'timestamp':
-                idx = int(line.split('"')[1])
-                timestamp = convert_ordinal_to_datetime(float(line.split()[2]))
-                timestamp = PluginLib.date_to_string(timestamp)
-                self.time_axis.update({idx: timestamp})
-                line = f.readline()
+    def load_gams_file(self, gms_file):
+        """Read in the .gms file.
+        """
+        gms_file = os.path.abspath(gms_file)
+        gms_data = import_gms_data(gms_file)
+        self.gms_data = gms_data.split('\n')
 
-    def assign_net_attrs(self):
-        net_vars = dict()
-        for attr in self.network.attributes.ResourceAttribute:
+    def parse_time_index(self):
+        """Read the time index of the GAMS model used. This only works for
+        models where data is exported from Hydra using GAMSexport.
+        """
+        for i, line in enumerate(self.gms_data):
+            if line[0:24] == 'Parameter timestamp(t) ;':
+                break
+        i += 2
+        line = self.gms_data[i]
+        while line.split('(', 1)[0].strip() == 'timestamp':
+            idx = int(line.split('"')[1])
+            timestamp = convert_ordinal_to_datetime(float(line.split()[2]))
+            timestamp = PluginLib.date_to_string(timestamp)
+            self.time_axis.update({idx: timestamp})
+            i += 1
+            line = self.gms_data[i]
+
+    def parse_variables(self):
+        """For all variables stored in the gdx file, check if these are time
+        time series or not.
+        """
+        for i, line in enumerate(self.gms_data):
+            if line.strip().lower() == 'variables':
+                break
+
+        i += 1
+        line = self.gms_data[i]
+        while line.strip() != ';':
+            var = line.split()[0]
+            splitvar = var.split('(', 1)
+            varname = splitvar[0]
+            if len(splitvar) == 1:
+                params = []
+            else:
+                params = splitvar[1][0:-1].split(',')
+            if 't' in params:
+                self.gdx_ts_vars.update({varname: params.index('t')})
+
+            i += 1
+            line = self.gms_data[i]
+
+    def assign_attr_data(self):
+        """Assign data to all variable attributes in the network.
+        """
+        # Network attributes
+        for attr in self.network.attributes.ResourceAttr:
             if attr.attr_is_var == 'Y':
-                net_vars.update({self.attrs[attr.attr_id]:
-                                 (attr.id, attr.attr_id)})
-        for var in self.gdx_variables.keys():
-            if var in net_vars.keys():
-                attr_id = net_vars[var][0]
-                res_attr_id = net_vars[var][1]
-                datatype = guess_data_type(self.gdx_variables[var], 'network')
-                dataset = create_dataset(self.gdx_variables[var], datatype)
+                if self.attrs[attr.attr_id] in self.gdx_variables.keys():
+                    gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
+                    dataset = self.cli.factory.create('hyd:Dataset')
+                    dataset.name = 'GAMS import - ' + gdxvar.name
+                    if gdxvar.name in self.gdx_ts_vars.keys():
+                        dataset.type = 'timeseries'
+                        index = []
+                        for idx in gdxvar.index:
+                            index.append(idx[self.gdx_ts_vars[gdxvar.name]])
+                        data = gdxvar.data
+                        dataset.value = self.create_timeseries(index, data)
+                    elif gdxvar.dim == 0:
+                        data = gdxvar.data[0]
+                        try:
+                            data = float(data)
+                            dataset.type = 'scalar'
+                            dataset.value = self.create_scalar(data)
+                        except ValueError:
+                            dataset.type = 'descriptor'
+                            dataset.value = self.create_descriptor(data)
+                    elif gdxvar.dim > 0:
+                        dataset.type = 'array'
+                        dataset.value = self.create_array(gdxvar.index,
+                                                          gdxvar.data)
 
-    def assign_link_attrs(self):
-        pass
+                    # Add data
+                    res_scen = self.cli.factory.create('hyd:ResourceScenario')
+                    res_scen.resource_attr_id = attr.id
+                    res_scen.attr_id = attr.attr_id
+                    res_scen.value = dataset
+                    self.res_scenario.append(res_scen)
 
-    def assign_node_attrs(self):
-        pass
+        # Node attributes
+        nodes = dict()
+        for node in self.network.nodes.Node:
+            nodes.update({node.id: node.name})
+            for attr in node.attributes.ResourceAttr:
+                if attr.attr_is_var == 'Y':
+                    if self.attrs[attr.attr_id] in self.gdx_variables.keys():
+                        gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
+                        dataset = self.cli.factory.create('hyd:Dataset')
+                        dataset.name = 'GAMS import - ' + node.name + ' ' \
+                            + gdxvar.name
+                        if gdxvar.name in self.gdx_ts_vars.keys():
+                            dataset.type = 'timeseries'
+                            index = []
+                            data = []
+                            for i, idx in enumerate(gdxvar.index):
+                                if node.name in idx:
+                                    index.append(
+                                        idx[self.gdx_ts_vars[gdxvar.name]])
+                                    data.append(gdxvar.data[i])
+                            dataset.value = self.create_timeseries(index, data)
+                        elif gdxvar.dim == 1:
+                            for i, idx in enumerate(gdxvar.index):
+                                if node.name in idx:
+                                    data = gdxvar.data[i]
+                                    try:
+                                        data = float(data)
+                                        dataset.type = 'scalar'
+                                        dataset.value = \
+                                            self.create_scalar(data)
+                                    except ValueError:
+                                        dataset.type = 'descriptor'
+                                        dataset.value = \
+                                            self.create_descriptor(data)
+                                        print data
+                                    break
+                        elif gdxvar.dim > 1:
+                            dataset.type = 'array'
+                            index = []
+                            data = []
+                            for i, idx in enumerate(gdxvar.index):
+                                if node.name in idx:
+                                    idx.pop(idx.index(node.name))
+                                    index.append(idx)
+                                    data.append(gdxvar.data[i])
+                            dataset.value = self.create_array(gdxvar.index,
+                                                              gdxvar.data)
 
-    def create_dataset(self, gdxvar):
-        if datatype == 'timeseries':
-            return self.create_timeseries(gdxvar)
-        elif datatype == 'array':
-            return self.create_array(gdxvar)
-        elif datatype == 'scalar':
-            return self.create_scalar(gdxvar)
-        elif datatype == 'descriptor':
-            return self.create_descriptor(gdxvar)
-        else:
-            logging.info('Could not assign data for variable "%s".'
-                         % gdxvar.name)
+                        res_scen = \
+                            self.cli.factory.create('hyd:ResourceScenario')
+                        res_scen.resource_attr_id = attr.id
+                        res_scen.attr_id = attr.attr_id
+                        res_scen.value = dataset
+                        self.res_scenario.append(res_scen)
 
-    def create_timeseries(self, gdxvar):
-        pass
+        # Link attributes
+        for link in self.network.links.Link:
+            for attr in link.attributes.ResourceAttr:
+                if attr.attr_is_var == 'Y':
+                    fromnode = nodes[link.node_1_id]
+                    tonode = nodes[link.node_2_id]
+                    if self.attrs[attr.attr_id] in self.gdx_variables.keys():
+                        gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
+                        dataset = self.cli.factory.create('hyd:Dataset')
+                        dataset.name = 'GAMS import - ' + link.name + ' ' \
+                            + gdxvar.name
+                        if gdxvar.name in self.gdx_ts_vars.keys():
+                            dataset.type = 'timeseries'
+                            index = []
+                            data = []
+                            for i, idx in enumerate(gdxvar.index):
+                                if fromnode in idx and tonode in idx and \
+                                   idx.index(fromnode) < idx.index(tonode):
+                                    index.append(
+                                        idx[self.gdx_ts_vars[gdxvar.name]])
+                                    data.append(gdxvar.data[i])
+                            dataset.value = self.create_timeseries(index, data)
+                        elif gdxvar.dim == 2:
+                            for i, idx in enumerate(gdxvar.index):
+                                if fromnode in idx and tonode in idx and \
+                                   idx.index(fromnode) < idx.index(tonode):
+                                    data = gdxvar.data[i]
+                                    try:
+                                        data = float(data)
+                                        dataset.type = 'scalar'
+                                        dataset.value = \
+                                            self.create_scalar(data)
+                                    except ValueError:
+                                        dataset.type = 'descriptor'
+                                        dataset.value = \
+                                            self.create_descriptor(data)
+                                        print data
+                                    break
+                        elif gdxvar.dim > 2:
+                            dataset.type = 'array'
+                            index = []
+                            data = []
+                            for i, idx in enumerate(gdxvar.index):
+                                if fromnode in idx and tonode in idx and \
+                                   idx.index(fromnode) < idx.index(tonode):
+                                    idx.pop(idx.index(fromnode))
+                                    idx.pop(idx.index(tonode))
+                                    index.append(idx)
+                                    data.append(gdxvar.data[i])
+                            dataset.value = self.create_array(gdxvar.index,
+                                                              gdxvar.data)
 
-    def create_scalar(self, gdxvar):
-        pass
+                        res_scen = \
+                            self.cli.factory.create('hyd:ResourceScenario')
+                        res_scen.resource_attr_id = attr.id
+                        res_scen.attr_id = attr.attr_id
+                        res_scen.value = dataset
+                        self.res_scenario.append(res_scen)
+        print self.res_scenario
 
-    def create_array(self, gdxvar):
-        pass
+    def create_timeseries(self, index, data):
+        timeseries = self.cli.factory.create('hyd:TimeSeries')
+        for i, idx in enumerate(index):
+            tsdata = self.cli.factory.create('hyd:TimeSeriesData')
+            tsdata.ts_time = self.time_axis[int(idx)]
+            tsdata.ts_value = [float(data[i])]
+            timeseries.ts_values.TimeSeriesData.append(tsdata)
 
-    def create_descriptor(self, gdxvar):
-        pass
+        return timeseries
 
+    def create_scalar(self, value):
+        scalar = self.cli.factory.create('hyd:Scalar')
+        scalar.param_value = value
 
-def guess_data_type(gdxvar, restype):
-    if restype == 'network':
-        resdim = 0
-    elif restype == 'node':
-        resdim = 1
-    elif restype == 'link':
-        resdim = 2
+        return scalar
+
+    def create_array(self, index, data):
+        hydra_array = self.cli.factory.create('hyd:Array')
+        dimension = len(index[0])
+        extent = []
+        for n in range(dimension):
+            n_idx = []
+            for idx in index:
+                n_idx.append(int(idx[n]))
+            extent.append(max(n_idx))
+
+        array = 0
+        for e in extent:
+            new_array = [array for i in range(e)]
+            array = new_array
+
+        array = data
+        while len(extent) > 1:
+            i = 0
+            outer_array = []
+            for m in range(reduce(mul, extent[0:-1])):
+                inner_array = []
+                for n in range(extent[-1]):
+                    inner_array.append(array[i])
+                    i += 1
+                outer_array.append(inner_array)
+            array = outer_array
+            extent = extent[0:-1]
+
+        hydra_array.arr_data = str(array)
+
+        return hydra_array
+
+    def create_descriptor(self, value):
+        descriptor = self.cli.factory.create('hyd:Descriptor')
+        descriptor.dexc_val = value
+
+        return descriptor
+
+    def save(self):
+        self.network.scenarios.Scenario[0].resourcescenarios.ResourceScenario \
+            = self.res_scenario
+        self.cli.service.update_network(self.network)
 
 
 def commandline_parser():
@@ -203,9 +410,9 @@ Written by Philipp Meier <philipp@diemeiers.ch>
                         help='ID of the scenario the data will be imported to.')
     parser.add_argument('-f', '--gdx-file',
                         help='GDX file containing GAMS results.')
-    parser.add_argument('-d', '--gams-data',
-                        help='''Full path to the Hydra generated GAMS data file
-                        (*.txt) used for the simulation.''')
+    parser.add_argument('-d', '--gms-file',
+                        help='''Full path to the GAMS model (*.gms) used for
+                        the simulation.''')
 
     return parser
 
@@ -216,9 +423,11 @@ if __name__ == '__main__':
 
     gdximport = GAMSimport()
     gdximport.load_network(args.network, args.scenario)
-    gdximport.parse_time_index(args.gams_data)
+    gdximport.load_gams_file(args.gms_file)
+    gdximport.parse_time_index()
     gdximport.open_gdx_file(args.gdx_file)
     gdximport.read_gdx_data()
+    gdximport.parse_variables()
+    gdximport.assign_attr_data()
 
-    for i, idx in enumerate(gdximport.gdx_variables['urTotalBenefits'].index):
-        print idx, gdximport.gdx_variables['urTotalBenefits'].data[i]
+    gdximport.save()
