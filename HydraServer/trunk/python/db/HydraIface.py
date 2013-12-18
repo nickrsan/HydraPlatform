@@ -24,7 +24,7 @@ def add_dataset(data_type, val, units, dimension, name="", dataset_id=None):
     """
         Data can exist without scenarios. This is the mechanism whereby
         single pieces of data can be added without doing it through a scenario.
-        
+
         A typical use of this would be for setting default values on template items.
     """
 
@@ -46,7 +46,7 @@ def add_dataset(data_type, val, units, dimension, name="", dataset_id=None):
         d.db.data_dimen = dimension
         d.db.data_hash  = data_hash
         d.save()
-        
+
         return d.db.dataset_id
 
 def get_data_from_hash(data_hash):
@@ -200,8 +200,8 @@ class GenericResource(IfaceBase):
             rs.db.dataset_id = existing_dataset_id
         else:
             dataset_id = None
-            #if this is definitely not new data, fetch the 
-            #dataset id from the DB. 
+            #if this is definitely not new data, fetch the
+            #dataset id from the DB.
             if new is not True:
                 data_in_db = rs.load()
                 #Was the 'new' flag correct?
@@ -259,7 +259,7 @@ class GenericResource(IfaceBase):
         template_name_map = {}
         for r in rs:
             template_name_map[r.template_id] = r.template_name
-            
+
             if group_dict.get(r.group_id):
                 if group_dict[r.group_id].get(r.template_id):
                     group_dict[r.group_id]['templates'][r.template_id].add(r.attr_id)
@@ -368,13 +368,13 @@ class GenericResource(IfaceBase):
                 group_summary.id   = group_id
                 group_summary.name = group_name
                 group_summary.templates = []
-                
+
                 for template_id, template_name in templates:
                     template_summary = hydra_complexmodels.TemplateSummary()
                     template_summary.id = template_id
                     template_summary.name = template_name
                     group_summary.templates.append(template_summary)
-                
+
                 template_list.append(group_summary)
 
             setattr(cm, 'templates', template_list)
@@ -716,7 +716,7 @@ class TemplateGroup(IfaceBase):
         grp.templates = templates
 
         return grp
-    
+
     def delete(self):
         for template in self.templates:
             template.delete()
@@ -810,6 +810,7 @@ class Dataset(IfaceBase):
         IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.dataset_id = dataset_id
+        self.time_format = '{:0>4d}-{:0>2d}-{:02d} {:0>2d}:{:0>2d}:{:0>2d}.{:}'
 
         if dataset_id is not None:
             self.load()
@@ -956,9 +957,18 @@ class Dataset(IfaceBase):
             ts_datas = ts.timeseriesdatas
             ts_values = []
             for ts in ts_datas:
+                timestamp = convert_ordinal_to_datetime(ts.db.ts_time)
+                timestamp = self.time_format.format(timestamp.year,
+                                                    timestamp.month,
+                                                    timestamp.day,
+                                                    timestamp.hour,
+                                                    timestamp.minute,
+                                                    timestamp.second,
+                                                    timestamp.microsecond)
+
                 ts_values.append(
                     {
-                    'ts_time'  : [convert_ordinal_to_datetime(ts.db.ts_time)],
+                    'ts_time'  : [timestamp],
                     'ts_value' : ts.db.ts_value
                 })
             complexmodel = {
@@ -966,8 +976,16 @@ class Dataset(IfaceBase):
             }
         elif self.db.data_type == 'eqtimeseries':
             eqts = EqTimeSeries(data_id = self.db.data_id)
+            starttime = convert_ordinal_to_datetime(eqts.db.start_time)
+            starttime = self.time_format.format(starttime.year,
+                                                starttime.month,
+                                                starttime.day,
+                                                starttime.hour,
+                                                starttime.minute,
+                                                starttime.second,
+                                                starttime.microsecond)
             complexmodel = {
-                'start_time' : convert_ordinal_to_datetime(eqts.db.start_time),
+                'start_time' : starttime,
                 'frequency'  : eqts.db.frequency,
                 'arr_data'   : [eqts.db.arr_data],
             }

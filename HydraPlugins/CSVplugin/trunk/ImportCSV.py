@@ -342,7 +342,7 @@ class ImportCSV(object):
                     node.y = 0
                     logging.info('Y coordinate of node %s is not a number.'
                                  % node.name)
-            
+
             if len(attrs) > 0:
                 node = self.add_data(node, attrs, linedata, units=units)
 
@@ -429,7 +429,7 @@ class ImportCSV(object):
 
         # Collect existing resource attributes:
         resource_attrs = dict()
-        
+
         if resource.attributes is None:
             return resource
 
@@ -469,11 +469,12 @@ class ImportCSV(object):
             # create dataset and assign to attribute (if not empty)
             if len(data[i].strip()) > 0:
 
-                if data[i] in ('NULL', 'I AM NOT A NUMBER! I AM A FREE MAN!'):
+                if data[i].strip() in ('NULL',
+                                       'I AM NOT A NUMBER! I AM A FREE MAN!'):
 
                     res_attr.attr_is_var = 'Y'
 
-                else:    
+                else:
 
                     if units is not None:
                         dataset = self.create_dataset(data[i], res_attr, units[i])
@@ -508,11 +509,11 @@ class ImportCSV(object):
             logging.info(constraint_str)
             constant  = split_str[-1]
             op        = split_str[-2]
-           
+
             constraint = self.cli.factory.create("hyd:Constraint")
             constraint.constant = constant
             constraint.op       = op
-            
+
             main_group = self.get_group(constraint_str)
 
             group = self.parse_constraint_group(main_group)
@@ -526,12 +527,12 @@ class ImportCSV(object):
     def convert_to_complexmodel(self, group):
 
             regex = re.compile('[\[\]]')
-            
+
             constraint_grp = self.cli.factory.create('hyd:ConstraintGroup')
-           
+
             op = group[1]
             constraint_grp.op = op
-            
+
             lhs = group[0]
             rhs = group[2]
 
@@ -540,7 +541,7 @@ class ImportCSV(object):
                     grp_cm = self.convert_to_complexmodel(grp)
                     constraint_grp.constraintgroups.ConstraintGroup.append(grp_cm)
                 else:
-                        
+
                     constraint_item = self.cli.factory.create('hyd:ConstraintItem')
                     #Check to see if the item  is a constant numeric value
                     if grp.find('[') < 0:
@@ -557,12 +558,12 @@ class ImportCSV(object):
 
                         if item_type == 'NODE':
                             n = self.Nodes.get(item_name)
-                        
+
                             if n is None:
                                 raise Exception('Node %s not found!'%(item_name))
 
                             for ra in n.attributes.ResourceAttr:
-                            
+
                                 attr = self.Attributes.get(item_attr)
                                 if attr is None:
                                     raise Exception('Attr %s not found!'%(item_attr))
@@ -580,11 +581,11 @@ class ImportCSV(object):
             group_str = group_str[1:-1]
 
         grp = [None, None, None]
-        
+
         regex = re.compile('[\+\-\*\/]')
 
         eq = regex.split(group_str)
-         
+
         lhs = None
         if group_str.startswith('('):
             lhs = self.get_group(group_str)
@@ -596,7 +597,7 @@ class ImportCSV(object):
         group_str = group_str.replace(lhs, '', 1)
 
         op = regex.findall(group_str)[0]
-        
+
         grp[1] = op
 
         group_str = group_str.replace(op, '').strip()
@@ -612,7 +613,7 @@ class ImportCSV(object):
         #When this count equals 0, we have reached
         #the end of the group,
         count = 0
-        
+
         for i, c in enumerate(group_str):
             #found a sub-group, add 1 to count
             if c == '(':
@@ -623,7 +624,7 @@ class ImportCSV(object):
                 #is the end of a sub-group or not?
                 if count == 0:
                     #not, return the group.
-                    return group_str[0:i+1].strip() 
+                    return group_str[0:i+1].strip()
 
         return group_str
 
@@ -824,7 +825,7 @@ if __name__ == '__main__':
         if args.links is not None:
             for linkfile in args.links:
                 csv.read_links(linkfile)
-        
+
         if args.rules is not None:
             for constraintfile in args.rules:
                 csv.read_constraints(constraintfile)

@@ -1,12 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import config 
+import config
 import hydra_logging
 from suds.client import Client
+from suds.plugin import MessagePlugin
 
 from datetime import datetime
 import os
+
+
+class FixNamespace(MessagePlugin):
+    """Hopefully a temporary fix for an unresolved namespace issue.
+    """
+    def marshalled(self, context):
+        self.fix_ns(context.envelope)
+
+    def fix_ns(self, element):
+        if element.prefix == 'xs':
+            element.prefix = 'ns0'
+
+        for e in element.getChildren():
+            self.fix_ns(e)
 
 
 class HydraResource(object):
@@ -267,7 +282,7 @@ def connect():
     url = config.get('hydra_client', 'url')
     user = config.get('hydra_client', 'user')
     passwd = config.get('hydra_client', 'password')
-    cli = Client(url, timeout=2400)
+    cli = Client(url, timeout=2400, plugins=[FixNamespace()])
     session_id = cli.service.login(user, passwd)
     token = cli.factory.create('RequestHeader')
     token.session_id = session_id

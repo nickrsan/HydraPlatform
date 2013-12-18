@@ -287,7 +287,7 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
 
     dimension = resource_scenario.value.dimension
     data_unit = resource_scenario.value.unit
-    
+
     unit = units.Units()
 
     # Assign dimension if necessary
@@ -737,13 +737,15 @@ class DataService(HydraService):
     @rpc(AnyDict, _returns=AnyDict)
     def update_dataset(ctx, data):
         """
-            Update a piece of data directly, rather than through a resource scenario
+            Update a piece of data directly, rather than through a resource
+            scenario.
         """
 
     @rpc(Integer, _returns=AnyDict)
     def get_dataset(dataset_id):
         """
-            Get a piece of data directly, rather than through a resource scenario
+            Get a piece of data directly, rather than through a resource
+            scenario.
         """
 
     @rpc(Integer, _returns=Boolean)
@@ -776,6 +778,13 @@ class DataService(HydraService):
     @rpc(Integer, SpyneArray(String), _returns=AnyDict)
     #@rpc(Integer, SpyneArray(String), _returns=AnyDict)
     def get_val_at_time(ctx, dataset_id, timestamps):
+        """
+        Given a timestamp (or list of timestamps) and some timeseries data,
+        return the values appropriate to the requested times.
+
+        If the timestamp is before the start of the timeseries data, return
+        None If the timestamp is after the end of the timeseries data, return
+        the last value.  """
         t = []
         for time in timestamps:
             t.append(timestamp_to_server_time(time))
