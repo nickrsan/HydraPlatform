@@ -3,7 +3,7 @@ from HydraLib.HydraException import HydraError
 from spyne.model.primitive import String, Integer, Boolean
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
-from hydra_complexmodels import Network, Node, Link, Scenario
+from hydra_complexmodels import Network, Node, Link, Scenario, ResourceGroup
 from db import HydraIface
 from HydraLib import hdb, IfaceLib
 from hydra_base import HydraService, ObjectNotFoundError
@@ -111,10 +111,12 @@ def get_scenario_by_name(network_id, scenario_name):
 
     rs = HydraIface.execute(sql)
     if len(rs) == 0:
-        logging.info("No scenario in network %s with name %s" % (network_id, scenario_name))
+        logging.info("No scenario in network %s with name %s"\
+                     % (network_id, scenario_name))
         return None
     else:
-        logging.info("Scenario with name %s found in network %s" % (scenario_name, network_id))
+        logging.info("Scenario with name %s found in network %s"\
+                     % (scenario_name, network_id))
         return rs[0].scenario_id
 
 class NetworkService(HydraService):
@@ -214,6 +216,7 @@ class NetworkService(HydraService):
 
         IfaceLib.bulk_insert(net_i.links, 'tLink')
         net_i.load_all()
+        link_ids = dict()
         for l_i in net_i.links:
             for link in network.links:
                 node_1_from_map = node_ids[link.node_1_id]
@@ -222,12 +225,31 @@ class NetworkService(HydraService):
                     _add_resource_types(l_i, link.templates)
                     resource_attrs.extend(_add_attributes(l_i, link.attributes))
                     all_attributes.extend(link.attributes)
+                    link_ids[link.id] = l_i.db.link_id
+                    break
+
+        #Then add all the groups.
+        logging.info("Adding groups to network")
+        for group in network.resourcegroups:
+            net_i.add_group(group.name,
+                           group.description,
+                           group.status)
+
+        IfaceLib.bulk_insert(net_i.resourcegroups, 'tResourceGroup')
+        net_i.load_all()
+        group_ids = dict()
+        for g_i in net_i.resourcegroups:
+            for group in network.resourcegroups:
+                if group.name == g_i.db.group_name:
+                    resource_attrs.extend(_add_attributes(g_i, group.attributes))
+                    all_attributes.extend(group.attributes)
+                    _add_resource_types(g_i, group.templates)
+                    group_ids[group.id] = g_i.db.group_id
                     break
 
         #insert all the resource attributes in one go!
         last_resource_attr_id = IfaceLib.bulk_insert(resource_attrs, "tResourceAttr")
 
-        #import pudb; pudb.set_trace()
         if last_resource_attr_id is not None:
             next_ra_id = last_resource_attr_id - len(all_attributes) + 1
             resource_attr_id_map = {}
@@ -272,6 +294,28 @@ class NetworkService(HydraService):
                 for constraint in s.constraints:
                     update_constraint_refs(constraint.constraintgroup, resource_attr_id_map)
                     ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint) 
+
+                group_items = []
+                for group_item in s.resourcegroupitems:
+                    group_item_i = HydraIface.ResourceGroupItem()
+                    group_item_i.db.scenario_id = scen.db.scenario_id
+                    group_item_i.db.group_id = group_ids[group_item.group_id]
+                    group_item_i.db.ref_key = group_item.ref_key
+                    if group_item.ref_key == 'NODE':
+                        ref_id = node_ids[group_item.ref_id]
+                    elif group_item.ref_key == 'LINK':
+                        ref_id = link_ids[group_item.ref_id]
+                    elif group_item.ref_key == 'GROUP':
+                        ref_id = group_ids[group_item.ref_id]
+                    else:
+                        raise HydraError("A ref key of %s is not valid for a "
+                                         "resource group item.",\
+                                         group_item.ref_key)
+
+                    group_item_i.db.ref_id = ref_id
+                    group_items.append(group_item_i)
+
+                IfaceLib.bulk_insert(group_items, 'tResourceGroupItem')
 
                 net_i.scenarios.append(scen)
 
@@ -362,7 +406,6 @@ class NetworkService(HydraService):
 
         #First add all the nodes
         for node in network.nodes:
-            is_new = False
 
             #If we get a negative or null node id, we know
             #it is a new node.
@@ -374,7 +417,6 @@ class NetworkService(HydraService):
                 n.db.node_y           = node.y
                 n.db.status           = node.status
             else:
-                is_new = True
                 n = net_i.add_node(node.name,
                                    node.description,
                                    node.layout,
@@ -386,11 +428,10 @@ class NetworkService(HydraService):
             _add_resource_types(n, node.templates)
             resource_attr_id_map.update(node_attr_id_map)
 
-            #If a temporary ID was given to the node
-            #store the mapping to the real node_id
-            if is_new is True:
-                node_id_map[node.id] = n.db.node_id
+            node_id_map[node.id] = n.db.node_id
 
+        link_id_map = dict()
+        
         for link in network.links:
             node_1_id = link.node_1_id
             if link.node_1_id in node_id_map:
@@ -417,7 +458,36 @@ class NetworkService(HydraService):
             link_attr_id_map = _update_attributes(l, link.attributes)
             _add_resource_types(l, link.templates)
             resource_attr_id_map.update(link_attr_id_map)
+            link_id_map[link.id] = l.db.link_id
 
+        group_id_map = dict()
+
+        all_items_before = []
+        #Next all the groups
+        for group in network.resourcegroups:
+
+            #If we get a negative or null group id, we know
+            #it is a new node.
+            if group.id is not None and group.id > 0:
+                g = net_i.get_group(group.id)
+                g.db.group_name        = group.name
+                g.db.group_description = group.description
+                g.db.status           = group.status
+            else:
+                g = net_i.add_group(group.name,
+                                   group.description,
+                                   group.status)
+            g.save()
+
+            group_attr_id_map = _update_attributes(g, group.attributes)
+            _add_resource_types(g, group.templates)
+            resource_attr_id_map.update(group_attr_id_map)
+
+            group_id_map[group.id] = g.db.group_id
+            for item in g.resourcegroupitems:
+                all_items_before.append(item.db.item_id)
+
+        all_items_after = []
         if network.scenarios is not None:
             for s in network.scenarios:
                 if s.id is not None and s.id > 0:
@@ -439,6 +509,41 @@ class NetworkService(HydraService):
                 for constraint in s.constraints:
                     update_constraint_refs(constraint.constraintgroup, resource_attr_id_map)
                     ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint) 
+                
+                for group_item in s.resourcegroupitems:
+
+                    if group_item.id and group_item.id > 0:
+                        group_item_i = HydraIface.ResourceGroupItem(item_id=group_item.id)
+                    else:
+                        group_item_i = HydraIface.ResourceGroupItem()
+                        group_item_i.db.scenario_id = scen.db.scenario_id
+                        group_item_i.db.group_id = group_id_map[group_item.group_id]
+
+                    group_item_i.db.ref_key = group_item.ref_key
+                    if group_item.ref_key == 'NODE':
+                        ref_id = node_id_map.get(group_item.ref_id)
+                    elif group_item.ref_key == 'LINK':
+                        ref_id = link_id_map.get(group_item.ref_id)
+                    elif group_item.ref_key == 'GROUP':
+                        ref_id = group_id_map.get(group_item.ref_id)
+                    else:
+                        raise HydraError("A ref key of %s is not valid for a "
+                                         "resource group item.",\
+                                         group_item.ref_key)
+
+                    if ref_id is None:
+                        raise HydraError("Invalid ref ID for group item!")
+
+                    group_item_i.db.ref_id = ref_id
+                    group_item_i.save()
+                    all_items_after.append(group_item_i.db.item_id)
+            
+            items_to_delete = set(all_items_before) - set(all_items_after)
+            for item_id in items_to_delete:
+                group_item_i = HydraIface.ResourceGroupItem(item_id=item_id)
+                group_item_i.delete()
+                group_item_i.save()
+
 
         net = net_i.get_as_complexmodel()
 
@@ -476,7 +581,7 @@ class NetworkService(HydraService):
     @rpc(Integer, Node, _returns=Node)
     def add_node(ctx, network_id, node):
         """
-            Add a node
+            Add a node to a network
             (Node){
                id = 1027
                name = "Node 1"
@@ -506,6 +611,7 @@ class NetworkService(HydraService):
         x.save()
 
         _add_attributes(x, node.attributes)
+        _add_resource_types(x, node.templates)
 
         hdb.commit()
         node = x.get_as_complexmodel()
@@ -556,6 +662,7 @@ class NetworkService(HydraService):
         x.db.node_description = node.description
 
         _add_attributes(x, node.attributes)
+        _add_resource_types(x, node.templates)
 
         x.save()
         x.commit()
@@ -609,9 +716,8 @@ class NetworkService(HydraService):
     @rpc(Integer, Link, _returns=Link)
     def add_link(ctx, network_id, link):
         """
-            Add a link
+            Add a link to a network
         """
-        link = None
 
         x = HydraIface.Link()
         x.db.network_id = network_id
@@ -622,6 +728,7 @@ class NetworkService(HydraService):
         x.save()
 
         _add_attributes(x, link.attributes)
+        _add_resource_types(x, link.templates)
         x.commit()
 
         link = x.get_as_complexmodel()
@@ -640,6 +747,7 @@ class NetworkService(HydraService):
         x.db.link_description = link.description
 
         _add_attributes(x, link.attributes)
+        _add_resource_types(x, link.templates)
 
         x.save()
         x.commit()
@@ -672,6 +780,27 @@ class NetworkService(HydraService):
         x.commit()
         return x.load()
 
+    @rpc(Integer, ResourceGroup, _returns=ResourceGroup)
+    def add_group(ctx, network_id, group):
+        """
+            Add a resourcegroup to a network
+        """
+
+        x = HydraIface.ResourceGroup()
+        x.db.network_id = network_id
+        x.db.group_name = group.name
+        x.db.group_description = group.description
+        x.db.status = group.status
+        x.save()
+
+        _add_attributes(x, group.attributes)
+        _add_resource_types(x, group.templates)
+        x.commit()
+
+        group = x.get_as_complexmodel()
+
+        return group
+
     @rpc(Integer, _returns=SpyneArray(Scenario))
     def get_scenarios(ctx, network_id):
         """
@@ -688,3 +817,33 @@ class NetworkService(HydraService):
             scenarios.append(scen.get_as_complexmodel())
 
         return scenarios
+
+    @rpc(Integer, _returns=String)
+    def validate_network_topology(ctx, network_id):
+        """
+            Check for the presence of orphan nodes in a network.
+        """
+
+        net_i = HydraIface.Network(network_id=network_id)
+        net_i.load_all()
+
+        nodes = []
+        for node_i in net_i.nodes:
+            nodes.append(node_i.db.node_id)
+
+        link_nodes = []
+        for link_i in net_i.links:
+            if link_i.db.node_1_id not in link_nodes:
+                link_nodes.append(link_i.db.node_1_id)
+
+            if link_i.db.node_2_id not in link_nodes:
+                link_nodes.append(link_i.db.node_2_id)
+
+        nodes = set(nodes)
+        link_nodes = set(link_nodes)
+            
+        isolated_nodes = nodes - link_nodes
+        if len(isolated_nodes) > 0:
+            return "Orphan nodes are present."
+        
+        return "OK"

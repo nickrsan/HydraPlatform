@@ -229,5 +229,49 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         assert self.client.service.get_network(network.id).status == 'X', \
             'Deleting network did not work correctly.'
 
+
+    def test_validate_topology(self):
+        project = self.create_project('test')
+        network = self.client.factory.create('hyd:Network')
+        nodes = self.client.factory.create('hyd:NodeArray')
+        links = self.client.factory.create('hyd:LinkArray')
+
+        nnodes = 3
+        nlinks = 2
+        x = [0, 0, 1]
+        y = [0, 1, 0]
+
+        for i in range(nnodes):
+            node = self.client.factory.create('hyd:Node')
+            node.id = i * -1
+            node.name = 'Node ' + str(i)
+            node.description = 'Test node ' + str(i)
+            node.x = x[i]
+            node.y = y[i]
+
+            nodes.Node.append(node)
+
+        #NOTE: NOT ADDING ENOUGH LINKS!!
+        for i in range(nlinks-1):
+            link = self.client.factory.create('hyd:Link')
+            link.id = i * -1
+            link.name = 'Link ' + str(i)
+            link.description = 'Test link ' + str(i)
+            link.node_1_id = nodes.Node[i].id
+            link.node_2_id = nodes.Node[i + 1].id
+
+            links.Link.append(link)
+
+        network.project_id = project.id
+        network.name = 'Test'
+        network.description = 'A network for SOAP unit tests.'
+        network.nodes = nodes
+        network.links = links
+
+        network = self.client.service.add_network(network)
+        
+        result = self.client.service.validate_network_topology(network.id)
+        assert result == 'Orphan nodes are present.'
+
 if __name__ == '__main__':
     test_SoapServer.run()

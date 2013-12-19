@@ -25,6 +25,7 @@ from soap_server.users import UserService
 from soap_server.template import TemplateService
 from soap_server.constraints import ConstraintService
 from soap_server.static import ImageService, FileService
+from soap_server.groups import ResourceGroupService
 from soap_server.hydra_base import AuthenticationService,\
     LogoutService,\
     get_session_db,\
@@ -128,6 +129,7 @@ class HydraServer():
             LogoutService,
             NetworkService,
             ProjectService,
+            ResourceGroupService,
             AttributeService,
             ScenarioService,
             DataService,

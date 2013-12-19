@@ -35,15 +35,115 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         assert new_resource_scenario.value.value.desc_val == 'I am an updated test!'; "Value was not updated correctly!!"
 
-    def test_bulk_add_data(self):
+    def test_add_scenario(self):
+        """
+            Test adding a new scenario to a network.
+        """
+        network = self.create_network_with_data()
 
-        network =  self.create_network_with_data()
+        #Create the new scenario
+        scenario = self.client.factory.create('hyd:Scenario')
+        scenario.id = -1
+        scenario.name = 'Scenario 2'
+        scenario.description = 'Scenario 2 Description'
+
+        #Multiple data (Called ResourceScenario) means an array.
+        scenario_data = self.client.factory.create('hyd:ResourceScenarioArray')
+       
+        for node in network.nodes.Node:
+            if node.attributes is not None and len(node.attributes) > 0:
+                node1 = node
+
+        link = network.links.Link[0]
+
+        #Our node has several dmin'resource attributes', created earlier.
+        node_attrs = node1.attributes
+
+        group_item_array      = self.client.factory.create('hyd:ResourceGroupItemArray')
+        group_item_1          = self.client.factory.create('hyd:ResourceGroupItem')
+        group_item_1.ref_key  = 'NODE'
+        group_item_1.ref_id   = node1.id
+        group_item_1.group_id = network.resourcegroups.ResourceGroup[0].id 
+        group_item_2          = self.client.factory.create('hyd:ResourceGroupItem')
+        group_item_2.ref_key  = 'LINK'
+        group_item_2.ref_id   = link.id
+        group_item_2.group_id = network.resourcegroups.ResourceGroup[0].id 
+
+        group_item_array.ResourceGroupItem.append(group_item_1)
+        group_item_array.ResourceGroupItem.append(group_item_2)
+
+        scenario.resourcegroupitems = group_item_array
+
+        #This is an example of 3 diffent kinds of data
+        #A simple string (Descriptor)
+        #A time series, where the value may be a 1-D array
+        #A multi-dimensional array.
+        descriptor = self.create_descriptor(node_attrs.ResourceAttr[0], "new_descriptor")
+        timeseries = self.create_timeseries(node_attrs.ResourceAttr[1])
+        array      = self.create_array(node_attrs.ResourceAttr[2])
+
+        scenario_data.ResourceScenario.append(descriptor)
+        scenario_data.ResourceScenario.append(timeseries)
+        scenario_data.ResourceScenario.append(array)
+
+        #Set the scenario's data to the array we have just populated
+        scenario.resourcescenarios = scenario_data
+
+        scenario = self.client.service.add_scenario(network.id, scenario)
+
+        assert scenario is not None
+        assert len(scenario.resourcegroupitems.ResourceGroupItem) > 0
+        assert len(scenario.resourcescenarios) > 0
+
+
+    def test_update_scenario(self):
+        """
+            Test updating an existing scenario.
+        """
+        network = self.create_network_with_data()
+
+        #Create the new scenario
+        scenario = network.scenarios.Scenario[0] 
+        scenario.name = 'Updated Scenario'
+        scenario.description = 'Updated Scenario Description'
+       
+        for node in network.nodes.Node:
+            if node.attributes is not None and len(node.attributes) > 0:
+                node1 = node
+            else:
+                node2 = node
+
+        for item in scenario.resourcegroupitems.ResourceGroupItem:
+            if item.ref_key == 'NODE':
+                item.ref_id   = node2.id
+
+        descriptor = self.create_descriptor(node1.attributes.ResourceAttr[0], 
+                                                "updated_descriptor")
+
+        #Set the scenario's data to the array we have just populated
+        scenario.resourcescenarios.ResourceScenario.append(descriptor)
         
-        scenario = network.scenarios.Scenario[0]
-        scenario_id = scenario.id
+        for resourcescenario in scenario.resourcescenarios.ResourceScenario:
+            if resourcescenario.attr_id == descriptor.attr_id:
+                resourcescenario.value = descriptor.value
 
-        resource_scenario = scenario.resourcescenarios.ResourceScenario[0]
-        resource_attr_id = resource_scenario.resource_attr_id
+        updated_scenario = self.client.service.update_scenario(scenario)
+
+        assert updated_scenario is not None
+        assert updated_scenario.id == scenario.id
+        assert updated_scenario.name == "Updated Scenario"
+        assert updated_scenario.description == 'Updated Scenario Description'
+        assert len(updated_scenario.resourcegroupitems.ResourceGroupItem) > 0
+        for item in updated_scenario.resourcegroupitems.ResourceGroupItem:
+            if item.ref_key == 'NODE':
+                assert item.ref_id == node2.id
+        assert len(updated_scenario.resourcescenarios) > 0
+
+        for data in updated_scenario.resourcescenarios.ResourceScenario: 
+            if data.value.type == 'descriptor':
+                assert data.value.value.desc_val == "updated_descriptor"
+
+    def test_bulk_add_data(self):
 
         data = self.client.factory.create('ns1:DatasetArray')
 
@@ -121,6 +221,10 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         assert scen_1_constraint == scen_2_constraint; "Constraints did not clone correctly!"
         
+        scen_1_resourcegroupitems = network.scenarios.Scenario[0].resourcegroupitems.ResourceGroupItem
+        scen_2_resourcegroupitems = updated_network.scenarios.Scenario[1].resourcegroupitems.ResourceGroupItem
+        
+        assert len(scen_1_resourcegroupitems) == len(scen_2_resourcegroupitems)
 
     def test_compare(self):
 

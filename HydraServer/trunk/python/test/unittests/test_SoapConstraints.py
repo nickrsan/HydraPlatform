@@ -4,7 +4,254 @@ from tempfile import gettempdir as tmp
 shutil.rmtree(os.path.join(tmp(), 'suds'), True)
 import test_SoapServer
 
-class TestConstraint(test_SoapServer.SoapServerTest):
+class TestGroupsInNetwork(test_SoapServer.SoapServerTest):
+
+    def test_network_update_group(self):
+        net = self.create_network_with_data()
+           
+        resourcegroup = net.resourcegroups.ResourceGroup[0]
+        assert resourcegroup is not None
+
+        scenario = net.scenarios.Scenario[0]
+
+        group_items = scenario.resourcegroupitems.ResourceGroupItem
+        assert group_items is not None
+
+        resourcegroup.name        = "Updated Name"
+        resourcegroup.description = "Updated Description"
+        resourcegroup.status      = "X"
+
+        updated_net = self.client.service.update_network(net)
+
+        new_resourcegroup = updated_net.resourcegroups.ResourceGroup[0]
+        assert new_resourcegroup.id          == resourcegroup.id
+        assert new_resourcegroup.name        == "Updated Name"
+        assert new_resourcegroup.description == "Updated Description"
+        assert new_resourcegroup.status      == "X"
+
+    def test_network_add_valid_groupitem(self):
+        net = self.create_network_with_data()
+           
+        resourcegroup = net.resourcegroups.ResourceGroup[0]
+        assert resourcegroup is not None
+
+        scenario = net.scenarios.Scenario[0]
+
+        resourcegroupitems = scenario.resourcegroupitems.ResourceGroupItem
+
+        assert len(resourcegroupitems) == 2
+
+        new_item          = self.client.factory.create('hyd:ResourceGroupItem')
+        new_item.ref_key  = 'NODE'
+        new_item.ref_id   = net.nodes.Node[1].id
+        new_item.group_id = resourcegroup.id
+
+        resourcegroupitems.append(new_item)
+
+        updated_net = self.client.service.update_network(net)
+
+        updated_scenario = updated_net.scenarios.Scenario[0]
+        updated_items    = updated_scenario.resourcegroupitems.ResourceGroupItem
+
+        assert len(updated_items) == 3
+
+    def test_network_add_existing_groupitem(self):
+        net = self.create_network_with_data()
+           
+        resourcegroup = net.resourcegroups.ResourceGroup[0]
+        assert resourcegroup is not None
+
+        scenario = net.scenarios.Scenario[0]
+
+        resourcegroupitems = scenario.resourcegroupitems.ResourceGroupItem
+
+        assert len(resourcegroupitems) == 2
+
+        new_item          = self.client.factory.create('hyd:ResourceGroupItem')
+        new_item.ref_key  = 'NODE'
+        new_item.ref_id   = net.nodes.Node[0].id
+        new_item.group_id = resourcegroup.id
+        
+        resourcegroupitems.append(new_item)
+        
+        error = None
+        try:
+            self.client.service.update_network(net)
+        except Exception, e:
+            error =  e.message
+
+        assert error is not None
+        assert error.find('Duplicate') > 0
+
+    def test_network_add_invalid_groupitem(self):
+        net = self.create_network_with_data()
+           
+        resourcegroup = net.resourcegroups.ResourceGroup[0]
+        assert resourcegroup is not None
+
+        scenario = net.scenarios.Scenario[0]
+
+        resourcegroupitems = scenario.resourcegroupitems.ResourceGroupItem
+
+        assert len(resourcegroupitems) == 2
+
+        new_item          = self.client.factory.create('hyd:ResourceGroupItem')
+        new_item.ref_key  = 'NODE'
+        new_item.ref_id   = 99999
+        new_item.group_id = resourcegroup.id
+        
+        resourcegroupitems.append(new_item)
+
+        error = None 
+        try:
+            self.client.service.update_network(net)
+        except Exception, e:
+            error = e.message
+
+        assert error is not None
+        assert error.find("Invalid ref ID for group item!") > 0
+
+    def test_network_remove_groupitem(self):
+        net = self.create_network_with_data()
+           
+        resourcegroup = net.resourcegroups.ResourceGroup[0]
+        assert resourcegroup is not None
+
+        scenario = net.scenarios.Scenario[0]
+
+        resourcegroupitems = scenario.resourcegroupitems.ResourceGroupItem
+
+        assert len(resourcegroupitems) == 2
+
+        del(resourcegroupitems[0])
+
+        updated_net = self.client.service.update_network(net)
+
+        updated_scenario = updated_net.scenarios.Scenario[0]
+        updated_items    = updated_scenario.resourcegroupitems.ResourceGroupItem
+
+        assert len(updated_items) == 1
+
+    #*************************#
+    #NON NETWORK BASED UPDATES#
+    #*************************#
+
+class TestGroupsStandalone(test_SoapServer.SoapServerTest):
+    def test_add_group(self):
+        net = self.create_network_with_data()
+           
+        resourcegroup = self.client.factory.create('hyd:ResourceGroup') 
+        resourcegroup.name        = "New Group Name"
+        resourcegroup.description = "New Group Description"
+        resourcegroup.status      = "X"
+
+        new_resourcegroup = self.client.service.add_resourcegroup(resourcegroup, net.id)
+
+        assert new_resourcegroup.name        == resourcegroup.name 
+        assert new_resourcegroup.description == resourcegroup.description
+        assert new_resourcegroup.status      == resourcegroup.status
+
+    def test_update_group(self):
+        net = self.create_network_with_data()
+           
+        resourcegroup = net.resourcegroups.ResourceGroup[0]
+        assert resourcegroup is not None
+
+        resourcegroup.name        = "Updated Name"
+        resourcegroup.description = "Updated Description"
+        resourcegroup.status      = "X"
+
+        new_resourcegroup = self.client.service.update_resourcegroup(resourcegroup)
+
+        assert new_resourcegroup.id          == resourcegroup.id
+        assert new_resourcegroup.name        == "Updated Name"
+        assert new_resourcegroup.description == "Updated Description"
+        assert new_resourcegroup.status      == "X"
+
+    def test_add_valid_groupitem(self):
+        net = self.create_network_with_data()
+           
+        resourcegroup = net.resourcegroups.ResourceGroup[0]
+        assert resourcegroup is not None
+
+        scenario = net.scenarios.Scenario[0]
+
+        resourcegroupitems = scenario.resourcegroupitems.ResourceGroupItem
+
+        assert len(resourcegroupitems) == 2
+
+        new_item          = self.client.factory.create('hyd:ResourceGroupItem')
+        new_item.ref_key  = 'NODE'
+        new_item.ref_id   = net.nodes.Node[1].id
+        new_item.group_id = resourcegroup.id
+
+        resourcegroupitems.append(new_item)
+
+        new_item = self.client.service.add_resourcegroupitem(new_item, scenario.id)
+        
+        updated_net      = self.client.service.get_network(net.id) 
+        updated_scenario = updated_net.scenarios.Scenario[0]
+        updated_items    = updated_scenario.resourcegroupitems.ResourceGroupItem
+
+        assert len(updated_items) == 3
+
+    def test_add_existing_groupitem(self):
+        net = self.create_network_with_data()
+           
+        resourcegroup = net.resourcegroups.ResourceGroup[0]
+        assert resourcegroup is not None
+
+        scenario = net.scenarios.Scenario[0]
+
+        new_item          = self.client.factory.create('hyd:ResourceGroupItem')
+        new_item.ref_key  = 'NODE'
+        new_item.ref_id   = net.nodes.Node[0].id
+        new_item.group_id = resourcegroup.id
+        
+        error = None
+        try:
+            new_item = self.client.service.add_resourcegroupitem(new_item, scenario.id)
+        except Exception, e:
+            error =  e.message
+
+        assert error is not None
+        assert error.find('Duplicate') > 0
+
+    def test_add_invalid_groupitem(self):
+        net = self.create_network_with_data()
+           
+        resourcegroup = net.resourcegroups.ResourceGroup[0]
+        assert resourcegroup is not None
+
+        scenario = net.scenarios.Scenario[0]
+
+        new_item          = self.client.factory.create('hyd:ResourceGroupItem')
+        new_item.ref_key  = 'NODE'
+        new_item.ref_id   = 99999
+        new_item.group_id = resourcegroup.id
+        
+        error = None
+        try:
+            new_item = self.client.service.add_resourcegroupitem(new_item, scenario.id)
+        except Exception, e:
+            error =  e.message
+
+        assert error is not None
+        assert error.find("Invalid ref ID for group item!") > 0
+
+    def test_remove_groupitem(self):
+        net = self.create_network_with_data()
+           
+        scenario = net.scenarios.Scenario[0]
+
+        resourcegroupitems = scenario.resourcegroupitems.ResourceGroupItem
+
+        result = self.client.service.delete_resourcegroupitem(resourcegroupitems[0].id)
+
+        assert result == 'OK'
+
+
+class TestConstraints(test_SoapServer.SoapServerTest):
 
     def test_constraint(self):
 

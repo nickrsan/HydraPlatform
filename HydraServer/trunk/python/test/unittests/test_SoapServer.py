@@ -134,6 +134,7 @@ class SoapServerTest(unittest.TestCase):
         attr2 = self.create_attr("testattr_2")
         attr3 = self.create_attr("testattr_3")
         attr4 = self.create_attr("testattr_4")
+        attr5 = self.create_attr("group_attr")
 
         print "Attribute creation took: %s"%(datetime.datetime.now()-start)
         start = datetime.datetime.now()
@@ -150,26 +151,34 @@ class SoapServerTest(unittest.TestCase):
         #We don't assign data directly to these resource attributes. This
         #is done when creating the scenario -- a scenario is just a set of
         #data for a given list of resource attributes.
-        attr_array = self.client.factory.create('hyd:ResourceAttrArray')
-        node_attr1  = self.client.factory.create('hyd:ResourceAttr')
-        node_attr1.id = -1
+        attr_array         = self.client.factory.create('hyd:ResourceAttrArray')
+        node_attr1         = self.client.factory.create('hyd:ResourceAttr')
+        node_attr1.id      = -1
         node_attr1.attr_id = attr1.id
-        node_attr2  = self.client.factory.create('hyd:ResourceAttr')
+        node_attr2         = self.client.factory.create('hyd:ResourceAttr')
         node_attr2.attr_id = attr2.id
-        node_attr2.id = -2
-        node_attr3  = self.client.factory.create('hyd:ResourceAttr')
+        node_attr2.id      = -2
+        node_attr3         = self.client.factory.create('hyd:ResourceAttr')
         node_attr3.attr_id = attr3.id
-        node_attr3.id = -3
-        node_attr4  = self.client.factory.create('hyd:ResourceAttr')
+        node_attr3.id      = -3
+        node_attr4         = self.client.factory.create('hyd:ResourceAttr')
         node_attr4.attr_id = attr4.id
-        node_attr4.id = -4
+        node_attr4.id      = -4
         node_attr4.attr_is_var = 'Y'
+        
+        group_attr         = self.client.factory.create('hyd:ResourceAttr')
+        group_attr.attr_id = attr5.id
+        group_attr.id      = -5
+
+        
         attr_array.ResourceAttr.append(node_attr1)
         attr_array.ResourceAttr.append(node_attr2)
         attr_array.ResourceAttr.append(node_attr3)
         attr_array.ResourceAttr.append(node_attr4)
-
         node1.attributes = attr_array
+
+        group_attrs = self.client.factory.create('hyd:ResourceAttrArray')
+        group_attrs.ResourceAttr.append(group_attr)
 
         #Connect the two nodes with a link
         link = self.create_link(node1['id'], node2['id'])
@@ -194,6 +203,32 @@ class SoapServerTest(unittest.TestCase):
         #Our node has several dmin'resource attributes', created earlier.
         node_attrs = node1['attributes']
 
+
+        group_array       = self.client.factory.create('hyd:ResourceGroupArray')
+        group             = self.client.factory.create('hyd:ResourceGroup')
+        group.id          = -1
+        group.name        = "Test Group"
+        group.description = "Test group description"
+
+        group.attributes = group_attrs 
+
+        group_array.ResourceGroup.append(group)
+
+        group_item_array      = self.client.factory.create('hyd:ResourceGroupItemArray')
+        group_item_1          = self.client.factory.create('hyd:ResourceGroupItem')
+        group_item_1.ref_key  = 'NODE'
+        group_item_1.ref_id   = node1.id
+        group_item_1.group_id = group.id
+        group_item_2          = self.client.factory.create('hyd:ResourceGroupItem')
+        group_item_2.ref_key  = 'LINK'
+        group_item_2.ref_id   = link.id
+        group_item_2.group_id = group.id
+
+        group_item_array.ResourceGroupItem.append(group_item_1)
+        group_item_array.ResourceGroupItem.append(group_item_2)
+
+        scenario.resourcegroupitems = group_item_array
+
         #This is an example of 3 diffent kinds of data
         #A simple string (Descriptor)
         #A time series, where the value may be a 1-D array
@@ -201,11 +236,13 @@ class SoapServerTest(unittest.TestCase):
         descriptor = self.create_descriptor(node_attrs.ResourceAttr[0])
         timeseries = self.create_timeseries(node_attrs.ResourceAttr[1])
         array      = self.create_array(node_attrs.ResourceAttr[2])
+        
+        grp_timeseries = self.create_timeseries(group_attrs.ResourceAttr[0])
 
         scenario_data.ResourceScenario.append(descriptor)
         scenario_data.ResourceScenario.append(timeseries)
+        scenario_data.ResourceScenario.append(grp_timeseries)
         scenario_data.ResourceScenario.append(array)
-
 
         #Set the scenario's data to the array we have just populated
         scenario.resourcescenarios = scenario_data
@@ -239,6 +276,7 @@ class SoapServerTest(unittest.TestCase):
             'nodes'       : node_array,
             'layout'      : layout,
             'scenarios'   : scenario_array,
+            'resourcegroups' : group_array,
         }
         #print network
         network = self.client.service.add_network(network)
@@ -247,7 +285,7 @@ class SoapServerTest(unittest.TestCase):
 
         return network
 
-    def create_descriptor(self, ResourceAttr):
+    def create_descriptor(self, ResourceAttr, val="test"):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
         scenario_attr = self.client.factory.create('hyd:ResourceScenario')
@@ -262,7 +300,7 @@ class SoapServerTest(unittest.TestCase):
         dataset.dimension = 'number of units per time unit'
         
         descriptor = self.client.factory.create('hyd:Descriptor')
-        descriptor.desc_val = 'test'
+        descriptor.desc_val = val
 
         dataset.value = descriptor
 

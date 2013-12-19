@@ -3,6 +3,7 @@ from HydraLib.HydraException import HydraError
 from spyne.model.primitive import Integer, Boolean, String, AnyDict
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
+from constraints import ConstraintService
 from hydra_complexmodels import Scenario,\
         Descriptor,\
         TimeSeries,\
@@ -67,31 +68,137 @@ def clone_constraint_group(constraint_id, grp_i):
 class ScenarioService(HydraService):
     """
         The scenario SOAP service
+        as all resources already exist, there is no need to worry
+        about negative IDS
     """
 
-    @rpc(Scenario, _returns=Scenario)
-    def add_scenario(ctx, scenario):
+    @rpc(Integer, Scenario, _returns=Scenario)
+    def add_scenario(ctx, network_id, scenario):
         """
             Add a scenario to a specified network.
         """
-        x = HydraIface.Scenario()
-        x.db.network_id           = scenario.network_id
-        x.db.scenario_name        = scenario.name
-        x.db.scenario_description = scenario.description
-        x.save()
-        scenario.scenario_id = x.db.scenario_id
+        logging.info("Adding scenarios to network")
+        scen = HydraIface.Scenario()
+        scen.db.scenario_name        = scenario.name
+        scen.db.scenario_description = scenario.description
+        scen.db.network_id           = network_id
+        
+        #Just in case someone puts in a negative ID for the scenario.
+        if scenario.id < 0:
+            scenario.id = None
+
+        scen.save()
+
+        #extract the data from each resourcescenario so it can all be 
+        #inserted in one go, rather than one at a time
+        data = [r.value for r in scenario.resourcescenarios]
+
+        dataset_ids = DataService.bulk_insert_data(ctx, data)
+
+        #record all the resource attribute ids
+        resource_attr_ids = [r.resource_attr_id for r in scenario.resourcescenarios]
+
+        #get all the resource scenarios into a list and bulk insert them
+        resource_scenarios = []
+        for i, ra_id in enumerate(resource_attr_ids):
+            rs_i = HydraIface.ResourceScenario()
+            rs_i.db.resource_attr_id = ra_id
+            rs_i.db.dataset_id       = dataset_ids[i]
+            rs_i.db.scenario_id      = scen.db.scenario_id
+            resource_scenarios.append(rs_i)
+
+        IfaceLib.bulk_insert(resource_scenarios, 'tResourceScenario')
+
+        #This is to get the resource scenarios into the scenario
+        #object, so they are included into the scenario's complex model
+        scen.load_all()
+        
+        for constraint in scenario.constraints:
+            ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint) 
+
+        #Again doing bulk insert. 
+        group_items = []
+        for group_item in scenario.resourcegroupitems:
+
+            group_item_i = HydraIface.ResourceGroupItem()
+            group_item_i.db.scenario_id = scen.db.scenario_id
+            group_item_i.db.group_id    = group_item.group_id
+            group_item_i.db.ref_key     = group_item.ref_key
+            group_item_i.db.ref_id      = group_item.ref_id
+            group_items.append(group_item_i)
+
+        IfaceLib.bulk_insert(group_items, 'tResourceGroupItem')
+
+        scen.save()
+        scen.load_all()
+
+        return scen.get_as_complexmodel()
+
+    @rpc(Scenario, _returns=Scenario)
+    def update_scenario(ctx, scenario):
+        """
+            Update a single scenario
+            as all resources already exist, there is no need to worry
+            about negative IDS
+        """
+        scen = HydraIface.Scenario(scenario_id=scenario.id)
+        scen.db.scenario_name = scenario.name
+        scen.db.scenario_description = scenario.description
+        scen.save()
 
         for r_scen in scenario.resourcescenarios:
-            scenario._update_resourcescenario(x.db.scenario_id, r_scen, new=True)
+            _update_resourcescenario(scen.db.scenario_id, r_scen)
 
-        return x.get_as_complexmodel()
+        for constraint in scenario.constraints:
+            ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint) 
+        
+        #Get all the exiting resource group items for this scenario.
+        #THen process all the items sent to this handler.
+        #Any in the DB that are not passed in here are removed.
+        sql = """
+            select
+                item_id
+                from
+                tResourceGroupItem
+            where
+                scenario_id = %s
+        """ % (scenario.id)
+        rs = HydraIface.execute(sql)
+        all_items_before = [r.item_id for r in rs]
+
+        #a list of all resourcegroupitems sent to the server.
+        all_items_after = []
+
+        for group_item in scenario.resourcegroupitems:
+
+            if group_item.id and group_item.id > 0:
+                group_item_i = HydraIface.ResourceGroupItem(item_id=group_item.id)
+            else:
+                group_item_i = HydraIface.ResourceGroupItem()
+                group_item_i.db.scenario_id = scen.db.scenario_id
+                group_item_i.db.group_id = group_item.group_id
+
+            group_item_i.db.ref_key = group_item.ref_key
+            group_item_i.db.ref_id =group_item.ref_id 
+            group_item_i.save()
+            all_items_after.append(group_item_i.db.item_id)
+    
+        #remove any obsolete resource group items
+        items_to_delete = set(all_items_before) - set(all_items_after)
+        for item_id in items_to_delete:
+            group_item_i = HydraIface.ResourceGroupItem(item_id=item_id)
+            group_item_i.delete()
+            group_item_i.save()
+
+        scen.save()
+        scen.load_all()
+        return scen.get_as_complexmodel()
 
     @rpc(Integer, _returns=Boolean)
     def delete_scenario(ctx, scenario_id):
         """
             Set the status of a scenario to 'X'.
         """
-
 
         success = True
         scen_i = HydraIface.Scenario(scenario_id = scenario_id)
@@ -135,12 +242,22 @@ class ScenarioService(HydraService):
             new_constraint.save()
             new_constraint.load()
 
-            grp_i = HydraIface.ConstraintGroup(constraint=constraint_i, group_id=constraint_i.db.group_id)
+            grp_i = HydraIface.ConstraintGroup(constraint=constraint_i, 
+                                               group_id=constraint_i.db.group_id)
 
             new_grp = clone_constraint_group(new_constraint.db.constraint_id, grp_i)
 
             new_constraint.db.group_id = new_grp.db.group_id
             new_constraint.save()
+
+        for resourcegroupitem_i in scen_i.resourcegroupitems:
+            new_resourcegroupitem_i = HydraIface.ResourceGroupItem()
+            new_resourcegroupitem_i.db.scenario_id = cloned_scen.db.scenario_id
+            new_resourcegroupitem_i.db.ref_key     = resourcegroupitem_i.db.ref_key
+            new_resourcegroupitem_i.db.ref_id      = resourcegroupitem_i.db.ref_id
+            new_resourcegroupitem_i.db.group_id    = resourcegroupitem_i.db.group_id
+            new_resourcegroupitem_i.save()
+
 
         return cloned_scen.get_as_complexmodel()
 
@@ -153,7 +270,8 @@ class ScenarioService(HydraService):
         scenario_2.load_all()
 
         if scenario_1.db.network_id != scenario_2.db.network_id:
-            raise HydraIface("Cannot compare scenarios that are not in the same network!")
+            raise HydraIface("Cannot compare scenarios that are not"
+                             " in the same network!")
 
         scenariodiff = ScenarioDiff()
         resource_diffs = []
@@ -265,8 +383,6 @@ def _delete_resourcescenario(scenario_id, resource_scenario):
     ra_id = resource_scenario.resource_attr_id
     sd = HydraIface.ResourceScenario(scenario_id=scenario_id, resource_attr_id=ra_id)
     sd.delete()
-
-
 
 def _update_resourcescenario(scenario_id, resource_scenario, new=False):
     """

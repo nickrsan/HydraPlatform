@@ -123,7 +123,7 @@ class GenericResource(IfaceBase):
                         ref_id = %(ref_id)s
                     and ref_key = '%(ref_key)s'
             """ % dict(ref_key = self.ref_key, ref_id = self.ref_id)
-
+        
         rs = execute(sql)
 
         for r in rs:
@@ -306,7 +306,7 @@ class GenericResource(IfaceBase):
             and rt.template_id = tmp.template_id
             and grp.group_id   = tmp.group_id
         """ % (self.ref_key, self.ref_id)
-
+        
         rs = execute(sql)
 
         group_dict   = {}
@@ -364,7 +364,7 @@ class GenericResource(IfaceBase):
                 group_name = group['group_name']
                 templates  = group['templates']
 
-                group_summary = hydra_complexmodels.ResourceGroupSummary()
+                group_summary = hydra_complexmodels.GroupSummary()
                 group_summary.id   = group_id
                 group_summary.name = group_name
                 group_summary.templates = []
@@ -422,6 +422,7 @@ class Network(GenericResource):
         self.db.network_id = network_id
         self.nodes = []
         self.links = []
+        self.resourcegroups = []
         if network_id is not None:
             self.load()
 
@@ -439,8 +440,12 @@ class Network(GenericResource):
         l.db.node_1_id        = node_1_id
         l.db.node_2_id        = node_2_id
         l.db.network_id       = self.db.network_id
-        #l.save()
+
+        #Do not call save here because it is likely that we may want
+        #to bulk insert links, not one at a time.
+        
         self.links.append(l)
+        
         return l
 
 
@@ -448,17 +453,37 @@ class Network(GenericResource):
         """
             Add a node to a network.
         """
-        n = Node()
-        n.db.node_name        = name
-        n.db.node_description = desc
-        n.validate_layout(layout)
-        n.db.node_layout      = layout
-        n.db.node_x           = node_x
-        n.db.node_y           = node_y
-        n.db.network_id       = self.db.network_id
-        #n.save()
-        self.nodes.append(n)
-        return n
+        node_i = Node()
+        node_i.db.node_name        = name
+        node_i.db.node_description = desc
+        node_i.validate_layout(layout)
+        node_i.db.node_layout      = layout
+        node_i.db.node_x           = node_x
+        node_i.db.node_y           = node_y
+        node_i.db.network_id       = self.db.network_id
+
+        #Do not call save here because it is likely that we may want
+        #to bulk insert nodes, not one at a time.
+        
+        self.nodes.append(node_i)
+
+        return node_i
+
+    def add_group(self, name, desc, status):
+        """
+            Add a new group to a network.
+        """
+        group_i                      = ResourceGroup()
+        group_i.db.group_name        = name
+        group_i.db.group_description = desc
+        group_i.db.status            = status
+        group_i.db.network_id        = self.db.network_id
+
+        self.resourcegroups.append(group_i)
+
+        return group_i
+
+
 
     def get_link(self, link_id):
         """
@@ -470,6 +495,8 @@ class Network(GenericResource):
                 if l.db.link_id == link_id:
                     l.load()
                     link = l
+                    break
+
         return link
 
     def get_node(self, node_id):
@@ -482,7 +509,22 @@ class Network(GenericResource):
             if n.db.node_id == node_id:
                 node = n
                 node.load()
+                break
+
         return node
+
+    def get_group(self, group_id):
+        """
+            Return group object with group_id if it is in this network
+        """
+        group_i = None
+        for g in self.resourcegroups:
+            if g.db.group_id == group_id:
+                group_i = g
+                group_i.load()
+                break
+
+        return group_i
 
 class Node(GenericResource):
     """
@@ -507,6 +549,68 @@ class Link(GenericResource):
         self.network    = network
         if link_id is not None:
             self.load()
+
+class ResourceGroup(GenericResource):
+    """
+        A container for references to nodes and links.
+        Used by models when constructing constraints.
+    """
+    def __init__(self, network = None, group_id = None):
+        GenericResource.__init__(self, network, self.__class__.__name__, 'GROUP', ref_id=group_id)
+
+        self.db.group_id = group_id
+        if group_id is not None:
+            self.load()
+    
+    def get_as_complexmodel(self):
+        cm             = super(ResourceGroup, self).get_as_complexmodel()
+        cm.id          = self.db.group_id
+        cm.name        = self.db.group_name
+        cm.description = self.db.group_description
+        return cm
+
+class ResourceGroupItem(IfaceBase):
+    """
+        A set of nodes and links
+    """
+    def __init__(self, group = None, item_id=None, group_id=None, ref_key = None, ref_id = None):
+        IfaceBase.__init__(self, group, self.__class__.__name__)
+
+        self.db.item_id = item_id
+        self.db.ref_key = ref_key
+        self.db.ref_id = ref_id
+        self.db.group_id = group_id
+        
+        if item_id is None and None not in (group_id, ref_key, ref_id):
+            self.get_pk()
+
+        if self.db.item_id is not None:
+            self.load()
+
+    def get_pk(self):
+        sql = """
+            select
+               item_id 
+            from
+                tResourceGroupItem
+            where
+                group_id = %s
+            and ref_key  = '%s'
+            and ref_id   = %s
+        """ % (self.db.group_id, self.db.ref_key, self.db.ref_id)
+
+        rs = execute(sql)
+        if len(rs) > 0:
+            self.db.item = rs[0].item
+        else:
+            return None
+
+        return self.db.resource_group_id
+
+    def get_as_complexmodel(self):
+        cm             = super(ResourceGroupItem, self).get_as_complexmodel()
+        cm.id          = self.db.item_id
+        return cm
 
 class Attr(IfaceBase):
     """
@@ -556,6 +660,7 @@ class ResourceAttr(IfaceBase):
             'LINK'     : Link,
             'NETWORK'  : Network,
             'PROJECT'  : Project,
+            'GROUP'    : ResourceGroup,
         }
 
         if ref_key_map.get(self.db.ref_key) is None:
@@ -1401,6 +1506,7 @@ class ConstraintItem(IfaceBase):
                     when link.link_name is not null then link.link_name
                     when network.network_name is not null then network.network_name
                     when project.project_name is not null then project.project_name
+                    when grp.group_name is not null then grp.group_name
                     else null
                 end as resource_name
                 from
@@ -1420,6 +1526,10 @@ class ConstraintItem(IfaceBase):
                     left join tProject project on (
                         ra.ref_key = 'PROJECT'
                         and ra.ref_id = project.project_id
+                    )
+                    left join tResourceGroup grp on (
+                        ra.ref_key = 'GROUP'
+                        and ra.ref_id = grp.group_id
                     ),
                     tAttr attr
                 where
@@ -1583,6 +1693,12 @@ db_hierarchy = dict(
         table_name = 'tLink',
         pk     = ['link_id']
     ),
+    resourcegroup  = dict(
+        obj        = ResourceGroup,
+        parent     = 'network',
+        table_name = 'tResourceGroup',
+        pk         = ['group_id'],
+    ),
     scenario  = dict(
         obj    = Scenario,
         parent = 'network',
@@ -1636,6 +1752,12 @@ db_hierarchy = dict(
         parent = 'scenario',
         table_name = 'tResourceScenario',
         pk     = ['resource_attr_id', 'scenario_id']
+    ),
+    resourcegroupitem = dict(
+        obj  = ResourceGroupItem,
+        parent = 'resourcegroup',
+        table_name = 'tResourceGroupItem',
+        pk         = ['item_id']
     ),
     dataset  = dict(
         obj   = Dataset,

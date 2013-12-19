@@ -2,7 +2,7 @@
 from spyne.model.complex import Array as SpyneArray
 from spyne.model.primitive import String, Integer, Unicode
 from spyne.decorator import rpc
-from hydra_complexmodels import Template, TemplateGroup, TemplateItem,ResourceGroupSummary, TemplateSummary
+from hydra_complexmodels import Template, TemplateGroup, TemplateItem,GroupSummary, TemplateSummary
 
 from db import HydraIface
 from hydra_base import HydraService
@@ -189,13 +189,13 @@ class TemplateService(HydraService):
 
         return grp_i.get_as_complexmodel()
 
-    @rpc(String, Integer, _returns=SpyneArray(ResourceGroupSummary))
+    @rpc(String, Integer, _returns=SpyneArray(GroupSummary))
     def get_matching_resource_templates(ctx, resource_type, resource_id):
         """
             Get the possible types (templates) of a resource by checking its attributes 
             against all available templates.
 
-            @returns A list of ResourceGroupSummary objects.
+            @returns A list of GroupSummary objects.
         """
         resource_i = None
         if resource_type == 'NETWORK':
@@ -211,14 +211,14 @@ class TemplateService(HydraService):
             group_name = group['group_name']
             templates  = group['templates']
 
-            group_summary = ResourceGroupSummary()
-            group_summary.id   = group_id
-            group_summary.name = group_name
+            group_summary           = GroupSummary()
+            group_summary.id        = group_id
+            group_summary.name      = group_name
             group_summary.templates = []
             
             for template_id, template_name in templates:
-                template_summary = TemplateSummary()
-                template_summary.id = template_id
+                template_summary      = TemplateSummary()
+                template_summary.id   = template_id
                 template_summary.name = template_name
                 group_summary.templates.append(template_summary)
             

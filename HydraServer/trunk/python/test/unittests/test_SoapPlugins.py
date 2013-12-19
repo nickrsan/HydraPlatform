@@ -7,12 +7,12 @@ from lxml import etree
 
 class PluginsTest(test_SoapServer.SoapServerTest):
 
-    def test_get_plugins(self):
+    def get_plugins(self):
         plugins = self.client.service.get_plugins()
 
         assert len(plugins[0]) > 0, "Plugins not retrieved correctly."
 
-    def test_run_plugin(self):
+    def run_plugin(self):
         plugins = self.client.service.get_plugins()
         
 

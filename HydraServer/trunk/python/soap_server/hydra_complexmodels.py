@@ -179,7 +179,7 @@ class TemplateSummary(HydraComplexModel):
         ('id',      Integer),
     ]
 
-class ResourceGroupSummary(HydraComplexModel):
+class GroupSummary(HydraComplexModel):
     _type_info = [
         ('name',    String),
         ('id',      Integer),
@@ -199,7 +199,7 @@ class Node(Resource):
         ('y',           Decimal(min_occurs=1, default=0)),
         ('status',      String(default='A')),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
-        ('templates',   SpyneArray(ResourceGroupSummary, default=[])),
+        ('templates',   SpyneArray(GroupSummary, default=[])),
     ]
     def __eq__(self, other):
         if self.node_x == other.node_x and self.node_y == other.node_y \
@@ -218,7 +218,7 @@ class Link(Resource):
         ('node_2_id',   Integer(default=None)),
         ('status',      String(default='A')),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
-        ('templates',   SpyneArray(ResourceGroupSummary, default=[])),
+        ('templates',   SpyneArray(GroupSummary, default=[])),
     ]
 
 class ResourceScenario(Resource):
@@ -226,6 +226,25 @@ class ResourceScenario(Resource):
         ('resource_attr_id', Integer(default=None)),
         ('attr_id',          Integer(default=None)),
         ('value',            Dataset),
+    ]
+
+class ResourceGroupItem(HydraComplexModel):
+    _type_info = [
+        ('id',       Integer(default=None)),
+        ('ref_id',   Integer(default=None)),
+        ('ref_key',  String(default=None)),
+        ('group_id', Integer(default=None)),
+    ]
+
+class ResourceGroup(HydraComplexModel):
+    _type_info = [
+        ('id',          Integer(default=None)),
+        ('network_id',  Integer(default=None)),
+        ('name',        String(default=None)),
+        ('description', String(min_occurs=1, default="")),
+        ('status',      String(default='A')),
+        ('attributes',  SpyneArray(ResourceAttr, default=[])),
+        ('templates',   SpyneArray(GroupSummary, default=[])),
     ]
 
 class ConstraintItem(HydraComplexModel):
@@ -275,6 +294,7 @@ class Scenario(Resource):
         ('status',               String(default='A')),
         ('resourcescenarios',    SpyneArray(ResourceScenario, default=[])),
         ('constraints',          SpyneArray(Constraint, default=[])),
+        ('resourcegroupitems',   SpyneArray(ResourceGroupItem, default=[])),
     ]
 
 class ResourceScenarioDiff(HydraComplexModel):
@@ -312,7 +332,8 @@ class Network(Resource):
         ('scenarios',           SpyneArray(Scenario, default=[])),
         ('nodes',               SpyneArray(Node, default=[])),
         ('links',               SpyneArray(Link, default=[])),
-        ('templates',           SpyneArray(ResourceGroupSummary, default=[])),
+        ('resourcegroups',      SpyneArray(ResourceGroup, default=[])),
+        ('templates',           SpyneArray(GroupSummary, default=[])),
     ]
 
 class NetworkSummary(Resource):

@@ -374,7 +374,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             node.x = x[i]
             node.y = y[i]
 
-            grp_summary = self.client.factory.create('hyd:ResourceGroupSummary')
+            grp_summary = self.client.factory.create('hyd:GroupSummary')
             grp_summary.id = group.id
             grp_summary.name = group.name
             
@@ -384,7 +384,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             
             grp_summary.templates.TemplateSummary.append(tmpl_summary)
             
-            node.templates.ResourceGroupSummary.append(grp_summary)
+            node.templates.GroupSummary.append(grp_summary)
 
             nodes.Node.append(node)
 
@@ -407,7 +407,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         network = self.client.service.add_network(network)
 
         for node in network.nodes.Node:
-            assert node.templates is not None and node.templates.ResourceGroupSummary[0].templates.TemplateSummary[0].name == "Test template 1"; "Template was not added correctly!"
+            assert node.templates is not None and node.templates.GroupSummary[0].templates.TemplateSummary[0].name == "Test template 1"; "Template was not added correctly!"
 
     def test_update_resource_template(self):
 
@@ -434,7 +434,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             node.x = x[i]
             node.y = y[i]
 
-            grp_summary = self.client.factory.create('hyd:ResourceGroupSummary')
+            grp_summary = self.client.factory.create('hyd:GroupSummary')
             grp_summary.id = group.id
             grp_summary.name = group.name
             
@@ -444,7 +444,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             
             grp_summary.templates.TemplateSummary.append(tmpl_summary)
             
-            node.templates.ResourceGroupSummary.append(grp_summary)
+            node.templates.GroupSummary.append(grp_summary)
 
             nodes.Node.append(node)
 
@@ -470,7 +470,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         updated_node = network.nodes.Node[0]
 
-        grp_summary = self.client.factory.create('hyd:ResourceGroupSummary')
+        grp_summary = self.client.factory.create('hyd:GroupSummary')
         grp_summary.id = group.id
         grp_summary.name = group.name
         
@@ -480,16 +480,16 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         
         grp_summary.templates.TemplateSummary.append(tmpl_summary)
         
-        node.templates.ResourceGroupSummary.append(grp_summary)
+        node.templates.GroupSummary.append(grp_summary)
         
-        del updated_node.templates.ResourceGroupSummary[0]
-        updated_node.templates.ResourceGroupSummary.append(grp_summary)
+        del updated_node.templates.GroupSummary[0]
+        updated_node.templates.GroupSummary.append(grp_summary)
 
         new_network = self.client.service.update_network(network)
 
         for node in new_network.nodes.Node:
             if node.id == updated_node.id:
-                assert node.templates is not None and node.templates.ResourceGroupSummary[0].templates.TemplateSummary[0].name == "Test template 2"; "Template was not added correctly!"
+                assert node.templates is not None and node.templates.GroupSummary[0].templates.TemplateSummary[0].name == "Test template 2"; "Template was not added correctly!"
 
     def test_find_matching_resource_templates(self):
 
@@ -505,7 +505,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         assert len(matching_templates) > 0; "No templates returned!"
         
         matching_template_ids = []
-        for grp in matching_templates.ResourceGroupSummary:
+        for grp in matching_templates.GroupSummary:
             for tmpl in grp.templates.TemplateSummary:
                 matching_template_ids.append(tmpl.id)
 
