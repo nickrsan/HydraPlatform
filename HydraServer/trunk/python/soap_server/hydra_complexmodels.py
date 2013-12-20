@@ -247,6 +247,12 @@ class ResourceGroup(HydraComplexModel):
         ('templates',   SpyneArray(GroupSummary, default=[])),
     ]
 
+class ResourceGroupDiff(HydraComplexModel):
+    _type_info = [
+       ('scenario_1_items', SpyneArray(ResourceGroupItem, default=[])),
+       ('scenario_2_items', SpyneArray(ResourceGroupItem, default=[]))
+    ]
+
 class ConstraintItem(HydraComplexModel):
     """
         A constraint item is the atomic element of a conatraint.
@@ -318,6 +324,7 @@ class ScenarioDiff(HydraComplexModel):
     _type_info = [
         ('resourcescenarios',    SpyneArray(ResourceScenarioDiff, default=[])),
         ('constraints',          ConstraintDiff),
+        ('groups',               ResourceGroupDiff),
     ]
 
 class Network(Resource):

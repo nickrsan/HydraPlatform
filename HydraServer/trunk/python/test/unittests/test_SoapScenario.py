@@ -255,14 +255,17 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         dataset.name = 'Max Capacity'
         dataset.unit = 'metres / second'
         dataset.dimension = 'number of units per time unit'
-        
+ 
         descriptor = self.client.factory.create('ns1:Descriptor')
         descriptor.desc_val = 'I am an updated test!'
 
         dataset.value = descriptor
 
         self.client.service.add_data_to_attribute(scenario_id, resource_attr_id, dataset)
-        
+
+        item_to_remove = new_scenario.resourcegroupitems.ResourceGroupItem[0].id
+        self.client.service.delete_resourcegroupitem(item_to_remove)
+
         updated_network = self.client.service.get_network(new_scenario.network_id)
 
         scenarios = updated_network.scenarios.Scenario
@@ -276,6 +279,11 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         assert len(scenario_diff.constraints.common_constraints) == 1; "Constraint comparison was not successful!"
         
         assert len(scenario_diff.constraints.scenario_1_constraints) == 1; "Constraint comparison was not successful!"
+
+
+        assert len(scenario_diff.groups.scenario_1_items) == 1; "Group comparison was not successful!"
+        assert scenario_diff.groups.scenario_2_items is None; "Group comparison was not successful!"
+
 
 if __name__ == '__main__':
     test_SoapServer.run()

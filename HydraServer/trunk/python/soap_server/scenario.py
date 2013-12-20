@@ -11,11 +11,13 @@ from hydra_complexmodels import Scenario,\
         Scalar,\
         Array as HydraArray,\
         ResourceScenario,\
+        ResourceGroupItem,\
         Dataset,\
         DatasetGroup,\
         ScenarioDiff,\
         ResourceScenarioDiff,\
         ConstraintDiff,\
+        ResourceGroupDiff,\
         parse_value
 
 from db import HydraIface
@@ -258,6 +260,7 @@ class ScenarioService(HydraService):
             new_resourcegroupitem_i.db.group_id    = resourcegroupitem_i.db.group_id
             new_resourcegroupitem_i.save()
 
+        cloned_scen.load_all()
 
         return cloned_scen.get_as_complexmodel()
 
@@ -311,8 +314,32 @@ class ScenarioService(HydraService):
 
         scenariodiff.resourcescenarios = resource_diffs
 
-        #The next comparison is of constraints.
+        #Now compare groups.
+        #Return list of group items in scenario 1 not in scenario 2 and vice versa
+        s1_items = []
+        for s1_item in scenario_1.resourcegroupitems:
+            s1_items.append((s1_item.db.group_id, s1_item.db.ref_key, s1_item.db.ref_id))
+        s2_items = []
+        for s2_item in scenario_2.resourcegroupitems:
+            s2_items.append((s2_item.db.group_id, s2_item.db.ref_key, s2_item.db.ref_id))
 
+        groupdiff = ResourceGroupDiff()
+        for s1_only_item in set(s1_items) - set(s2_items):
+            item = ResourceGroupItem()
+            item.group_id = s1_only_item[0]
+            item.ref_key  = s1_only_item[1]
+            item.ref_id   = s1_only_item[2]
+            groupdiff.scenario_1_items.append(item)
+        for s2_only_item in set(s2_items) - set(s1_items):
+            item = ResourceGroupItem()
+            item.group_id = s2_only_item[0]
+            item.ref_key  = s2_only_item[1]
+            item.ref_id   = s2_only_item[2]
+            groupdiff.scenario_2_items.append(item)
+
+        scenariodiff.groups = groupdiff
+
+        #The next comparison is of constraints.
         constraint_diff = ConstraintDiff()
         common_constraints = []
         scenario_1_constraints = []

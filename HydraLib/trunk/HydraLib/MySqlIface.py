@@ -316,8 +316,10 @@ class DBIface(object):
 
     def __setattr__(self, name, value):
         if name != 'db_attrs' and name in self.db_attrs:
-            self.db_data[name] = value
-            self.has_changed = True
+            old_val = self.db_data[name]
+            if value != old_val:
+                self.db_data[name] = value
+                self.has_changed = True
         else:
             super(DBIface, self).__setattr__(name, value)
 
@@ -354,6 +356,8 @@ class DBIface(object):
                 setattr(self, self.seq, cursor.lastrowid)
         cursor.close()
 
+        self.has_changed = False
+
     def update(self):
         """
             Updates all the values for a table in the DB..
@@ -370,6 +374,8 @@ class DBIface(object):
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         cursor.execute(complete_update)
         cursor.close()
+        
+        self.has_changed = False
 
     def load(self):
         """
@@ -407,7 +413,8 @@ class DBIface(object):
             for k, v in r.get_as_dict().items():
                 logging.debug("Setting column %s to %s", k, v)
                 self.db_data[k] = v
-
+       
+        self.has_changed = False
 
         return True
 
