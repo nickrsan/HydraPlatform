@@ -251,7 +251,6 @@ class GAMSimport(object):
                                         dataset.type = 'descriptor'
                                         dataset.value = \
                                             self.create_descriptor(data)
-                                        print data
                                     break
                         elif gdxvar.dim > 1:
                             dataset.type = 'array'
@@ -308,7 +307,6 @@ class GAMSimport(object):
                                         dataset.type = 'descriptor'
                                         dataset.value = \
                                             self.create_descriptor(data)
-                                        print data
                                     break
                         elif gdxvar.dim > 2:
                             dataset.type = 'array'
@@ -330,7 +328,6 @@ class GAMSimport(object):
                         res_scen.attr_id = attr.attr_id
                         res_scen.value = dataset
                         self.res_scenario.append(res_scen)
-        print self.res_scenario
 
     def create_timeseries(self, index, data):
         timeseries = self.cli.factory.create('hyd:TimeSeries')
