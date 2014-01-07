@@ -47,7 +47,7 @@ def parse_value(data):
         arr_data   = eval(value[2][0])
         return (start_time, frequency, arr_data)
     elif data_type == 'scalar':
-       return value[0][0]
+        return value[0][0]
     elif data_type == 'array':
         print
         print value[0][0]
@@ -90,12 +90,12 @@ class Dataset(HydraComplexModel):
     ]
 
 class Descriptor(HydraComplexModel):
-   _type_info = [
+    _type_info = [
         ('desc_val', String),
     ]
 
 class TimeSeriesData(HydraComplexModel):
- _type_info = [
+    _type_info = [
         #('ts_time', DateTime),
         ('ts_time', String),
         ('ts_value', AnyDict),
@@ -162,6 +162,7 @@ class Template(HydraComplexModel):
     _type_info = [
         ('id',                    Integer(default=None)),
         ('name',                  String(default=None)),
+        ('alias',                 String(default=None)),
         ('group_id',              Integer(min_occurs=1, default=None)),
         ('templateitems', SpyneArray(TemplateItem, default=[])),
     ]
@@ -202,8 +203,8 @@ class Node(Resource):
         ('templates',   SpyneArray(GroupSummary, default=[])),
     ]
     def __eq__(self, other):
-        if self.node_x == other.node_x and self.node_y == other.node_y \
-        and self.node_name == other.node_name:
+        if self.x == other.x and self.y == other.y \
+        and self.name == other.name:
             return True
         else:
             return False

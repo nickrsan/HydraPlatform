@@ -1,10 +1,8 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import test_SoapServer
 import datetime
-import copy
 
 class TemplatesTest(test_SoapServer.SoapServerTest):
 
@@ -44,6 +42,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         #**********************
         template1 = self.client.factory.create('hyd:Template')
         template1.name = "Test template 1"
+        template1.alias = "Test template alias"
 
         items = self.client.factory.create('hyd:TemplateItemArray')
         
@@ -115,9 +114,11 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         template_1 = self.client.factory.create('hyd:Template')
         template_1.name = "Test template 1"
+        template_1.name = "Test template 1 alias"
 
         template_2 = self.client.factory.create('hyd:Template')
         template_2.name = "Test template 2"
+        template_2.name = "Test template 2 alias"
 
         items_1 = self.client.factory.create('hyd:TemplateItemArray')
         items_2 = self.client.factory.create('hyd:TemplateItemArray')
@@ -178,6 +179,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         
         template = self.client.factory.create('hyd:Template')
         template.name = "Test template name @ %s"%(datetime.datetime.now())
+        template.alias = "%s alias" % template.name
 
         items = self.client.factory.create('hyd:TemplateItemArray')
         
@@ -194,10 +196,11 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         items.TemplateItem.append(item_3)
 
         template.templateitems = items
-        
+
         new_template = self.client.service.add_template(template)
         
         assert new_template.name == template.name, "Names are not the same!"
+        assert new_template.alias == template.alias, "Aliases are not the same!"
         assert new_template.id is not None, "New template has no ID!"
         assert new_template.id > 0, "New template has incorrect ID!"
 
@@ -212,7 +215,8 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         attr_3 = self.create_attr("testattr_3") 
         
         template = self.client.factory.create('hyd:Template')
-        template.name = "Test template name @ %s"%(datetime.datetime.now())
+        template.name = "Test template name @ %s" % (datetime.datetime.now())
+        template.alias = template.name + " alias"
         template.group_id = self.get_group().id
 
         items = self.client.factory.create('hyd:TemplateItemArray')
@@ -230,12 +234,14 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         new_template = self.client.service.add_template(template)
         
         assert new_template.name == template.name, "Names are not the same!"
+        assert new_template.alias == template.alias, "Aliases are not the same!"
         assert new_template.id is not None, "New template has no ID!"
         assert new_template.id > 0, "New template has incorrect ID!"
 
         assert len(new_template.templateitems[0]) == 2, "Resource template items did not add correctly"
         
         new_template.name = "Updated template name @ %s"%(datetime.datetime.now())
+        new_template.alias = template.name + " alias"
         
         items = self.client.factory.create('hyd:TemplateItemArray')
 
@@ -248,6 +254,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         updated_template = self.client.service.update_template(new_template)
 
         assert new_template.name == updated_template.name, "Names are not the same!"
+        assert new_template.alias == updated_template.alias, "Aliases are not the same!"
         assert new_template.id == updated_template.id, "template ids to not match!"
         assert new_template.id > 0, "New template has incorrect ID!"
 
@@ -273,6 +280,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         
         template = self.client.factory.create('hyd:Template')
         template.name = "Test template name @ %s"%(datetime.datetime.now())
+        template.alias = template.name + " alias"
         template.group_id = self.get_group().id
 
         items = self.client.factory.create('hyd:TemplateItemArray')
@@ -307,6 +315,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         
         template = self.client.factory.create('hyd:Template')
         template.name = "Test template name @ %s"%(datetime.datetime.now())
+        template.alias = template.name + " alias"
 
         items = self.client.factory.create('hyd:TemplateItemArray')
         

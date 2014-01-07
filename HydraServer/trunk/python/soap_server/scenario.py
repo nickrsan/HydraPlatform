@@ -26,7 +26,6 @@ from HydraLib.util import timestamp_to_server_time
 
 from hydra_base import HydraService
 
-
 def clone_constraint_group(constraint_id, grp_i):
     """
         This will clone not only the group in question
@@ -368,10 +367,15 @@ class ScenarioService(HydraService):
                 scenario_2_constraints.append(con2)
 
         constraint_diff.common_constraints     = common_constraints
-        constraint_diff.scenario_1_constraints  = scenario_1_constraints
+        constraint_diff.scenario_1_constraints = scenario_1_constraints
         constraint_diff.scenario_2_constraints = scenario_2_constraints
 
         scenariodiff.constraints = constraint_diff
+
+        #for k, v in HydraIface.IfaceLib.MySqlIface.SQL_RESULT_DIFF_COUNT.items():
+        #    run_count = HydraIface.IfaceLib.MySqlIface.SQL_CALL_COUNT[k]
+        #    rs, count = v
+        #    logging.debug("Run %s times, Changed %s times : \n %s"%(run_count, count, k))
 
         return scenariodiff
 

@@ -13,6 +13,7 @@ from spyne.service import ServiceBase
 
 _session_db = set()
 _user_map   = {}
+
 def get_session_db():
     return _session_db
 
@@ -106,16 +107,17 @@ class AuthenticationService(ServiceBase):
     def login(username, password):
         user_i = HydraIface.User()
         user_i.db.username = username
-        user_id = user_i.get_user_id()
-        
-        if user_id is None:
-           raise AuthenticationError(username)
+        if _user_map.get(username) is None:
+            user_id = user_i.get_user_id()
+            if user_id is None:
+                raise AuthenticationError(username)
+            _user_map[username] = user_id
+        else:
+            user_id = _user_map[username]
 
         user_i.db.user_id = user_id
         user_i.load()
 
-        _user_map[username] = user_id
-        
         if bcrypt.hashpw(password, user_i.db.password) == user_i.db.password:
             session_id = (username, '%x' % random.randint(1<<124, (1<<128)-1))
             _session_db.add(session_id)

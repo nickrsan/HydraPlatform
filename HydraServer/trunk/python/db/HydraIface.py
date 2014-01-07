@@ -339,11 +339,14 @@ class GenericResource(IfaceBase):
         except etree.LxmlError, e:
             raise HydraError("Layout XML did not validate!: Error was: %s"%(e))
 
-    def get_as_complexmodel(self):
+    def get_as_complexmodel(self, time=False):
         """
             Converts this object into a spyne.model.ComplexModel type
             which can be used by the soap library.
         """
+
+        if time:
+            start = datetime.datetime.now()
         cm = super(GenericResource, self).get_as_complexmodel()
 
         #if I have attributes, convert them
@@ -378,6 +381,9 @@ class GenericResource(IfaceBase):
                 template_list.append(group_summary)
 
             setattr(cm, 'templates', template_list)
+
+        if time:
+            logging.info("Complex model conversion of %s took: %s " % (self.name, datetime.datetime.now()-start))
 
         return cm
 
@@ -432,7 +438,7 @@ class Network(GenericResource):
             define the network topology, by associating two already
             existing nodes.
         """
-        l = Link()
+        l = Link(network=self)
         l.db.link_name        = name
         l.db.link_description = desc
         l.validate_layout(layout)
@@ -453,7 +459,7 @@ class Network(GenericResource):
         """
             Add a node to a network.
         """
-        node_i = Node()
+        node_i = Node(network=self)
         node_i.db.node_name        = name
         node_i.db.node_description = desc
         node_i.validate_layout(layout)
@@ -473,7 +479,7 @@ class Network(GenericResource):
         """
             Add a new group to a network.
         """
-        group_i                      = ResourceGroup()
+        group_i                      = ResourceGroup(network=self)
         group_i.db.group_name        = name
         group_i.db.group_description = desc
         group_i.db.status            = status
@@ -743,7 +749,7 @@ class Template(IfaceBase):
         """
             Add a resource template item to a resource template.
         """
-        item_i = TemplateItem()
+        item_i = TemplateItem(template=self)
         item_i.db.attr_id = attr_id
         item_i.db.template_id = self.db.template_id
 
@@ -769,6 +775,7 @@ class Template(IfaceBase):
     def get_as_complexmodel(self):
         tmp =  hydra_complexmodels.Template()
         tmp.name = self.db.template_name
+        tmp.alias = self.db.alias
         tmp.id = self.db.template_id
         tmp.group_id   = self.db.group_id
 
@@ -800,7 +807,7 @@ class TemplateGroup(IfaceBase):
 
 
     def add_template(self, name):
-        template_i = Template()
+        template_i = Template(templategroup=self)
         template_i.db.group_id = self.db.group_id
         template_i.db.template_name = name
         template_i.save()
@@ -1392,11 +1399,11 @@ class ConstraintGroup(IfaceBase):
             return self.items
 
         if self.db.ref_key_1 == 'ITEM':
-            item = ConstraintItem(item_id=self.db.ref_id_1)
+            item = ConstraintItem(constraint=self.constraint, item_id=self.db.ref_id_1)
             self.items.append(item)
 
         if self.db.ref_key_2 == 'ITEM':
-            item = ConstraintItem(item_id=self.db.ref_id_2)
+            item = ConstraintItem(constraint=self.constraint, item_id=self.db.ref_id_2)
             self.items.append(item)
 
         return self.items
@@ -1410,7 +1417,7 @@ class ConstraintGroup(IfaceBase):
             group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_1)
             str_1 = group.eval_group()
         elif self.db.ref_key_1 == 'ITEM':
-            item = ConstraintItem(item_id=self.db.ref_id_1)
+            item = ConstraintItem(self.constraint, item_id=self.db.ref_id_1)
 
             if item.db.constant is None:
 

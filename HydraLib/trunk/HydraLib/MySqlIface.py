@@ -4,6 +4,7 @@ import config
 from HydraLib.hdb import HydraMySqlCursor
 from HydraException import HydraError
 from mysql.connector import IntegrityError
+import inspect
 
 global DB_STRUCT
 DB_STRUCT = {}
@@ -14,12 +15,50 @@ CONNECTION = None
 global DB_HIERARCHY
 DB_HIERARCHY = None
 
+#Used to count how often a single piece of sql is called.
+global SQL_CALL_COUNT
+SQL_CALL_COUNT = {}
+
+#Used to count how often the results of a single piece of sql change.
+global SQL_RESULT_DIFF_COUNT
+SQL_RESULT_DIFF_COUNT = {}
+
 def execute(sql):
+    logging.info(inspect.stack()[1][3])
+    update_call_count(sql)
+    
     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
     rs = cursor.execute_sql(sql)
+    
+    #Keep track of result sets changing for a given piece of sql.
+    #If the SQL never changes, we should be caching the result.
+    update_rs_count(sql,rs)
+    
     logging.info("Execution returned %s results", len(rs))
     cursor.close()
+
     return rs
+
+def update_call_count(sql):
+    global SQL_CALL_COUNT
+
+    if sql in SQL_CALL_COUNT.keys():
+        SQL_CALL_COUNT[sql] += 1
+    else:
+        SQL_CALL_COUNT[sql] = 1
+
+def update_rs_count(sql, new_rs):
+    global SQL_RESULT_DIFF_COUNT 
+    new = [r.get_as_dict() for r in new_rs]
+
+    if sql in SQL_RESULT_DIFF_COUNT.keys():
+        old_rs, count = SQL_RESULT_DIFF_COUNT[sql]
+        old = [r.get_as_dict() for r in old_rs]
+        if old != new:
+            count = count + 1
+            SQL_RESULT_DIFF_COUNT[sql] = (new_rs, count)
+    else:
+        SQL_RESULT_DIFF_COUNT[sql] = (new_rs, 0)
 
 def init(cnx, db_hierarchy):
 

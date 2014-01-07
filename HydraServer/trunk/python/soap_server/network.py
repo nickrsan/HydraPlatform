@@ -260,7 +260,7 @@ class NetworkService(HydraService):
         if network.scenarios is not None:
             logging.info("Adding scenarios to network")
             for s in network.scenarios:
-                scen = HydraIface.Scenario()
+                scen = HydraIface.Scenario(network=net_i)
                 scen.db.scenario_name        = s.name
                 scen.db.scenario_description = s.description
                 scen.db.network_id           = net_i.db.network_id
@@ -321,7 +321,7 @@ class NetworkService(HydraService):
 
         logging.info("Insertion of network took: %s",(datetime.datetime.now()-insert_start))
         return_value = net_i.get_as_complexmodel()
-
+        
         return return_value
 
     @rpc(Integer, Integer, _returns=Network)
@@ -329,25 +329,14 @@ class NetworkService(HydraService):
         """
             Return a whole network as a complex model.
         """
-        x = HydraIface.Network(network_id = network_id)
-
-        if x.load_all() is False:
+        net_i = HydraIface.Network(network_id = network_id)
+        
+        if net_i.load_all() is False:
             raise ObjectNotFoundError("Network (network_id=%s) not found." %
                                       network_id)
 
-        net = x.get_as_complexmodel()
-
-        if scenario_id is not None:
-            scenario = []
-            for scen in net.scenarios:
-                if scen.id == scenario_id:
-                    x = HydraIface.Scenario(scenario_id=scenario_id)
-                    x.load_all()
-                    scenario = x.get_as_complexmodel()
-                    break
-            net.scenarios = []
-            net.scenarios.append(scenario)
-
+        net = net_i.get_as_complexmodel()
+        
         return net
 
     @rpc(String, Integer, _returns=Network)
@@ -375,13 +364,13 @@ class NetworkService(HydraService):
         network_id = rs[0].network_id
 
 
-        x = HydraIface.Network(network_id = network_id)
+        net_i = HydraIface.Network(network_id = network_id)
 
-        if x.load_all() is False:
+        if net_i.load_all() is False:
             raise ObjectNotFoundError("Network (network_id=%s) not found." % \
                                       network_id)
 
-        net = x.get_as_complexmodel()
+        net = net_i.get_as_complexmodel()
 
         return net
 
@@ -491,7 +480,7 @@ class NetworkService(HydraService):
         if network.scenarios is not None:
             for s in network.scenarios:
                 if s.id is not None and s.id > 0:
-                    scen = HydraIface.Scenario(scenario_id=s.id)
+                    scen = HydraIface.Scenario(network=net_i, scenario_id=s.id)
 
                 else:
                     scenario_id = get_scenario_by_name(network.id, s.name) 
@@ -544,8 +533,9 @@ class NetworkService(HydraService):
                 group_item_i.delete()
                 group_item_i.save()
 
-
-        net = net_i.get_as_complexmodel()
+        net_i.load_all()
+        
+        net = net_i.get_as_complexmodel(True)
 
         hdb.commit()
 

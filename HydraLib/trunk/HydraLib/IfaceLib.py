@@ -167,7 +167,6 @@ class IfaceBase(object):
             Converts this object into a spyne.model.ComplexModel type
             which can be used by the soap library.
         """
-        start = datetime.datetime.now()
         #first create the appropriate soap complex model
         cm = getattr(hydra_complexmodels, self.name)()
         #If self is not in the DB, then return an empty
@@ -199,7 +198,6 @@ class IfaceBase(object):
                 child_objs.append(child_cm)
             setattr(cm, name, child_objs) 
 
-        logging.info("Complex model conversion of %s took: %s " % (self.name, datetime.datetime.now()-start))
         return cm
 
 

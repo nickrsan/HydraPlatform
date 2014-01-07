@@ -4,6 +4,7 @@
         <resource>
             <type>NODE</type>
             <name>Reservoir</name>
+            <alias>Reservoir</alias>
             <attribute>
                 <name>Min Capacity</name>
                 <dimension>Volume</dimension>
@@ -29,6 +30,7 @@
         <resource>
             <type>NODE</type>
             <name>Desalination Plant</name>
+            <alias>Desalination Plant</alias>
             <attribute>
                 <name>Min Capacity</name>
                 <dimension>Volume</dimension>

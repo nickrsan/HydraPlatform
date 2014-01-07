@@ -104,6 +104,7 @@ class TemplateService(HydraService):
                 grp.group_name,
                 tmpl.template_name,
                 tmpl.template_id,
+                tmpl.alias,
                 attr.attr_name,
                 attr.attr_id
             from
@@ -117,7 +118,7 @@ class TemplateService(HydraService):
             and item.template_id = tmpl.template_id
             and attr.attr_id     = item.attr_id
         """ % group_name
-
+ 
         rs = HydraIface.execute(sql)
 
         if len(rs) > 0:
@@ -155,10 +156,11 @@ class TemplateService(HydraService):
                     template_i = HydraIface.Template(template_id=r.template_id)
                     break
             else:
-                    template_i = HydraIface.Template()
-                    template_i.db.group_id = grp_i.db.group_id
-                    template_i.db.template_name = resource.find('name').text
-                    template_i.save()
+                template_i = HydraIface.Template()
+                template_i.db.group_id = grp_i.db.group_id
+                template_i.db.template_name = resource.find('name').text
+                template_i.db.alias = resource.find('alias').text
+                template_i.save()
                
             #delete any TemplateItems which are in the DB but not in the XML file
             existing_attrs = []
@@ -257,6 +259,7 @@ class TemplateService(HydraService):
                 for tmpl_i in grp_i.templates:
                     if tmpl_i.db.template_id == template.id:
                         tmpl_i.db.template_name = template.name
+                        tmpl_i.db.alias = template.alias
                         tmpl_i.save()
                         tmpl_i.load_all()
                         break
@@ -345,6 +348,7 @@ class TemplateService(HydraService):
         """
         rt_i = HydraIface.Template()
         rt_i.db.template_name  = template.name
+        rt_i.db.alias  = template.alias
         
         if template.group_id is not None:
             rt_i.db.group_id = template.group_id
@@ -367,6 +371,7 @@ class TemplateService(HydraService):
         """
         rt_i = HydraIface.Template(template_id = template.id)
         rt_i.db.template_name  = template.name
+        rt_i.db.alias  = template.alias
         rt_i.load_all()
 
         if template.group_id is not None:
