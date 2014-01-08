@@ -5,6 +5,7 @@ between units and dimensions.
 """
 
 import os
+from copy import deepcopy
 from ConfigParser import NoSectionError
 
 from util import load_config
@@ -26,8 +27,10 @@ class Units(object):
     """
 
     unittree = None
+    usertree = None
     dimensions = dict()
     units = dict()
+    unit_description = dict()
 
     def __init__(self):
         try:
@@ -46,9 +49,9 @@ class Units(object):
         if user_unitfile is not None:
             try:
                 with open(user_unitfile) as f:
-                    usertree = etree.parse(f).getroot()
-                    for element in usertree:
-                        self.unittree.append(element)
+                    self.usertree = etree.parse(f).getroot()
+                for element in self.usertree:
+                    self.unittree.append(deepcopy(element))
             except IOError:
                 logging.info("Custom unit conversion file '%s' does not exist."
                              % user_unitfile)
@@ -61,13 +64,15 @@ class Units(object):
                 self.units.update({unit.get('abbr'):
                                    (float(unit.get('lf')),
                                     float(unit.get('cf')))})
+                self.unit_description.update({unit.get('abbr'):
+                                              unit.get('name')})
 
     def check_consistency(self, unit, dimension):
         """Check whether a specified unit is consistent with the physical
         dimension asked for by the attribute or the dataset.
         """
         unit, factor = self.parse_unit(unit)
-        return unit in self.dimensions['dimension']
+        return unit in self.dimensions[dimension]
 
     def get_dimension(self, unit):
         """Return the physical dimension a given unit refers to.
@@ -79,16 +84,20 @@ class Units(object):
                 return dim
 
     def convert(self, value, unit1, unit2):
-        """Convert
+        """Convert a value from one unit to another one. The two units must
+        represent the same physical dimension.
         """
-        unit1, factor1 = self.parse_unit(unit1)
-        unit2, factor2 = self.parse_unit(unit2)
-        conv_factor1 = self.units[unit1]
-        conv_factor2 = self.units[unit2]
+        if self.get_dimension(unit1) == self.get_dimension(unit2):
+            unit1, factor1 = self.parse_unit(unit1)
+            unit2, factor2 = self.parse_unit(unit2)
+            conv_factor1 = self.units[unit1]
+            conv_factor2 = self.units[unit2]
 
-        return (conv_factor1[0] / conv_factor2[0] * (factor1 * value) \
-            + (conv_factor1[1] - conv_factor2[1]) / conv_factor2[0]) / \
-            factor2
+            return (conv_factor1[0] / conv_factor2[0] * (factor1 * value)
+                    + (conv_factor1[1] - conv_factor2[1]) / conv_factor2[0]) /\
+                factor2
+        else:
+            logging.info("Unit conversion: dimensions are not consistent.")
 
     def parse_unit(self, unit):
         """
@@ -100,6 +109,56 @@ class Units(object):
         except ValueError:
             return unit, 1.0
 
+    def get_dimensions(self):
+        """Get a list of all dimenstions listed in one of the xml files.
+        """
+        return self.dimensions.keys()
+
+    def get_units(self, dimension):
+        """Get a list of all units describing one specific dimension.
+        """
+        dimdict = dict()
+        for unit in self.dimensions[dimension]:
+            dimdict.update({unit: self.unit_description[unit]})
+        return dimdict
+
+    def add_dimension(self, dimension):
+        """Add a dimension to the custom xml file as listed in the config file.
+        """
+        if dimension not in self.dimensions.keys():
+            self.usertree.append(etree.Element('dimension', name=dimension))
+            self.dimensions.update({dimension: []})
+
+    def add_unit(self, dimension, unit):
+        """Add a unit and conversion factor to a specific dimension. The new
+        unit will be written to the custom XML-file.
+        """
+        if dimension in self.dimensions.keys() and \
+                unit['abbr'] not in self.dimensions[dimension]:
+
+            # Update internal variables:
+            self.dimensions[dimension].append(unit['abbr'])
+            self.units.update({unit['abbr']:
+                               (float(unit['lf']), float(unit['cf']))})
+            self.unit_description.update({unit['abbr']: unit['name']})
+            # Update XML tree
+            element_index = None
+            for i, element in enumerate(self.usertree):
+                if element.get('name') == dimension:
+                    element_index = i
+                    break
+            if element_index is not None:
+                self.usertree[element_index].append(
+                    etree.Element('unit', name=unit['name'], abbr=unit['abbr'],
+                                  lf=unit['lf'], cf=unit['cf'],
+                                  info=unit['info']))
+
+    def save_user_file(self):
+        """Save units or dimensions added to the server to the custom XML file.
+        """
+        user_unitfile = self.usertree.base
+        with open(user_unitfile, 'w') as f:
+            f.write(etree.tostring(self.usertree, pretty_print=True))
 
 if __name__ == '__main__':
     units = Units()
