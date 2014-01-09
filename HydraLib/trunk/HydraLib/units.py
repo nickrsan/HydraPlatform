@@ -22,8 +22,8 @@ class Units(object):
     consistency between units and dimensions. Unit conversion factors are
     defined in a static built-in XML file and in a custom file defined by
     the user. The location of the unit conversion file provided by the user
-    is specified in the config file in section [unit conversion]. This section
-    and a file specifying custom unit conversion factors are optional.
+    is specified in the config file in section ``[unit conversion]``. This
+    section and a file specifying custom unit conversion factors are optional.
     """
 
     unittree = None
@@ -100,7 +100,8 @@ class Units(object):
             logging.info("Unit conversion: dimensions are not consistent.")
 
     def parse_unit(self, unit):
-        """
+        """Helper function that extracts constant factors from unit
+        specifications. This allows to specify units similar to this: 10^6 m^3.
         """
         try:
             float(unit[0])
@@ -117,10 +118,16 @@ class Units(object):
     def get_units(self, dimension):
         """Get a list of all units describing one specific dimension.
         """
-        dimdict = dict()
+        unitlist = []
         for unit in self.dimensions[dimension]:
-            dimdict.update({unit: self.unit_description[unit]})
-        return dimdict
+            unitdict = dict()
+            unitdict.update({'abbr': unit})
+            unitdict.update({'name': self.unit_description[unit]})
+            unitdict.update({'lf': self.units[unit][0]})
+            unitdict.update({'cf': self.units[unit][1]})
+            unitdict.update({'dimension': dimension})
+            unitlist.append(unitdict)
+        return unitlist
 
     def add_dimension(self, dimension):
         """Add a dimension to the custom xml file as listed in the config file.
@@ -150,7 +157,7 @@ class Units(object):
             if element_index is not None:
                 self.usertree[element_index].append(
                     etree.Element('unit', name=unit['name'], abbr=unit['abbr'],
-                                  lf=unit['lf'], cf=unit['cf'],
+                                  lf=str(unit['lf']), cf=str(unit['cf']),
                                   info=unit['info']))
 
     def save_user_file(self):

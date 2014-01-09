@@ -256,9 +256,9 @@ class ResourceGroupDiff(HydraComplexModel):
 
 class ConstraintItem(HydraComplexModel):
     """
-        A constraint item is the atomic element of a conatraint.
-        The value of a constraint item can be value of a particular resource attribute
-        or an arbitrary static value, such as an integer, so we can support:
+        A constraint item is the atomic element of a conatraint.  The value of
+        a constraint item can be value of a particular resource attribute or an
+        arbitrary static value, such as an integer, so we can support:
 
         X.attr + Y.attr > 0
         or
@@ -426,4 +426,15 @@ class DatasetOwner(HydraComplexModel):
     _type_info = [
         ('dataset_id',   Integer),
         ('user_id',   Integer),
+    ]
+
+
+class Unit(HydraComplexModel):
+    _type_info = [
+        ('name', String),
+        ('abbr', String),
+        ('cf', Decimal),
+        ('lf', Decimal),
+        ('info', String),
+        ('dimension', String),
     ]

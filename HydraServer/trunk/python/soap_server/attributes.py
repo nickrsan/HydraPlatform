@@ -89,8 +89,11 @@ class AttributeService(HydraService):
     @rpc(Attr, _returns=Attr)
     def add_attribute(ctx, attr):
         """
-            Add a generic attribute, which can then be used in creating
-            a resource attribute, and put into a template.
+        Add a generic attribute, which can then be used in creating
+        a resource attribute, and put into a template.
+
+        .. code-block:: python
+
             (Attr){
                 id = 1020
                 name = "Test Attr"
@@ -107,8 +110,11 @@ class AttributeService(HydraService):
     @rpc(SpyneArray(Attr), _returns=SpyneArray(Attr))
     def add_attributes(ctx, attrs):
         """
-            Add a generic attribute, which can then be used in creating
-            a resource attribute, and put into a template.
+        Add a generic attribute, which can then be used in creating
+        a resource attribute, and put into a template.
+
+        .. code-block:: python
+
             (Attr){
                 id = 1020
                 name = "Test Attr"

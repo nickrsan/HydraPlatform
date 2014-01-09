@@ -83,14 +83,14 @@ class ScenarioService(HydraService):
         scen.db.scenario_name        = scenario.name
         scen.db.scenario_description = scenario.description
         scen.db.network_id           = network_id
-        
+
         #Just in case someone puts in a negative ID for the scenario.
         if scenario.id < 0:
             scenario.id = None
 
         scen.save()
 
-        #extract the data from each resourcescenario so it can all be 
+        #extract the data from each resourcescenario so it can all be
         #inserted in one go, rather than one at a time
         data = [r.value for r in scenario.resourcescenarios]
 
@@ -113,11 +113,11 @@ class ScenarioService(HydraService):
         #This is to get the resource scenarios into the scenario
         #object, so they are included into the scenario's complex model
         scen.load_all()
-        
-        for constraint in scenario.constraints:
-            ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint) 
 
-        #Again doing bulk insert. 
+        for constraint in scenario.constraints:
+            ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint)
+
+        #Again doing bulk insert.
         group_items = []
         for group_item in scenario.resourcegroupitems:
 
@@ -151,8 +151,8 @@ class ScenarioService(HydraService):
             _update_resourcescenario(scen.db.scenario_id, r_scen)
 
         for constraint in scenario.constraints:
-            ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint) 
-        
+            ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint)
+
         #Get all the exiting resource group items for this scenario.
         #THen process all the items sent to this handler.
         #Any in the DB that are not passed in here are removed.
@@ -180,10 +180,10 @@ class ScenarioService(HydraService):
                 group_item_i.db.group_id = group_item.group_id
 
             group_item_i.db.ref_key = group_item.ref_key
-            group_item_i.db.ref_id =group_item.ref_id 
+            group_item_i.db.ref_id =group_item.ref_id
             group_item_i.save()
             all_items_after.append(group_item_i.db.item_id)
-    
+
         #remove any obsolete resource group items
         items_to_delete = set(all_items_before) - set(all_items_after)
         for item_id in items_to_delete:
@@ -243,7 +243,7 @@ class ScenarioService(HydraService):
             new_constraint.save()
             new_constraint.load()
 
-            grp_i = HydraIface.ConstraintGroup(constraint=constraint_i, 
+            grp_i = HydraIface.ConstraintGroup(constraint=constraint_i,
                                                group_id=constraint_i.db.group_id)
 
             new_grp = clone_constraint_group(new_constraint.db.constraint_id, grp_i)

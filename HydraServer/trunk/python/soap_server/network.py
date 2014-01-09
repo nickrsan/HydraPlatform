@@ -27,36 +27,36 @@ def _add_attributes(resource_i, attributes):
 
 def _add_resource_types(resource_i, groups):
     """
-        Save a reference to the templates used for this resource.
-        
-        Template references in the DB but not passed into this 
-        function are considered obsolete and are deleted.
-        
-        @returns a list of template_ids representing the template ids
-        on the resource.
+    Save a reference to the templates used for this resource.
+
+    Template references in the DB but not passed into this
+    function are considered obsolete and are deleted.
+
+    @returns a list of template_ids representing the template ids
+    on the resource.
 
     """
     if groups is None:
         return []
 
     existing_groups = resource_i.get_templates()
-    
+
     existing_template_ids = []
     for group_id, group in existing_groups.items():
         for template_id, template_name in group['templates']:
             existing_template_ids.append(template_id)
-    
+
     new_template_ids = []
     for group in groups:
-        
+
         templates = group.templates
 
         for template in templates:
             if template.id in existing_template_ids:
                 continue
 
-            new_template_ids.append(template.id)        
-            
+            new_template_ids.append(template.id)
+
             rt_i = HydraIface.ResourceType()
             rt_i.db.template_id = template.id
             rt_i.db.ref_key     = resource_i.ref_key
@@ -68,7 +68,7 @@ def _add_resource_types(resource_i, groups):
                                       ref_id = resource_i.ref_id,
                                       ref_key = resource_i.ref_key)
         rt_i.delete()
-    
+
     return new_template_ids
 
 def _update_attributes(resource_i, attributes):
@@ -127,18 +127,18 @@ class NetworkService(HydraService):
     @rpc(Network, _returns=Network)
     def add_network(ctx, network):
         """
-            Takes an entire network complex model and saves it to the DB.
-            This complex model includes links & scenarios (with resource data).
-            Returns the network's complex model.
+        Takes an entire network complex model and saves it to the DB.  This
+        complex model includes links & scenarios (with resource data).  Returns
+        the network's complex model.
 
-            As links connect two nodes using the node_ids, if the nodes are new
-            they will not yet have node_ids. In this case, use negative ids
-            as temporary IDS until the node has been given an permanent ID.
+        As links connect two nodes using the node_ids, if the nodes are new
+        they will not yet have node_ids. In this case, use negative ids as
+        temporary IDS until the node has been given an permanent ID.
 
-            All inter-object referencing of new objects
-            should be done using negative IDs in the client.
+        All inter-object referencing of new objects should be done using
+        negative IDs in the client.
 
-            The returned object will have positive IDS
+        The returned object will have positive IDS
 
         """
 
@@ -152,7 +152,7 @@ class NetworkService(HydraService):
         net_i.db.project_id          = network.project_id
         net_i.db.network_name        = network.name
         net_i.db.network_description = network.description
-        
+
         if network.layout is not None:
             net_i.validate_layout(network.layout)
             net_i.db.network_layout      = network.layout
@@ -290,10 +290,10 @@ class NetworkService(HydraService):
                 #This is to get the resource scenarios into the scenario
                 #object, so they are included into the scenario's complex model
                 scen.load_all()
-                
+
                 for constraint in s.constraints:
                     update_constraint_refs(constraint.constraintgroup, resource_attr_id_map)
-                    ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint) 
+                    ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint)
 
                 group_items = []
                 for group_item in s.resourcegroupitems:
@@ -327,7 +327,7 @@ class NetworkService(HydraService):
     @rpc(Integer, Integer, _returns=Network)
     def get_network(ctx, network_id, scenario_id=None):
         """
-            Return a whole network as a complex model.
+        Return a whole network as a complex model.
         """
         net_i = HydraIface.Network(network_id = network_id)
         
@@ -342,7 +342,7 @@ class NetworkService(HydraService):
     @rpc(String, Integer, _returns=Network)
     def get_network_by_name(ctx, project_id, network_name):
         """
-            Return a whole network as a complex model.
+        Return a whole network as a complex model.
         """
 
         sql = """
@@ -360,7 +360,7 @@ class NetworkService(HydraService):
             raise HydraError('No network named %s found in project %s'%(network_name, project_id))
         elif len(rs) > 1:
             logging.warning("Multiple networks names %s found in project %s. Choosing first network in rs(network_id=%s)"%(network_name, project_id, rs[0].network_id))
-        
+
         network_id = rs[0].network_id
 
 
@@ -420,7 +420,7 @@ class NetworkService(HydraService):
             node_id_map[node.id] = n.db.node_id
 
         link_id_map = dict()
-        
+
         for link in network.links:
             node_1_id = link.node_1_id
             if link.node_1_id in node_id_map:
@@ -483,7 +483,7 @@ class NetworkService(HydraService):
                     scen = HydraIface.Scenario(network=net_i, scenario_id=s.id)
 
                 else:
-                    scenario_id = get_scenario_by_name(network.id, s.name) 
+                    scenario_id = get_scenario_by_name(network.id, s.name)
                     scen = HydraIface.Scenario(scenario_id = scenario_id)
                 scen.db.scenario_name        = s.name
                 scen.db.scenario_description = s.description
@@ -497,8 +497,8 @@ class NetworkService(HydraService):
 
                 for constraint in s.constraints:
                     update_constraint_refs(constraint.constraintgroup, resource_attr_id_map)
-                    ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint) 
-                
+                    ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint)
+
                 for group_item in s.resourcegroupitems:
 
                     if group_item.id and group_item.id > 0:
@@ -526,7 +526,7 @@ class NetworkService(HydraService):
                     group_item_i.db.ref_id = ref_id
                     group_item_i.save()
                     all_items_after.append(group_item_i.db.item_id)
-            
+
             items_to_delete = set(all_items_before) - set(all_items_after)
             for item_id in items_to_delete:
                 group_item_i = HydraIface.ResourceGroupItem(item_id=item_id)
@@ -544,10 +544,9 @@ class NetworkService(HydraService):
     @rpc(Integer, Boolean, _returns=Boolean)
     def delete_network(ctx, network_id, purge_data):
         """
-            Deletes a network. This does not
-            remove the network from the DB. It just
-            sets the status to 'X', meaning it can no longer
-            be seen by the user.
+        Deletes a network. This does not remove the network from the DB. It
+        just sets the status to 'X', meaning it can no longer be seen by the
+        user.
         """
         success = True
         x = HydraIface.Network(network_id = network_id)
@@ -561,9 +560,8 @@ class NetworkService(HydraService):
     @rpc(Network, Network, SpyneArray(Node), _returns=Boolean)
     def join_networks(ctx, network_1, network_2, joining_nodes):
         """
-            Given two networks and a set of nodes, return
-            a new network which is a combination of both networks, with
-            the nodes as the joining nodes.
+        Given two networks and a set of nodes, return a new network which is a
+        combination of both networks, with the nodes as the joining nodes.
 
         """
         pass
@@ -571,7 +569,10 @@ class NetworkService(HydraService):
     @rpc(Integer, Node, _returns=Node)
     def add_node(ctx, network_id, node):
         """
-            Add a node to a network
+        Add a node to a network:
+
+        .. code-block:: python
+
             (Node){
                id = 1027
                name = "Node 1"
@@ -611,9 +612,11 @@ class NetworkService(HydraService):
     @rpc(Node, _returns=Node)
     def update_node(ctx, node):
         """
-            Update a node.
-            If new attributes are present, they will be added to the node.
-            The non-presence of attributes does not remove them.
+        Update a node.
+        If new attributes are present, they will be added to the node.
+        The non-presence of attributes does not remove them.
+
+        .. code-block:: python
 
             (Node){
                id = 1039
@@ -831,9 +834,9 @@ class NetworkService(HydraService):
 
         nodes = set(nodes)
         link_nodes = set(link_nodes)
-            
+
         isolated_nodes = nodes - link_nodes
         if len(isolated_nodes) > 0:
             return "Orphan nodes are present."
-        
+
         return "OK"

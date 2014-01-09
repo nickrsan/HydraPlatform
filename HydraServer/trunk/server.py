@@ -26,6 +26,7 @@ from soap_server.template import TemplateService
 from soap_server.constraints import ConstraintService
 from soap_server.static import ImageService, FileService
 from soap_server.groups import ResourceGroupService
+from soap_server.units import UnitService
 from soap_server.hydra_base import AuthenticationService,\
     LogoutService,\
     get_session_db,\
@@ -138,6 +139,7 @@ class HydraServer():
             TemplateService,
             ImageService,
             FileService,
+            UnitService,
         ]
 
         application = HydraSoapApplication(applications, 'hydra.base',
