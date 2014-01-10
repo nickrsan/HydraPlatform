@@ -205,6 +205,30 @@ class Units(object):
         else:
             return False
 
+    def delete_unit(self, unit):
+        """Delete a unit from the custom file.
+        """
+        if unit['abbr'] in self.userunits:
+            self.userunits.remove(unit['abbr'])
+            self.dimensions[unit['dimension']].remove(unit['abbr'])
+            del self.units[unit['abbr']]
+            del self.unit_description[unit['abbr']]
+            # Update XML tree
+            element_index = None
+            for i, element in enumerate(self.usertree):
+                if element.get('name') == unit['dimension']:
+                    element_index = i
+                    break
+            if element_index is not None:
+                for unit_element in self.usertree[element_index]:
+                    if unit_element.get('abbr') == unit['abbr']:
+                        self.usertree[element_index].remove(unit_element)
+                return True
+            else:
+                return False
+        else:
+            return False
+
     def save_user_file(self):
         """Save units or dimensions added to the server to the custom XML file.
         """

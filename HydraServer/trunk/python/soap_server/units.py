@@ -73,6 +73,17 @@ class UnitService(HydraService):
         hydra_units.save_user_file()
         return result
 
+    @rpc(Unit, _returns=Boolean)
+    def delete_unit(ctx, unit):
+        """Delete a unit from the custom unit collection.
+        """
+        unitdict = get_object_as_dict(unit, Unit)
+        if unit.dimension is None:
+            unitdict['dimension'] = hydra_units.get_dimension(unit.abbr)
+        result = hydra_units.delete_unit(unitdict)
+        hydra_units.save_user_file()
+        return result
+
     @rpc(Decimal, String, String, _returns=Decimal)
     def convert_units(ctx, value, unit1, unit2):
         """Convert a value from one unit to another one.
