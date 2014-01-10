@@ -1,5 +1,11 @@
 from spyne.model.complex import Array as SpyneArray, ComplexModel
-from spyne.model.primitive import Unicode, String, Integer, Decimal, DateTime, AnyDict
+from spyne.model.primitive import Unicode
+from spyne.model.primitive import String
+from spyne.model.primitive import Integer
+from spyne.model.primitive import Decimal
+from spyne.model.primitive import DateTime
+from spyne.model.primitive import AnyDict
+from spyne.model.primitive import Double
 import datetime
 from spyne.util.odict import odict
 
@@ -433,8 +439,8 @@ class Unit(HydraComplexModel):
     _type_info = [
         ('name', String),
         ('abbr', String),
-        ('cf', Decimal),
-        ('lf', Decimal),
+        ('cf', Double),
+        ('lf', Double),
         ('info', String),
         ('dimension', String),
     ]

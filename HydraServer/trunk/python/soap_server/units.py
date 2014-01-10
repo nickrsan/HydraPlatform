@@ -55,9 +55,23 @@ class UnitService(HydraService):
         """
         # Convert the complex model into a dict
         unitdict = get_object_as_dict(unit, Unit)
-        hydra_units.add_unit(unit.dimension, unitdict)
+        if unit.dimension is None:
+            unitdict['dimension'] = hydra_units.get_dimension(unit.abbr)
+        hydra_units.add_unit(unitdict['dimension'], unitdict)
         hydra_units.save_user_file()
         return True
+
+    @rpc(Unit, _returns=Boolean)
+    def update_unit(ctx, unit):
+        """Update an existing unit added to the custom unit collection. Please
+        not that units built in to the library can not be updated.
+        """
+        unitdict = get_object_as_dict(unit, Unit)
+        if unit.dimension is None:
+            unitdict['dimension'] = hydra_units.get_dimension(unit.abbr)
+        result = hydra_units.update_unit(unitdict['dimension'], unitdict)
+        hydra_units.save_user_file()
+        return result
 
     @rpc(Decimal, String, String, _returns=Decimal)
     def convert_units(ctx, value, unit1, unit2):

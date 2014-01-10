@@ -30,6 +30,7 @@ class Units(object):
     usertree = None
     dimensions = dict()
     units = dict()
+    userunits = []
     unit_description = dict()
 
     def __init__(self):
@@ -52,6 +53,8 @@ class Units(object):
                     self.usertree = etree.parse(f).getroot()
                 for element in self.usertree:
                     self.unittree.append(deepcopy(element))
+                    for subelement in element:
+                        self.userunits.append(subelement.get('abbr'))
             except IOError:
                 logging.info("Custom unit conversion file '%s' does not exist."
                              % user_unitfile)
@@ -148,6 +151,7 @@ class Units(object):
             self.units.update({unit['abbr']:
                                (float(unit['lf']), float(unit['cf']))})
             self.unit_description.update({unit['abbr']: unit['name']})
+            self.userunits.append(unit['abbr'])
             # Update XML tree
             element_index = None
             for i, element in enumerate(self.usertree):
@@ -159,6 +163,47 @@ class Units(object):
                     etree.Element('unit', name=unit['name'], abbr=unit['abbr'],
                                   lf=str(unit['lf']), cf=str(unit['cf']),
                                   info=unit['info']))
+            else:
+                dimension_element = etree.Element('dimension', name=dimension)
+                dimension_element.append(
+                    etree.Element('unit', name=unit['name'], abbr=unit['abbr'],
+                                  lf=str(unit['lf']), cf=str(unit['cf']),
+                                  info=unit['info']))
+                self.usertree.append(dimension_element)
+        else:
+            return False
+
+    def update_unit(self, dimension, unit):
+        """Update a unit in the custom file. Please note that units in the
+        built-in file can not be updated.
+        """
+        if dimension in self.dimensions.keys() and \
+                unit['abbr'] in self.userunits:
+
+            # update internal variables
+            self.dimensions[dimension].append(unit['abbr'])
+            self.units.update({unit['abbr']:
+                               (float(unit['lf']), float(unit['cf']))})
+            self.unit_description.update({unit['abbr']: unit['name']})
+            # Update XML tree
+            element_index = None
+            for i, element in enumerate(self.usertree):
+                if element.get('name') == dimension:
+                    element_index = i
+                    break
+            if element_index is not None:
+                for unit_element in self.usertree[element_index]:
+                    if unit_element.get('abbr') == unit['abbr']:
+                        self.usertree[element_index].remove(unit_element)
+                self.usertree[element_index].append(
+                    etree.Element('unit', name=unit['name'], abbr=unit['abbr'],
+                                  lf=str(unit['lf']), cf=str(unit['cf']),
+                                  info=unit['info']))
+                return True
+            else:
+                return False
+        else:
+            return False
 
     def save_user_file(self):
         """Save units or dimensions added to the server to the custom XML file.
