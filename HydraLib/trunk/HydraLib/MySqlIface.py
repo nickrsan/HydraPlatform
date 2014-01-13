@@ -24,15 +24,14 @@ global SQL_RESULT_DIFF_COUNT
 SQL_RESULT_DIFF_COUNT = {}
 
 def execute(sql):
-    logging.info(inspect.stack()[1][3])
-    update_call_count(sql)
+#    update_call_count(sql)
     
     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
     rs = cursor.execute_sql(sql)
     
     #Keep track of result sets changing for a given piece of sql.
     #If the SQL never changes, we should be caching the result.
-    update_rs_count(sql,rs)
+ #   update_rs_count(sql,rs)
     
     logging.info("Execution returned %s results", len(rs))
     cursor.close()
@@ -344,7 +343,10 @@ class DBIface(object):
             elif db_type.find('int') != -1:
                 return int(val)
             elif db_type == 'blob':
-                return eval(val)
+                try:
+                    return eval(val)
+                except:
+                    return val
             elif db_type == 'datetime':
                 return self.db_data[name]
 

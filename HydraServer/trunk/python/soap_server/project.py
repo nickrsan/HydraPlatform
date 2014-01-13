@@ -3,9 +3,10 @@ from spyne.model.primitive import Integer, Boolean
 from spyne.model.complex import Array as SpyneArray
 from db import HydraIface
 from hydra_complexmodels import Project, ProjectSummary, Network
-from hydra_base import HydraService, ObjectNotFoundError, get_user_id
+from hydra_base import HydraService, ObjectNotFoundError
 from HydraLib.HydraException import HydraError
 import scenario
+import logging
 
 def _add_project_attributes(resource_i, attributes):
     if attributes is None:
@@ -40,17 +41,14 @@ class ProjectService(HydraService):
         proj_i = HydraIface.Project()
         proj_i.db.project_name = project.name
         proj_i.db.project_description = project.description
-        proj_i.db.created_by = get_user_id(ctx.in_header.username)
+        proj_i.db.created_by = ctx.in_header.user_id
 
         proj_i.save()
 
         _add_project_attributes(proj_i, project.attributes)
 
-        proj_owner_i = HydraIface.ProjectOwner()
-        proj_owner_i.db.user_id = get_user_id(ctx.in_header.username)
-        proj_owner_i.db.project_id = proj_i.db.project_id
-
-        proj_owner_i.save()
+        user_id = ctx.in_header.user_id
+        proj_i.set_ownership(user_id)
 
         ret = proj_i.get_as_complexmodel()
 
@@ -64,6 +62,9 @@ class ProjectService(HydraService):
         """
 
         proj_i = HydraIface.Project(project_id = project.id)
+        
+        proj_i.check_write_permission(ctx.in_header.user_id)
+        
         proj_i.db.project_name        = project.name
         proj_i.db.project_description = project.description
 
@@ -80,7 +81,9 @@ class ProjectService(HydraService):
             get a project complexmodel
         """
         proj_i = HydraIface.Project(project_id = project_id)
-        
+
+        proj_i.check_read_permission(ctx.in_header.user_id)
+
         if proj_i.load() is False:
             raise ObjectNotFoundError("Project (project_id=%s) not found."%project_id)
 
@@ -91,7 +94,7 @@ class ProjectService(HydraService):
         """
             get a project complexmodel
         """
-        user_id = get_user_id(ctx.in_header.username)
+        user_id = ctx.in_header.user_id
         if user_id is None:
             user_i = HydraIface.User()
             user_i.db.username = ctx.in_header.username
@@ -106,13 +109,16 @@ class ProjectService(HydraService):
             select
                 p.project_id,
                 p.project_name,
-                p.cr_date
+                p.cr_date,
+                p.created_by
             from
-                tProjectOwner o,
+                tOwner o,
                 tProject p
             where
                 o.user_id = %s
-                and p.project_id = o.project_id 
+                and o.ref_key = 'PROJECT'
+                and p.project_id = o.ref_id 
+                and o.view = 'Y'
             order by p.cr_date
 
         """ % user_id
@@ -125,6 +131,7 @@ class ProjectService(HydraService):
             p.id = r.project_id
             p.name = r.project_name
             p.cr_date = str(r.cr_date)
+            p.created_by = r.created_by
             projects.append(p)
 
         return projects
@@ -137,6 +144,7 @@ class ProjectService(HydraService):
         """
         success = True
         x = HydraIface.Project(project_id = project_id)
+        x.check_write_permission(ctx.in_header.user_id)
         x.db.status = 'X'
         x.save()
         x.commit()
@@ -149,14 +157,21 @@ class ProjectService(HydraService):
             Get all networks in a project
             Returns an array of network objects.
         """
+        user_id = ctx.in_header.user_id
         networks = []
 
         x = HydraIface.Project(project_id = project_id)
+        x.check_read_permission(user_id)
         x.load_all()
 
         for n_i in x.networks:
-            n_i.load()
-            networks.append(n_i.get_as_complexmodel())
+            try:
+                n_i.check_read_permission(user_id)
+                n_i.load()
+                networks.append(n_i.get_as_complexmodel())
+            except:
+                logging.info("Not returning network %s as user %s does not have "
+                             "permission to read it."%(n_i.db.network_id, user_id))
 
         return networks
 

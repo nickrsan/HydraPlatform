@@ -27,21 +27,10 @@ class FixNamespace(MessagePlugin):
             self.fix_ns(e)
 
 def connect(login=True):
-    #logging.debug("Connecting to server.")
     port = config.getint('hydra_server', 'port')
     url = 'http://localhost:%s?wsdl' % port
     client = Client(url, plugins=[FixNamespace()])
     
-    token = None
-    if login == True:
-
-        session_id = client.service.login('root', '')
-    
-        token = client.factory.create('RequestHeader')
-        token.session_id = session_id
-        token.username = 'root'
-  
-    client.set_options(cache=None, soapheaders=token)
     client.add_prefix('hyd', 'soap_server.hydra_complexmodels')
     global CLIENT
     CLIENT = client
@@ -61,9 +50,43 @@ class SoapServerTest(unittest.TestCase):
         
         self.client = CLIENT
 
+        self.login('root', '')
+        
+
     def tearDown(self):
         logging.debug("Tearing down")
         hydra_logging.shutdown()
+        self.logout('root')
+
+    def login(self, username, password):
+        login_response = self.client.service.login(username, password)
+
+        session_id = login_response.session_id
+        user_id    = login_response.user_id
+
+        token = self.client.factory.create('RequestHeader')
+        token.session_id = session_id
+        token.username = username
+        token.user_id  = user_id
+      
+        self.client.set_options(cache=None, soapheaders=token)
+
+    def logout(self, username):
+        msg = self.client.service.logout(username)
+        return msg
+
+    def create_user(self, name):
+
+        existing_user = self.client.service.get_user_by_name(name)
+        if existing_user is not None:
+            return existing_user 
+
+        user = self.client.factory.create('hyd:User')
+        user.username = name
+        user.password = "password"
+
+        new_user = self.client.service.add_user(user)
+        return new_user
 
     def create_project(self, name):
         project = self.client.factory.create('hyd:Project')
@@ -112,7 +135,7 @@ class SoapServerTest(unittest.TestCase):
             attr = self.client.service.add_attribute(attr)
         return attr
 
-    def create_network_with_data(self):
+    def create_network_with_data(self, project_id=None):
         """
             Test adding data to a network through a scenario.
             This test adds attributes to one node and then assignes data to them.
@@ -120,11 +143,13 @@ class SoapServerTest(unittest.TestCase):
             attributes node. 
         """
         start = datetime.datetime.now()
-        (project) = {
-            'name'        : 'New Project %s'%(datetime.datetime.now()),
-            'description' : 'New Project Description',
-        }
-        p =  self.client.service.add_project(project)
+        if project_id is None:
+            (project) = {
+                'name'        : 'New Project %s'%(datetime.datetime.now()),
+                'description' : 'New Project Description',
+            }
+            p =  self.client.service.add_project(project)
+            project_id = p.id
 
         print "Project creation took: %s"%(datetime.datetime.now()-start)
         start = datetime.datetime.now()
@@ -269,9 +294,9 @@ class SoapServerTest(unittest.TestCase):
         """
 
         (network) = {
-            'name'        : 'Network 1',
+            'name'        : 'Network @ %s'%datetime.datetime.now(),
             'description' : 'Test network with 2 nodes and 1 link',
-            'project_id'  : p['id'],
+            'project_id'  : project_id,
             'links'       : link_array,
             'nodes'       : node_array,
             'layout'      : layout,

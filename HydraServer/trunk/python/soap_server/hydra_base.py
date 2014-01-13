@@ -1,8 +1,9 @@
-from spyne.model.primitive import Mandatory, String 
+from spyne.model.primitive import Mandatory, String
 from spyne.error import Fault
 from spyne.model.complex import ComplexModel
 from spyne.decorator import srpc, rpc
 from db import HydraIface
+from hydra_complexmodels import LoginResponse
 
 import datetime
 
@@ -24,6 +25,7 @@ class RequestHeader(ComplexModel):
     __namespace__ = 'hydra.base'
     session_id    = Mandatory.String
     username      = Mandatory.String
+    user_id       = Mandatory.String
 
 class HydraService(ServiceBase):
     __tns__ = 'hydra.base'
@@ -68,28 +70,6 @@ class ObjectNotFoundError(HydraServiceError):
                 faultstring=message
         )
 
-
-#class Preferences(ComplexModel):
-#    __namespace__ = 'hydra.authentication'
-#
-#    language = String(max_len=2)
-#    time_zone = String
-
-#preferences_db = {
-#    'test': Preferences(language='en', time_zone='Europe/London'),
-#}
-#
-#class PreferenceService(HydraService):
-#    __tns__      = 'hydra.authentication'
-#    
-#    @srpc(Mandatory.String, _throws=ResourceNotFoundError, _returns=Preferences)
-#    def get_preferences(username):
-#        if username == 'smith':
-#            raise AuthorizationError()
-#
-#        retval = preferences_db[username]
-#
-#        return retval
 class LogoutService(HydraService):
     __tns__      = 'hydra.authentication'
     
@@ -102,8 +82,8 @@ class LogoutService(HydraService):
 class AuthenticationService(ServiceBase):
     __tns__      = 'hydra.base'
 
-    @srpc(Mandatory.String, String, _returns=String,
-                                                    _throws=AuthenticationError)
+    @srpc(Mandatory.String, String, _returns=LoginResponse,
+                                                   _throws=AuthenticationError)
     def login(username, password):
         user_i = HydraIface.User()
         user_i.db.username = username
@@ -127,6 +107,10 @@ class AuthenticationService(ServiceBase):
         user_i.db.last_login = datetime.datetime.now()
         user_i.save()
 
-        return session_id[1]
+        loginresponse = LoginResponse()
+        loginresponse.session_id = session_id[1]
+        loginresponse.user_id    = user_i.db.user_id
+
+        return loginresponse 
 
 

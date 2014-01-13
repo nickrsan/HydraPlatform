@@ -12,6 +12,7 @@ from HydraLib import config
 from lxml import etree
 import attributes
 from decimal import Decimal
+from xml.sax.saxutils import unescape
 
 def parse_attribute(attribute):
 
@@ -105,6 +106,7 @@ class TemplateService(HydraService):
                 tmpl.template_name,
                 tmpl.template_id,
                 tmpl.alias,
+                tmpl.layout,
                 attr.attr_name,
                 attr.attr_id
             from
@@ -159,7 +161,15 @@ class TemplateService(HydraService):
                 template_i = HydraIface.Template()
                 template_i.db.group_id = grp_i.db.group_id
                 template_i.db.template_name = resource.find('name').text
-                template_i.db.alias = resource.find('alias').text
+                
+                if resource.find('alias') is not None:
+                    template_i.db.alias = resource.find('alias').text
+
+                if resource.find('layout') is not None:
+                    layout = unescape(resource.find('layout').text)
+                    HydraIface.validate_layout(layout)
+                    template_i.db.layout = layout
+
                 template_i.save()
                
             #delete any TemplateItems which are in the DB but not in the XML file
@@ -260,6 +270,8 @@ class TemplateService(HydraService):
                     if tmpl_i.db.template_id == template.id:
                         tmpl_i.db.template_name = template.name
                         tmpl_i.db.alias = template.alias
+                        tmpl_i.db.layout = template.layout
+                        HydraIface.validate_layout(tmpl_i.db.layout)
                         tmpl_i.save()
                         tmpl_i.load_all()
                         break
@@ -349,6 +361,8 @@ class TemplateService(HydraService):
         rt_i = HydraIface.Template()
         rt_i.db.template_name  = template.name
         rt_i.db.alias  = template.alias
+        rt_i.db.layout = template.layout
+        HydraIface.validate_layout(rt_i.db.layout)
         
         if template.group_id is not None:
             rt_i.db.group_id = template.group_id
@@ -372,6 +386,8 @@ class TemplateService(HydraService):
         rt_i = HydraIface.Template(template_id = template.id)
         rt_i.db.template_name  = template.name
         rt_i.db.alias  = template.alias
+        rt_i.db.layout = template.layout
+        HydraIface.validate_layout(rt_i.db.layout)
         rt_i.load_all()
 
         if template.group_id is not None:

@@ -33,6 +33,7 @@ from soap_server.hydra_base import AuthenticationService,\
     AuthenticationError,\
     ObjectNotFoundError,\
     HydraServiceError
+from soap_server.sharing import SharingService
 
 from HydraLib.HydraException import HydraError
 
@@ -139,6 +140,7 @@ class HydraServer():
             TemplateService,
             ImageService,
             FileService,
+            SharingService,
             UnitService,
         ]
 

@@ -6,7 +6,7 @@ from spyne.decorator import rpc
 from hydra_complexmodels import Network, Node, Link, Scenario, ResourceGroup
 from db import HydraIface
 from HydraLib import hdb, IfaceLib
-from hydra_base import HydraService, ObjectNotFoundError
+from hydra_base import HydraService, ObjectNotFoundError, get_user_id
 import scenario
 from constraints import ConstraintService
 import datetime
@@ -148,11 +148,15 @@ class NetworkService(HydraService):
         insert_start = datetime.datetime.now()
 
         net_i = HydraIface.Network()
+        
+        proj_i = HydraIface.Project(project_id = network.project_id)
+        proj_i.check_write_permission(ctx.in_header.user_id)
 
         net_i.db.project_id          = network.project_id
         net_i.db.network_name        = network.name
         net_i.db.network_description = network.description
-
+        net_i.db.created_by          = ctx.in_header.user_id
+        
         if network.layout is not None:
             net_i.validate_layout(network.layout)
             net_i.db.network_layout      = network.layout
@@ -318,10 +322,12 @@ class NetworkService(HydraService):
                 IfaceLib.bulk_insert(group_items, 'tResourceGroupItem')
 
                 net_i.scenarios.append(scen)
+        
+        net_i.set_ownership(ctx.in_header.user_id)
 
         logging.info("Insertion of network took: %s",(datetime.datetime.now()-insert_start))
         return_value = net_i.get_as_complexmodel()
-        
+
         return return_value
 
     @rpc(Integer, Integer, _returns=Network)
@@ -330,7 +336,9 @@ class NetworkService(HydraService):
         Return a whole network as a complex model.
         """
         net_i = HydraIface.Network(network_id = network_id)
-        
+       
+        net_i.check_read_permission(ctx.in_header.user_id)
+
         if net_i.load_all() is False:
             raise ObjectNotFoundError("Network (network_id=%s) not found." %
                                       network_id)
@@ -365,6 +373,8 @@ class NetworkService(HydraService):
 
 
         net_i = HydraIface.Network(network_id = network_id)
+        
+        net_i.check_read_permission(ctx.in_header.user_id)
 
         if net_i.load_all() is False:
             raise ObjectNotFoundError("Network (network_id=%s) not found." % \
@@ -381,6 +391,7 @@ class NetworkService(HydraService):
         """
         net = None
         net_i = HydraIface.Network(network_id = network.id)
+        net_i.check_write_permission(ctx.in_header.user_id)
         net_i.load_all()
         net_i.db.project_id          = network.project_id
         net_i.db.network_name        = network.name
@@ -451,6 +462,8 @@ class NetworkService(HydraService):
 
         group_id_map = dict()
 
+        #record which groups existed before the update, so groups that are no longer
+        #sent are removed.
         all_items_before = []
         #Next all the groups
         for group in network.resourcegroups:
@@ -458,22 +471,22 @@ class NetworkService(HydraService):
             #If we get a negative or null group id, we know
             #it is a new node.
             if group.id is not None and group.id > 0:
-                g = net_i.get_group(group.id)
-                g.db.group_name        = group.name
-                g.db.group_description = group.description
-                g.db.status           = group.status
+                g_i = net_i.get_group(group.id)
+                g_i.db.group_name        = group.name
+                g_i.db.group_description = group.description
+                g_i.db.status           = group.status
             else:
-                g = net_i.add_group(group.name,
+                g_i = net_i.add_group(group.name,
                                    group.description,
                                    group.status)
-            g.save()
+            g_i.save()
 
-            group_attr_id_map = _update_attributes(g, group.attributes)
-            _add_resource_types(g, group.templates)
+            group_attr_id_map = _update_attributes(g_i, group.attributes)
+            _add_resource_types(g_i, group.templates)
             resource_attr_id_map.update(group_attr_id_map)
 
-            group_id_map[group.id] = g.db.group_id
-            for item in g.resourcegroupitems:
+            group_id_map[group.id] = g_i.db.group_id
+            for item in g_i.resourcegroupitems:
                 all_items_before.append(item.db.item_id)
 
         all_items_after = []
@@ -549,10 +562,11 @@ class NetworkService(HydraService):
         user.
         """
         success = True
-        x = HydraIface.Network(network_id = network_id)
-        x.db.status = 'X'
-        x.save()
-        x.commit()
+        net_i = HydraIface.Network(network_id = network_id)
+        net_i.check_read_permission(ctx.in_header.user_id)
+        net_i.db.status = 'X'
+        net_i.save()
+        net_i.commit()
 
         hdb.commit()
         return success
@@ -593,19 +607,22 @@ class NetworkService(HydraService):
         """
         node = None
 
-        x = HydraIface.Node()
-        x.db.network_id = network_id
-        x.db.node_name = node.name
-        x.db.node_x    = node.x
-        x.db.node_y    = node.y
-        x.db.node_description = node.description
-        x.save()
+        net_i = HydraIface.Network(network_id = network_id)
+        net_i.check_write_permission(ctx.in_header.user_id)
+        
+        node_i = HydraIface.Node()
+        node_i.db.network_id = network_id
+        node_i.db.node_name = node.name
+        node_i.db.node_x    = node.x
+        node_i.db.node_y    = node.y
+        node_i.db.node_description = node.description
+        node_i.save()
 
-        _add_attributes(x, node.attributes)
-        _add_resource_types(x, node.templates)
+        _add_attributes(node_i, node.attributes)
+        _add_resource_types(node_i, node.templates)
 
         hdb.commit()
-        node = x.get_as_complexmodel()
+        node = node_i.get_as_complexmodel()
 
         return node
 
@@ -648,7 +665,12 @@ class NetworkService(HydraService):
         """
         node = None
 
+        
         x = HydraIface.Node(node_id = node.id)
+        
+        net_i = HydraIface.Network(network_id = x.db.network_id)
+        net_i.check_write_permission(ctx.in_header.user_id)
+        
         x.db.node_name = node.name
         x.db.node_x    = node.x
         x.db.node_y    = node.y
@@ -684,6 +706,10 @@ class NetworkService(HydraService):
         """
         success = True
         x = HydraIface.Node(node_id = node_id)
+        
+        net_i = HydraIface.Network(network_id=x.db.network_id)
+        net_i.check_write_permission(ctx.in_header.user_id)
+
         x.db.status = 'X'
         x.save()
         x.commit()
@@ -701,6 +727,10 @@ class NetworkService(HydraService):
 
         """
         x = HydraIface.Node(node_id = node_id)
+        
+        net_i = HydraIface.Network(network_id=x.db.network_id)
+        net_i.check_write_permission(ctx.in_header.user_id)
+        
         x.delete(purge_data=purge_data)
         x.save()
         x.commit()
@@ -712,7 +742,11 @@ class NetworkService(HydraService):
             Add a link to a network
         """
 
+        net_i = HydraIface.Network(network_id=network_id)
+        net_i.check_write_permission(ctx.in_header.user_id)
+        
         x = HydraIface.Link()
+
         x.db.network_id = network_id
         x.db.link_name = link.name
         x.db.node_1_id = link.node_1_id
@@ -734,6 +768,10 @@ class NetworkService(HydraService):
             Update a link.
         """
         x = HydraIface.Link(link_id = link.id)
+        
+        net_i = HydraIface.Network(network_id=x.db.network_id)
+        net_i.check_write_permission(ctx.in_header.user_id)
+        
         x.db.link_name = link.name
         x.db.node_1_id = link.node_1_id
         x.db.node_2_id = link.node_2_id
@@ -753,6 +791,10 @@ class NetworkService(HydraService):
         """
         success = True
         x = HydraIface.Link(link_id = link_id)
+        
+        net_i = HydraIface.Network(network_id=x.db.network_id)
+        net_i.check_write_permission(ctx.in_header.user_id)
+        
         x.db.status = 'X'
         x.save()
         x.commit()
@@ -768,6 +810,10 @@ class NetworkService(HydraService):
             will be deleted.
         """
         x = HydraIface.Link(link_id = link_id)
+        
+        net_i = HydraIface.Network(network_id=x.db.network_id)
+        net_i.check_write_permission(ctx.in_header.user_id)
+        
         x.delete(purge_data=purge_data)
         x.save()
         x.commit()
@@ -778,6 +824,9 @@ class NetworkService(HydraService):
         """
             Add a resourcegroup to a network
         """
+
+        net_i = HydraIface.Network(network_id=network_id)
+        net_i.check_write_permission(ctx.in_header.user_id)
 
         x = HydraIface.ResourceGroup()
         x.db.network_id = network_id
@@ -800,6 +849,9 @@ class NetworkService(HydraService):
             Get all the scenarios in a given network.
         """
         net = HydraIface.Network(network_id=network_id)
+        
+        net_i = HydraIface.Network(network_id=network_id)
+        net_i.check_read_permission(ctx.in_header.user_id)
 
         net.load_all()
 
@@ -817,6 +869,9 @@ class NetworkService(HydraService):
             Check for the presence of orphan nodes in a network.
         """
 
+        net_i = HydraIface.Network(network_id=network_id)
+        net_i.check_read_permission(ctx.in_header.user_id)
+        
         net_i = HydraIface.Network(network_id=network_id)
         net_i.load_all()
 

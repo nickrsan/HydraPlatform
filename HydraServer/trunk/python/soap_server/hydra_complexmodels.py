@@ -81,6 +81,14 @@ def get_array(arr):
 
     return current_level
 
+
+class LoginResponse(ComplexModel):
+    __namespace__ = 'soap_server.hydra_complexmodels'
+    _type_info = [
+        ('session_id', String(min_occurs=1)),
+        ('user_id',    Integer(min_occurs=1)),
+    ]
+
 class HydraComplexModel(ComplexModel):
     __namespace__ = 'soap_server.hydra_complexmodels'
     error = String()
@@ -169,6 +177,7 @@ class Template(HydraComplexModel):
         ('id',                    Integer(default=None)),
         ('name',                  String(default=None)),
         ('alias',                 String(default=None)),
+        ('layout',                String(default=None)),
         ('group_id',              Integer(min_occurs=1, default=None)),
         ('templateitems', SpyneArray(TemplateItem, default=[])),
     ]
@@ -340,6 +349,8 @@ class Network(Resource):
         ('id',                  Integer(default=None)),
         ('name',                String(default=None)),
         ('description',         String(min_occurs=1, default=None)),
+        ('created_by',          Integer(default=None)),
+        ('cr_date',             String(default=None)),
         ('layout',              String(min_occurs=1, default=None)),
         ('status',              String(default='A')),
         ('attributes',          SpyneArray(ResourceAttr, default=[])),
@@ -373,8 +384,8 @@ class ProjectSummary(Resource):
         ('id',          Integer(default=None)),
         ('name',        String(default=None)),
         ('cr_date',     String(default=None)),
+        ('created_by',  Integer(default=None)),
     ]
-
 
 class User(HydraComplexModel):
     _type_info = [
@@ -399,7 +410,6 @@ class RolePerm(HydraComplexModel):
         ('perm_id',   Integer),
     ]
 
-
 class Role(HydraComplexModel):
     _type_info = [
         ('id',     Integer),
@@ -421,11 +431,13 @@ class Plugin(HydraComplexModel):
         ('params',      SpyneArray(PluginParam, default=[])),
     ]
 
-
-class ProjectOwner(HydraComplexModel):
+class Owner(HydraComplexModel):
     _type_info = [
-        ('project_id',   Integer),
-        ('user_id',   Integer),
+        ('ref_id',   Integer),
+        ('ref_key',  String),
+        ('user_id',  Integer),
+        ('edit',     String),
+        ('view',     String)
     ]
 
 class DatasetOwner(HydraComplexModel):

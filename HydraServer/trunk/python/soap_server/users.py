@@ -37,6 +37,25 @@ class UserService(HydraService):
 
         return user_i.get_as_complexmodel()
 
+    @rpc(String, _returns=User)
+    def get_user_by_name(ctx, username):
+        """
+            Add a new user.
+        """
+        user_i = HydraIface.User()
+        
+        user_i.db.username = username
+        
+        user_id = user_i.get_user_id()
+
+        #If the user is already there, cannot add another with 
+        #the same username.
+        if user_id is not None:
+            user_i.load_all()
+            return user_i.get_as_complexmodel()
+        
+        return None
+
     @rpc(User, _returns=String)
     def delete_user(ctx, user):
         """

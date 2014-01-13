@@ -323,19 +323,23 @@ class ScenarioService(HydraService):
             s2_items.append((s2_item.db.group_id, s2_item.db.ref_key, s2_item.db.ref_id))
 
         groupdiff = ResourceGroupDiff()
+        scenario_1_items = []
+        scenario_2_items = []
         for s1_only_item in set(s1_items) - set(s2_items):
             item = ResourceGroupItem()
             item.group_id = s1_only_item[0]
             item.ref_key  = s1_only_item[1]
             item.ref_id   = s1_only_item[2]
-            groupdiff.scenario_1_items.append(item)
+            scenario_1_items.append(item)
         for s2_only_item in set(s2_items) - set(s1_items):
             item = ResourceGroupItem()
             item.group_id = s2_only_item[0]
             item.ref_key  = s2_only_item[1]
             item.ref_id   = s2_only_item[2]
-            groupdiff.scenario_2_items.append(item)
-
+            scenario_2_items.append(item)
+        
+        groupdiff.scenario_1_items = scenario_1_items
+        groupdiff.scenario_2_items = scenario_2_items
         scenariodiff.groups = groupdiff
 
         #The next comparison is of constraints.

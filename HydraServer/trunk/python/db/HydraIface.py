@@ -66,6 +66,28 @@ def get_data_from_hash(data_hash):
     else:
         return None
 
+def validate_layout(layout_xml):
+    """
+        Using layout.xsd, validate a piece of layout xml
+    """
+    if layout_xml is None or layout_xml == "":
+        logging.info("No layout information to validate")
+        return
+
+    xmlschema_doc = etree.parse(LAYOUT_XSD_PATH)
+
+    xmlschema = etree.XMLSchema(xmlschema_doc)
+
+    logging.info(layout_xml)
+    try:
+        xml_tree = etree.fromstring(layout_xml)
+
+        xmlschema.assertValid(xml_tree)
+    except etree.LxmlError, e:
+        raise HydraError("Layout XML did not validate!: Error was: %s"%(e))
+
+
+
 class GenericResource(IfaceBase):
     """
         A superclass for all 'resource' types -- Network, Node, Link, Scenario and Project.
@@ -322,22 +344,7 @@ class GenericResource(IfaceBase):
         return group_dict
 
     def validate_layout(self, layout_xml):
-
-        if layout_xml is None or layout_xml == "":
-            logging.info("No layout information to validate")
-            return
-
-        xmlschema_doc = etree.parse(LAYOUT_XSD_PATH)
-
-        xmlschema = etree.XMLSchema(xmlschema_doc)
-
-        logging.info(layout_xml)
-        try:
-            xml_tree = etree.fromstring(layout_xml)
-
-            xmlschema.assertValid(xml_tree)
-        except etree.LxmlError, e:
-            raise HydraError("Layout XML did not validate!: Error was: %s"%(e))
+        validate_layout(layout_xml)
 
     def get_as_complexmodel(self, time=False):
         """
@@ -386,6 +393,125 @@ class GenericResource(IfaceBase):
             logging.info("Complex model conversion of %s took: %s " % (self.name, datetime.datetime.now()-start))
 
         return cm
+    
+    def set_ownership(self, user_id, read='Y', write='Y', share='Y'):
+        owner = Owner()
+        owner.db.ref_key = self.ref_key
+        
+        if self.ref_key not in ('PROJECT', 'NETWORK'):
+            raise HydraError("Only resources of type NETWORK and PROJECT may have an owner.")
+
+        owner.db.ref_id = self.ref_id
+        owner.db.user_id = int(user_id)
+        owner.load()
+        owner.db.view  = read
+        owner.db.edit  = write
+        owner.db.share = share
+
+        owner.save()
+
+        return owner
+
+    def get_owners(self):
+        if self.ref_key not in ('PROJECT', 'NETWORK'):
+            return []
+      
+        sql = """
+            select
+                user_id
+            from
+                tOwner
+            where
+                ref_key = '%s'
+            and ref_id  = %s
+        """%(self.ref_key, self.ref_id)
+
+        rs = execute(sql)
+
+        return [r.user_id for r in rs]
+
+    def check_read_permission(self, user_id):
+        """
+            Check whether this user can read this network
+        """
+
+        if self.ref_key not in ('PROJECT', 'NETWORK'):
+            return
+      
+        sql = """
+            select
+                user_id
+            from
+                tOwner
+            where
+                ref_key = '%s'
+            and ref_id  = %s
+            and view    = 'Y'
+            and user_id = %s
+        """%(self.ref_key, self.ref_id, user_id)
+
+        rs = execute(sql)
+
+        if len(rs) == 0:
+            raise HydraError("Permission denied. User %s does not have read"
+                             " access on %s %s" % 
+                             (user_id, self.ref_key, self.ref_id))
+
+    def check_write_permission(self, user_id):
+        """
+            Check whether this user can read this network
+        """
+
+        if self.ref_key not in ('PROJECT', 'NETWORK'):
+            return
+      
+        sql = """
+            select
+                user_id
+            from
+                tOwner
+            where
+                ref_key = '%s'
+            and ref_id  = %s
+            and view    = 'Y'
+            and edit    = 'Y'
+            and user_id = %s
+        """%(self.ref_key, self.ref_id, user_id)
+
+        rs = execute(sql)
+
+        if len(rs) == 0:
+            raise HydraError("Permission denied. User %s does not have write"
+                             " access on %s %s" % 
+                             (user_id, self.ref_key, self.ref_id))
+
+    def check_share_permission(self, user_id):
+        """
+            Check whether this user can read this network
+        """
+
+        if self.ref_key not in ('PROJECT', 'NETWORK'):
+            return
+      
+        sql = """
+            select
+                user_id
+            from
+                tOwner
+            where
+                ref_key = '%s'
+            and ref_id  = %s
+            and view    = 'Y'
+            and share   = 'Y'
+            and user_id = %s
+        """%(self.ref_key, self.ref_id, user_id)
+
+        rs = execute(sql)
+
+        if len(rs) == 0:
+            raise HydraError("Permission denied. User %s does not have share"
+                             " access on %s %s" % 
+                             (user_id, self.ref_key, self.ref_id))
 
 class Project(GenericResource):
     """
@@ -416,6 +542,47 @@ class Scenario(GenericResource):
         self.db.scenario_id = scenario_id
         if scenario_id is not None:
             self.load()
+    
+    def get_as_complexmodel(self):
+        cm = super(Scenario, self).get_as_complexmodel()
+        sql = """
+            select
+                item_id
+            from
+                tResourceGroupItem
+            where
+                scenario_id = %s
+        """ % (self.db.scenario_id)
+
+        rs = execute(sql)
+        resourcegroupitems = []
+        for r in rs:
+            item_i = ResourceGroupItem(item_id = r.item_id)
+            item_i.load()
+            resourcegroupitems.append(item_i.get_as_complexmodel())
+        cm.resourcegroupitems = resourcegroupitems
+
+        return cm
+
+    def get_resource_items(self):
+        self.resourcegroupitems = []
+        sql = """
+            select
+                item_id
+            from
+                tResourceGroupItem
+            where
+                scenario_id = %s
+        """ % (self.db.scenario_id)
+
+        rs = execute(sql)
+
+        for r in rs:
+            item_i = ResourceGroupItem(item_id = r.item_id)
+            item_i.load()
+            self.resourcegroupitems.append(item_i)
+        
+        return self.resourcegroupitems
 
 class Network(GenericResource):
     """
@@ -684,6 +851,45 @@ class ResourceAttr(IfaceBase):
         """
         return self.resourcescenarios
 
+    def get_constraint_items(self):
+        sql = """
+            select
+                item_id
+            from
+                tConstraintItem
+            where
+                resource_attr_id = %s
+        """ % (self.db.resource_attr_id)
+
+        rs = execute(sql)
+        constraintitems = []
+        for r in rs:
+            item_i = ConstraintItem(item_id = r.item_id)
+            item_i.load()
+            constraintitems.append(item_i)
+
+        return constraintitems
+            
+    def get_resource_scenarios(self):
+        sql = """
+            select
+                scenario_id
+            from
+                tResourceScenario
+            where
+                resource_attr_id = %s
+        """ % (self.db.resource_attr_id)
+
+        rs = execute(sql)
+        resourcescenarios = []
+        for r in rs:
+            resource_scenario = ResourceScenario(scenario_id=r.scenario_id, resource_attr_id = self.db.resource_attr_id)
+            resource_scenario.load()
+            resourcescenarios.append(resource_scenario)
+
+        return resourcescenarios
+
+
     def delete(self, purge_data=False):
             #If there are any constraints associated with this resource attribute, it cannot be deleted
             if len(self.constraintitems) > 0:
@@ -776,6 +982,7 @@ class Template(IfaceBase):
         tmp =  hydra_complexmodels.Template()
         tmp.name = self.db.template_name
         tmp.alias = self.db.alias
+        tmp.layout = self.db.layout
         tmp.id = self.db.template_id
         tmp.group_id   = self.db.group_id
 
@@ -1651,28 +1858,17 @@ class RolePerm(IfaceBase):
         if perm_id is not None and role_id is not None:
             self.load()
 
-class ProjectOwner(IfaceBase):
+class Owner(IfaceBase):
     """
        Ownership for a project.
     """
-    def __init__(self, project=None, user_id = None, project_id = None):
-        IfaceBase.__init__(self, project, self.__class__.__name__)
+    def __init__(self, user_id = None, ref_key = None, ref_id = None):
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.user_id = user_id
-        self.db.project_id = project_id
-        if user_id is not None and project_id is not None:
-            self.load()
-
-class DatasetOwner(IfaceBase):
-    """
-        Ownership for a piece of data
-    """
-    def __init__(self, dataset=None, user_id = None, dataset_id = None):
-        IfaceBase.__init__(self, dataset, self.__class__.__name__)
-
-        self.db.user_id = user_id
-        self.db.dataset_id = dataset_id
-        if user_id is not None and dataset_id is not None:
+        self.db.ref_key = ref_key
+        self.db.ref_id  = ref_id
+        if user_id is not None and ref_key is not None and ref_id is not None:
             self.load()
 
 db_hierarchy = dict(
@@ -1710,7 +1906,10 @@ db_hierarchy = dict(
         obj    = Scenario,
         parent = 'network',
         table_name = 'tScenario',
-        pk     = ['scenario_id']
+        pk     = ['scenario_id'],
+        attr_funcs = {
+            'resourcegroupitems' : Scenario.get_resource_items
+        }
     ),
     attr  = dict(
         obj   = Attr,
@@ -1728,7 +1927,11 @@ db_hierarchy = dict(
         obj   = ResourceAttr,
         parent = 'attr',
         table_name = 'tResourceAttr',
-        pk     = ['resource_attr_id']
+        pk     = ['resource_attr_id'],
+        attr_funcs = {
+            'constraintitems'   : ResourceAttr.get_constraint_items,
+            'resourcescenarios' : ResourceAttr.get_resource_scenarios
+        }
     ),
     template  = dict(
         obj   = Template,
@@ -1780,7 +1983,7 @@ db_hierarchy = dict(
     ),
     datasetgroupitem = dict(
         obj        = DatasetGroupItem,
-        parent     = DatasetGroup,
+        parent     = 'datasetgroup',
         table_name = 'tDatasetGroupItem',
         pk         = ['group_id', 'dataset_id'],
     ),
@@ -1874,16 +2077,10 @@ db_hierarchy = dict(
         table_name = 'tRolePerm',
         pk     = ['perm_id', 'role_id']
     ),
-    projectowner  = dict(
-        obj   = ProjectOwner,
-        parent = 'project',
-        table_name = 'tProjectOwner',
+    owner  = dict(
+        obj   = Owner,
+        parent = None,
+        table_name = 'tOwner',
         pk     = ['user_id', 'project_id']
-    ),
-    datasetowner  = dict(
-        obj   = DatasetOwner,
-        parent = 'dataset',
-        table_name = 'tDatasetOwner',
-        pk     = ['user_id', 'dataset_id']
     ),
 )

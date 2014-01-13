@@ -180,6 +180,18 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         template = self.client.factory.create('hyd:Template')
         template.name = "Test template name @ %s"%(datetime.datetime.now())
         template.alias = "%s alias" % template.name
+        template.layout = """
+            <resource_layout>
+                <layout>
+                    <name>color</name>
+                    <value>red</value>
+                </layout>
+                <layout>
+                    <name>shapefile</name>
+                    <value>blah.shp</value>
+                </layout>
+            </resource_layout>
+        """
 
         items = self.client.factory.create('hyd:TemplateItemArray')
         
@@ -201,6 +213,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         
         assert new_template.name == template.name, "Names are not the same!"
         assert new_template.alias == template.alias, "Aliases are not the same!"
+        assert new_template.layout == template.layout, "Layouts are not the same!"
         assert new_template.id is not None, "New template has no ID!"
         assert new_template.id > 0, "New template has incorrect ID!"
 

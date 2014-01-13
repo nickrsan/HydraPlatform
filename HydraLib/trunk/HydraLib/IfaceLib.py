@@ -79,6 +79,16 @@ class IfaceBase(object):
         self.deleted = True
         self.in_db   = False
 
+    def __getattr__(self, name):
+        try:
+            self.__getattribute__(name)
+        except:
+            attr_funcs = self.db.db_hierarchy.get(self.name.lower()).get('attr_funcs', {})
+            if attr_funcs.get(name) is not None:
+                return attr_funcs.get(name)(self)
+            else:
+                raise
+
     def save(self):
         """
             Call the appropriate insert or update function, depending on
@@ -116,10 +126,12 @@ class IfaceBase(object):
         for name, rows in children.items():
             #turn 'link' into 'links'
             attr_name              = name[1:].lower() + 's'
-            #if it's not already set, set it to a default []
-            if hasattr(self, attr_name) is False:
-                self.__setattr__(attr_name, [])
-                self.children.append(attr_name)
+            
+            if self.db.db_hierarchy.get(name[1:].lower())['parent'] == self.name.lower():
+                #if it's not already set, set it to a default []
+                if hasattr(self, attr_name) is False:
+                    self.__setattr__(attr_name, [])
+                    self.children.append(attr_name)
         return children
 
     def load_children(self):
@@ -128,28 +140,35 @@ class IfaceBase(object):
 
         child_rs = self.db.load_children(self.child_info)
         for name, rows in child_rs.items():
-            #turn 'tLink' into 'links'
-            attr_name              = name[1:].lower() + 's'
+            #Check if I am actually set as a parent to the children I have
+            #identified (a child may have only one parent, hence this check)
+            parent = self.db.db_hierarchy[name[1:].lower()]['parent']
+            if parent is not None and parent.lower() == self.name.lower():
+                #turn 'tLink' into 'links'
+                attr_name              = name[1:].lower() + 's'
+                child_objs = []
+                for row in rows:
+                    #I am referenced by foreign key, but I may not be the parent; example
+                    #a project and network reference a user for created_by but
+                    #are not children of a user. So we must check that the parent relationship
+                    #this is set explicitly.
+                    child_obj = self.db.db_hierarchy[name[1:].lower()]['obj'](self)
 
-            child_objs = []
-            for row in rows:
-                child_obj = self.db.db_hierarchy[name[1:].lower()]['obj'](self)
+                    child_obj.parent = self
+                    child_obj.__setattr__(self.name.lower(), self)
+                    for col, val in row:
+                        child_obj.db.__setattr__(col, val)
 
-                child_obj.parent = self
-                child_obj.__setattr__(self.name.lower(), self)
-                for col, val in row:
-                    child_obj.db.__setattr__(col, val)
+                    child_obj.in_db = True
 
-                child_obj.in_db = True
+                    child_obj.load_all()
 
-                child_obj.load_all()
+                    child_objs.append(child_obj)
 
-                child_objs.append(child_obj)
-
-            #ex: set network.links = [link1, link2, link3]
-            self.__setattr__(attr_name, child_objs)
-            #ex: self.children.append('links')
-            self.children.append(attr_name)
+                #ex: set network.links = [link1, link2, link3]
+                self.__setattr__(attr_name, child_objs)
+                #ex: self.children.append('links')
+                self.children.append(attr_name)
 
     def get_parent(self):
         if self.parent is None:
@@ -167,8 +186,10 @@ class IfaceBase(object):
             Converts this object into a spyne.model.ComplexModel type
             which can be used by the soap library.
         """
+
         #first create the appropriate soap complex model
         cm = getattr(hydra_complexmodels, self.name)()
+
         #If self is not in the DB, then return an empty
         #complex model.
         if self.in_db is False:
@@ -199,5 +220,3 @@ class IfaceBase(object):
             setattr(cm, name, child_objs) 
 
         return cm
-
-

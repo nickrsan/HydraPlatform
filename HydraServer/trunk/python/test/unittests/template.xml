@@ -5,6 +5,19 @@
             <type>NODE</type>
             <name>Reservoir</name>
             <alias>Reservoir</alias>
+            <layout>
+                <![CDATA[
+                    <resource_layout>
+                        <layout>
+                            <name>color</name>
+                            <value>red</value>
+                        </layout>
+                        <layout>
+                            <name>shapefile</name>
+                            <value>blah.shp</value>
+                        </layout>
+                    </resource_layout>]]>
+            </layout>
             <attribute>
                 <name>Min Capacity</name>
                 <dimension>Volume</dimension>

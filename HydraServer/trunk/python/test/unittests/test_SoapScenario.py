@@ -242,7 +242,6 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         new_scenario = self.client.service.clone_scenario(scenario_id)
 
-
         self.create_constraint(network, constant=4)
 
         resource_scenario = new_scenario.resourcescenarios.ResourceScenario[0]
@@ -269,8 +268,16 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         updated_network = self.client.service.get_network(new_scenario.network_id)
 
         scenarios = updated_network.scenarios.Scenario
+        
+        scenario_1 = None
+        scenario_2 = None
+        for s in scenarios:
+            if s.id == new_scenario.id:
+                scenario_1 = s 
+            else:
+                scenario_2 = s
 
-        scenario_diff = self.client.service.compare_scenarios(scenarios[0].id, scenarios[1].id)
+        scenario_diff = self.client.service.compare_scenarios(scenario_1.id, scenario_2.id)
         
         print "Comparison result: %s"%(scenario_diff)
 
@@ -278,11 +285,10 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         assert len(scenario_diff.constraints.common_constraints) == 1; "Constraint comparison was not successful!"
         
-        assert len(scenario_diff.constraints.scenario_1_constraints) == 1; "Constraint comparison was not successful!"
+        assert len(scenario_diff.constraints.scenario_2_constraints) == 1; "Constraint comparison was not successful!"
 
-
-        assert len(scenario_diff.groups.scenario_1_items) == 1; "Group comparison was not successful!"
-        assert scenario_diff.groups.scenario_2_items is None; "Group comparison was not successful!"
+        assert len(scenario_diff.groups.scenario_2_items) == 1; "Group comparison was not successful!"
+        assert scenario_diff.groups.scenario_1_items is None; "Group comparison was not successful!"
 
 
 if __name__ == '__main__':
