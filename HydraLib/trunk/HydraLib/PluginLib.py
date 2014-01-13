@@ -283,10 +283,13 @@ def connect():
     user = config.get('hydra_client', 'user')
     passwd = config.get('hydra_client', 'password')
     cli = Client(url, timeout=2400, plugins=[FixNamespace()])
-    session_id = cli.service.login(user, passwd)
+    login_response = cli.service.login(user, passwd)
+    user_id = login_response.user_id
+    session_id = login_response.session_id
     token = cli.factory.create('RequestHeader')
     token.session_id = session_id
     token.username = user
+    token.user_id = user_id
     cli.set_options(soapheaders=token)
     cli.add_prefix('hyd', 'soap_server.hydra_complexmodels')
 

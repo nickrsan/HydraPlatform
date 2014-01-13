@@ -5,7 +5,7 @@ import logging
 import shutil
 import os
 
-from HydraLib import hydra_logging, config 
+from HydraLib import hydra_logging, config
 
 from suds.client import Client
 from suds.plugin import MessagePlugin
@@ -30,7 +30,7 @@ def connect(login=True):
     port = config.getint('hydra_server', 'port')
     url = 'http://localhost:%s?wsdl' % port
     client = Client(url, plugins=[FixNamespace()])
-    
+
     client.add_prefix('hyd', 'soap_server.hydra_complexmodels')
     global CLIENT
     CLIENT = client
@@ -47,11 +47,11 @@ class SoapServerTest(unittest.TestCase):
         global CLIENT
         if CLIENT is None:
             connect()
-        
+
         self.client = CLIENT
 
         self.login('root', '')
-        
+
 
     def tearDown(self):
         logging.debug("Tearing down")
@@ -68,7 +68,7 @@ class SoapServerTest(unittest.TestCase):
         token.session_id = session_id
         token.username = username
         token.user_id  = user_id
-      
+
         self.client.set_options(cache=None, soapheaders=token)
 
     def logout(self, username):
@@ -79,7 +79,7 @@ class SoapServerTest(unittest.TestCase):
 
         existing_user = self.client.service.get_user_by_name(name)
         if existing_user is not None:
-            return existing_user 
+            return existing_user
 
         user = self.client.factory.create('hyd:User')
         user.username = name
@@ -130,7 +130,7 @@ class SoapServerTest(unittest.TestCase):
         attr = self.client.service.get_attribute(name)
         if attr is None:
             attr       = self.client.factory.create('hyd:Attr')
-            attr.name  = name 
+            attr.name  = name
             attr.dimen = 'dimensionless'
             attr = self.client.service.add_attribute(attr)
         return attr
@@ -139,8 +139,8 @@ class SoapServerTest(unittest.TestCase):
         """
             Test adding data to a network through a scenario.
             This test adds attributes to one node and then assignes data to them.
-            It assigns a descriptor, array and timeseries to the 
-            attributes node. 
+            It assigns a descriptor, array and timeseries to the
+            attributes node.
         """
         start = datetime.datetime.now()
         if project_id is None:
@@ -190,12 +190,12 @@ class SoapServerTest(unittest.TestCase):
         node_attr4.attr_id = attr4.id
         node_attr4.id      = -4
         node_attr4.attr_is_var = 'Y'
-        
+
         group_attr         = self.client.factory.create('hyd:ResourceAttr')
         group_attr.attr_id = attr5.id
         group_attr.id      = -5
 
-        
+
         attr_array.ResourceAttr.append(node_attr1)
         attr_array.ResourceAttr.append(node_attr2)
         attr_array.ResourceAttr.append(node_attr3)
@@ -235,7 +235,7 @@ class SoapServerTest(unittest.TestCase):
         group.name        = "Test Group"
         group.description = "Test group description"
 
-        group.attributes = group_attrs 
+        group.attributes = group_attrs
 
         group_array.ResourceGroup.append(group)
 
@@ -261,7 +261,7 @@ class SoapServerTest(unittest.TestCase):
         descriptor = self.create_descriptor(node_attrs.ResourceAttr[0])
         timeseries = self.create_timeseries(node_attrs.ResourceAttr[1])
         array      = self.create_array(node_attrs.ResourceAttr[2])
-        
+
         grp_timeseries = self.create_timeseries(group_attrs.ResourceAttr[0])
 
         scenario_data.ResourceScenario.append(descriptor)
@@ -323,7 +323,7 @@ class SoapServerTest(unittest.TestCase):
         dataset.name = 'Max Capacity'
         dataset.unit = 'metres / second'
         dataset.dimension = 'number of units per time unit'
-        
+
         descriptor = self.client.factory.create('hyd:Descriptor')
         descriptor.desc_val = val
 
@@ -343,7 +343,7 @@ class SoapServerTest(unittest.TestCase):
         scenario_attr.resource_attr_id = ResourceAttr.id
 
         dataset = self.client.factory.create('hyd:Dataset')
-        
+
         dataset.type = 'timeseries'
         dataset.name = 'my time series'
         dataset.unit = 'feet cubed'
@@ -373,7 +373,7 @@ class SoapServerTest(unittest.TestCase):
 
         scenario_attr.attr_id = ResourceAttr.attr_id
         scenario_attr.resource_attr_id = ResourceAttr.id
-        
+
         dataset = self.client.factory.create('hyd:Dataset')
         dataset.type = 'array'
         dataset.name = 'my array'
@@ -382,7 +382,7 @@ class SoapServerTest(unittest.TestCase):
 
         arr = self.client.factory.create('hyd:Array')
         arr.arr_data = str([[[1, 2, 3], [5, 4, 6]],[[10, 20, 30], [40, 50, 60]]])
-        
+
         dataset.value = arr
 
         scenario_attr.value = dataset
@@ -405,7 +405,7 @@ class SoapServerTest(unittest.TestCase):
         #Innermost group first (A + 5)
         group_3 = self.client.factory.create('hyd:ConstraintGroup')
         group_3.op = '+'
-        
+
         item_1 = self.client.factory.create('hyd:ConstraintItem')
         item_1.resource_attr_id = net.nodes.Node[0].attributes.ResourceAttr[0].id
         item_2 = self.client.factory.create('hyd:ConstraintItem')
@@ -415,23 +415,23 @@ class SoapServerTest(unittest.TestCase):
         group_3_items = self.client.factory.create('hyd:ConstraintItemArray')
         group_3_items.ConstraintItem.append(item_1)
         group_3_items.ConstraintItem.append(item_2)
-        
+
         group_3.constraintitems = group_3_items
 
         #Then the next group out (group_1 * B)
         #Group 2 (which has both an item and a group)
         group_2 = self.client.factory.create('hyd:ConstraintGroup')
-        group_2.op = '*' 
+        group_2.op = '*'
 
         item_3 = self.client.factory.create('hyd:ConstraintItem')
         item_3.resource_attr_id = net.nodes.Node[0].attributes.ResourceAttr[1].id
-       
+
         group_2_items = self.client.factory.create('hyd:ConstraintItemArray')
         group_2_items.ConstraintItem.append(item_3)
-        
+
         group_2_groups = self.client.factory.create('hyd:ConstraintGroupArray')
         group_2_groups.ConstraintGroup.append(group_3)
-        
+
         group_2.constraintgroups = group_2_groups
         group_2.constraintitems  = group_2_items
 
@@ -459,7 +459,7 @@ class SoapServerTest(unittest.TestCase):
         constraint.constant = 0
 
         constraint.constraintgroup = group_1
-       
+
         test_constraint = self.client.service.add_constraint(net.scenarios[0][0].id, constraint)
         return test_constraint
 
