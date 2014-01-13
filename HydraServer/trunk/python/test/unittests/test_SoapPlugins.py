@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -14,7 +13,7 @@ class PluginsTest(test_SoapServer.SoapServerTest):
 
     def run_plugin(self):
         plugins = self.client.service.get_plugins()
-        
+
 
         plugin_etrees = []
         for plugin in plugins[0]:
@@ -32,7 +31,7 @@ class PluginsTest(test_SoapServer.SoapServerTest):
 
                 mandatory_args = ptree.find('mandatory_args')
                 args = mandatory_args.findall('arg')
-                
+
                 for arg in args:
                     plugin_param = self.client.factory.create('ns1:PluginParam')
                     plugin_param.name = arg.find('name').text
@@ -41,8 +40,8 @@ class PluginsTest(test_SoapServer.SoapServerTest):
 
                 PID = self.client.service.run_plugin(plugin)
                 print PID
-                
-                #Give the plugin a chance to execute. 
+
+                #Give the plugin a chance to execute.
                 import time
                 time.sleep(1)
 
