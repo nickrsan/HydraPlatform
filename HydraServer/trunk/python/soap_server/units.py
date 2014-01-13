@@ -26,9 +26,18 @@ class UnitService(HydraService):
         servers list of dimensions. If the dimension already exists, nothing is
         done.
         """
-        hydra_units.add_dimension(dimension)
+        result = hydra_units.add_dimension(dimension)
         hydra_units.save_user_file()
-        return True
+        return result
+
+    @rpc(String, _returns=Boolean)
+    def delete_dimension(ctx, dimension):
+        """Delete a physical dimension from the list of dimensions. Please note
+        that deleting works only for dimensions listed in the custom file.
+        """
+        result = hydra_units.delete_dimension(dimension)
+        hydra_units.save_user_file()
+        return result
 
     @rpc(Unit, _returns=Boolean)
     def add_unit(ctx, unit):

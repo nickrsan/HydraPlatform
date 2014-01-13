@@ -31,6 +31,8 @@ class Units(object):
     dimensions = dict()
     units = dict()
     userunits = []
+    userdimensions = []
+    static_dimensions = []
     unit_description = dict()
 
     def __init__(self):
@@ -47,12 +49,16 @@ class Units(object):
         with open(builtin_unitfile) as f:
             self.unittree = etree.parse(f).getroot()
 
+        for element in self.unittree:
+            self.static_dimensions.append(element.get('name'))
+
         if user_unitfile is not None:
             try:
                 with open(user_unitfile) as f:
                     self.usertree = etree.parse(f).getroot()
                 for element in self.usertree:
                     self.unittree.append(deepcopy(element))
+                    self.userdimensions.append(element.get('name'))
                     for subelement in element:
                         self.userunits.append(subelement.get('abbr'))
             except IOError:
@@ -138,6 +144,33 @@ class Units(object):
         if dimension not in self.dimensions.keys():
             self.usertree.append(etree.Element('dimension', name=dimension))
             self.dimensions.update({dimension: []})
+            self.userdimensions.append(dimension)
+            return True
+        else:
+            return False
+
+    def delete_dimension(self, dimension):
+        """Delete a dimension from the custom XML file.
+        """
+        if dimension in self.userdimensions:
+            # Delete units from the dimension
+            for unit in self.dimensions[dimension]:
+                if unit in self.userunits:
+                    delunit = {'abbr': unit, 'dimension': dimension}
+                    self.delete_unit(delunit)
+            # delete dimension from internal variables
+            idx = self.userdimensions.index(dimension)
+            del self.userdimensions[idx]
+            if dimension not in self.static_dimensions:
+                del self.dimensions[dimension]
+            # Delete dimension form XML tree
+            for element in self.usertree:
+                if element.get('name') == dimension:
+                    self.usertree.remove(element)
+                    break
+            return True
+        else:
+            return False
 
     def add_unit(self, dimension, unit):
         """Add a unit and conversion factor to a specific dimension. The new
@@ -153,6 +186,9 @@ class Units(object):
             self.unit_description.update({unit['abbr']: unit['name']})
             self.userunits.append(unit['abbr'])
             # Update XML tree
+            # 'info' is the only field that is allowed to be empty
+            if 'info' not in unit.keys() or unit['info'] is None:
+                unit['info'] = ''
             element_index = None
             for i, element in enumerate(self.usertree):
                 if element.get('name') == dimension:
@@ -170,6 +206,7 @@ class Units(object):
                                   lf=str(unit['lf']), cf=str(unit['cf']),
                                   info=unit['info']))
                 self.usertree.append(dimension_element)
+                self.userdimensions.append(dimension)
         else:
             return False
 
@@ -186,6 +223,8 @@ class Units(object):
                                (float(unit['lf']), float(unit['cf']))})
             self.unit_description.update({unit['abbr']: unit['name']})
             # Update XML tree
+            if 'info' not in unit.keys() or unit['info'] is None:
+                unit['info'] = ''
             element_index = None
             for i, element in enumerate(self.usertree):
                 if element.get('name') == dimension:
