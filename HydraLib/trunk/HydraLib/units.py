@@ -12,6 +12,7 @@ import config
 from lxml import etree
 import logging
 
+
 class Units(object):
     """
     This class provides functionality for unit conversion and checking of
@@ -33,6 +34,10 @@ class Units(object):
     unit_info = dict()
 
     def __init__(self):
+        default_user_file = \
+            os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                            'static',
+                            'user_units.xml')
         try:
             builtin_unitfile = \
                 os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -42,24 +47,29 @@ class Units(object):
         except NoSectionError:
             user_unitfile = None
 
+        if user_unitfile is None:
+            user_unitfile = default_user_file
+
         with open(builtin_unitfile) as f:
             self.unittree = etree.parse(f).getroot()
 
         for element in self.unittree:
             self.static_dimensions.append(element.get('name'))
 
-        if user_unitfile is not None:
-            try:
-                with open(user_unitfile) as f:
-                    self.usertree = etree.parse(f).getroot()
-                for element in self.usertree:
-                    self.unittree.append(deepcopy(element))
-                    self.userdimensions.append(element.get('name'))
-                    for subelement in element:
-                        self.userunits.append(subelement.get('abbr'))
-            except IOError:
-                logging.info("Custom unit conversion file '%s' does not exist."
-                             % user_unitfile)
+        try:
+            with open(user_unitfile) as f:
+                self.usertree = etree.parse(f).getroot()
+        except IOError:
+            logging.info(("Custom unit conversion file '%s' does not "
+                          + "exist, falling back to default file (%s).")
+                         % (user_unitfile, default_user_file))
+            with open(default_user_file) as f:
+                self.usertree = etree.parse(f).getroot()
+        for element in self.usertree:
+            self.unittree.append(deepcopy(element))
+            self.userdimensions.append(element.get('name'))
+            for subelement in element:
+                self.userunits.append(subelement.get('abbr'))
 
         for element in self.unittree:
             dimension = element.get('name')
@@ -178,16 +188,17 @@ class Units(object):
         if dimension in self.dimensions.keys() and \
                 unit['abbr'] not in self.dimensions[dimension]:
 
+            # 'info' is the only field that is allowed to be empty
+            if 'info' not in unit.keys() or unit['info'] is None:
+                unit['info'] = ''
             # Update internal variables:
             self.dimensions[dimension].append(unit['abbr'])
             self.units.update({unit['abbr']:
                                (float(unit['lf']), float(unit['cf']))})
             self.unit_description.update({unit['abbr']: unit['name']})
             self.userunits.append(unit['abbr'])
+            self.unit_info.update({unit['abbr']: unit['info']})
             # Update XML tree
-            # 'info' is the only field that is allowed to be empty
-            if 'info' not in unit.keys() or unit['info'] is None:
-                unit['info'] = ''
             element_index = None
             for i, element in enumerate(self.usertree):
                 if element.get('name') == dimension:

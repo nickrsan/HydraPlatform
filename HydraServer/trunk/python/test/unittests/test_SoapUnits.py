@@ -10,7 +10,6 @@ class UnitsTest(test_SoapServer.SoapServerTest):
     def test_get_dimensions(self):
 
         dimension_list = self.client.service.get_dimensions()
-        print dimension_list
         assert dimension_list is not None and len(dimension_list) != 0, \
             "Could not get a list of dimensions."
 
@@ -185,8 +184,9 @@ class UnitsTest(test_SoapServer.SoapServerTest):
         assert result2 is False, \
             "Unit consistency check didn't work."
 
-def setup():
-    test_SoapServer.connect()
+
+#def setup():
+#    test_SoapServer.connect()
 
 if __name__ == '__main__':
     test_SoapServer.run()
