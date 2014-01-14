@@ -138,6 +138,7 @@ class UnitService(HydraService):
             cm_unit.lf = unit['lf']
             cm_unit.cf = unit['cf']
             cm_unit.dimension = unit['dimension']
+            cm_unit.info = unit['info']
             complex_model_list.append(cm_unit)
         return complex_model_list
 

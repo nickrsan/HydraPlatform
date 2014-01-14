@@ -34,6 +34,7 @@ class Units(object):
     userdimensions = []
     static_dimensions = []
     unit_description = dict()
+    unit_info = dict()
 
     def __init__(self):
         try:
@@ -75,6 +76,8 @@ class Units(object):
                                     float(unit.get('cf')))})
                 self.unit_description.update({unit.get('abbr'):
                                               unit.get('name')})
+                self.unit_info.update({unit.get('abbr'):
+                                       unit.get('info')})
 
     def check_consistency(self, unit, dimension):
         """Check whether a specified unit is consistent with the physical
@@ -135,6 +138,7 @@ class Units(object):
             unitdict.update({'lf': self.units[unit][0]})
             unitdict.update({'cf': self.units[unit][1]})
             unitdict.update({'dimension': dimension})
+            unitdict.update({'info': self.unit_info[unit]})
             unitlist.append(unitdict)
         return unitlist
 
