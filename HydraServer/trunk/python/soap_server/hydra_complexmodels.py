@@ -398,6 +398,7 @@ class Perm(HydraComplexModel):
     _type_info = [
         ('id',   Integer),
         ('name', String),
+        ('code', String),
     ]
 
 class RoleUser(HydraComplexModel):
@@ -414,6 +415,7 @@ class Role(HydraComplexModel):
     _type_info = [
         ('id',     Integer),
         ('name',   String),
+        ('code',   String),
         ('roleperms', SpyneArray(RolePerm, default=[])),
         ('roleusers', SpyneArray(RoleUser, default=[])),
     ]

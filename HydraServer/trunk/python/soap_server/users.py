@@ -80,6 +80,7 @@ class UserService(HydraService):
         """
         role_i = HydraIface.Role()
         role_i.db.role_name = role.name
+        role_i.db.role_code = role.code
 
         role_i.save()
 
@@ -103,6 +104,7 @@ class UserService(HydraService):
         """
         perm_i = HydraIface.Perm()
         perm_i.db.perm_name = perm.name
+        perm_i.db.perm_code = perm.code
 
         perm_i.save()
 
@@ -163,6 +165,7 @@ class UserService(HydraService):
         """
         role_i = HydraIface.Role(role_id=role.id)
         role_i.db.role_name = role.name
+        role_i.db.role_code = role.code
 
         for perm in role.permissions:
             if hasattr('id', perm) and perm.id is not None:

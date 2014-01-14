@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -10,7 +9,7 @@ class UsersTest(test_SoapServer.SoapServerTest):
 
     def test_add_user(self):
         user = self.client.factory.create('hyd:User')
-        user.username = "test_user @ %s" % datetime.datetime.now()
+        user.username = "test_user @ %s" % (datetime.datetime.now())
         user.password = "test_user_password"
 
         new_user = self.client.service.add_user(user)
@@ -26,7 +25,8 @@ class UsersTest(test_SoapServer.SoapServerTest):
 
     def test_add_role(self):
         role = self.client.factory.create('hyd:Role')
-        role.name = "test_role"
+        role.name = "Test Role"
+        role.code = "test_role @ %s" % (datetime.datetime.now()) 
 
         new_role = self.client.service.add_role(role)
 
@@ -41,7 +41,8 @@ class UsersTest(test_SoapServer.SoapServerTest):
 
     def test_add_perm(self):
         perm = self.client.factory.create('hyd:Perm')
-        perm.name = "test_perm"
+        perm.name = "Test Perm"
+        perm.code = "test_perm @ %s" % (datetime.datetime.now())
 
         new_perm = self.client.service.add_perm(perm)
 
@@ -63,7 +64,8 @@ class UsersTest(test_SoapServer.SoapServerTest):
         new_user = self.client.service.add_user(user)
 
         role = self.client.factory.create('hyd:Role')
-        role.name = "test_role"
+        role.name = "Test Role"
+        role.code = "test_role @ %s"  % (datetime.datetime.now()) 
 
         new_role = self.client.service.add_role(role)
 
@@ -86,12 +88,14 @@ class UsersTest(test_SoapServer.SoapServerTest):
     def test_set_role_perm(self):
 
         role = self.client.factory.create('hyd:Role')
-        role.name = "test_role"
+        role.name = "Test Role"
+        role.code = "test_role @ %s"  % (datetime.datetime.now()) 
 
         new_role = self.client.service.add_role(role)
 
         perm = self.client.factory.create('hyd:Perm')
-        perm.name = "test_perm"
+        perm.name = "Test Perm"
+        perm.code = "test_perm @ %s" % (datetime.datetime.now()) 
 
         new_perm = self.client.service.add_perm(perm)
 

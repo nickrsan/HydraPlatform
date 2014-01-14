@@ -1,6 +1,7 @@
 import test_HydraIface
 import mysql.connector
 from db import HydraIface
+import datetime
 
 class UserTest(test_HydraIface.HydraIfaceTest):
  
@@ -43,18 +44,21 @@ class RoleTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         x = HydraIface.Role()
         x.db.role_name = "Unimportant users"
+        x.db.role_code = "Unimportant users @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
 
-        x.db.role_name = "Important users"
+        x.db.role_name = "Important users 1"
         x.save()
         x.commit()
         x.load()
-        assert x.db.role_name == "Important users", "Role did not update correctly"
+        assert x.db.role_name == "Important users 1", "Role did not update correctly"
+        x.delete()
 
     def test_delete(self):
         x = HydraIface.Role()
         x.db.role_name = "Unimportant users"
+        x.db.role_code = "Unimportant users @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
 
@@ -64,12 +68,14 @@ class RoleTest(test_HydraIface.HydraIfaceTest):
     def test_load(self):
         x = HydraIface.Role()
         x.db.role_name = "Unimportant users"
+        x.db.role_code = "Unimportant users @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
 
         y = HydraIface.Role(role_id=x.db.role_id)
         assert y.load() == True, "Load did not work correctly"
+        x.delete()
 
 
 class PermTest(test_HydraIface.HydraIfaceTest):
@@ -77,6 +83,7 @@ class PermTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         x = HydraIface.Perm()
         x.db.perm_name = "Unimportant permission"
+        x.db.perm_code = "Unimportant users"
         x.save()
         x.commit()
 
@@ -85,10 +92,12 @@ class PermTest(test_HydraIface.HydraIfaceTest):
         x.commit()
         x.load()
         assert x.db.perm_name == "Important permission", "Perm did not update correctly"
+        x.delete()
 
     def test_delete(self):
         x = HydraIface.Perm()
         x.db.perm_name = "Unimportant permission"
+        x.db.perm_code = "Unimportant users"
         x.save()
         x.commit()
 
@@ -98,12 +107,14 @@ class PermTest(test_HydraIface.HydraIfaceTest):
     def test_load(self):
         x = HydraIface.Perm()
         x.db.perm_name = "Unimportant users"
+        x.db.perm_code = "Unimportant users"
         x.save()
         x.commit()
         x.load()
 
         y = HydraIface.Perm(perm_id=x.db.perm_id)
         assert y.load() == True, "Load did not work correctly"
+        x.delete()
 
 
 class RoleUserTest(test_HydraIface.HydraIfaceTest):
@@ -120,6 +131,7 @@ class RoleUserTest(test_HydraIface.HydraIfaceTest):
     def create_role(self):
         x = HydraIface.Role()
         x.db.role_name = "Role 1"
+        x.db.role_code = "Unimportant users @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
@@ -182,6 +194,7 @@ class RolePermTest(test_HydraIface.HydraIfaceTest):
     def create_perm(self, perm_name):
         x = HydraIface.Perm()
         x.db.perm_name = perm_name
+        x.db.perm_code = "Unimportant perm @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
@@ -190,6 +203,7 @@ class RolePermTest(test_HydraIface.HydraIfaceTest):
     def create_role(self):
         x = HydraIface.Role()
         x.db.role_name = "Role 1"
+        x.db.role_code = "Unimportant users @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
