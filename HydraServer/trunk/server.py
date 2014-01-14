@@ -37,7 +37,7 @@ from soap_server.sharing import SharingService
 
 from HydraLib.HydraException import HydraError
 
-from HydraLib import hydra_logging, hdb, config
+from HydraLib import hdb, config
 from db import HydraIface
 
 import datetime
@@ -108,8 +108,7 @@ class HydraServer():
 
     def __init__(self):
 
-        hydra_logging.init(level='DEBUG')
-        #logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
+        logging.getLogger('spyne').setLevel(logging.INFO)
         connection = hdb.connect()
         HydraIface.init(connection)
 
@@ -159,15 +158,11 @@ class HydraServer():
 
         from wsgiref.simple_server import make_server
 
-        #Initialise the config.
-        config.load_config()
-
         port = config.getint('hydra_server', 'port')
         spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
 
         logging.info("listening to http://127.0.0.1:%s", port)
         logging.info("wsdl is at: http://localhost:%s/?wsdl", port)
-
 
         server = make_server('127.0.0.1', port, wsgi_application)
         server.serve_forever()

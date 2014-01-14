@@ -236,6 +236,36 @@ class SharingTest(test_SoapServer.SoapServerTest):
         #reset the client to the 'root' client for a consistent tearDown
         self.client = old_client
 
+    def test_sharing_shared_network(self):
+
+        self.create_user("UserA")
+        self.create_user("UserB")
+        self.create_user("UserC")
+        
+        #One client is for the 'root' user and must remain open so it
+        #can be closed correctly in the tear down. 
+        old_client = self.client
+        new_client = test_SoapServer.connect()
+        self.client = new_client
+        self.login("UserA", 'password')
+        
+        network_1 = self.create_network_with_data()
+
+        #share the whole project with user B, and allow them to share.
+        self.client.service.share_project(network_1.project_id, ["UserB"], 'Y', 'Y')
+
+        self.client.service.logout("UserA")
+
+        self.login("UserB", 'password')
+       
+        self.assertRaises(suds.WebFault, self.client.service.share_project, network_1.project_id, ["UserC"], 'Y', 'Y')
+        self.assertRaises(suds.WebFault, self.client.service.share_network, network_1.id, ["UserC"], 'Y', 'Y')
+
+        self.client.service.logout("UserB")
+
+        self.client = old_client
+
+
 
 if __name__ == '__main__':
     test_SoapServer.run()

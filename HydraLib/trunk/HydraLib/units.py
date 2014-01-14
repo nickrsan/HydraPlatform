@@ -8,13 +8,9 @@ import os
 from copy import deepcopy
 from ConfigParser import NoSectionError
 
-from util import load_config
+import config
 from lxml import etree
-from HydraLib import hydra_logging
 import logging
-
-hydra_logging.init(level='INFO')
-
 
 class Units(object):
     """
@@ -38,7 +34,6 @@ class Units(object):
 
     def __init__(self):
         try:
-            config = load_config()
             builtin_unitfile = \
                 os.path.join(os.path.dirname(os.path.realpath(__file__)),
                              'static',

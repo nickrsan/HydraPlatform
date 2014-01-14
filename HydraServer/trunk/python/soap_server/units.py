@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import logging
-from HydraLib.HydraException import HydraError
-from spyne.model.primitive import String, Boolean, Decimal, AnyDict
+from spyne.model.primitive import String, Boolean, Decimal
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from spyne.util.dictdoc import get_object_as_dict
-from hydra_base import HydraService, ObjectNotFoundError
+from hydra_base import HydraService
 from hydra_complexmodels import Unit
 
 from HydraLib import units

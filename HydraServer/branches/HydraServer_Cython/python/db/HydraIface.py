@@ -1,4 +1,4 @@
-from HydraLib import util
+import config
 from HydraLib.hdb import HydraMySqlCursor
 import logging
 from decimal import Decimal
@@ -11,7 +11,6 @@ global CONNECTION
 CONNECTION = None
 
 def init(cnx):
-    config = util.load_config()
 
     global CONNECTION
     global DB_STRUCT

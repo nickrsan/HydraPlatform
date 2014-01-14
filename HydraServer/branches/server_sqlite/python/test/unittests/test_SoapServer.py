@@ -5,11 +5,10 @@ import logging
 import shutil
 import os
 
-from HydraLib import hydra_logging, util
-
 from suds.client import Client
 from suds.plugin import MessagePlugin
 from tempfile import gettempdir as tmp
+from HydraLib import config
 
 global CLIENT
 CLIENT = None
@@ -27,7 +26,6 @@ class FixNamespace(MessagePlugin):
 
 def connect(login=True):
     #logging.debug("Connecting to server.")
-    config = util.load_config()
     port = config.getint('hydra_server', 'port')
     url = 'http://localhost:%s?wsdl' % port
     client = Client(url, plugins=[FixNamespace()])
@@ -50,7 +48,6 @@ def connect(login=True):
 class SoapServerTest(unittest.TestCase):
 
     def setUp(self):
-        hydra_logging.init(level='INFO')
         # Clear SUDS cache:
         shutil.rmtree(os.path.join(tmp(), 'suds'), True)
         global CLIENT

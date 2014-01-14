@@ -7,6 +7,7 @@ import datetime
 
 from HydraLib.HydraException import HydraError
 import sys, traceback
+from HydraLib import config
 
 global DB_STRUCT
 DB_STRUCT = {}
@@ -15,7 +16,6 @@ global CONNECTION
 CONNECTION = None
 
 def init(cnx):
-    config = util.load_config()
 
     global CONNECTION
     global DB_STRUCT

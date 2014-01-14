@@ -34,6 +34,11 @@ class SharingService(HydraService):
         else:
             write = 'Y'
 
+        if net_i.db.created_by != int(ctx.in_header.user_id) and share == 'Y':
+            raise HydraError("Cannot share the 'sharing' ability as user %s is not"
+                         " the owner of network %s"%
+                         (ctx.in_header.user_id, network_id))
+
         for username in usernames:
             user_i = HydraIface.User()
             user_i.db.username = username
@@ -73,6 +78,11 @@ class SharingService(HydraService):
             share = 'N'
         else:
             write = 'Y'
+
+        if proj_i.db.created_by != ctx.in_header.user_id and share == 'Y':
+            raise HydraError("Cannot share the 'sharing' ability as user %s is not"
+                         " the owner of project %s"%
+                         (ctx.in_header.user_id, project_id))
 
         for username in usernames:
             user_i = HydraIface.User()

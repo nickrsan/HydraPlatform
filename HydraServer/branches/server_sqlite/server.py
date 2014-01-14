@@ -37,6 +37,7 @@ from db import HydraIface
 import datetime
 import sys, traceback
 
+from HydraLib import config
 
 
 def _on_method_call(ctx):
@@ -146,7 +147,6 @@ class HydraServer():
 
         from wsgiref.simple_server import make_server
 
-        config = util.load_config()
         port = config.getint('hydra_server', 'port')
 
         logging.info("listening to http://127.0.0.1:%s", port)

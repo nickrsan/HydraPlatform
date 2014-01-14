@@ -12,7 +12,7 @@ from tempfile import gettempdir as tmp
 shutil.rmtree(os.path.join(tmp(), 'suds'), True)
 from suds.client import Client
 from suds.plugin import MessagePlugin
-from HydraLib import util
+from HydraLib import config
 
 class FixNamespace(MessagePlugin):
     def marshalled(self, context):
@@ -28,7 +28,6 @@ class FixNamespace(MessagePlugin):
 class TestSoap(unittest.TestCase):
     def setUp(self):
         self.seq = range(10)
-        config = util.load_config()
         url = config.get('hydra_client', 'url')
         print "Connecting to %s"%url
 

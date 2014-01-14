@@ -1,4 +1,3 @@
-import logging
 import os
 import glob
 import ConfigParser
@@ -33,12 +32,11 @@ def load_config():
     sysfiles = glob.glob('/etc/hydra/*.ini')
     repofiles = glob.glob(modulepath + '/../../../config/*.ini')
 
-    config = ConfigParser.RawConfigParser(allow_no_value=True)
+    defaults={}
+    defaults['home_dir'] = os.environ.get('HYDRA_HOME_DIR', '~')
+    defaults['hydra_base_dir'] = os.environ.get('HYDRA_BASE_DIR', '~/svn/HYDRA')
 
-    logging.debug('LOADING CONFIG FILES: ' +
-                  ', '.join([', '.join(repofiles),
-                             ', '.join(sysfiles),
-                             ', '.join(userfiles)]))
+    config = ConfigParser.ConfigParser(defaults, allow_no_value=True)
 
     for ini_file in repofiles:
         config.read(ini_file)

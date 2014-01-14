@@ -13,6 +13,7 @@ shutil.rmtree(os.path.join(tmp(), 'suds'), True)
 from suds.client import Client
 from suds.plugin import MessagePlugin
 from HydraLib import util
+from HydraLib import config
 
 class FixNamespace(MessagePlugin):
     def marshalled(self, context):
@@ -77,7 +78,6 @@ class TestSoap(unittest.TestCase):
 
     def test_add_project(self):
 
-        config = util.load_config()
         port = config.getint('soap_server', 'port')
         c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
         (project) = {
@@ -97,7 +97,6 @@ class TestSoap(unittest.TestCase):
         print p2
 
     def test_network(self):
-        config = util.load_config()
         port = config.getint('soap_server', 'port')
         c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])
 
@@ -135,7 +134,6 @@ class TestSoap(unittest.TestCase):
         assert Network is not None, "Network did not create correctly"
 
     def test_scenario(self):
-        config = util.load_config()
         port = config.getint('soap_server', 'port')
         c = Client('http://localhost:%s/?wsdl'%port, xstq=False,  plugins=[FixNamespace()])
 #        c = Client('http://localhost:%s/?wsdl'%port, plugins=[FixNamespace()])

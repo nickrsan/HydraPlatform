@@ -32,50 +32,6 @@ def load_csv(cnx, cursor, filepath):
         cursor.close()
         cnx.close()
 
-
-def load_config():
-    """Load a config file. This function looks for a config (*.ini) file in the
-    following order::
-
-        (1) ./*.ini
-        (2) ~/.config/hydra/
-        (3) /etc/hydra
-        (4) [...]/HYDRA/HydraLib/trunk/../../config/
-
-    (1) will override (2) will override (3) will override (4). Parameters not
-    defined in (1) will be taken from (2). Parameters not defined in (2) will
-    be taken from (3).  (3) is the config folder that will be checked out from
-    the svn repository.  (2) Will be be provided as soon as an installable
-    distribution is available. (1) will usually be written individually by
-    every user."""
-    #TODO: Check for the operating system we are running, provide search paths
-    #      for Windows machines.
-    modulepath = os.path.dirname(os.path.abspath(__file__))
-
-    localfiles = glob.glob('*.ini')
-    userfiles = glob.glob(os.path.expanduser('~') + '/.config/hydra/*.ini')
-    sysfiles = glob.glob('/etc/hydra/*.ini')
-    repofiles = glob.glob(modulepath + '/../../../config/*.ini')
-
-    config = ConfigParser.RawConfigParser(allow_no_value=True)
-
-    logging.debug('LOADING CONFIG FILES: ' +
-                  ', '.join([', '.join(repofiles),
-                             ', '.join(sysfiles),
-                             ', '.join(userfiles)]))
-
-    for ini_file in repofiles:
-        config.read(ini_file)
-    for ini_file in sysfiles:
-        config.read(ini_file)
-    for ini_file in userfiles:
-        config.read(ini_file)
-    for ini_file in localfiles:
-        config.read(ini_file)
-
-    return config
-
-
 def timestamp_to_server_time(timestamp):
     """Convert a timestamp as defined in the soap interface to the time format
     stored in the database.
