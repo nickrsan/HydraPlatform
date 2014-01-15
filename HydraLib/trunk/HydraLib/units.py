@@ -36,8 +36,8 @@ class Units(object):
     def __init__(self):
         default_user_file = \
             os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                            'static',
-                            'user_units.xml')
+                         'static',
+                         'user_units.xml')
         try:
             builtin_unitfile = \
                 os.path.join(os.path.dirname(os.path.realpath(__file__)),
