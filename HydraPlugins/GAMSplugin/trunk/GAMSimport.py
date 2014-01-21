@@ -27,12 +27,14 @@ Options
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== ======================================
---gams-path            -g     GAMS_PATH  File path of the GAMS installation.
+--gams-path            -G     GAMS_PATH  File path of the GAMS installation.
 --network              -t     NETWORK    ID of the network that will be
                                          exported.
 --scenario             -s     SCENARIO   ID of the scenario that will be
                                          exported.
 --gdx-file             -f     GDX_FILE   GDX file containing GAMS results
+--gams-model           -m     GMS_FILE   Full path to the GAMS model (*.gms)
+                                         used for the simulation.
 ====================== ====== ========== ======================================
 
 
@@ -399,7 +401,7 @@ Written by Philipp Meier <philipp@diemeiers.ch>
         """, epilog="For more information visit www.hydra-network.com",
         formatter_class=argparse.RawDescriptionHelpFormatter)
     # Mandatory arguments
-    parser.add_argument('-g', '--gams-path',
+    parser.add_argument('-G', '--gams-path',
                         help='Path of the GAMS installation.')
     parser.add_argument('-t', '--network',
                         help='ID of the network the data will be imported to.')
@@ -407,7 +409,7 @@ Written by Philipp Meier <philipp@diemeiers.ch>
                         help='ID of the scenario the data will be imported to.')
     parser.add_argument('-f', '--gdx-file',
                         help='GDX file containing GAMS results.')
-    parser.add_argument('-d', '--gms-file',
+    parser.add_argument('-m', '--gms-file',
                         help='''Full path to the GAMS model (*.gms) used for
                         the simulation.''')
 

@@ -33,7 +33,7 @@ Options
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== ======================================
---network              -f     NETWORK    ID of the network that will be
+--network              -t     NETWORK    ID of the network that will be
                                          exported.
 --scenario             -s     SCENARIO   ID of the scenario that will be
                                          exported.
@@ -63,7 +63,6 @@ from datetime import timedelta
 from string import ascii_lowercase
 
 from HydraLib import PluginLib
-from HydraLib import units
 
 from GAMSplugin import GAMSnetwork
 from GAMSplugin import GAMSlink
@@ -78,7 +77,6 @@ class GAMSexport(object):
     def __init__(self, network_id, scenario_id, filename):
         self.filename = filename
         self.time_index = []
-        self.unit_conversion = units.Units()
 
         self.cli = PluginLib.connect()
         net = self.cli.service.get_network(network_id, scenario_id)
@@ -376,7 +374,8 @@ class GAMSexport(object):
             value = float(value)
             units = time_step[valuelen:].strip()
 
-        return self.unit_conversion.convert(value, units, 'day')
+        return self.cli.service.convert_units(value, units, 'day')
+        #return self.unit_conversion.convert(value, units, 'day')
 
     def parse_date(self, date):
         """Parse date string supplied from the user. All formats supported by

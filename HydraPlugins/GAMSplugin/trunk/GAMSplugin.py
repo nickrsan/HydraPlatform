@@ -42,10 +42,15 @@ class GAMSnetwork(HydraNetwork):
         self.scenario_id = soap_net.scenarios.Scenario[0].id
 
         if soap_net.attributes is not None:
-            for res_attr in soap_net.attributes.Attr:
-                self.add_attribute(attributes[res_attr.attr_id],
-                                   res_attr,
-                                   resource_scenarios[res_attr.id])
+            for res_attr in soap_net.attributes.ResourceAttr:
+                if res_attr.id in resource_scenarios.keys():
+                    self.add_attribute(attributes[res_attr.attr_id],
+                                       res_attr,
+                                       resource_scenarios[res_attr.id])
+                else:
+                    self.add_attribute(attributes[res_attr.attr_id],
+                                       res_attr,
+                                       None)
 
         # load nodes
         for node in soap_net.nodes.Node:
@@ -77,9 +82,15 @@ class GAMSnetwork(HydraNetwork):
             new_link.gams_name = new_link.from_node + ' . ' + new_link.to_node
             if link.attributes is not None:
                 for res_attr in link.attributes.ResourceAttr:
-                    new_link.add_attribute(attributes[res_attr.attr_id],
-                                           res_attr,
-                                           resource_scenarios[res_attr.id])
+                    if res_attr.id in resource_scenarios.keys():
+                        new_link.add_attribute(attributes[res_attr.attr_id],
+                                               res_attr,
+                                               resource_scenarios[res_attr.id])
+                    else:
+                        new_link.add_attribute(attributes[res_attr.attr_id],
+                                               res_attr,
+                                               None)
+
             self.add_link(new_link)
 
 
@@ -166,10 +177,13 @@ def import_gms_data(filename):
             line = f.readline()
             if line == '':
                 break
-            lineparts = line.split()
-            if len(lineparts) > 2 and \
-                    lineparts[0] == '$' \
-                    and lineparts[1] == 'include':
-                line = import_gms_data(os.path.join(basepath, lineparts[2]))
+            sline = line.strip()
+            if len(sline) > 0 and sline[0] == '$':
+                lineparts = sline.split()
+                if len(lineparts) > 2 and \
+                        lineparts[1] == 'include':
+                    line = import_gms_data(os.path.join(basepath, lineparts[2]))
+                elif len(lineparts) == 2 and lineparts[0] == '$include':
+                    line = import_gms_data(os.path.join(basepath, lineparts[1]))
             gms_data += line
     return gms_data
