@@ -197,6 +197,7 @@ class GAMSexport(object):
         obj_type = resources[0].object_type
         for attr in resources[0].attributes:
             if attr.dataset_type == datatype:
+                attr.name = translate_attr_name(attr.name)
                 attributes.append(attr)
         if len(attributes) > 0:
             self.output += 'SETS\n\n'  # Needed before sets are defined
@@ -235,6 +236,7 @@ class GAMSexport(object):
         obj_type = resources[0].object_type
         for attr in resources[0].attributes:
             if attr.dataset_type == 'timeseries':
+                attr.name = translate_attr_name(attr.name)
                 attributes.append(attr)
         if len(attributes) > 0:
             self.output += 'SETS\n\n'  # Needed before sets are defined
@@ -280,6 +282,7 @@ class GAMSexport(object):
         attributes = []
         for attr in resources[0].attributes:
             if attr.dataset_type == 'array':
+                attr.name = translate_attr_name(attr.name)
                 attributes.append(attr)
         if len(attributes) > 0:
             # We have to write the complete array information for every single
@@ -388,6 +391,36 @@ class GAMSexport(object):
     def write_file(self):
         with open(self.filename, 'w') as f:
             f.write(self.output)
+
+
+def translate_attr_name(name):
+    """Replace non alphanumeric characters with '_'. This function throws an
+    error, if the first letter of an attribute name is not an alphabetic
+    character.
+    """
+    if isinstance(name, str):
+        translator = ''.join(chr(c) if chr(c).isalnum()
+                             else '_' for c in range(256))
+    elif isinstance(name, unicode):
+        print name
+        translator = UnicodeTranslate()
+
+    name = name.translate(translator)
+    print name
+
+    return name
+
+
+class UnicodeTranslate(dict):
+    """Translate a unicode attribute name to a valid GAMS variable.
+    """
+    def __missing__(self, item):
+        char = unichr(item)
+        repl = u'_'
+        if item < 256 and char.isalnum():
+            repl = char
+        self[item] = repl
+        return repl
 
 
 def commandline_parser():
