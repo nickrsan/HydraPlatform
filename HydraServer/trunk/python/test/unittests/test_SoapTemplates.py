@@ -3,6 +3,8 @@
 
 import test_SoapServer
 import datetime
+from lxml import etree
+from HydraLib import config
 
 class TemplatesTest(test_SoapServer.SoapServerTest):
 
@@ -511,7 +513,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         for node in new_network.nodes.Node:
             if node.id == updated_node.id:
-                assert node.templates is not None and node.templates.GroupSummary[0].templates.TemplateSummary[0].name == "Test template 2"; "Template was not added correctly!"
+                assert node.templates is not None and node.templates.GroupSummary[0].templates.TemplateSummary[0].name == "Test template 2", "Template was not added correctly!"
 
     def test_find_matching_resource_templates(self):
 
@@ -524,14 +526,31 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         node_to_check = network.nodes.Node[0]
         matching_templates = self.client.service.get_matching_resource_templates('NODE', node_to_check.id)
 
-        assert len(matching_templates) > 0; "No templates returned!"
+        assert len(matching_templates) > 0, "No templates returned!"
         
         matching_template_ids = []
         for grp in matching_templates.GroupSummary:
             for tmpl in grp.templates.TemplateSummary:
                 matching_template_ids.append(tmpl.id)
 
-        assert template_id in matching_template_ids; "Template ID not found in matching templates!"
+        assert template_id in matching_template_ids, "Template ID not found in matching templates!"
+
+    def test_create_template_from_network(self):
+        network = self.create_network_with_data()
+
+        net_template = self.client.service.get_network_as_xml_template(network.id)
+        
+        assert net_template is not None
+
+        template_xsd_path = config.get('templates', 'template_xsd_path')
+        xmlschema_doc = etree.parse(template_xsd_path)
+                        
+        xmlschema = etree.XMLSchema(xmlschema_doc)
+
+        xml_tree = etree.fromstring(net_template)
+        
+        xmlschema.assertValid(xml_tree)
+
 
 def setup():
     test_SoapServer.connect()

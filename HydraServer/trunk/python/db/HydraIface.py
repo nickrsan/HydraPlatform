@@ -971,6 +971,8 @@ class ResourceAttr(IfaceBase):
 
         return resourcescenarios
 
+    def get_attr(self):
+        return Attr(attr_id=self.db.attr_id)
 
     def delete(self, purge_data=False):
         #If there are any constraints associated with this resource attribute, it cannot be deleted

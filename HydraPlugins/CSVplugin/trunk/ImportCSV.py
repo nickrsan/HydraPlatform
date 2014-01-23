@@ -706,7 +706,7 @@ class ImportCSV(object):
 
         ts_values = []
 
-        timedata = data.split('\n')
+        timedata = data.split('\n')pte
         for line in timedata:
             if line != '':
                 dataset = line.split(',')

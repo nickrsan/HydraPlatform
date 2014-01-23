@@ -482,3 +482,113 @@ class TemplateService(HydraService):
 
         return get_as_complexmodel(ctx, rt_i)
 
+    @rpc(Integer, _returns=Unicode)
+    def get_network_as_xml_template(ctx, network_id):
+        """
+            Turn an existing network into an xml template
+            using its attributes.
+            If an optional scenario ID is passed in, default
+            values will be populated from that scenario.
+        """
+        template_xml = etree.Element("template_definition")
+
+        net_i = HydraIface.Network(network_id=network_id)
+        net_i.load_all()
+
+        template_name = etree.SubElement(template_xml, "template_name")
+        template_name.text = "Templated from Network %s"%(net_i.db.network_name)
+        
+        resources = etree.SubElement(template_xml, "resources")
+        if net_i.get_attributes():
+            net_resource    = etree.SubElement(resources, "resource")
+            
+            resource_type   = etree.SubElement(net_resource, "type")
+            resource_type.text   = "NETWORK"
+
+            resource_name   = etree.SubElement(net_resource, "name")
+            resource_name.text   = net_i.db.network_name
+
+            if net_i.db.network_layout is not None:
+                resource_layout = etree.SubElement(net_resource, "layout")
+                resource_layout.text = net_i.db.network_layout
+
+            for net_attr in net_i.get_attributes():
+                _make_attr_element(net_resource, net_attr)
+
+        existing_tmpls = {'NODE': [], 'LINK': []}
+        for node_i in net_i.nodes:
+            node_attributes = node_i.get_attributes()
+            attr_ids = [attr.db.attr_id for attr in node_attributes]
+            if attr_ids>0 and attr_ids not in existing_tmpls['NODE']:
+
+                node_resource    = etree.Element("resource")
+            
+                resource_type   = etree.SubElement(node_resource, "type")
+                resource_type.text   = "NODE"
+
+                resource_name   = etree.SubElement(node_resource, "name")
+                resource_name.text   = node_i.db.node_name
+
+                if node_i.db.node_layout is not None:
+                    resource_layout = etree.SubElement(node_resource, "layout")
+                    resource_layout.text = node_i.db.node_layout
+
+                for node_attr in node_attributes:
+                    _make_attr_element(node_resource, node_attr)
+
+                existing_tmpls['NODE'].append(attr_ids)
+                resources.append(node_resource)
+
+        for link_i in net_i.links:
+            link_attributes = link_i.get_attributes()
+            attr_ids = [attr.db.attr_id for attr in link_attributes]
+            if attr_ids>0 and attr_ids not in existing_tmpls['LINK']:
+                link_resource    = etree.Element("resource")
+            
+                resource_type   = etree.SubElement(link_resource, "type")
+                resource_type.text   = "LINK"
+
+                resource_name   = etree.SubElement(link_resource, "name")
+                resource_name.text   = link_i.db.link_name
+
+                if link_i.db.link_layout is not None:
+                    resource_layout = etree.SubElement(link_resource, "layout")
+                    resource_layout.text = link_i.db.link_layout
+
+                for link_attr in link_attributes:
+                    _make_attr_element(link_resource, link_attr)
+
+                existing_tmpls['LINK'].append(attr_ids)
+                resources.append(link_resource)
+        
+        xml_string = etree.tostring(template_xml)
+
+        return xml_string
+
+def _make_attr_element(parent, resource_attr_i):
+    """
+        General function to add an attribute element to a resource element.
+    """
+    attr = etree.SubElement(parent, "attribute")
+    attr_i = resource_attr_i.get_attr()
+
+    attr_name      = etree.SubElement(attr, 'name')
+    attr_name.text = attr_i.db.attr_name
+
+    attr_dimension = etree.SubElement(attr, 'dimension')
+    attr_dimension.text = attr_i.db.attr_dimen
+
+    attr_is_var    = etree.SubElement(attr, 'is_var')
+    attr_is_var.text = resource_attr_i.db.attr_is_var
+
+    # if scenario_id is not None:
+    #     for rs in resource_attr_i.get_resource_scenarios():
+    #         if rs.db.scenario_id == scenario_id
+    #             attr_default   = etree.SubElement(attr, 'default')
+    #             default_val = etree.SubElement(attr_default, 'value')
+    #             default_val.text = rs.get_dataset().get_val()
+    #             default_unit = etree.SubElement(attr_default, 'unit')
+    #             default_unit.text = rs.get_dataset().db.unit
+
+    return attr
+
