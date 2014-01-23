@@ -76,7 +76,7 @@ def parse_value(data):
                     for val in ts_val[key]:
                         logging.debug("Evaluating value: %s"%val)
                         series.append(eval(val))
-                        ts.append((ordinal_ts_time, series))
+                        ts.append((ordinal_ts_time, eval(val)))
 
         return ts
     elif data_type == 'eqtimeseries':
@@ -202,7 +202,7 @@ class TimeSeriesData(HydraComplexModel):
         if val is None:
             return
         self.ts_time  = [val['ts_time']]
-        self.ts_value = val['ts_value']
+        self.ts_value = [val['ts_value']]
 
 class TimeSeries(HydraComplexModel):
     _type_info = [

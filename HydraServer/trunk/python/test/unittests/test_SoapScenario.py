@@ -3,7 +3,7 @@
 
 import test_SoapServer
 import datetime
-
+import logging
 
 class ScenarioTest(test_SoapServer.SoapServerTest):
 
@@ -197,6 +197,33 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         new_datasets = self.client.service.bulk_insert_data(data)
 
         assert len(new_datasets.integer) == 2; "Data was not added correctly!"
+
+    def test_get_data_between_times(self):
+        net = self.create_network_with_data()
+        scenario = net.scenarios.Scenario[0]
+        val_to_query = None
+        for d in scenario.resourcescenarios.ResourceScenario:
+            if d.value.type == 'timeseries':
+                val_to_query = d.value
+                break
+
+        val_a = val_to_query.value.ts_values[0].ts_value
+        val_b = val_to_query.value.ts_values[1].ts_value
+
+        now = datetime.datetime.now()
+
+        vals = self.client.service.get_vals_between_times(
+            val_to_query.id,
+            now,
+            now + datetime.timedelta(minutes=75),
+            'minutes',
+            )
+
+        assert len(vals.data) == 76
+        for val in vals.data[0:59]:
+            assert val == val_a
+        for val in vals.data[60:75]:
+            assert val == val_b
 
 
     def test_clone(self):

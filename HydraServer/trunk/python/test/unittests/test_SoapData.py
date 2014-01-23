@@ -42,8 +42,7 @@ class DataGroupTest(test_SoapServer.SoapServerTest):
         newly_added_group = self.client.service.add_dataset_group(group)
 
         assert newly_added_group.group_id is not None, "Dataset group does not have an ID!"
-        assert len(newly_added_group.datasetgroupitems.DatasetGroupItem) == 2, "Dataset group does not have any items!"
-  
+        assert len(newly_added_group.datasetgroupitems.DatasetGroupItem) == 2, "Dataset group does not have any items!"  
 
 class SharingTest(test_SoapServer.SoapServerTest):
 

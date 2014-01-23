@@ -23,9 +23,10 @@ from hydra_complexmodels import Scenario,\
 
 from db import HydraIface
 from HydraLib import units, IfaceLib
-from HydraLib.util import timestamp_to_server_time
+from HydraLib.util import timestamp_to_server_time, get_datetime
 
 from hydra_base import HydraService
+import datetime
 
 def clone_constraint_group(constraint_id, grp_i):
     """
@@ -957,5 +958,25 @@ class DataService(HydraService):
         #    data.append(td.get_val(timestamp=time))
         data = td.get_val(timestamp=t)
         dataset = {'data': data}
+
+        return dataset
+
+    @rpc(Integer,String,String,String(values=['seconds', 'minutes', 'hours', 'days', 'months']),_returns=AnyDict)
+    def get_vals_between_times(ctx, dataset_id, start_time, end_time, timestep):
+        server_start_time = get_datetime(start_time)
+        server_end_time   = get_datetime(end_time)
+
+        times = [timestamp_to_server_time(server_start_time)]
+
+        next_time = server_start_time
+        while next_time < server_end_time:
+            next_time = next_time  + datetime.timedelta(**{timestep:1})
+            times.append(timestamp_to_server_time(next_time))
+
+        td = HydraIface.Dataset(dataset_id=dataset_id)
+        logging.debug("Number of times to fetch: %s", len(times))
+        data = td.get_val(timestamp=times)
+
+        dataset = {'data' : data}
 
         return dataset

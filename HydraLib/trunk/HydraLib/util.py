@@ -32,10 +32,10 @@ def load_csv(cnx, cursor, filepath):
         cursor.close()
         cnx.close()
 
-def timestamp_to_server_time(timestamp):
-    """Convert a timestamp as defined in the soap interface to the time format
-    stored in the database.
-    """
+def get_datetime(timestamp):
+
+    if isinstance(timestamp, datetime.datetime):
+        return timestamp
 
     FORMAT = "%Y-%m-%d %H:%M:%S.%f"
     #"2013-08-13T15:55:43.468886Z"
@@ -59,6 +59,13 @@ def timestamp_to_server_time(timestamp):
         else:
             raise e
 
+    return ts_time
+
+def timestamp_to_server_time(timestamp):
+    """Convert a timestamp as defined in the soap interface to the time format
+    stored in the database.
+    """
+    ts_time = get_datetime(timestamp)
     # Convert time to Gregorian ordinal (1 = January 1st, year 1)
     ordinal_ts_time = ts_time.toordinal()
     fraction = (ts_time -
