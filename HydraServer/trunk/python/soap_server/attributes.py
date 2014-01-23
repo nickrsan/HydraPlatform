@@ -5,7 +5,8 @@ from hydra_complexmodels import Attr
 from db import HydraIface
 from hydra_complexmodels import TemplateGroup,\
         Template, \
-        Resource
+        Resource,\
+        get_as_complexmodel
 
 from hydra_base import HydraService
 from HydraLib import IfaceLib
@@ -105,7 +106,7 @@ class AttributeService(HydraService):
         x.db.attr_name = attr.name
         x.db.attr_dimen = attr.dimen
         x.save()
-        return x.get_as_complexmodel()
+        return get_as_complexmodel(ctx, x)
 
     @rpc(SpyneArray(Attr), _returns=SpyneArray(Attr))
     def add_attributes(ctx, attrs):
@@ -258,7 +259,7 @@ class AttributeService(HydraService):
 
         resource_i.add_attribute(attr_id, attr_is_var)
 
-        return resource_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, resource_i)
 
     @rpc(TemplateGroup, _returns=TemplateGroup)
     def add_template_group(ctx, group):
@@ -276,7 +277,7 @@ class AttributeService(HydraService):
             for item in template.templateitems:
                 t_i.add_item(item.attr_id)
 
-        return g_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, g_i)
 
     @rpc(TemplateGroup, _returns=TemplateGroup)
     def update_template_group(ctx, group):
@@ -293,7 +294,7 @@ class AttributeService(HydraService):
             for item in template.templateitems:
                 t_i.add_item(item.attr_id)
 
-        return g_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, g_i)
 
     @rpc(Template, _returns=Template)
     def add_resource_template(ctx, template):
@@ -316,7 +317,7 @@ class AttributeService(HydraService):
         for item in template.templateitems:
             template_i.add_item(item.attr_id)
 
-        return template_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, template_i)
 
 
     @rpc(Template, _returns=Template)
@@ -334,7 +335,7 @@ class AttributeService(HydraService):
         for item in template.templateitems:
             template_i.add_item(item.attr_id)
 
-        return template_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, template_i)
 
     @rpc(Integer, Integer, _returns=Template)
     def remove_attr_from_template(ctx, template_id, attr_id):
@@ -358,4 +359,4 @@ class AttributeService(HydraService):
         for item in template_i.templateitems:
             resource_i.add_attribute(item.db.attr_id)
 
-        return resource_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, resource_i)

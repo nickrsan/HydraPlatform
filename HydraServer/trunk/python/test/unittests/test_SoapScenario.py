@@ -126,7 +126,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         for resourcescenario in scenario.resourcescenarios.ResourceScenario:
             if resourcescenario.attr_id == descriptor.attr_id:
                 resourcescenario.value = descriptor.value
-
+        
         updated_scenario = self.client.service.update_scenario(scenario)
 
         assert updated_scenario is not None
@@ -154,19 +154,31 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         dataset1.unit = 'feet cubed'
         dataset1.dimension = 'cubic capacity'
 
-        ts1 = self.client.factory.create('ns1:TimeSeriesData')
-        ts1.ts_time  = datetime.datetime.now()
-        ts1.ts_value = str([1, 2, 3, 4, 5])
+        # ts1 = self.client.factory.create('ns1:TimeSeriesData')
+        # ts1.ts_time  = datetime.datetime.now()
+        # ts1.ts_value = str([1, 2, 3, 4, 5])
 
-        ts2 = self.client.factory.create('ns1:TimeSeriesData')
-        ts2.ts_time  = datetime.datetime.now() + datetime.timedelta(hours=1)
-        ts2.ts_value = str([2, 3, 4, 5, 6])
+        # ts2 = self.client.factory.create('ns1:TimeSeriesData')
+        # ts2.ts_time  = datetime.datetime.now() + datetime.timedelta(hours=1)
+        # ts2.ts_value = str([2, 3, 4, 5, 6])
 
-        ts3 = self.client.factory.create('ns1:TimeSeries')
-        ts3.ts_values.TimeSeriesData.append(ts1)
-        ts3.ts_values.TimeSeriesData.append(ts2)
+        # ts3 = self.client.factory.create('ns1:TimeSeries')
+        # ts3.ts_values.TimeSeriesData.append(ts1)
+        # ts3.ts_values.TimeSeriesData.append(ts2)
        
-        dataset1.value = ts3
+        # dataset1.value = ts3
+        dataset1.value = {'ts_values':
+            [
+                {
+                    'ts_time' : datetime.datetime.now(),
+                    'ts_value' : str([1, 2, 3, 4, 5]),
+                },
+                {
+                    'ts_time' : datetime.datetime.now() + datetime.timedelta(hours=1),
+                    'ts_value' : str([2, 3, 4, 5, 6]),
+                }
+            ],
+        }
         data.Dataset.append(dataset1)
 
         dataset2 = self.client.factory.create('ns1:Dataset')

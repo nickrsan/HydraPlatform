@@ -3,7 +3,8 @@ from spyne.decorator import rpc
 from db import HydraIface
 from hydra_complexmodels import User,\
         Role,\
-        Perm
+        Perm,\
+        get_as_complexmodel
 
 import bcrypt
 
@@ -35,7 +36,7 @@ class UserService(HydraService):
         
         user_i.save()
 
-        return user_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, user_i)
 
     @rpc(String, _returns=User)
     def get_user_by_name(ctx, username):
@@ -52,7 +53,7 @@ class UserService(HydraService):
         #the same username.
         if user_id is not None:
             user_i.load_all()
-            return user_i.get_as_complexmodel()
+            return get_as_complexmodel(ctx, user_i)
         
         return None
 
@@ -84,7 +85,7 @@ class UserService(HydraService):
 
         role_i.save()
 
-        return role_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, role_i)
 
     @rpc(Role, _returns=String)
     def delete_role(ctx, role):
@@ -108,7 +109,7 @@ class UserService(HydraService):
 
         perm_i.save()
 
-        return perm_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, perm_i)
 
     @rpc(Perm, _returns=String)
     def delete_perm(ctx, perm):
@@ -128,7 +129,7 @@ class UserService(HydraService):
         roleuser_i.save()
         roleuser_i.role.load_all()
 
-        return roleuser_i.role.get_as_complexmodel()
+        return get_as_complexmodel(ctx, roleuser_i.role)
 
     @rpc(User, Role, _returns=String)
     def delete_user_role(ctx, user, role):
@@ -146,7 +147,7 @@ class UserService(HydraService):
 
         roleperm_i.role.load_all()
 
-        return roleperm_i.role.get_as_complexmodel()
+        return get_as_complexmodel(ctx, roleperm_i.role)
 
     @rpc(Role, Perm, _returns=String)
     def delete_role_perm(ctx, role, perm):
@@ -198,6 +199,6 @@ class UserService(HydraService):
 
             roleuser_i.save()
 
-        return role_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, role_i)
 
             

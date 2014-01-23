@@ -704,26 +704,29 @@ class ImportCSV(object):
         if 'XXXX' in timeformat:
             seasonal = True
 
-        timeseries = self.cli.factory.create('hyd:TimeSeries')
-        #timeseries.ts_values = []
+        ts_values = []
 
         timedata = data.split('\n')
         for line in timedata:
             if line != '':
                 dataset = line.split(',')
-                tsdata = self.cli.factory.create('hyd:TimeSeriesData')
                 tstime = datetime.strptime(dataset[0].strip(), timeformat)
                 tstime = self.timezone.localize(tstime)
 
-                tsdata.ts_time = PluginLib.date_to_string(tstime,
+                ts_time = PluginLib.date_to_string(tstime,
                                                           seasonal=seasonal)
 
                 value_length = len(dataset) - 1
-                tsdata.ts_value = []
+                ts_value = []
                 for i in range(value_length):
-                    tsdata.ts_value.append(float(dataset[i + 1].strip()))
+                    ts_value.append(float(dataset[i + 1].strip()))
+                
+                ts_values.append({
+                    'ts_time' : ts_time,
+                    'ts_value' : ts_value,
+                    })
 
-                timeseries.ts_values.TimeSeriesData.append(tsdata)
+        timeseries = {'ts_values' : ts_values}
 
         return timeseries
 

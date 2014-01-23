@@ -1,7 +1,6 @@
 import logging
 from decimal import Decimal
 from soap_server import hydra_complexmodels
-import datetime
 import config
 
 import MySqlIface
@@ -31,7 +30,6 @@ class IfaceBase(object):
         The base database interface class.
     """
     def __init__(self, parent, class_name):
-        global DB
     
         logging.debug("Initialising %s", class_name)
 
@@ -180,6 +178,40 @@ class IfaceBase(object):
             logging.debug("Parent: %s", parent)
             self.parent = parent
             self.__setattr__(parent_name, parent)
+
+    def get_as_dict(self, user_id=None):
+        """
+            Convert this object into a dict
+            
+            The user_id parameter is used for controlling
+            what gets populated in the dictionary bases
+            on a user's permission.
+        """
+        obj_dict = dict(
+            object_type = self.name
+            )
+
+        #If self is not in the DB, then return an empty dict
+        if self.in_db is False:
+            return obj_dict
+
+        for attr in self.db.db_attrs:
+            value = getattr(self.db, attr)
+            if type(value) == Decimal:
+                value = float(value)
+            obj_dict[attr] = value
+        
+        #get my children, convert them and add them to the dict.
+        for child_name in self.children:
+            objs = getattr(self, child_name)
+            child_objs = []
+            for obj in objs:
+                obj.load_all()
+                child_cm = obj.get_as_dict(user_id=user_id)
+                child_objs.append(child_cm)
+            obj_dict[child_name] = child_objs
+
+        return obj_dict
 
     def get_as_complexmodel(self):
         """

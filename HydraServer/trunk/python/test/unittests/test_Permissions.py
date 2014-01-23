@@ -2,6 +2,7 @@ import test_HydraIface
 import mysql.connector
 from db import HydraIface
 import datetime
+from HydraLib.HydraException import HydraError
 
 class UserTest(test_HydraIface.HydraIfaceTest):
  
@@ -160,10 +161,10 @@ class RoleUserTest(test_HydraIface.HydraIfaceTest):
         role = self.create_role()
 
         x = HydraIface.RoleUser(user_id=user1.db.user_id, role_id=0)
-        self.assertRaises(mysql.connector.DatabaseError, x.save)
+        self.assertRaises(HydraError, x.save)
 
         y = HydraIface.RoleUser(user_id=0, role_id=role.db.role_id)
-        self.assertRaises(mysql.connector.DatabaseError, y.save)
+        self.assertRaises(HydraError, y.save)
 
     def test_delete(self):
         user = self.create_user("User 1")
@@ -232,10 +233,10 @@ class RolePermTest(test_HydraIface.HydraIfaceTest):
         role = self.create_role()
 
         x = HydraIface.RolePerm(perm_id=perm1.db.perm_id, role_id=0)
-        self.assertRaises(mysql.connector.DatabaseError, x.save)
+        self.assertRaises(HydraError, x.save)
 
         y = HydraIface.RolePerm(perm_id=0, role_id=role.db.role_id)
-        self.assertRaises(mysql.connector.DatabaseError, y.save)
+        self.assertRaises(HydraError, y.save)
 
     def test_delete(self):
         perm = self.create_perm("Perm 1")

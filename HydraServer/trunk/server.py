@@ -33,7 +33,7 @@ from soap_server.hydra_base import AuthenticationService,\
     AuthenticationError,\
     ObjectNotFoundError,\
     HydraServiceError
-from soap_server.sharing import SharingService
+from soap_server.sharing import SharingService, DataSharingService
 
 from HydraLib.HydraException import HydraError
 
@@ -91,6 +91,7 @@ class HydraSoapApplication(Application):
             return res
         except HydraError, e:
             logging.critical(e)
+            traceback.print_exc(file=sys.stdout)
             raise HydraServiceError(e.message)
         except ObjectNotFoundError, e:
             logging.critical(e)
@@ -141,6 +142,7 @@ class HydraServer():
             FileService,
             SharingService,
             UnitService,
+            DataSharingService,
         ]
 
         application = HydraSoapApplication(applications, 'hydra.base',

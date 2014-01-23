@@ -33,8 +33,8 @@ def load_config():
     repofiles = glob.glob(modulepath + '/../../../config/*.ini')
 
     defaults={}
-    defaults['home_dir'] = os.environ.get('HYDRA_HOME_DIR', '~')
-    defaults['hydra_base_dir'] = os.environ.get('HYDRA_BASE_DIR', '~/svn/HYDRA')
+    defaults['home_dir'] = os.path.expanduser(os.environ.get('HYDRA_HOME_DIR', '~'))
+    defaults['hydra_base_dir'] = os.path.expanduser(os.environ.get('HYDRA_BASE_DIR', '~/svn/HYDRA'))
 
     config = ConfigParser.ConfigParser(defaults, allow_no_value=True)
 

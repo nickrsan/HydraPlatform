@@ -2,7 +2,12 @@
 from spyne.model.complex import Array as SpyneArray
 from spyne.model.primitive import String, Integer, Unicode
 from spyne.decorator import rpc
-from hydra_complexmodels import Template, TemplateGroup, TemplateItem,GroupSummary, TemplateSummary
+from hydra_complexmodels import Template,\
+TemplateGroup,\
+TemplateItem,\
+GroupSummary,\
+TemplateSummary,\
+get_as_complexmodel
 
 from db import HydraIface
 from hydra_base import HydraService
@@ -199,7 +204,7 @@ class TemplateService(HydraService):
 
         grp_i.load_all()
 
-        return grp_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, grp_i)
 
     @rpc(String, Integer, _returns=SpyneArray(GroupSummary))
     def get_matching_resource_templates(ctx, resource_type, resource_id):
@@ -253,7 +258,7 @@ class TemplateService(HydraService):
             for item in template.templateitems:
                 rt_i.add_item(item.attr_id)
 
-        return grp_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, grp_i)
 
     @rpc(TemplateGroup, _returns=TemplateGroup)
     def update_templategroup(ctx, group):
@@ -287,7 +292,7 @@ class TemplateService(HydraService):
                     tmpl_i.save()
 
         grp_i.commit()
-        return grp_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, grp_i)
 
     @rpc(_returns=SpyneArray(TemplateGroup))
     def get_templategroups(ctx):
@@ -309,7 +314,7 @@ class TemplateService(HydraService):
         for r in rs:
             grp_i = HydraIface.TemplateGroup(group_id=r.group_id)
             grp_i.load_all()
-            grp = grp_i.get_as_complexmodel()
+            grp = get_as_complexmodel(ctx, grp_i)
             groups.append(grp)
 
         return groups
@@ -322,7 +327,7 @@ class TemplateService(HydraService):
         
         grp_i = HydraIface.TemplateGroup(group_id=group_id)
         grp_i.load_all()
-        grp = grp_i.get_as_complexmodel()
+        grp = get_as_complexmodel(ctx, grp_i)
 
         return grp
 
@@ -349,7 +354,7 @@ class TemplateService(HydraService):
 
         grp_i = HydraIface.TemplateGroup(group_id=group_id)
         grp_i.load_all()
-        grp = grp_i.get_as_complexmodel()
+        grp = get_as_complexmodel(ctx, grp_i)
 
         return grp
 
@@ -374,7 +379,7 @@ class TemplateService(HydraService):
         for item in template.templateitems:
             rt_i.add_item(item.attr_id)
 
-        return rt_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, rt_i)
 
     @rpc(Template, _returns=Template)
     def update_template(ctx, template):
@@ -404,7 +409,7 @@ class TemplateService(HydraService):
         
         rt_i.save()
 
-        return rt_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, rt_i)
 
     @rpc(Integer, _returns=Template)
     def get_template(ctx, template_id):
@@ -413,7 +418,7 @@ class TemplateService(HydraService):
         """
         tmpl_i = HydraIface.Template(template_id=template_id)
         tmpl_i.load_all()
-        tmpl = tmpl_i.get_as_complexmodel()
+        tmpl = get_as_complexmodel(ctx, tmpl_i)
 
         return tmpl
 
@@ -448,7 +453,7 @@ class TemplateService(HydraService):
 
         tmpl_i = HydraIface.Template(template_id=template_id)
         tmpl_i.load_all()
-        tmpl = tmpl_i.get_as_complexmodel()
+        tmpl = get_as_complexmodel(ctx, tmpl_i)
 
         return tmpl
 
@@ -461,7 +466,7 @@ class TemplateService(HydraService):
         rt_i.load_all()
         rt_i.add_item(item.attr_id) 
         rt_i.save()
-        return rt_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, rt_i)
 
   
     @rpc(TemplateItem, _returns=Template)
@@ -475,5 +480,5 @@ class TemplateService(HydraService):
         rt_i.remove_item(item.attr_id) 
         rt_i.save()
 
-        return rt_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, rt_i)
 

@@ -1,5 +1,6 @@
 from HydraLib.HydraException import HydraError
 from spyne.model.primitive import String, Integer
+from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from db import HydraIface
 from hydra_base import HydraService
@@ -11,8 +12,8 @@ class SharingService(HydraService):
     """
 
     @rpc(Integer, String(max_occurs='unbounded'), 
-         String(pattern="[YN]"), String(pattern="[YN]"), _returns=String)
-    def share_network(ctx, network_id, usernames, read_only, share='N'):
+         String(pattern="[YN]"), String(pattern="[YN]", default='Y'), _returns=String())
+    def share_network(ctx, network_id, usernames, read_only, share):
         """
             Share a network with a list of users, identified by their usernames.
             
@@ -161,7 +162,7 @@ class SharingService(HydraService):
             user_i = HydraIface.User()
             user_i.db.username = username
             user_i.get_user_id()
-            #The creator of a project must always have read and write access
+            #The creator of a network must always have read and write access
             #to their project
             if net_i.db.created_by == user_i.db.user_id:
                 raise HydraError("Cannot set permissions on network %s"
@@ -171,3 +172,39 @@ class SharingService(HydraService):
             net_i.set_ownership(user_i.db.user_id, read=read, write=write, share=share)
 
         return "OK"
+
+class DataSharingService(HydraService):
+    @rpc(Integer, String(max_occurs="unbounded"),
+         String(pattern="[YN]"), String(pattern="[YN]"), String(pattern="[YN]"),
+         _returns=String)
+    def lock_dataset(ctx, dataset_id, exceptions, read, write, share):
+        """
+            Lock a particular piece of data so it can only be seen by its owner.
+            Only an owner can lock (and unlock) data.
+            Data with no owner cannot be locked.
+            
+            The exceptions paramater lists the usernames of those with permission to view the data
+            read, write and share indicate whether these users can read, edit and share this data.
+        """
+
+        dataset_i = HydraIface.Dataset(dataset_id=dataset_id)
+        #check that I can lock the dataset
+        if dataset_i.db.created_by != int(ctx.in_header.user_id):
+            raise HydraError('Permission denied. '
+                            'User %s is not the owner of dataset %s'
+                            %(ctx.in_header.user_id, dataset_i.db.data_name))
+
+        dataset_i.db.locked = 'Y'
+        if exceptions is not None:
+            for username in exceptions:
+                user_i = HydraIface.User()
+                user_i.db.username = username
+                user_i.get_user_id()
+
+                dataset_i.set_ownership(user_i.db.user_id, read=read, write=write, share=share)
+
+        dataset_i.save()
+
+        return "OK"
+
+

@@ -3,7 +3,8 @@ from spyne.decorator import rpc
 from db import HydraIface
 from hydra_complexmodels import Constraint,\
         ConstraintItem,\
-        ConstraintGroup
+        ConstraintGroup,\
+        get_as_complexmodel
 
 from hydra_base import HydraService
 from hydra_base import RequestHeader 
@@ -67,7 +68,7 @@ class ConstraintService(HydraService):
         constraint_i.db.group_id = group_i.db.group_id
         constraint_i.save()
 
-        return constraint_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, constraint_i)
 
     @rpc(Integer, Constraint, _returns=Constraint)
     def delete_constraint(ctx, scenario_id, constraint):
@@ -76,7 +77,7 @@ class ConstraintService(HydraService):
         """
         constraint_i = HydraIface.Constraint()
         
-        return constraint_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, constraint_i)
  
     @rpc(ConstraintGroup, _returns=ConstraintGroup)
     def echo_constraintgroup(ctx, constraintgroup):

@@ -10,6 +10,7 @@ from HydraLib import IfaceLib, config
 from HydraLib.IfaceLib import IfaceBase, execute
 
 from lxml import etree
+import os
 
 global LAYOUT_XSD_PATH
 LAYOUT_XSD_PATH = None
@@ -19,8 +20,9 @@ def init(cnx):
 
     global LAYOUT_XSD_PATH
     LAYOUT_XSD_PATH = config.get('hydra_server', 'layout_xsd_path')
+    LAYOUT_XSD_PATH = os.path.expanduser(LAYOUT_XSD_PATH)
 
-def add_dataset(data_type, val, units, dimension, name="", dataset_id=None):
+def add_dataset(data_type, val, units, dimension, name="", dataset_id=None, user_id=None):
     """
         Data can exist without scenarios. This is the mechanism whereby
         single pieces of data can be added without doing it through a scenario.
@@ -45,6 +47,7 @@ def add_dataset(data_type, val, units, dimension, name="", dataset_id=None):
         d.db.data_name  = name
         d.db.data_dimen = dimension
         d.db.data_hash  = data_hash
+        d.db.created_by = user_id
         d.save()
 
         return d.db.dataset_id
@@ -189,7 +192,7 @@ class GenericResource(IfaceBase):
             return None
 
     def assign_value(self, scenario_id, resource_attr_id, data_type, val,
-                     units, name, dimension, new=False):
+                     units, name, dimension, new=False, user_id=None):
         """
             Insert or update a piece of data in a scenario. the 'new' flag
             indicates that the data is new, thus allowing us to avoid unnecessary
@@ -235,7 +238,8 @@ class GenericResource(IfaceBase):
                                      units,
                                      dimension,
                                      name=name,
-                                     dataset_id=dataset_id)
+                                     dataset_id=dataset_id,
+                                     user_id=user_id)
 
             rs.db.dataset_id = dataset_id
 
@@ -345,6 +349,71 @@ class GenericResource(IfaceBase):
 
     def validate_layout(self, layout_xml):
         validate_layout(layout_xml)
+
+    def get_as_dict(self, user_id=None, time=False):
+        """
+            Converts this object into a spyne.model.ComplexModel type
+            which can be used by the soap library.
+            
+            The time paramater indicates that this function should
+            be timed for debugging purposes
+
+            The user_id parameter controls the contents of the dict
+            should a user not have sufficient privilages to see things
+        """
+
+        if time:
+            start = datetime.datetime.now()
+
+        obj_dict = super(GenericResource, self).get_as_dict(user_id=user_id)
+
+        obj_dict.update(
+            dict(attributes  = [],
+            templates   = [],
+            )
+        )
+
+        #If self is not in the DB, then return an empty dict
+        if self.in_db is False:
+            return obj_dict
+
+        for attr in self.get_attributes():
+            if self.name == 'Project':
+                rs_i = ResourceScenario(scenario_id = 1, resource_attr_id=attr.db.resource_attr_id)
+                obj_dict['attributes'].append(rs_i.get_as_dict(user_id=user_id))
+            else:
+                obj_dict['attributes'].append(attr.get_as_dict(user_id=user_id))
+        
+        #Should this go into the complex model code?
+        #It is not true to the structure of the DB...
+        template_groups = self.get_templates()
+
+        template_list = []
+        for group_id, group in template_groups.items():
+            group_name = group['group_name']
+            templates  = group['templates']
+
+            group_summary  = dict(
+                    object_type   = "GroupSummary",
+                    group_id      = group_id,
+                    group_name    = group_name,
+                    templates     = [],
+            )
+            
+            for template_id, template_name in templates:
+                template = dict(
+                    object_type = "TemplateSummary",
+                    template_id = template_id,
+                    template_name = template_name,
+                    )
+                group_summary['templates'].append(template)
+            template_list.append(group_summary)
+        obj_dict['templates'] = template_list
+
+        if time:
+            logging.info("get_as_dict of %s took: %s ", self.name, datetime.datetime.now()-start)
+
+        return obj_dict
 
     def get_as_complexmodel(self, time=False):
         """
@@ -543,8 +612,7 @@ class Scenario(GenericResource):
         if scenario_id is not None:
             self.load()
     
-    def get_as_complexmodel(self):
-        cm = super(Scenario, self).get_as_complexmodel()
+    def get_resourcegroupitems(self):
         sql = """
             select
                 item_id
@@ -558,8 +626,22 @@ class Scenario(GenericResource):
         resourcegroupitems = []
         for r in rs:
             item_i = ResourceGroupItem(item_id = r.item_id)
-            item_i.load()
-            resourcegroupitems.append(item_i.get_as_complexmodel())
+            resourcegroupitems.append(item_i)
+        self.resourcegroupitems = resourcegroupitems
+        return self.resourcegroupitems
+
+    def get_as_dict(self, user_id=None):
+        obj_dict = super(Scenario, self).get_as_dict(user_id=user_id)
+
+        obj_dict['resourcegroupitems'] = [rgi.get_as_dict() for rgi in self.get_resourcegroupitems()]
+
+        return obj_dict
+
+    def get_as_complexmodel(self):
+        cm = super(Scenario, self).get_as_complexmodel()
+        resourcegroupitems = []
+        for rgi in self.get_resourcegroupitems():
+            resourcegroupitems.append(rgi.get_as_complexmodel())
         cm.resourcegroupitems = resourcegroupitems
 
         return cm
@@ -734,7 +816,7 @@ class ResourceGroup(GenericResource):
         self.db.group_id = group_id
         if group_id is not None:
             self.load()
-    
+
     def get_as_complexmodel(self):
         cm             = super(ResourceGroup, self).get_as_complexmodel()
         cm.id          = self.db.group_id
@@ -891,30 +973,30 @@ class ResourceAttr(IfaceBase):
 
 
     def delete(self, purge_data=False):
-            #If there are any constraints associated with this resource attribute, it cannot be deleted
-            if len(self.constraintitems) > 0:
-                constraints = [ci.db.constraint_id for ci in self.constraintitems]
-                raise HydraError("Resource attribute cannot be deleted. "
-                                 "It is referened by constraints: %s "\
-                                 %constraints)
+        #If there are any constraints associated with this resource attribute, it cannot be deleted
+        if len(self.constraintitems) > 0:
+            constraints = [ci.db.constraint_id for ci in self.constraintitems]
+            raise HydraError("Resource attribute cannot be deleted. "
+                             "It is referened by constraints: %s "\
+                             %constraints)
 
-            for resource_scenario in self.resourcescenarios:
-                #We can only purge data if there are no other resource
-                #attributes associated with this data.
-                if purge_data == True:
-                    d = resource_scenario.dataset
-                    d.load()
-                    #If there is only 1 resource attribute for this
-                    #piece of data, it's OK to remove it.
-                    if len(d.resourcescenarios) == 1:
-                        #Delete the data entry first
-                        resource_scenario.dataset.delete_val()
-                        #then delete the scenario data
-                        d.delete()
-                #delete the reference to the resource attribute
-                resource_scenario.delete()
-            #delete the resource attribute
-            super(ResourceAttr, self).delete()
+        for resource_scenario in self.resourcescenarios:
+            #We can only purge data if there are no other resource
+            #attributes associated with this data.
+            if purge_data == True:
+                d = resource_scenario.dataset
+                d.load()
+                #If there is only 1 resource attribute for this
+                #piece of data, it's OK to remove it.
+                if len(d.resourcescenarios) == 1:
+                    #Delete the data entry first
+                    resource_scenario.dataset.delete_val()
+                    #then delete the scenario data
+                    d.delete()
+            #delete the reference to the resource attribute
+            resource_scenario.delete()
+        #delete the resource attribute
+        super(ResourceAttr, self).delete()
 
     def get_as_complexmodel(self):
         cm = super(ResourceAttr, self).get_as_complexmodel()
@@ -979,12 +1061,12 @@ class Template(IfaceBase):
         return item_i
 
     def get_as_complexmodel(self):
-        tmp =  hydra_complexmodels.Template()
-        tmp.name = self.db.template_name
-        tmp.alias = self.db.alias
-        tmp.layout = self.db.layout
-        tmp.id = self.db.template_id
-        tmp.group_id   = self.db.group_id
+        tmp          =  hydra_complexmodels.Template()
+        tmp.id       = self.db.template_id
+        tmp.name     = self.db.template_name
+        tmp.alias    = self.db.alias
+        tmp.layout   = self.db.layout
+        tmp.group_id = self.db.group_id
 
         items = []
         for item in self.templateitems:
@@ -1042,6 +1124,10 @@ class TemplateGroup(IfaceBase):
 
         super(TemplateGroup, self).delete()
 
+    def get_as_dict(self, user_id=None):
+        obj_dict = super(TemplateGroup, self).get_as_dict()
+        return obj_dict
+
 class ResourceType(IfaceBase):
     """
         Records whether a node, link or network has been
@@ -1093,6 +1179,23 @@ class ResourceScenario(IfaceBase):
             self.dataset = ds
         return ds
 
+    def get_as_dict(self, user_id=None):
+        """
+            This method overrides the base method as it hides
+            some of the DB complexities
+        """
+        #first create the appropriate soap complex model
+        obj_dict = dict(
+            object_type      = self.name,
+            resource_attr_id = self.db.resource_attr_id,
+            attr_id          = self.resourceattr.db.attr_id,
+        )
+
+        if self.get_dataset() is not None:
+            obj_dict['value'] = self.dataset.get_as_dict(user_id=user_id)
+
+        return obj_dict
+
     def get_as_complexmodel(self):
         """
             This method overrides the base method as it hides
@@ -1104,16 +1207,22 @@ class ResourceScenario(IfaceBase):
         cm.resource_attr_id = self.db.resource_attr_id
         cm.attr_id = self.resourceattr.db.attr_id
 
-        if self.dataset is not None:
+        if self.get_dataset() is not None:
             sd_i              = self.dataset
 
             dataset           = hydra_complexmodels.Dataset()
+            dataset.locked    = sd_i.db.locked
             dataset.id        = sd_i.db.dataset_id
             dataset.type      = sd_i.db.data_type
-            dataset.unit      = sd_i.db.data_units
             dataset.name      = sd_i.db.data_name
-            dataset.dimension = sd_i.db.data_dimen
-            dataset.value     = sd_i.get_as_complexmodel()
+            
+            if sd_i.db.locked == 'N':
+                dataset.dimension = sd_i.db.data_dimen
+                dataset.unit      = sd_i.db.data_units
+                dataset.value     = sd_i.get_as_complexmodel()
+            else:
+                #Check if the user requesting this data has permission to see it.
+                pass
 
             cm.value          = dataset
 
@@ -1133,6 +1242,54 @@ class Dataset(IfaceBase):
 
         if dataset_id is not None:
             self.load()
+
+    def set_ownership(self, user_id, read='Y', write='Y', share='Y'):
+        """
+            Add 'exceptions' to a locked dataset.
+            If a dataset is locked nobody except the owner can get it
+            from the server. Exceptions to this rule are added by 'ownership.'
+        """
+
+        if self.db.locked == 'N':
+            raise HydraError("Cannot set ownership. Dataset not locked")
+
+        owner = Owner()
+        owner.db.ref_key = 'DATASET'
+        
+        owner.db.ref_id  = self.db.dataset_id
+        owner.db.user_id = int(user_id)
+        owner.load()
+        owner.db.view    = read
+        owner.db.edit    = write
+        owner.db.share   = share
+
+        owner.save()
+
+        return owner
+
+    def check_read_permission(self, user_id):
+        """
+            Check whether this user can read this network
+        """
+
+        sql = """
+            select
+                user_id
+            from
+                tOwner
+            where
+                ref_key = 'DATASET'
+            and ref_id  = %s
+            and view    = 'Y'
+            and user_id = %s
+        """%(self.db.dataset_id, user_id)
+
+        rs = execute(sql)
+
+        if len(rs) == 0:
+            raise HydraError("Permission denied. User %s does not have read"
+                             " access on dataset %s" % 
+                             (user_id, self.db.dataset_id))
 
     def get_val_at_time(self, timestamp, ts_value):
         """
@@ -1259,6 +1416,46 @@ class Dataset(IfaceBase):
         logging.info("Deleting %s with data id %s", self.db.data_type, self.db.data_id)
         d.delete()
 
+    def get_as_dict(self, user_id = None):
+        """
+            This method overrides the base method as it hides
+            some of the DB complexities.
+
+            If the user_id parameter is None, no value is returned
+            If the user_id is not the creator of the dataset and
+            does not have read permission in tOwner, no value is returned.
+        """
+
+        #Create the dict but with no 'value' attribute.
+        obj_dict = super(Dataset, self).get_as_dict(user_id=user_id)
+        obj_dict['value'] = None
+        if user_id is None:
+            return obj_dict
+
+        if self.db.locked == 'Y':
+            try:
+                self.check_read_permission(user_id)
+            except HydraError:
+                return obj_dict
+
+        if self.db.data_type == 'descriptor':
+            datum = Descriptor(data_id = self.db.data_id)
+        elif self.db.data_type == 'timeseries':
+            datum = TimeSeries(data_id=self.db.data_id)
+            datum.load_all()
+        elif self.db.data_type == 'eqtimeseries':
+            datum = EqTimeSeries(data_id = self.db.data_id)
+        elif self.db.data_type == 'scalar':
+            datum = Scalar(data_id = self.db.data_id)
+        elif self.db.data_type == 'array':
+            datum = Array(data_id = self.db.data_id)
+        else:
+            raise HydraError("Cannot find data type %s"%(self.db.data_type))
+        
+        obj_dict['value'] = datum.get_as_dict()
+
+        return obj_dict
+
     def get_as_complexmodel(self):
         """
             This method overrides the base method as it hides
@@ -1269,29 +1466,20 @@ class Dataset(IfaceBase):
         complexmodel = None
         if self.db.data_type == 'descriptor':
             d = Descriptor(data_id = self.db.data_id)
-            complexmodel = {'desc_val': [d.db.desc_val]}
+            complexmodel = {'desc_val': [d.get_val()]}
         elif self.db.data_type == 'timeseries':
             ts = TimeSeries(data_id=self.db.data_id)
             ts.load_all()
             ts_datas = ts.timeseriesdatas
             ts_values = []
             for ts in ts_datas:
-                timestamp = convert_ordinal_to_datetime(ts.db.ts_time)
-                timestamp = self.time_format.format(timestamp.year,
-                                                    timestamp.month,
-                                                    timestamp.day,
-                                                    timestamp.hour,
-                                                    timestamp.minute,
-                                                    timestamp.second,
-                                                    timestamp.microsecond)
-
                 ts_values.append(
                     {
-                    'ts_time'  : [timestamp],
+                    'ts_time'  : [ts.get_timestamp()],
                     'ts_value' : ts.db.ts_value
                 })
             complexmodel = {
-                'ts_values' : {'TimeSeriesData': ts_values}
+                'ts_values' : ts_values
             }
         elif self.db.data_type == 'eqtimeseries':
             eqts = EqTimeSeries(data_id = self.db.data_id)
@@ -1404,6 +1592,12 @@ class Descriptor(IfaceBase):
         if data_id is not None:
             self.load()
 
+    def get_val(self):
+        """
+            Get the value of a descriptor. A string value.
+        """
+        return self.db.desc_val
+
 class TimeSeries(IfaceBase):
     """
         Non-equally spaced time series data
@@ -1412,6 +1606,8 @@ class TimeSeries(IfaceBase):
     """
     def __init__(self, data_id = None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
+
+        self.time_format = '{:0>4d}-{:0>2d}-{:02d} {:0>2d}:{:0>2d}:{:0>2d}.{:}'
 
         self.db.data_id = data_id
         if data_id is not None:
@@ -1444,6 +1640,19 @@ class TimeSeries(IfaceBase):
 
         for time, value in values:
             self.set_ts_value(time, value)
+
+    def get_val(self):
+        """
+            Return the entire time series.
+            Return value is a list of tuples: (time, value)
+        """
+        self.load_all()
+        ts_datas = self.timeseriesdatas
+        ts_values = []
+        for ts in ts_datas:
+            ts_values.append((ts.get_timestamp(),ts.db.ts_value))
+
+        return ts_values
 
     def get_ts_value(self, time):
         """
@@ -1480,10 +1689,30 @@ class TimeSeriesData(IfaceBase):
     """
     def __init__(self, timeseries=None, data_id = None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
+        self.time_format = '{:0>4d}-{:0>2d}-{:02d} {:0>2d}:{:0>2d}:{:0>2d}.{:}'
 
         self.db.data_id = data_id
         if data_id is not None:
             self.load()
+
+    def get_as_dict(self, user_id=None):
+        obj_dict = dict(
+            data_id = self.db.data_id,
+            ts_time = self.get_timestamp(),
+            ts_value = self.db.ts_value,
+        )
+        return obj_dict
+
+    def get_timestamp(self):
+        timestamp = convert_ordinal_to_datetime(self.db.ts_time)
+        timestamp = self.time_format.format(timestamp.year,
+                                            timestamp.month,
+                                            timestamp.day,
+                                            timestamp.hour,
+                                            timestamp.minute,
+                                            timestamp.second,
+                                            timestamp.microsecond)
+        return timestamp
 
 class EqTimeSeries(IfaceBase):
     """
@@ -1493,10 +1722,31 @@ class EqTimeSeries(IfaceBase):
     def __init__(self, data_id = None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
 
+        self.time_format = '{:0>4d}-{:0>2d}-{:02d} {:0>2d}:{:0>2d}:{:0>2d}.{:}'
+
         self.db.data_id = data_id
 
         if data_id is not None:
             self.load()
+
+    def get_val(self):
+        """
+            Get the value of an equally spaced TimeSeries
+            returns a dictionary containing start time, frequency and value.
+        """
+        starttime = convert_ordinal_to_datetime(self.db.start_time)
+        starttime = self.time_format.format(starttime.year,
+                                            starttime.month,
+                                            starttime.day,
+                                            starttime.hour,
+                                            starttime.minute,
+                                            starttime.second,
+                                            starttime.microsecond)
+        return {
+            'start_time' : starttime,
+            'frequency'  : self.db.frequency,
+            'arr_data'   : self.db.arr_data,
+        }
 
 class Scalar(IfaceBase):
     """
@@ -1508,6 +1758,12 @@ class Scalar(IfaceBase):
         self.db.data_id = data_id
         if data_id is not None:
             self.load()
+    
+    def get_val(self):
+        """
+            Get the value of this scalar. A number basically.
+        """
+        return self.db.param_value
 
 class Array(IfaceBase):
     """
@@ -1519,6 +1775,12 @@ class Array(IfaceBase):
         self.db.data_id = data_id
         if data_id is not None:
             self.load()
+
+    def get_val(self):
+        """
+            Get the value of this array.
+        """
+        return self.db.arr_data
 
 class Constraint(IfaceBase):
     """
@@ -1553,6 +1815,11 @@ class Constraint(IfaceBase):
 
         return cm
 
+    def get_as_dict(self, user_id=None):
+        self.load_all()
+        obj_dict = super(Constraint, self).get_as_dict()
+
+        return obj_dict
 
 class ConstraintGroup(IfaceBase):
     """
@@ -1657,6 +1924,30 @@ class ConstraintGroup(IfaceBase):
 
         return "(%s %s %s)"%(str_1, self.db.op, str_2)
 
+    def get_as_dict(self, user_id=None):
+        
+        obj_dict = super(ConstraintGroup, self).get_as_dict()
+        
+        obj_dict.update(dict(
+            groups     = [],
+            items      = [],
+        ))
+        if self.db.ref_key_1 == 'GRP':
+            group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_1)
+            obj_dict['groups'].append(group.get_as_dict())
+        elif self.db.ref_key_1 == 'ITEM':
+            item = ConstraintItem(item_id=self.db.ref_id_1)
+            obj_dict['items'].append(item.get_as_dict())
+
+        if self.db.ref_key_2 == 'GRP':
+            group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_2)
+            obj_dict['groups'].append(group.get_as_dict())
+        elif self.db.ref_key_2 == 'ITEM':
+            item = ConstraintItem(item_id=self.db.ref_id_2)
+            obj_dict['items'].append(item.get_as_dict())
+
+        return obj_dict
+
     def get_as_complexmodel(self):
 
         str_1 = None
@@ -1669,9 +1960,9 @@ class ConstraintGroup(IfaceBase):
             item = ConstraintItem(item_id=self.db.ref_id_1)
 
             #str_1 = item.db.resource_attr_id
-            item_details = item.get_item_details()
             if item.db.constant is None:
-                str_1 = "%s[%s][%s]" % (item_details[1], item_details[3], item_details[0])
+                attr_name, ref_key, ref_id, resource_name = item.get_item_details()
+                str_1 = "%s[%s][%s]" % (ref_key, ref_id, attr_name)
             else:
                 str_1 = item.db.constant
 
@@ -1680,11 +1971,10 @@ class ConstraintGroup(IfaceBase):
             str_2 = group.get_as_complexmodel()
         elif self.db.ref_key_2 == 'ITEM':
             item = ConstraintItem(item_id=self.db.ref_id_2)
-
             #str_2 = item.db.resource_attr_id
-            item_details = item.get_item_details()
             if item.db.constant is None:
-                str_2 = "%s[%s][%s]" % (item_details[1], item_details[3], item_details[0])
+                attr_name, ref_key, ref_id, resource_name = item.get_item_details()
+                str_2 = "%s[%s][%s]" % (ref_key, ref_id, attr_name)
             else:
                 str_2 = item.db.constant
 
@@ -1759,6 +2049,38 @@ class ConstraintItem(IfaceBase):
                 self.db.resource_attr_id)
 
         return (rs[0].attr_name, rs[0].ref_key, rs[0].ref_id, rs[0].resource_name)
+
+    def get_as_string(self):
+
+        item_details = item.get_item_details()
+        if item.db.constant is None:
+            item_val = "%s[%s][%s]" % (item_details[1], item_details[3], item_details[0])
+        else:
+            item_val = item.db.constant
+
+        return item_val
+
+    def get_as_dict(self, user_id=None):
+        attr_name     = None
+        ref_key       = None
+        ref_id        = None
+        resource_name = None
+        if self.db.constant is None:
+            details       = self.get_item_details()
+            attr_name, ref_key, ref_id, resource_name = details
+
+        obj_dict = dict(
+            attr_name        = attr_name,
+            ref_key          = ref_key,
+            ref_id           = ref_id,
+            resource_name    = resource_name,
+            constant         = self.db.constant,
+            resource_attr_id = self.db.resource_attr_id,
+            constraint_id    = self.db.constraint_id,
+            item_id          = self.db.item_id,
+        )
+
+        return obj_dict
 
 class User(IfaceBase):
     """

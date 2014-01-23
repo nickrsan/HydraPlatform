@@ -3,6 +3,7 @@
 
 import config
 import hydra_logging
+import logging
 from suds.client import Client
 from suds.plugin import MessagePlugin
 
@@ -279,6 +280,8 @@ class HydraAttribute(object):
 
 def connect():
     hydra_logging.init(level='INFO')
+    logging.getLogger('suds').setLevel(logging.ERROR)
+    logging.getLogger('suds.client').setLevel(logging.CRITICAL)
     url = config.get('hydra_client', 'url')
     user = config.get('hydra_client', 'user')
     passwd = config.get('hydra_client', 'password')

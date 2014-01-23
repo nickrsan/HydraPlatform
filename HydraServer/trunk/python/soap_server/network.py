@@ -3,7 +3,13 @@ from HydraLib.HydraException import HydraError
 from spyne.model.primitive import String, Integer, Boolean
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
-from hydra_complexmodels import Network, Node, Link, Scenario, ResourceGroup
+import hydra_complexmodels
+from hydra_complexmodels import Network,\
+Node,\
+Link,\
+Scenario,\
+ResourceGroup,\
+get_as_complexmodel
 from db import HydraIface
 from HydraLib import hdb, IfaceLib
 from hydra_base import HydraService, ObjectNotFoundError, get_user_id
@@ -326,8 +332,10 @@ class NetworkService(HydraService):
         net_i.set_ownership(ctx.in_header.user_id)
 
         logging.info("Insertion of network took: %s",(datetime.datetime.now()-insert_start))
-        return_value = net_i.get_as_complexmodel()
+        
+        return_value = get_as_complexmodel(ctx, net_i)
 
+        logging.debug("Return value: %s", return_value)
         return return_value
 
     @rpc(Integer, Integer, _returns=Network)
@@ -343,7 +351,7 @@ class NetworkService(HydraService):
             raise ObjectNotFoundError("Network (network_id=%s) not found." %
                                       network_id)
 
-        net = net_i.get_as_complexmodel()
+        net = get_as_complexmodel(ctx, net_i)
         
         return net
 
@@ -380,7 +388,7 @@ class NetworkService(HydraService):
             raise ObjectNotFoundError("Network (network_id=%s) not found." % \
                                       network_id)
 
-        net = net_i.get_as_complexmodel()
+        net = get_as_complexmodel(ctx, net_i)
 
         return net
 
@@ -548,7 +556,7 @@ class NetworkService(HydraService):
 
         net_i.load_all()
         
-        net = net_i.get_as_complexmodel(True)
+        net = get_as_complexmodel(ctx, net_i)
 
         hdb.commit()
 
@@ -622,7 +630,8 @@ class NetworkService(HydraService):
         _add_resource_types(node_i, node.templates)
 
         hdb.commit()
-        node = node_i.get_as_complexmodel()
+        net = get_as_complexmodel(ctx, node_i)
+
 
         return node
 
@@ -682,7 +691,7 @@ class NetworkService(HydraService):
         x.save()
         x.commit()
         hdb.commit()
-        node = x.get_as_complexmodel()
+        node = get_as_complexmodel(ctx, x)
 
         return node
 
@@ -758,7 +767,7 @@ class NetworkService(HydraService):
         _add_resource_types(x, link.templates)
         x.commit()
 
-        link = x.get_as_complexmodel()
+        link = get_as_complexmodel(ctx, x)
 
         return link
 
@@ -782,7 +791,10 @@ class NetworkService(HydraService):
 
         x.save()
         x.commit()
-        return x.get_as_complexmodel()
+
+        link = get_as_complexmodel(ctx, x)
+        
+        return link
 
     @rpc(Integer, _returns=Link)
     def delete_link(ctx, link_id):
@@ -828,18 +840,18 @@ class NetworkService(HydraService):
         net_i = HydraIface.Network(network_id=network_id)
         net_i.check_write_permission(ctx.in_header.user_id)
 
-        x = HydraIface.ResourceGroup()
-        x.db.network_id = network_id
-        x.db.group_name = group.name
-        x.db.group_description = group.description
-        x.db.status = group.status
-        x.save()
+        res_grp_i = HydraIface.ResourceGroup()
+        res_grp_i.db.network_id = network_id
+        res_grp_i.db.group_name = group.name
+        res_grp_i.db.group_description = group.description
+        res_grp_i.db.status = group.status
+        res_grp_i.save()
 
-        _add_attributes(x, group.attributes)
-        _add_resource_types(x, group.templates)
-        x.commit()
+        _add_attributes(res_grp_i, group.attributes)
+        _add_resource_types(res_grp_i, group.templates)
+        res_grp_i.commit()
 
-        group = x.get_as_complexmodel()
+        group = get_as_complexmodel(ctx, res_grp_i)
 
         return group
 
@@ -859,7 +871,8 @@ class NetworkService(HydraService):
 
         for scen in net.scenarios:
             scen.load()
-            scenarios.append(scen.get_as_complexmodel())
+            s_complex = get_as_complexmodel(ctx, scen)
+            scenarios.append(s_complex)
 
         return scenarios
 

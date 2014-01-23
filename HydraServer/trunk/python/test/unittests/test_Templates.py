@@ -2,6 +2,7 @@ import test_HydraIface
 import mysql.connector
 from db import HydraIface
 import datetime
+from HydraLib.HydraException import HydraError
 
 class TemplateGroupTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
@@ -84,7 +85,7 @@ class TemplateTest(test_HydraIface.HydraIfaceTest):
         y = HydraIface.Template()
         y.db.template_name = 'test_fk'
         y.db.group_id      = x.db.group_id + 1
-        self.assertRaises(mysql.connector.DatabaseError, y.save)
+        self.assertRaises(HydraError, y.save)
 
     def test_load(self):
         x = HydraIface.Template()
@@ -137,10 +138,10 @@ class TemplateItemTest(test_HydraIface.HydraIfaceTest):
         t = self.create_template("template1")
 
         x = HydraIface.TemplateItem(attr_id=a.db.attr_id, template_id=0)
-        self.assertRaises(mysql.connector.DatabaseError, x.save)
+        self.assertRaises(HydraError, x.save)
 
         y = HydraIface.TemplateItem(attr_id=0, template_id=t.db.template_id)
-        self.assertRaises(mysql.connector.DatabaseError, y.save)
+        self.assertRaises(HydraError, y.save)
 
     def test_load(self):
         a = self.create_attribute("attr1")

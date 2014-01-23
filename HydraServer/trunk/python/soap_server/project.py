@@ -2,7 +2,10 @@ from spyne.decorator import rpc
 from spyne.model.primitive import Integer, Boolean
 from spyne.model.complex import Array as SpyneArray
 from db import HydraIface
-from hydra_complexmodels import Project, ProjectSummary, Network
+from hydra_complexmodels import Project,\
+ProjectSummary,\
+Network,\
+get_as_complexmodel
 from hydra_base import HydraService, ObjectNotFoundError
 from HydraLib.HydraException import HydraError
 import scenario
@@ -50,7 +53,7 @@ class ProjectService(HydraService):
         user_id = ctx.in_header.user_id
         proj_i.set_ownership(user_id)
 
-        ret = proj_i.get_as_complexmodel()
+        ret = get_as_complexmodel(ctx, proj_i)
 
         return ret
 
@@ -72,7 +75,7 @@ class ProjectService(HydraService):
 
         proj_i.save()
 
-        return proj_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, proj_i)
 
 
     @rpc(Integer, _returns=Project)
@@ -87,7 +90,7 @@ class ProjectService(HydraService):
         if proj_i.load() is False:
             raise ObjectNotFoundError("Project (project_id=%s) not found."%project_id)
 
-        return proj_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx, proj_i)
  
     @rpc(Integer, _returns=SpyneArray(ProjectSummary))
     def get_projects(ctx):
@@ -168,7 +171,7 @@ class ProjectService(HydraService):
             try:
                 n_i.check_read_permission(user_id)
                 n_i.load()
-                networks.append(n_i.get_as_complexmodel())
+                networks.append(get_as_complexmodel(ctx, n_i))
             except:
                 logging.info("Not returning network %s as user %s does not have "
                              "permission to read it."%(n_i.db.network_id, user_id))

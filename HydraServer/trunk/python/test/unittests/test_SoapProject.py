@@ -4,6 +4,7 @@
 import test_SoapServer
 import datetime
 import copy
+import logging
 
 def setup():
     test_SoapServer.connect()
@@ -32,7 +33,7 @@ class ProjectTest(test_SoapServer.SoapServerTest):
 
         attributes = self.client.factory.create('hyd:ResourceScenarioArray')
         
-        attributes.ResourceScenario.append(self.create_descriptor(proj_attr_1))
+        attributes.ResourceScenario.append(self.create_descriptor(proj_attr_1, val="just project desscriptor"))
         attributes.ResourceScenario.append(self.create_array(proj_attr_2))
         attributes.ResourceScenario.append(self.create_timeseries(proj_attr_3))
 
@@ -54,12 +55,12 @@ class ProjectTest(test_SoapServer.SoapServerTest):
         new_project.description = \
             'An updated project created through the SOAP interface.'
  
-        print self.client.last_sent()
+        logging.debug(self.client.last_sent())
  
         updated_project = self.client.service.update_project(new_project)
  
-        print self.client.last_sent()
-        print updated_project
+        logging.debug(self.client.last_sent())
+        logging.debug(updated_project)
 
         assert project.id == updated_project.id, \
             "project_id changed on update."
@@ -73,7 +74,10 @@ class ProjectTest(test_SoapServer.SoapServerTest):
             'An updated project created through the SOAP interface.', \
             "Update did not work correctly."
 
-        assert updated_project.attributes.ResourceScenario[0].value.type == 'descriptor' and updated_project.attributes.ResourceScenario[0].value.value.desc_val == 'test', "There is an inconsistency with the attributes."
+        rs_to_check = updated_project.attributes.ResourceScenario[0]
+        assert rs_to_check.value.type == 'descriptor' and \
+               rs_to_check.value.value.desc_val == 'just project desscriptor', \
+               "There is an inconsistency with the attributes."
 
     def test_load(self):
         project = self.client.factory.create('hyd:Project')

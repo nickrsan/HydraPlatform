@@ -151,7 +151,7 @@ class SoapServerTest(unittest.TestCase):
             p =  self.client.service.add_project(project)
             project_id = p.id
 
-        print "Project creation took: %s"%(datetime.datetime.now()-start)
+        logging.debug("Project creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
 
         #Create some attributes, which we can then use to put data on our nodes
@@ -161,7 +161,7 @@ class SoapServerTest(unittest.TestCase):
         attr4 = self.create_attr("testattr_4")
         attr5 = self.create_attr("group_attr")
 
-        print "Attribute creation took: %s"%(datetime.datetime.now()-start)
+        logging.debug("Attribute creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
 
         #Create 2 nodes
@@ -213,7 +213,7 @@ class SoapServerTest(unittest.TestCase):
         link_array = self.client.factory.create('hyd:LinkArray')
         link_array.Link.append(link)
 
-        print "Making nodes & links took: %s"%(datetime.datetime.now()-start)
+        logging.debug("Making nodes & links took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
 
         #Create the scenario
@@ -277,7 +277,7 @@ class SoapServerTest(unittest.TestCase):
         scenario_array = self.client.factory.create('hyd:ScenarioArray')
         scenario_array.Scenario.append(scenario)
 
-        print "Scenario definition took: %s"%(datetime.datetime.now()-start)
+        logging.debug("Scenario definition took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
 
         layout = """
@@ -303,10 +303,10 @@ class SoapServerTest(unittest.TestCase):
             'scenarios'   : scenario_array,
             'resourcegroups' : group_array,
         }
-        #print network
+        #logging.debug(network)
         network = self.client.service.add_network(network)
 
-        print "Network Creation took: %s"%(datetime.datetime.now()-start)
+        logging.debug("Network Creation took: %s"%(datetime.datetime.now()-start))
 
         return network
 
@@ -349,19 +349,27 @@ class SoapServerTest(unittest.TestCase):
         dataset.unit = 'feet cubed'
         dataset.dimension = 'cubic capacity'
 
-        ts1 = self.client.factory.create('hyd:TimeSeriesData')
-        ts1.ts_time  = datetime.datetime.now()
-        ts1.ts_value = str([1, 2, 3, 4, 5])
+        # ts1 = self.client.factory.create('hyd:TimeSeriesData')
+        # ts1.ts_time  = datetime.datetime.now()
+        # ts1.ts_value = str([1, 2, 3, 4, 5])
 
-        ts2 = self.client.factory.create('hyd:TimeSeriesData')
-        ts2.ts_time  = datetime.datetime.now() + datetime.timedelta(hours=1)
-        ts2.ts_value = str([2, 3, 4, 5, 6])
+        # ts2 = self.client.factory.create('hyd:TimeSeriesData')
+        # ts2.ts_time  = datetime.datetime.now() + datetime.timedelta(hours=1)
+        # ts2.ts_value = str([2, 3, 4, 5, 6])
 
-        ts3 = self.client.factory.create('hyd:TimeSeries')
-        ts3.ts_values.TimeSeriesData.append(ts1)
-        ts3.ts_values.TimeSeriesData.append(ts2)
+        # ts3 = self.client.factory.create('hyd:TimeSeries')
+        # ts3.ts_values.TimeSeriesData.append(ts1)
+        # ts3.ts_values.TimeSeriesData.append(ts2)
 
-        dataset.value = ts3
+        #dataset.value = ts3
+        dataset.value = {'ts_values' : 
+            [
+                {'ts_time' : datetime.datetime.now(),
+                'ts_value' : str([1, 2, 3, 4, 5])},
+                {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=1),
+                'ts_value' : str([10, 20, 30, 40, 50])},
+            ]
+        }
         scenario_attr.value = dataset
 
         return scenario_attr

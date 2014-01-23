@@ -18,7 +18,8 @@ from hydra_complexmodels import Scenario,\
         ResourceScenarioDiff,\
         ConstraintDiff,\
         ResourceGroupDiff,\
-        parse_value
+        parse_value,\
+        get_as_complexmodel
 
 from db import HydraIface
 from HydraLib import units, IfaceLib
@@ -133,7 +134,7 @@ class ScenarioService(HydraService):
         scen.save()
         scen.load_all()
 
-        return scen.get_as_complexmodel()
+        return get_as_complexmodel(ctx, scen)
 
     @rpc(Scenario, _returns=Scenario)
     def update_scenario(ctx, scenario):
@@ -148,7 +149,7 @@ class ScenarioService(HydraService):
         scen.save()
 
         for r_scen in scenario.resourcescenarios:
-            _update_resourcescenario(scen.db.scenario_id, r_scen)
+            _update_resourcescenario(scen.db.scenario_id, r_scen, user_id=ctx.in_header.user_id)
 
         for constraint in scenario.constraints:
             ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint)
@@ -193,7 +194,7 @@ class ScenarioService(HydraService):
 
         scen.save()
         scen.load_all()
-        return scen.get_as_complexmodel()
+        return get_as_complexmodel(ctx, scen)
 
     @rpc(Integer, _returns=Boolean)
     def delete_scenario(ctx, scenario_id):
@@ -261,7 +262,7 @@ class ScenarioService(HydraService):
 
         cloned_scen.load_all()
 
-        return cloned_scen.get_as_complexmodel()
+        return get_as_complexmodel(ctx, cloned_scen)
 
     @rpc(Integer, Integer, _returns=ScenarioDiff)
     def compare_scenarios(ctx, scenario_id_1, scenario_id_2):
@@ -286,15 +287,15 @@ class ScenarioService(HydraService):
                     if s1_rs.db.dataset_id != s2_rs.db.dataset_id:
                         resource_diff = ResourceScenarioDiff()
                         resource_diff.resource_attr_id = s1_rs.db.resource_attr_id
-                        resource_diff.scenario_1_dataset = s1_rs.get_as_complexmodel().value
-                        resource_diff.scenario_2_dataset = s2_rs.get_as_complexmodel().value
+                        resource_diff.scenario_1_dataset = get_as_complexmodel(ctx, s1_rs).value
+                        resource_diff.scenario_2_dataset = get_as_complexmodel(ctx, s2_rs).value
                         resource_diffs.append(resource_diff)
 
                     break
             else:
                 resource_diff = ResourceScenarioDiff()
                 resource_diff.resource_attr_id = s1_rs.db.resource_attr_id
-                resource_diff.scenario_1_dataset = s1_rs.get_as_complexmodel().value
+                resource_diff.scenario_1_dataset = get_as_complexmodel(ctx, s1_rs).value
                 resource_diff.scenario_2_dataset = None
                 resource_diffs.append(resource_diff)
 
@@ -308,7 +309,7 @@ class ScenarioService(HydraService):
                 resource_diff = ResourceScenarioDiff()
                 resource_diff.resource_attr_id = s1_rs.db.resource_attr_id
                 resource_diff.scenario_1_dataset = None
-                resource_diff.scenario_2_dataset = s2_rs.get_as_complexmodel().value
+                resource_diff.scenario_2_dataset = get_as_complexmodel(ctx, s2_rs).value
                 resource_diffs.append(resource_diff)
 
         scenariodiff.resourcescenarios = resource_diffs
@@ -350,9 +351,9 @@ class ScenarioService(HydraService):
         #Make a list of all the constraints that are unique
         #to scenario 1 and that are in both scenarios, but are not the same.
         for s1_con in scenario_1.constraints:
-            con1 = s1_con.get_as_complexmodel()
+            con1 = get_as_complexmodel(ctx, s1_con)
             for s2_con in scenario_2.constraints:
-                con2 = s2_con.get_as_complexmodel()
+                con2 = get_as_complexmodel(ctx, s2_con)
                 if con1.value == con2.value:
                     common_constraints.append(con1)
                     break
@@ -362,9 +363,9 @@ class ScenarioService(HydraService):
         #make a list of all the constraints that are unique
         #in scenario 2.
         for s2_con in scenario_2.constraints:
-            con2 = s2_con.get_as_complexmodel()
+            con2 = get_as_complexmodel(ctx, s2_con)
             for s1_con in scenario_1.constraints:
-                con1 = s1_con.get_as_complexmodel()
+                con1 = get_as_complexmodel(ctx, s1_con)
                 if con1.value == con2.value:
                     break
             else:
@@ -392,8 +393,12 @@ class ScenarioService(HydraService):
             from the scenario. Use the remove_resourcedata for this task.
         """
         if resource_scenario.value is not None:
-            res = _update_resourcescenario(scenario_id, resource_scenario)
-            return res.get_as_complexmodel()
+            res = _update_resourcescenario(scenario_id, resource_scenario, user_id=ctx.in_header.user_id)
+            if res is None:
+                raise HydraError("Could not update resource data. No value "
+                    "sent with data. Check privilages.")
+
+            return get_as_complexmodel(ctx, res)
 
     @rpc(Integer, ResourceScenario, _returns=ResourceScenario)
     def delete_resourcedata(ctx,scenario_id, resource_scenario):
@@ -402,16 +407,20 @@ class ScenarioService(HydraService):
         """
         _delete_resourcescenario(scenario_id, resource_scenario)
 
-def _get_dataset(dataset_id):
+    @rpc(Integer, _returns=Dataset)
+    def get_dataset(ctx, dataset_id):
+        """
+            Get a single dataset, by ID
+        """
 
-    if dataset_id is None:
-        return None
+        if dataset_id is None:
+            return None
 
-    sd_i = HydraIface.Dataset(dataset_id=dataset_id)
-    sd_i.load()
-    dataset = sd_i.get_as_complexmodel()
+        sd_i = HydraIface.Dataset(dataset_id=dataset_id)
+        sd_i.load()
+        dataset = get_as_complexmodel(ctx, sd_i)
 
-    return dataset
+        return dataset
 
 def _delete_resourcescenario(scenario_id, resource_scenario):
 
@@ -419,7 +428,7 @@ def _delete_resourcescenario(scenario_id, resource_scenario):
     sd = HydraIface.ResourceScenario(scenario_id=scenario_id, resource_attr_id=ra_id)
     sd.delete()
 
-def _update_resourcescenario(scenario_id, resource_scenario, new=False):
+def _update_resourcescenario(scenario_id, resource_scenario, new=False, user_id=None):
     """
         Insert or Update the value of a resource's attribute by first getting the
         resource, then parsing the input data, then assigning the value.
@@ -433,9 +442,13 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
     res = r_a.get_resource()
 
     data_type = resource_scenario.value.type.lower()
-
+    
     value = parse_value(resource_scenario.value)
 
+    if value is None:
+        logging.info("Cannot set data on resource attribute %s",ra_id)
+        return None
+    
     dimension = resource_scenario.value.dimension
     data_unit = resource_scenario.value.unit
 
@@ -454,7 +467,7 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False):
     name      = resource_scenario.value.name
 
     rs_i = res.assign_value(scenario_id, ra_id, data_type, value,
-                    data_unit, name, dimension, new=new)
+                    data_unit, name, dimension, new=new, user_id=user_id)
 
     return rs_i
 
@@ -466,6 +479,11 @@ def hash_incoming_data(data):
 
     for d in data:
         val = parse_value(d)
+
+        if val is None:
+            logging.info("Cannot parse data (dataset_id=%s). "
+                         "Value not available.",d.id)
+            continue
 
         scenario_datum = HydraIface.Dataset()
         scenario_datum.db.data_type  = d.type
@@ -531,6 +549,8 @@ class DataService(HydraService):
                 tDataset
         """
 
+        user_id = ctx.in_header.user_id
+
         unit = units.Units()
 
         rs = HydraIface.execute(sql)
@@ -565,10 +585,15 @@ class DataService(HydraService):
         for i, d in enumerate(bulk_data):
             val = parse_value(d)
 
+            if val is None:
+                logging.info("Cannot parse data (dataset_id=%s). Value not available.",d.dataset_id)
+                continue
+
             scenario_datum = HydraIface.Dataset()
             scenario_datum.db.data_type  = d.type
             scenario_datum.db.data_name  = d.name
             scenario_datum.db.data_units = d.unit
+            scenario_datum.db.created_by = user_id
 
             # Assign dimension if necessary
             # It happens that d.dimension is and empty string. We set it to
@@ -752,12 +777,18 @@ class DataService(HydraService):
 
         value = parse_value(dataset)
 
+        if value is None:
+            raise HydraException("Cannot set value to attribute. "
+                "No value was sent with dataset %s", dataset.id)
+
+        user_id = ctx.in_header.user_id
+
         rs_i = res.assign_value(scenario_id, resource_attr_id, data_type, value,
-                        dataset.unit, dataset.name, dataset.dimension, new=False)
+                        dataset.unit, dataset.name, dataset.dimension, new=False, user_id=user_id)
 
         rs_i.load_all()
 
-        x = rs_i.get_as_complexmodel()
+        x = get_as_complexmodel(ctx,rs_i)
         logging.info(x)
         return x
 
@@ -769,10 +800,11 @@ class DataService(HydraService):
         grp_i.load()
         grp_i.commit()
 
-        return grp_i.get_as_complexmodel()
+        return get_as_complexmodel(ctx,grp_i)
 
     @rpc(DatasetGroup, _returns=DatasetGroup)
     def add_dataset_group(ctx, group):
+
         grp_i = HydraIface.DatasetGroup()
         grp_i.db.group_name = group.group_name
 
@@ -789,7 +821,8 @@ class DataService(HydraService):
 
         grp_i.load_all()
 
-        return grp_i.get_as_complexmodel()
+        return_grp = get_as_complexmodel(ctx,grp_i)
+        return return_grp
 
     @rpc(String, _returns=SpyneArray(DatasetGroup))
     def get_groups_like_name(ctx, group_name):
@@ -842,14 +875,7 @@ class DataService(HydraService):
 
         for r in rs:
             sd = HydraIface.Dataset(dataset_id=r.dataset_id)
-            d           = Dataset()
-            d.id        = sd.db.dataset_id
-            d.type      = sd.db.data_type
-            d.dimension = sd.db.data_dimen
-            d.unit      = sd.db.data_units
-            d.name      = sd.db.data_name
-            d.value     = sd.get_as_complexmodel()
-            scenario_data.append(d)
+            scenario_data.append(get_as_complexmodel(ctx, sd))
 
         return scenario_data
 
@@ -873,31 +899,18 @@ class DataService(HydraService):
         rs = HydraIface.execute(sql)
 
         for r in rs:
-            sd = HydraIface.Dataset(dataset_id=r.dataset_id)
-            d           = Dataset()
-            d.id        = sd.db.dataset_id
-            d.type      = sd.db.data_type
-            d.dimension = sd.db.data_dimen
-            d.unit      = sd.db.data_units
-            d.name      = sd.db.data_name
-            d.value     = sd.get_as_complexmodel()
-            scenario_data.append(d)
+            sd          = HydraIface.Dataset(dataset_id=r.dataset_id)
+            scenario_data.append(get_as_complexmodel(ctx, sd))
 
         return scenario_data
 
-    @rpc(AnyDict, _returns=AnyDict)
+    @rpc(Dataset, _returns=Dataset)
     def update_dataset(ctx, data):
         """
             Update a piece of data directly, rather than through a resource
             scenario.
         """
 
-    @rpc(Integer, _returns=AnyDict)
-    def get_dataset(dataset_id):
-        """
-            Get a piece of data directly, rather than through a resource
-            scenario.
-        """
 
     @rpc(Integer, _returns=Boolean)
     def delete_dataset(dataset_id):
