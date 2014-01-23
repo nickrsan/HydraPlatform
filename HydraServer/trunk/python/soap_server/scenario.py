@@ -977,6 +977,6 @@ class DataService(HydraService):
         logging.debug("Number of times to fetch: %s", len(times))
         data = td.get_val(timestamp=times)
 
-        dataset = {'data' : data}
+        dataset = {'data' : [data]}
 
         return dataset

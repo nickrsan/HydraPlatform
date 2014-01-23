@@ -219,11 +219,32 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
             'minutes',
             )
 
-        assert len(vals.data) == 76
-        for val in vals.data[0:59]:
-            assert val == val_a
-        for val in vals.data[60:75]:
-            assert val == val_b
+        data = eval(vals.data)
+        assert len(data) == 76
+        for val in data[0:59]:
+            assert val == eval(val_a)
+        for val in data[60:75]:
+            assert val == eval(val_b)
+
+    def test_descriptor_get_data_between_times(self):
+        net = self.create_network_with_data()
+        scenario = net.scenarios.Scenario[0]
+        val_to_query = None
+        for d in scenario.resourcescenarios.ResourceScenario:
+            if d.value.type == 'descriptor':
+                val_to_query = d.value
+                break
+
+        now = datetime.datetime.now()
+
+        value = self.client.service.get_vals_between_times(
+            val_to_query.id,
+            now,
+            now + datetime.timedelta(minutes=75),
+            'minutes',
+            )
+        logging.debug(value)
+        assert value.data == 'test'
 
 
     def test_clone(self):
