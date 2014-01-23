@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import test_SoapServer
+import suds
 import bcrypt
 import datetime
 
@@ -114,6 +115,44 @@ class UsersTest(test_SoapServer.SoapServerTest):
 
         assert delete_result == 'OK', "Role Perm was not removed!"
 
+    def test_get_users(self):
+        users = self.client.service.get_all_users()
+        assert len(users) > 0
+        for user in users.User:
+            if user.id == 1:
+                assert user.username == 'root'
+
+    def test_get_perms(self):
+        perms = self.client.service.get_all_perms()
+        assert len(perms.Perm) >= 19
+
+        check_perm = perms.Perm[0]
+
+        single_perm = self.client.service.get_perm(check_perm.id)
+
+        assert single_perm.id == check_perm.id
+        assert single_perm.code == check_perm.code
+        assert single_perm.name == check_perm.name
+        self.assertRaises(suds.WebFault, self.client.service.get_perm, 99999)
+
+    def test_get_roles(self):
+        roles = self.client.service.get_all_roles()
+        assert len(roles.Role) >=6
+
+        role_codes = set([r.code for r in roles.Role])
+        core_set = set(['admin', 'dev', 'modeller', 'manager', 'grad', 'decision'])
+        assert core_set.issubset(role_codes)
+        for r in roles.Role:
+            if r.code == 'admin':
+                assert len(r.roleperms.RolePerm) >= 10
+                check_role = r
+
+        single_role = self.client.service.get_role(check_role.id)
+        assert check_role.id == single_role.id
+        assert check_role.code == single_role.code
+        assert check_role.name == single_role.name
+        assert len(check_role.roleperms) == len(single_role.roleperms)
+        self.assertRaises(suds.WebFault, self.client.service.get_role, 99999)
 
 def setup():
     test_SoapServer.connect()

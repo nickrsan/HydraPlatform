@@ -1,4 +1,5 @@
 from spyne.model.primitive import Integer, String
+from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from db import HydraIface
 from hydra_complexmodels import User,\
@@ -202,3 +203,119 @@ class UserService(HydraService):
         return get_as_complexmodel(ctx, role_i)
 
             
+    @rpc(_returns=SpyneArray(User))
+    def get_all_users(ctx):
+        """
+            Get the username & ID of all users.
+        """
+
+        sql = """
+            select
+                username,
+                user_id
+            from
+                tUser
+        """
+
+        rs = HydraIface.execute(sql)
+        users = []
+        for r in rs:
+            user = User()
+            user.username = r.username
+            user.id  = r.user_id
+            users.append(user)
+
+        return users
+
+    @rpc(_returns=SpyneArray(Perm))
+    def get_all_perms(ctx):
+        """
+            Get all permissions
+        """
+        sql = """
+            select
+                perm_name,
+                perm_id,
+                perm_code
+            from
+                tPerm
+        """
+        rs = HydraIface.execute(sql)
+        perms = []
+        for r in rs:
+            perm = Perm()
+            perm.name = r.perm_name
+            perm.id   = r.perm_id
+            perm.code = r.perm_code
+            perms.append(perm)
+        return perms
+
+    @rpc(_returns=SpyneArray(Role))
+    def get_all_roles(ctx):
+        """
+            Get all roleissions
+        """
+        sql = """
+            select
+                role_id
+            from
+                tRole
+        """
+        rs = HydraIface.execute(sql)
+        roles = []
+        for r in rs:
+            role = HydraIface.Role(role_id=r.role_id)
+            role.load_all()
+            roles.append(get_as_complexmodel(ctx, role))
+        
+        return roles
+
+    @rpc(Integer, _returns=Role)
+    def get_role(ctx, role_id):
+        """
+            Get all roleissions
+        """
+        sql = """
+            select
+                role_id
+            from
+                tRole
+            where
+                role_id=%s
+        """ % (role_id)
+
+        rs = HydraIface.execute(sql)
+        if len(rs) == 0:
+            raise HydraError("Role not found (role_id=%s)", role_id)
+        
+        role = HydraIface.Role(role_id=rs[0].role_id)
+        role.load_all()
+        
+        return get_as_complexmodel(ctx, role)
+
+    @rpc(Integer, _returns=Perm)
+    def get_perm(ctx, perm_id):
+        """
+            Get all permissions
+        """
+        sql = """
+            select
+                perm_id,
+                perm_name,
+                perm_code
+            from
+                tPerm
+            where
+                perm_id=%s
+        """ % (perm_id)
+
+        rs = HydraIface.execute(sql)
+        if len(rs) == 0:
+            raise HydraError("perm not found (perm_id=%s)", perm_id)
+        
+        p = Perm()
+        p.id = rs[0].perm_id
+        p.name= rs[0].perm_name
+        p.code = rs[0].perm_code
+        
+        return p
