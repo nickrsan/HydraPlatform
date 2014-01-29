@@ -7,7 +7,9 @@ includes = ["encodings.utf_8",\
             "ConfigParser",\
             "mysql.connector",\
             "suds",\
-	    "pytz"]
+	    "pytz",\
+            "spyne",\
+            "spyne.service",]
 
 setup(
     name = "On Dijkstra's Algorithm",
