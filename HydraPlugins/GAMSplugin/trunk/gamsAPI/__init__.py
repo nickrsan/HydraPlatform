@@ -8,4 +8,4 @@ elif sys.platform == 'linux2' and 'i686' in os.uname():
 elif sys.platform == 'win32' or sys.platform == 'cygwin':
     from lib_win32_27 import *
 else:
-    raise ImportError
+    raise ImportError("GAMS API for platform '%s' not found." % sys.platform)

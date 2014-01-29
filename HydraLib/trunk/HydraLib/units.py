@@ -7,6 +7,7 @@ between units and dimensions.
 import os
 from copy import deepcopy
 from ConfigParser import NoSectionError
+from HydraLib.HydraException import HydraError
 
 import config
 from lxml import etree
@@ -99,6 +100,7 @@ class Units(object):
         for dim in self.dimensions.keys():
             if unit in self.dimensions[dim]:
                 return dim
+        raise HydraError('Unit not found.')
 
     def convert(self, value, unit1, unit2):
         """Convert a value from one unit to another one. The two units must
@@ -252,7 +254,7 @@ class Units(object):
             else:
                 return False
         else:
-            return False
+            raise HydraError('Unit not found.')
 
     def delete_unit(self, unit):
         """Delete a unit from the custom file.
