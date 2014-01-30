@@ -233,12 +233,15 @@
         <unit name="acre-inch per day"       abbr="ac-in day^-1" lf="0.00118970085" cf="0" info=""/>
         <unit name="acre-inch per month"     abbr="ac-in mon^-1" lf="3.90875157e-05" cf="0" info=""/>
     </dimension>
-        <dimension name="Monetary value">
+    <dimension name="Monetary value">
         <unit abbr="$" cf="0" info="" lf="1" name="US Dollar"/>
     </dimension>
     <dimension name="Energy price">
         <unit name="USDollars per kilowatt-hour" abbr="$ kWh^-1"    lf="2.77777777e-07" cf="0" info="Cost in US Dollars per energy unit (kilowatt-hour)."/>
         <unit name="USDollars per kilojoule" abbr="$ kJ^-1"    lf="0.001" cf="0" info="Cost in US Dollars per energy unit (kilojoule)."/>
         <unit name="USDollars per joule" abbr="$ J^-1"    lf="1" cf="0" info="Cost in US Dollars per energy unit (joule)."/>
+    </dimension>
+    <dimension name="Dimensionless">
+        <unit abbr="%" cf="0" info="" lf="1" name="Percent"/>
     </dimension>
 </UNITS>
