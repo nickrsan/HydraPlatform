@@ -1,3 +1,3 @@
-Name  , X               , Y               , group, stor_group, infeasQ, Description
-Units ,                 ,                 ,      ,           ,        ,
-Hp1   , 497262.882599909, 156700.428599865, hp   , nonstor   , NULL   ,
+Name  , X               , Y               , stor_group, infeasQ, Description
+Units ,                 ,                 ,           ,        ,
+Hp1   , 497262.882599909, 156700.428599865, nonstor   , NULL   ,
