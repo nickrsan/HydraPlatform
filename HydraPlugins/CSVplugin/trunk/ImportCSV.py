@@ -121,6 +121,7 @@ API docs
 
 import argparse as ap
 import logging
+import os
 from datetime import datetime
 import pytz
 
@@ -147,6 +148,8 @@ class ImportCSV(object):
     expand_filenames = False
     unit_class = units.Units()
 
+    basepath = ''
+
     def __init__(self):
         self.cli = PluginLib.connect()
         self.node_id = PluginLib.temp_ids()
@@ -168,7 +171,7 @@ class ImportCSV(object):
                 logging.info('Project ID not valid. Creating new project')
 
         self.Project = self.cli.factory.create('hyd:Project')
-        self.Project.name = "CSV import at %s"%(datetime.now())
+        self.Project.name = "CSV import at %s" % (datetime.now())
         self.Project.description = \
             "Project created by the %s plug-in, %s." % \
             (self.__class__.__name__, datetime.now())
@@ -188,11 +191,12 @@ class ImportCSV(object):
     def create_network(self, file=None):
 
         if file is not None:
+            self.basepath = os.path.dirname(file)
             with open(file, mode='r') as csv_file:
                 self.net_data = csv_file.read().split('\n')
             # Ignore comments
             for i, line in enumerate(self.net_data):
-                if len(line) >0 and line.strip()[0] == '#':
+                if len(line) > 0 and line.strip()[0] == '#':
                     self.net_data.pop(i)
             keys = self.net_data[0].split(',')
             units = self.net_data[1].split(',')
@@ -289,7 +293,7 @@ class ImportCSV(object):
             self.node_data = csv_file.read().split('\n')
             # Ignore comments
             for i, line in enumerate(self.node_data):
-                if len(line) >0 and line.strip()[0] == '#':
+                if len(line) > 0 and line.strip()[0] == '#':
                     self.node_data.pop(i)
         self.create_nodes()
 
@@ -353,7 +357,7 @@ class ImportCSV(object):
             self.link_data = csv_file.read().split('\n')
             # Ignore comments
             for i, line in enumerate(self.link_data):
-                if len(line) >0 and line.strip()[0] == '#':
+                if len(line) > 0 and line.strip()[0] == '#':
                     self.link_data.pop(i)
         self.create_links()
 
@@ -477,7 +481,8 @@ class ImportCSV(object):
                 else:
 
                     if units is not None:
-                        dataset = self.create_dataset(data[i], res_attr, units[i])
+                        dataset = self.create_dataset(data[i],
+                                                      res_attr, units[i])
                     else:
                         dataset = self.create_dataset(data[i], res_attr, None)
 
@@ -507,12 +512,12 @@ class ImportCSV(object):
 
             split_str = constraint_str.split(' ')
             logging.info(constraint_str)
-            constant  = split_str[-1]
-            op        = split_str[-2]
+            constant = split_str[-1]
+            op = split_str[-2]
 
             constraint = self.cli.factory.create("hyd:Constraint")
             constraint.constant = constant
-            constraint.op       = op
+            constraint.op = op
 
             main_group = self.get_group(constraint_str)
 
@@ -653,10 +658,10 @@ class ImportCSV(object):
         except ValueError:
             try:
                 if self.expand_filenames:
-                    f = open(value)
-                    logging.info('Reading data from %s ...' % value)
-                    filedata = f.read()
-                    f.close()
+                    full_file_path = os.path.join(self.basepath, value)
+                    with open(full_file_path) as f:
+                        logging.info('Reading data from %s ...' % full_file_path)
+                        filedata = f.read()
                     tmp_filedata = filedata.split('\n')
                     filedata = ''
                     for i, line in enumerate(tmp_filedata):
@@ -720,7 +725,7 @@ class ImportCSV(object):
                 ts_value = []
                 for i in range(value_length):
                     ts_value.append(float(dataset[i + 1].strip()))
-                
+
                 ts_values.append({
                     'ts_time' : ts_time,
                     'ts_value' : ts_value,
@@ -760,6 +765,7 @@ class ImportCSV(object):
             logging.info("Network created. Network ID is %s", self.Network.id)
 
         logging.info("Network Scenarios are: %s",[s.id for s in self.Network.scenarios.Scenario])
+
 
 def commandline_parser():
     parser = ap.ArgumentParser(
