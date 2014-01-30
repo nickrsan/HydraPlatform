@@ -289,6 +289,7 @@ class ImportCSV(object):
                 (self.__class__.__name__, datetime.now())
 
     def read_nodes(self, file):
+        self.basepath = os.path.dirname(file)
         with open(file, mode='r') as csv_file:
             self.node_data = csv_file.read().split('\n')
             # Ignore comments
@@ -353,6 +354,7 @@ class ImportCSV(object):
             self.Nodes.update({node.name: node})
 
     def read_links(self, file):
+        self.basepath = os.path.dirname(file)
         with open(file, mode='r') as csv_file:
             self.link_data = csv_file.read().split('\n')
             # Ignore comments
