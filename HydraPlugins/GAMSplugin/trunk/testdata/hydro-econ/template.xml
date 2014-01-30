@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <template_definition>
-    <template_name>Templated from Network hydro-econ</template_name>
+    <template_name>Template for the GAMS hydro-econ model</template_name>
     <resources>
         <resource>
             <type>NETWORK</type>
@@ -34,7 +34,6 @@
         <resource>
             <type>NODE</type>
             <name>desal</name>
-            <layout/>
             <attribute>
                 <name>stor_group</name>
                 <dimension/>
@@ -69,7 +68,6 @@
         <resource>
             <type>NODE</type>
             <name>WWTP</name>
-            <layout/>
             <attribute>
                 <name>stor_group</name>
                 <dimension/>
@@ -89,7 +87,6 @@
         <resource>
             <type>NODE</type>
             <name>hp</name>
-            <layout/>
             <attribute>
                 <name>stor_group</name>
                 <dimension/>
@@ -104,7 +101,6 @@
         <resource>
             <type>NODE</type>
             <name>jn</name>
-            <layout/>
             <attribute>
                 <name>stor_group</name>
                 <dimension/>
@@ -124,7 +120,6 @@
         <resource>
             <type>NODE</type>
             <name>sr</name>
-            <layout/>
             <attribute>
                 <name>stor_group</name>
                 <dimension/>
@@ -169,7 +164,6 @@
         <resource>
             <type>NODE</type>
             <name>gw</name>
-            <layout/>
             <attribute>
                 <name>stor_group</name>
                 <dimension/>
@@ -214,7 +208,6 @@
         <resource>
             <type>NODE</type>
             <name>ag</name>
-            <layout/>
             <attribute>
                 <name>stor_group</name>
                 <dimension/>
@@ -269,7 +262,6 @@
         <resource>
             <type>NODE</type>
             <name>ur</name>
-            <layout/>
             <attribute>
                 <name>stor_group</name>
                 <dimension/>
@@ -314,7 +306,6 @@
         <resource>
             <type>LINK</type>
             <name>defLink</name>
-            <layout/>
             <attribute>
                 <name>lossCoeff</name>
                 <dimension>Dimensionless</dimension>
@@ -339,7 +330,6 @@
         <resource>
             <type>LINK</type>
             <name>costLink</name>
-            <layout/>
             <attribute>
                 <name>Cost</name>
                 <dimension>Monetary value</dimension>
