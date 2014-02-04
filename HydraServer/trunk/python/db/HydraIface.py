@@ -74,7 +74,7 @@ def validate_layout(layout_xml):
         Using layout.xsd, validate a piece of layout xml
     """
     if layout_xml is None or layout_xml == "":
-        logging.info("No layout information to validate")
+        logging.debug("No layout information to validate")
         return
 
     xmlschema_doc = etree.parse(LAYOUT_XSD_PATH)
@@ -350,7 +350,7 @@ class GenericResource(IfaceBase):
     def validate_layout(self, layout_xml):
         validate_layout(layout_xml)
 
-    def get_as_dict(self, user_id=None, time=False):
+    def get_as_dict(self, **kwargs):
         """
             Converts this object into a spyne.model.ComplexModel type
             which can be used by the soap library.
@@ -361,28 +361,28 @@ class GenericResource(IfaceBase):
             The user_id parameter controls the contents of the dict
             should a user not have sufficient privilages to see things
         """
+        time = kwargs.get('time', False)
 
-        if time:
+        if time is True:
             start = datetime.datetime.now()
 
-        obj_dict = super(GenericResource, self).get_as_dict(user_id=user_id)
+        obj_dict = super(GenericResource, self).get_as_dict(**kwargs)
 
         obj_dict.update(
             dict(attributes  = [],
             templates   = [],
             )
         )
+        
+        if self.attributes == []:
+            self.get_attributes()
 
-        #If self is not in the DB, then return an empty dict
-        if self.in_db is False:
-            return obj_dict
-
-        for attr in self.get_attributes():
+        for attr in self.attributes:
             if self.name == 'Project':
                 rs_i = ResourceScenario(scenario_id = 1, resource_attr_id=attr.db.resource_attr_id)
-                obj_dict['attributes'].append(rs_i.get_as_dict(user_id=user_id))
+                obj_dict['attributes'].append(rs_i.get_as_dict(**kwargs))
             else:
-                obj_dict['attributes'].append(attr.get_as_dict(user_id=user_id))
+                obj_dict['attributes'].append(attr.get_as_dict(**kwargs))
         
         #Should this go into the complex model code?
         #It is not true to the structure of the DB...
@@ -630,15 +630,25 @@ class Scenario(GenericResource):
         self.resourcegroupitems = resourcegroupitems
         return self.resourcegroupitems
 
-    def get_as_dict(self, user_id=None):
-        obj_dict = super(Scenario, self).get_as_dict(user_id=user_id)
+    def get_as_dict(self, **kwargs):
+        obj_dict = super(Scenario, self).get_as_dict(**kwargs)
 
-        obj_dict['resourcegroupitems'] = [rgi.get_as_dict() for rgi in self.get_resourcegroupitems()]
+        dict_items = []
+        for rgi in self.get_resourcegroupitems():
+            dict_items.append(rgi.get_as_dict(**kwargs))
+
+        obj_dict['resourcegroupitems'] = dict_items
 
         return obj_dict
 
     def get_as_complexmodel(self):
+        """
+            Override the base function as it needs to add
+            resourcegroup data as well, which isn't picked up
+            by the hydraiface structure.
+        """
         cm = super(Scenario, self).get_as_complexmodel()
+
         resourcegroupitems = []
         for rgi in self.get_resourcegroupitems():
             resourcegroupitems.append(rgi.get_as_complexmodel())
@@ -680,6 +690,61 @@ class Network(GenericResource):
         self.resourcegroups = []
         if network_id is not None:
             self.load()
+
+    def load_all(self, scenario_ids=[]):
+        """
+            Overwrite the base load_all function
+            to allow specific scenarios to be specified.
+            THis is done to aid in performance, so unwanted
+            data is not loaded.
+        """
+        if scenario_ids is not None and len(scenario_ids) > 0:
+            #Remove scenarios as children of this network so they
+            #are not all loaded in load all. Then only load the ones
+            #we are interested in.
+            all_children = self.child_info.copy() 
+            del(all_children['tScenario'])
+            self.children = all_children
+
+            load_ok = super(Network, self).load_all()
+            
+            if load_ok is False:
+                return False
+
+            scenarios = []
+            for s_id in scenario_ids:
+                s_i = Scenario(self, scenario_id=s_id)
+                if s_i.db.network_id != self.db.network_id:
+                    raise HydraError("Scenario %s is not in network %s"%
+                                    (s_id, self.db.network_id))
+                s_i.load_all()
+                scenarios.append(s_i)
+            self.scenarios = scenarios
+            return True
+        else:
+            self.child_info = self.get_children()
+            return super(Network, self).load_all() 
+
+    def get_all_scenarios(self):
+        """
+            Return all scenarios in a network
+        """
+        self.load_all()
+        return self.scenarios
+
+    def get_scenarios(self, scenario_ids):
+        """
+            Get the scenarios for this network
+        """
+        scenarios = []
+        for scenario_id in scenario_ids:
+            s_i = Scenario(scenario_id=scenario_id)
+            if s_i.db.network_id != self.db.network_id:
+                raise HydraError("Scenario %s is not in network %s"%
+                                 (scenario_id, self.db.network_id))
+            scenarios.append(s_i)
+
+        return scenarios
 
     def add_link(self, name, desc, layout, node_1_id, node_2_id):
         """
@@ -737,8 +802,6 @@ class Network(GenericResource):
         self.resourcegroups.append(group_i)
 
         return group_i
-
-
 
     def get_link(self, link_id):
         """
@@ -1126,8 +1189,8 @@ class TemplateGroup(IfaceBase):
 
         super(TemplateGroup, self).delete()
 
-    def get_as_dict(self, user_id=None):
-        obj_dict = super(TemplateGroup, self).get_as_dict()
+    def get_as_dict(self, **kwargs):
+        obj_dict = super(TemplateGroup, self).get_as_dict(**kwargs)
         return obj_dict
 
 class ResourceType(IfaceBase):
@@ -1174,6 +1237,25 @@ class ResourceScenario(IfaceBase):
         self.resourceattr = ra
         return ra
 
+    def get_attr_id(self):
+        if self.resourceattr is not None:
+            return self.resourceattr.db.attr_id
+
+        sql = """
+            select
+                attr_id
+            from
+                tResourceAttr
+            where
+                resource_attr_id=%s
+        """%self.db.resource_attr_id
+
+        rs = execute(sql)
+        if len(rs) != 1:
+            raise HydraError("Error retrieving attr_id for resource attr %s"
+                             %(self.db.resource_attr_id))
+        return rs[0].attr_id
+
     def get_dataset(self):
         ds = None
         if self.db.dataset_id is not None:
@@ -1181,20 +1263,27 @@ class ResourceScenario(IfaceBase):
             self.dataset = ds
         return ds
 
-    def get_as_dict(self, user_id=None):
+    def get_as_dict(self, **kwargs):
         """
             This method overrides the base method as it hides
             some of the DB complexities
         """
+
+        if kwargs.get('include_data', 'Y') == 'N':
+            return None
+
         #first create the appropriate soap complex model
         obj_dict = dict(
             object_type      = self.name,
             resource_attr_id = self.db.resource_attr_id,
-            attr_id          = self.resourceattr.db.attr_id,
+            attr_id          = self.get_attr_id(),
+            value            = None,
         )
 
-        if self.get_dataset() is not None:
-            obj_dict['value'] = self.dataset.get_as_dict(user_id=user_id)
+        if self.dataset is None:
+            self.get_dataset()
+
+        obj_dict['value'] = self.dataset.get_as_dict(**kwargs)
 
         return obj_dict
 
@@ -1241,6 +1330,7 @@ class Dataset(IfaceBase):
 
         self.db.dataset_id = dataset_id
         self.time_format = '{:0>4d}-{:0>2d}-{:02d} {:0>2d}:{:0>2d}:{:0>2d}.{:}'
+        self.datum = None
 
         if dataset_id is not None:
             self.load()
@@ -1293,90 +1383,31 @@ class Dataset(IfaceBase):
                              " access on dataset %s" % 
                              (user_id, self.db.dataset_id))
 
-    def get_val_at_time(self, timestamp, ts_value):
-        """
-            Given a timestamp (or list of timestamps) and some timeseries data,
-            return the values appropriate to the requested times.
-
-            If the timestamp is *before* the start of the timeseries data, return None
-            If the timestamp is *after* the end of the timeseries data, return the last
-            value.
-        """
-        val = None
-        if timestamp is not None:
-            #get the ts_value most appropriate for the given timestamp
-            ts_val_dict = dict(ts_value)
-            sorted_times = ts_val_dict.keys()
-            sorted_times.sort()
-            sorted_times.reverse()
-
-            if isinstance(timestamp, list):
-                val = []
-                for t in timestamp:
-                    for time in sorted_times:
-                        if t >= time:
-                            val.append(ts_val_dict[time])
-                            break
-                    else:
-                        val.append(None)
-
-            else:
-                for time in sorted_times:
-                    if timestamp >= time:
-                        val =  ts_val_dict[time]
-                        break
-                else:
-                    val = None
-        return val
-
-
-
     def get_val(self, timestamp=None):
-        val = None
+        datum = self.get_datum()
+        if self.db.data_type in ('timeseries', 'eqtimeseries'):
+            return datum.get_val(timestamp=timestamp)
+        else:
+            return datum.get_val()
+
+    def get_datum(self):
+        if self.datum is not None:
+            return self.datum
+
         if self.db.data_type == 'descriptor':
-            d = Descriptor(data_id = self.db.data_id)
-            val = d.db.desc_val
+            datum = Descriptor(data_id = self.db.data_id)
         elif self.db.data_type == 'timeseries':
-            ts = TimeSeries(data_id=self.db.data_id)
-            ts.load_all()
-
-            ts_datas = ts.timeseriesdatas
-            val = [(ts_data.db.ts_time, ts_data.db.ts_value) for ts_data in ts_datas]
-
-            if timestamp is not None:
-                val =  self.get_val_at_time(timestamp, val)
-
+            datum = TimeSeries(data_id=self.db.data_id)
         elif self.db.data_type == 'eqtimeseries':
-            eqts = EqTimeSeries(data_id = self.db.data_id)
-            val  = eqts.db.arr_data
-
-            if timestamp is not None:
-                #easiest thing to do is build up a dictionary of timestamp / values
-                val = eval(val) #this should be a multi-dimensional list
-                start_date = eqts.db.start_time
-                val_dict = dict()
-                time_interval = start_date
-                time_delta    = datetime.timedelta(seconds=eqts.db.frequency)
-                for v in val:
-                    val_dict[time_interval] = v
-                    time_interval = time_interval + time_delta
-
-                for time in val_dict.keys().sort().reverse():
-                    if timestamp >= time:
-                        val = val_dict[time]
-                        break
-                else:
-                    val = None
-
+            datum = EqTimeSeries(data_id = self.db.data_id)
         elif self.db.data_type == 'scalar':
-            s = Scalar(data_id = self.db.data_id)
-            val = s.db.param_value
+            datum = Scalar(data_id = self.db.data_id)
         elif self.db.data_type == 'array':
-            a = Array(data_id = self.db.data_id)
-            val = a.db.arr_data
-
-        logging.debug("VALUE IS: %s", val)
-        return val
+            datum = Array(data_id = self.db.data_id)
+        logging.info(self.db.data_type)
+        
+        self.datum = datum
+        return datum
 
     def set_val(self, data_type, val):
         data = None
@@ -1418,7 +1449,7 @@ class Dataset(IfaceBase):
         logging.info("Deleting %s with data id %s", self.db.data_type, self.db.data_id)
         d.delete()
 
-    def get_as_dict(self, user_id = None):
+    def get_as_dict(self, **kwargs):
         """
             This method overrides the base method as it hides
             some of the DB complexities.
@@ -1428,8 +1459,9 @@ class Dataset(IfaceBase):
             does not have read permission in tOwner, no value is returned.
         """
 
+        user_id = kwargs.get('user_id')
         #Create the dict but with no 'value' attribute.
-        obj_dict = super(Dataset, self).get_as_dict(user_id=user_id)
+        obj_dict = super(Dataset, self).get_as_dict(**kwargs)
         obj_dict['value'] = None
         if user_id is None:
             return obj_dict
@@ -1440,21 +1472,8 @@ class Dataset(IfaceBase):
             except HydraError:
                 return obj_dict
 
-        if self.db.data_type == 'descriptor':
-            datum = Descriptor(data_id = self.db.data_id)
-        elif self.db.data_type == 'timeseries':
-            datum = TimeSeries(data_id=self.db.data_id)
-            datum.load_all()
-        elif self.db.data_type == 'eqtimeseries':
-            datum = EqTimeSeries(data_id = self.db.data_id)
-        elif self.db.data_type == 'scalar':
-            datum = Scalar(data_id = self.db.data_id)
-        elif self.db.data_type == 'array':
-            datum = Array(data_id = self.db.data_id)
-        else:
-            raise HydraError("Cannot find data type %s"%(self.db.data_type))
-        
-        obj_dict['value'] = datum.get_as_dict()
+        datum = self.get_datum()
+        obj_dict['value'] = datum.get_as_dict(**kwargs)
 
         return obj_dict
 
@@ -1643,18 +1662,50 @@ class TimeSeries(IfaceBase):
         for time, value in values:
             self.set_ts_value(time, value)
 
-    def get_val(self):
+    def get_val(self, timestamp=None):
         """
-            Return the entire time series.
-            Return value is a list of tuples: (time, value)
+            Given a timestamp (or list of timestamps) and some timeseries data,
+            return the values appropriate to the requested times.
+
+            If the timestamp is *before* the start of the timeseries data, return None
+            If the timestamp is *after* the end of the timeseries data, return the last
+            value.
         """
         self.load_all()
         ts_datas = self.timeseriesdatas
-        ts_values = []
+        #Set the return value to be a list of tuples -- the default
+        #return value. 
+        val = []
         for ts in ts_datas:
-            ts_values.append((ts.get_timestamp(),ts.db.ts_value))
+            val.append((ts.db.ts_time,ts.db.ts_value))
 
-        return ts_values
+        if timestamp is not None:
+            #get the ts_value most appropriate for the given timestamp
+            ts_val_dict = dict(val)
+            sorted_times = ts_val_dict.keys()
+            sorted_times.sort()
+            sorted_times.reverse()
+
+            if isinstance(timestamp, list):
+                #return value will now be a list of actual values instead
+                #of a list of tuples.
+                val = []
+                for t in timestamp:
+                    for time in sorted_times:
+                        if t >= time:
+                            val.append(ts_val_dict[time])
+                            break
+                    else:
+                        val.append(None)
+
+            else:
+                for time in sorted_times:
+                    if timestamp >= time:
+                        val =  ts_val_dict[time]
+                        break
+                else:
+                    val = None
+        return val
 
     def get_ts_value(self, time):
         """
@@ -1697,7 +1748,7 @@ class TimeSeriesData(IfaceBase):
         if data_id is not None:
             self.load()
 
-    def get_as_dict(self, user_id=None):
+    def get_as_dict(self, **kwargs):
         obj_dict = dict(
             data_id = self.db.data_id,
             ts_time = self.get_timestamp(),
@@ -1731,24 +1782,45 @@ class EqTimeSeries(IfaceBase):
         if data_id is not None:
             self.load()
 
-    def get_val(self):
-        """
-            Get the value of an equally spaced TimeSeries
-            returns a dictionary containing start time, frequency and value.
-        """
-        starttime = convert_ordinal_to_datetime(self.db.start_time)
-        starttime = self.time_format.format(starttime.year,
+    def get_val(self, timestamp=None):
+        val  = self.db.arr_data
+
+        if timestamp is not None:
+            #easiest thing to do is build up a dictionary of timestamp / values
+            val = eval(val) #this should be a multi-dimensional list
+            start_date = self.db.start_time
+            val_dict = dict()
+            time_interval = start_date
+            time_delta    = datetime.timedelta(seconds=self.db.frequency)
+            for v in val:
+                val_dict[time_interval] = v
+                time_interval = time_interval + time_delta
+
+            for time in val_dict.keys().sort().reverse():
+                if timestamp >= time:
+                    val = val_dict[time]
+                    break
+            else:
+                val = None
+        else:
+            """
+                Get the value of an equally spaced TimeSeries
+                returns a dictionary containing start time, frequency and value.
+            """
+            starttime = convert_ordinal_to_datetime(self.db.start_time)
+            starttime = self.time_format.format(starttime.year,
                                             starttime.month,
                                             starttime.day,
                                             starttime.hour,
                                             starttime.minute,
                                             starttime.second,
                                             starttime.microsecond)
-        return {
-            'start_time' : starttime,
-            'frequency'  : self.db.frequency,
-            'arr_data'   : self.db.arr_data,
-        }
+            val = {
+                'start_time' : starttime,
+                'frequency'  : self.db.frequency,
+                'arr_data'   : self.db.arr_data,
+            }
+        return val
 
 class Scalar(IfaceBase):
     """
@@ -1817,9 +1889,9 @@ class Constraint(IfaceBase):
 
         return cm
 
-    def get_as_dict(self, user_id=None):
+    def get_as_dict(self, **kwargs):
         self.load_all()
-        obj_dict = super(Constraint, self).get_as_dict()
+        obj_dict = super(Constraint, self).get_as_dict(**kwargs)
 
         return obj_dict
 
@@ -1926,9 +1998,9 @@ class ConstraintGroup(IfaceBase):
 
         return "(%s %s %s)"%(str_1, self.db.op, str_2)
 
-    def get_as_dict(self, user_id=None):
+    def get_as_dict(self, **kwargs):
         
-        obj_dict = super(ConstraintGroup, self).get_as_dict()
+        obj_dict = super(ConstraintGroup, self).get_as_dict(**kwargs)
         
         obj_dict.update(dict(
             groups     = [],
@@ -1936,17 +2008,17 @@ class ConstraintGroup(IfaceBase):
         ))
         if self.db.ref_key_1 == 'GRP':
             group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_1)
-            obj_dict['groups'].append(group.get_as_dict())
+            obj_dict['groups'].append(group.get_as_dict(**kwargs))
         elif self.db.ref_key_1 == 'ITEM':
             item = ConstraintItem(item_id=self.db.ref_id_1)
-            obj_dict['items'].append(item.get_as_dict())
+            obj_dict['items'].append(item.get_as_dict(**kwargs))
 
         if self.db.ref_key_2 == 'GRP':
             group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_2)
-            obj_dict['groups'].append(group.get_as_dict())
+            obj_dict['groups'].append(group.get_as_dict(**kwargs))
         elif self.db.ref_key_2 == 'ITEM':
             item = ConstraintItem(item_id=self.db.ref_id_2)
-            obj_dict['items'].append(item.get_as_dict())
+            obj_dict['items'].append(item.get_as_dict(**kwargs))
 
         return obj_dict
 
@@ -2052,17 +2124,7 @@ class ConstraintItem(IfaceBase):
 
         return (rs[0].attr_name, rs[0].ref_key, rs[0].ref_id, rs[0].resource_name)
 
-    def get_as_string(self):
-
-        item_details = item.get_item_details()
-        if item.db.constant is None:
-            item_val = "%s[%s][%s]" % (item_details[1], item_details[3], item_details[0])
-        else:
-            item_val = item.db.constant
-
-        return item_val
-
-    def get_as_dict(self, user_id=None):
+    def get_as_dict(self, **kwargs):
         attr_name     = None
         ref_key       = None
         ref_id        = None

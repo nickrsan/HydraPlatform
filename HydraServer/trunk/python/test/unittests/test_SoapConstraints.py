@@ -43,7 +43,7 @@ class TestGroupsInNetwork(test_SoapServer.SoapServerTest):
 
         new_item          = self.client.factory.create('hyd:ResourceGroupItem')
         new_item.ref_key  = 'NODE'
-        new_item.ref_id   = net.nodes.Node[1].id
+        new_item.ref_id   = net.nodes.Node[-1].id
         new_item.group_id = resourcegroup.id
 
         resourcegroupitems.append(new_item)
@@ -182,7 +182,7 @@ class TestGroupsStandalone(test_SoapServer.SoapServerTest):
 
         new_item          = self.client.factory.create('hyd:ResourceGroupItem')
         new_item.ref_key  = 'NODE'
-        new_item.ref_id   = net.nodes.Node[1].id
+        new_item.ref_id   = net.nodes.Node[-1].id
         new_item.group_id = resourcegroup.id
 
         resourcegroupitems.append(new_item)
@@ -308,7 +308,7 @@ class TestConstraints(test_SoapServer.SoapServerTest):
         group_1.op = '-'
 
         item_4 = self.client.factory.create('ns1:ConstraintItem')
-        item_4.resource_attr_id = net.nodes.Node[0].attributes.ResourceAttr[2].id
+        item_4.resource_attr_id = net.links.Link[0].attributes.ResourceAttr[0].id
 
 
         group_1_items = self.client.factory.create('ns1:ConstraintItemArray')

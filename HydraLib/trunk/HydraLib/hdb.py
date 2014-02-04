@@ -1,6 +1,7 @@
 import mysql.connector
 import logging
 import config
+import sqlite3
 
 global CNX
 CNX = None
@@ -18,6 +19,21 @@ class HydraMySqlCursor(mysql.connector.cursor.MySQLCursor):
         for row in rows:
             rs.append(HydraRSRow(zip(self.column_names, row)))
         return rs
+
+#class HydraSqLiteCursor(sqlite3.cursor):
+#
+#    def execute_sql(self, qry):
+#        self.execute(qry)
+#        return self.get_rs()
+#
+#    def get_rs(self):
+#        rs = []
+#
+#        rows = self.fetchall()
+#        for row in rows:
+#            rs.append(HydraRSRow(zip(self.column_names, row)))
+#        return rs
+
 
 class HydraRSRow(object):
     def __init__(self, rs_zip):

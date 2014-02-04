@@ -29,10 +29,10 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_add_group(self):
 
-        attr_1 = self.create_attr("testattr_1") 
-        attr_2 = self.create_attr("testattr_2") 
-        attr_3 = self.create_attr("testattr_3") 
-        attr_4 = self.create_attr("testattr_3") 
+        link_attr_1 = self.create_attr("link_attr_1") 
+        link_attr_2 = self.create_attr("link_attr_2") 
+        node_attr_1 = self.create_attr("node_attr_1") 
+        node_attr_2 = self.create_attr("node_attr_2") 
         
         group = self.client.factory.create('hyd:TemplateGroup')
         group.name = 'Test Group @ %s'%datetime.datetime.now()
@@ -49,17 +49,13 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         items = self.client.factory.create('hyd:TemplateItemArray')
         
         item_1 = self.client.factory.create('hyd:TemplateItem')
-        item_1.attr_id = attr_1.id
+        item_1.attr_id = node_attr_1.id
         items.TemplateItem.append(item_1)
 
         item_2 = self.client.factory.create('hyd:TemplateItem')
-        item_2.attr_id = attr_2.id
+        item_2.attr_id = node_attr_2.id
         items.TemplateItem.append(item_2)
         
-        item_3 = self.client.factory.create('hyd:TemplateItem')
-        item_3.attr_id = attr_3.id
-        items.TemplateItem.append(item_3)
-
         template1.templateitems = items
         
         templates.Template.append(template1)
@@ -72,16 +68,12 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         items = self.client.factory.create('hyd:TemplateItemArray')
         
         item_1 = self.client.factory.create('hyd:TemplateItem')
-        item_1.attr_id = attr_1.id
+        item_1.attr_id = link_attr_1.id
         items.TemplateItem.append(item_1)
 
         item_2 = self.client.factory.create('hyd:TemplateItem')
-        item_2.attr_id = attr_2.id
+        item_2.attr_id = link_attr_2.id
         items.TemplateItem.append(item_2)
-        
-        item_4 = self.client.factory.create('hyd:TemplateItem')
-        item_4.attr_id = attr_4.id
-        items.TemplateItem.append(item_4)
         
         template2.templateitems = items
 
@@ -97,7 +89,13 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         assert new_group.id > 0, "New Group has incorrect ID!"
 
         assert len(new_group.templates) == 1, "Resource templates did not add correctly"
-        assert len(new_group.templates[0][0].templateitems[0]) == 3, "Resource template items did not add correctly"
+        for t in new_group.templates.Template[0].templateitems.TemplateItem:
+            assert t.attr_id in (node_attr_1.id, node_attr_2.id); 
+            "Node templates were not added correctly!"
+
+        for t in new_group.templates.Template[1].templateitems.TemplateItem:
+            assert t.attr_id in (link_attr_1.id, link_attr_2.id);
+            "Node templates were not added correctly!"
 
         self.set_group(new_group)
 

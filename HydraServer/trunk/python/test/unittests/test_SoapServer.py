@@ -107,22 +107,35 @@ class SoapServerTest(unittest.TestCase):
         return network
 
     def create_link(self, node_1_id, node_2_id):
-        link = self.client.factory.create('hyd:Link')
-        link.name = 'Test'
-        link.description = 'A test link between two nodes.'
-        link.node_1_id = node_1_id
-        link.node_2_id = node_2_id
+
+        ra_array = self.client.factory.create('hyd:ResourceAttrArray')
+
+        link = dict(
+            id   = None,
+            name = 'Test',
+            description = 'A test link between two nodes.',
+            layout      = None,
+            node_1_id = node_1_id,
+            node_2_id = node_2_id,
+            attributes = ra_array,
+        )
 
         return link
 
     def create_node(self,node_id, attributes=None, node_name="Test Node Name"):
-        node = self.client.factory.create('hyd:Node')
-        node.id = node_id
-        node.name = node_name
-        node.description = "A node representing a water resource"
-        node.x = 0
-        node.y = 0
-        node.attributes = attributes
+
+        if attributes is None:
+            attributes = self.client.factory.create('hyd:ResourceAttrArray')
+
+        node = {
+            'id' : node_id,
+            'name' : node_name,
+            'description' : "A node representing a water resource",
+            'layout'      : None,
+            'x' : 0,
+            'y' : 0,
+            'attributes' : attributes,
+        }
 
         return node
 
@@ -135,7 +148,7 @@ class SoapServerTest(unittest.TestCase):
             attr = self.client.service.add_attribute(attr)
         return attr
 
-    def create_network_with_data(self, project_id=None):
+    def create_network_with_data(self, project_id=None, num_nodes=10):
         """
             Test adding data to a network through a scenario.
             This test adds attributes to one node and then assignes data to them.
@@ -155,63 +168,88 @@ class SoapServerTest(unittest.TestCase):
         start = datetime.datetime.now()
 
         #Create some attributes, which we can then use to put data on our nodes
-        attr1 = self.create_attr("testattr_1")
-        attr2 = self.create_attr("testattr_2")
-        attr3 = self.create_attr("testattr_3")
-        attr4 = self.create_attr("testattr_4")
-        attr5 = self.create_attr("group_attr")
+        link_attr1 = self.create_attr("link_attr_1")
+        link_attr2 = self.create_attr("link_attr_2")
+        node_attr1 = self.create_attr("node_attr_1")
+        node_attr2 = self.create_attr("node_attr_2")
+        group_attr = self.create_attr("group_attr")
 
         logging.debug("Attribute creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
 
-        #Create 2 nodes
-        node1 = self.create_node(-1, node_name="Node 1")
-        node2 = self.create_node(-2, node_name="Node 2")
-
-        node_array = self.client.factory.create('hyd:NodeArray')
-        node_array.Node.append(node1)
-        node_array.Node.append(node2)
-
-        #From our attributes, create a resource attr for our node
-        #We don't assign data directly to these resource attributes. This
-        #is done when creating the scenario -- a scenario is just a set of
-        #data for a given list of resource attributes.
-        attr_array         = self.client.factory.create('hyd:ResourceAttrArray')
-        node_attr1         = self.client.factory.create('hyd:ResourceAttr')
-        node_attr1.id      = -1
-        node_attr1.attr_id = attr1.id
-        node_attr2         = self.client.factory.create('hyd:ResourceAttr')
-        node_attr2.attr_id = attr2.id
-        node_attr2.id      = -2
-        node_attr3         = self.client.factory.create('hyd:ResourceAttr')
-        node_attr3.attr_id = attr3.id
-        node_attr3.id      = -3
-        node_attr4         = self.client.factory.create('hyd:ResourceAttr')
-        node_attr4.attr_id = attr4.id
-        node_attr4.id      = -4
-        node_attr4.attr_is_var = 'Y'
-
-        group_attr         = self.client.factory.create('hyd:ResourceAttr')
-        group_attr.attr_id = attr5.id
-        group_attr.id      = -5
-
-
-        attr_array.ResourceAttr.append(node_attr1)
-        attr_array.ResourceAttr.append(node_attr2)
-        attr_array.ResourceAttr.append(node_attr3)
-        attr_array.ResourceAttr.append(node_attr4)
-        node1.attributes = attr_array
-
+       
+        #Put an attribute on a group
+        group_ra = dict(
+            ref_id  = None,
+            ref_key = 'GROUP',
+            attr_is_var = 'N',
+            attr_id = group_attr.id,
+            id      = -1
+        )
         group_attrs = self.client.factory.create('hyd:ResourceAttrArray')
-        group_attrs.ResourceAttr.append(group_attr)
+        group_attrs.ResourceAttr = [group_ra]
 
-        #Connect the two nodes with a link
-        link = self.create_link(node1['id'], node2['id'])
+        nodes = []
+        links = []
+
+        prev_node = None
+        ra_index = 2
+        for n in range(num_nodes):
+            node = self.create_node(n*-1, node_name="Node %s"%(n))
+
+            #Froddm our attributes, create a resource attr for our node
+            #We don't assign data directly to these resource attributes. This
+            #is done when creating the scenario -- a scenario is just a set of
+            #data for a given list of resource attributes.
+            node_ra1         = dict(
+                ref_key = 'NODE',
+                ref_id  = None,
+                attr_id = node_attr1.id,
+                id      = ra_index * -1,
+                attr_is_var = 'N',
+            )
+            ra_index = ra_index + 1
+            node_ra2         = dict(
+                ref_key = 'NODE',
+                ref_id  = None,
+                attr_id = node_attr2.id,
+                id      = ra_index * -1,
+                attr_is_var = 'Y',
+            )
+            ra_index = ra_index + 1
+
+            node['attributes'].ResourceAttr = [node_ra1, node_ra2] 
+            
+            nodes.append(node)
+
+            if prev_node is not None:
+                #Connect the two nodes with a link
+                link = self.create_link(node['id'], prev_node['id'])
+
+                link_ra1         = dict(
+                    ref_id  = None,
+                    ref_key = 'LINK',
+                    id     = ra_index * -1,
+                    attr_id = link_attr1.id,
+                    attr_is_var = 'N',
+                )
+                ra_index = ra_index + 1
+                link_ra2         = dict(
+                    ref_id  = None,
+                    ref_key = 'LINK',
+                    attr_id = link_attr2.id,
+                    id      = ra_index * -1,
+                    attr_is_var = 'N',
+                )
+                ra_index = ra_index + 1
+                
+                link['attributes'].ResourceAttr = [link_ra1, link_ra2] 
+                
+                links.append(link)
+
+            prev_node = node 
 
         #A network must contain an array of links. In this case, the array
-        #contains a single link
-        link_array = self.client.factory.create('hyd:LinkArray')
-        link_array.Link.append(link)
 
         logging.debug("Making nodes & links took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
@@ -225,10 +263,6 @@ class SoapServerTest(unittest.TestCase):
         #Multiple data (Called ResourceScenario) means an array.
         scenario_data = self.client.factory.create('hyd:ResourceScenarioArray')
 
-        #Our node has several dmin'resource attributes', created earlier.
-        node_attrs = node1['attributes']
-
-
         group_array       = self.client.factory.create('hyd:ResourceGroupArray')
         group             = self.client.factory.create('hyd:ResourceGroup')
         group.id          = -1
@@ -240,34 +274,49 @@ class SoapServerTest(unittest.TestCase):
         group_array.ResourceGroup.append(group)
 
         group_item_array      = self.client.factory.create('hyd:ResourceGroupItemArray')
-        group_item_1          = self.client.factory.create('hyd:ResourceGroupItem')
-        group_item_1.ref_key  = 'NODE'
-        group_item_1.ref_id   = node1.id
-        group_item_1.group_id = group.id
-        group_item_2          = self.client.factory.create('hyd:ResourceGroupItem')
-        group_item_2.ref_key  = 'LINK'
-        group_item_2.ref_id   = link.id
-        group_item_2.group_id = group.id
-
-        group_item_array.ResourceGroupItem.append(group_item_1)
-        group_item_array.ResourceGroupItem.append(group_item_2)
+        group_item_1 = dict(
+            ref_key  = 'NODE',
+            ref_id   = nodes[0]['id'],
+            group_id = group['id'],
+        )
+        group_item_2  = dict(
+            ref_key  = 'NODE',
+            ref_id   = nodes[1]['id'],
+            group_id = group['id'],
+        )
+        group_item_array.ResourceGroupItem = [group_item_1, group_item_2]
 
         scenario.resourcegroupitems = group_item_array
 
         #This is an example of 3 diffent kinds of data
+        
+        #For Links use the following:
         #A simple string (Descriptor)
-        #A time series, where the value may be a 1-D array
         #A multi-dimensional array.
-        descriptor = self.create_descriptor(node_attrs.ResourceAttr[0])
-        timeseries = self.create_timeseries(node_attrs.ResourceAttr[1])
-        array      = self.create_array(node_attrs.ResourceAttr[2])
+
+        #For nodes, use the following:
+        #A time series, where the value may be a 1-D array
+
+    
+        for n in nodes:
+            for na in n['attributes'].ResourceAttr:
+                if na.get('attr_is_var', 'N') == 'N':
+                    timeseries = self.create_timeseries(na)
+                    scenario_data.ResourceScenario.append(timeseries)
+
+        for l in links:
+            for na in l['attributes'].ResourceAttr:
+                if na['attr_id'] == link_attr1['id']:
+                    array      = self.create_array(na)
+                    scenario_data.ResourceScenario.append(array)
+                elif na['attr_id'] == link_attr2['id']:
+                    descriptor = self.create_descriptor(na)
+                    scenario_data.ResourceScenario.append(descriptor)
+
 
         grp_timeseries = self.create_timeseries(group_attrs.ResourceAttr[0])
 
-        scenario_data.ResourceScenario.append(descriptor)
-        scenario_data.ResourceScenario.append(timeseries)
         scenario_data.ResourceScenario.append(grp_timeseries)
-        scenario_data.ResourceScenario.append(array)
 
         #Set the scenario's data to the array we have just populated
         scenario.resourcescenarios = scenario_data
@@ -278,7 +327,6 @@ class SoapServerTest(unittest.TestCase):
         scenario_array.Scenario.append(scenario)
 
         logging.debug("Scenario definition took: %s"%(datetime.datetime.now()-start))
-        start = datetime.datetime.now()
 
         layout = """
             <resource_layout>
@@ -292,6 +340,10 @@ class SoapServerTest(unittest.TestCase):
                 </layout>
             </resource_layout>
         """
+        node_array = self.client.factory.create("hyd:NodeArray")
+        node_array.Node = nodes
+        link_array = self.client.factory.create("hyd:LinkArray")
+        link_array.Link = links
 
         (network) = {
             'name'        : 'Network @ %s'%datetime.datetime.now(),
@@ -304,32 +356,36 @@ class SoapServerTest(unittest.TestCase):
             'resourcegroups' : group_array,
         }
         #logging.debug(network)
+        start = datetime.datetime.now()
+        logging.info("Creating network...")
         network = self.client.service.add_network(network)
 
-        logging.debug("Network Creation took: %s"%(datetime.datetime.now()-start))
+        logging.info("Network Creation took: %s"%(datetime.datetime.now()-start))
 
         return network
 
     def create_descriptor(self, ResourceAttr, val="test"):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-        scenario_attr = self.client.factory.create('hyd:ResourceScenario')
-
-        scenario_attr.attr_id = ResourceAttr.attr_id
-        scenario_attr.resource_attr_id = ResourceAttr.id
-
-        dataset = self.client.factory.create('hyd:Dataset')
-        dataset.type = 'descriptor'
-        dataset.name = 'Max Capacity'
-        dataset.unit = 'metres / second'
-        dataset.dimension = 'number of units per time unit'
 
         descriptor = self.client.factory.create('hyd:Descriptor')
         descriptor.desc_val = val
+        
+        dataset = dict(
+            id=None,
+            type = 'descriptor',
+            name = 'Max Capacity',
+            unit = 'metres / second',
+            dimension = 'number of units per time unit',
+            locked = 'N',
+            value = descriptor,
+        )
 
-        dataset.value = descriptor
-
-        scenario_attr.value = dataset
+        scenario_attr = dict(
+            attr_id = ResourceAttr['attr_id'],
+            resource_attr_id = ResourceAttr['id'],
+            value = dataset,
+        )
 
         return scenario_attr
 
@@ -337,32 +393,15 @@ class SoapServerTest(unittest.TestCase):
     def create_timeseries(self, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-        scenario_attr = self.client.factory.create('hyd:ResourceScenario')
 
-        scenario_attr.attr_id = ResourceAttr.attr_id
-        scenario_attr.resource_attr_id = ResourceAttr.id
-
-        dataset = self.client.factory.create('hyd:Dataset')
-
-        dataset.type = 'timeseries'
-        dataset.name = 'my time series'
-        dataset.unit = 'feet cubed'
-        dataset.dimension = 'cubic capacity'
-
-        # ts1 = self.client.factory.create('hyd:TimeSeriesData')
-        # ts1.ts_time  = datetime.datetime.now()
-        # ts1.ts_value = str([1, 2, 3, 4, 5])
-
-        # ts2 = self.client.factory.create('hyd:TimeSeriesData')
-        # ts2.ts_time  = datetime.datetime.now() + datetime.timedelta(hours=1)
-        # ts2.ts_value = str([2, 3, 4, 5, 6])
-
-        # ts3 = self.client.factory.create('hyd:TimeSeries')
-        # ts3.ts_values.TimeSeriesData.append(ts1)
-        # ts3.ts_values.TimeSeriesData.append(ts2)
-
-        #dataset.value = ts3
-        dataset.value = {'ts_values' : 
+        dataset = dict(
+            id=None,
+            type = 'timeseries',
+            name = 'my time series',
+            unit = 'feet cubed',
+            dimension = 'cubic capacity',
+            locked = 'N',
+            value = {'ts_values' : 
             [
                 {'ts_time' : datetime.datetime.now(),
                 'ts_value' : str([1, 2, 3, 4, 5])},
@@ -370,30 +409,40 @@ class SoapServerTest(unittest.TestCase):
                 'ts_value' : str([10, 20, 30, 40, 50])},
             ]
         }
-        scenario_attr.value = dataset
+,
+        )
+
+        scenario_attr = dict(
+            attr_id = ResourceAttr['attr_id'],
+            resource_attr_id = ResourceAttr['id'],
+            value = dataset,
+        )
 
         return scenario_attr
 
     def create_array(self, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-        scenario_attr = self.client.factory.create('hyd:ResourceScenario')
-
-        scenario_attr.attr_id = ResourceAttr.attr_id
-        scenario_attr.resource_attr_id = ResourceAttr.id
-
-        dataset = self.client.factory.create('hyd:Dataset')
-        dataset.type = 'array'
-        dataset.name = 'my array'
-        dataset.unit = 'joules'
-        dataset.dimension = 'pressure'
 
         arr = self.client.factory.create('hyd:Array')
         arr.arr_data = str([[[1, 2, 3], [5, 4, 6]],[[10, 20, 30], [40, 50, 60]]])
 
-        dataset.value = arr
+        dataset = dict(
+            id=None,
+            type = 'array',
+            name = 'my array',
+            unit = 'joules',
+            dimension = 'pressure',
+            locked = 'N',
+            value = arr,
+        )
 
-        scenario_attr.value = dataset
+        scenario_attr = dict(
+            attr_id = ResourceAttr['attr_id'],
+            resource_attr_id = ResourceAttr['id'],
+            value = dataset,
+        )
+
 
         return scenario_attr
 
@@ -449,7 +498,7 @@ class SoapServerTest(unittest.TestCase):
         group_1.op = '-'
 
         item_4 = self.client.factory.create('hyd:ConstraintItem')
-        item_4.resource_attr_id = net.nodes.Node[0].attributes.ResourceAttr[2].id
+        item_4.resource_attr_id = net.links.Link[0].attributes.ResourceAttr[0].id
 
 
         group_1_items = self.client.factory.create('hyd:ConstraintItemArray')

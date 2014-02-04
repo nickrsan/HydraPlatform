@@ -3,7 +3,6 @@ from HydraLib.HydraException import HydraError
 from spyne.model.primitive import String, Integer, Boolean
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
-import hydra_complexmodels
 from hydra_complexmodels import Network,\
 Node,\
 Link,\
@@ -12,7 +11,7 @@ ResourceGroup,\
 get_as_complexmodel
 from db import HydraIface
 from HydraLib import hdb, IfaceLib
-from hydra_base import HydraService, ObjectNotFoundError, get_user_id
+from hydra_base import HydraService, ObjectNotFoundError
 import scenario
 from constraints import ConstraintService
 import datetime
@@ -125,6 +124,159 @@ def get_scenario_by_name(network_id, scenario_name):
                      % (scenario_name, network_id))
         return rs[0].scenario_id
 
+def get_timing(time):
+    return datetime.datetime.now() - time
+
+def add_nodes(net_i, nodes):
+    start_time = datetime.datetime.now()
+   
+    #List of HydraIface resource attributes
+    resource_attrs = []
+    #List of all complexmodel attributes
+    attrs          = []
+
+    #Maps temporary node_ids to real node_ids
+    node_id_map = dict()
+    
+    if nodes is None or len(nodes) == 0:
+        return node_id_map, resource_attrs, attrs
+
+    #First add all the nodes
+    logging.info("Adding nodes to network")
+    for node in nodes:
+        net_i.add_node(node.name, node.description, node.layout, node.x, node.y)
+
+    last_node_idx = IfaceLib.bulk_insert(net_i.nodes, 'tNode')
+    next_id = last_node_idx - len(net_i.nodes) + 1
+    idx = 0
+    while idx < len(net_i.nodes):
+        net_i.nodes[idx].db.node_id = next_id
+        net_i.nodes[idx].ref_id = next_id
+        next_id          = next_id + 1
+        idx              = idx     + 1
+
+    iface_nodes = dict()
+    for n_i in net_i.nodes:
+        iface_nodes[(n_i.db.node_x, n_i.db.node_y, n_i.db.node_name)] = n_i
+
+    for node in nodes:
+        if node.id not in node_id_map:
+            node_i = iface_nodes[(node.x,node.y,node.name)]
+            node_attrs = _add_attributes(node_i, node.attributes)
+            _add_resource_types(node_i, node.templates)
+            resource_attrs.extend(node_attrs)
+            attrs.extend(node.attributes)
+            #If a temporary ID was given to the node
+            #store the mapping to the real node_id
+            if node.id is not None and node.id <= 0:
+                    node_id_map[node.id] = node_i.db.node_id
+
+    logging.info("Nodes added in %s", get_timing(start_time))
+
+    return node_id_map, resource_attrs, attrs
+
+def add_links(net_i, links, node_id_map): 
+    start_time = datetime.datetime.now()
+
+    #List of HydraIface resource attributes
+    resource_attrs = []
+    #List of all complexmodel attributes
+    attrs          = []
+    #Map negative IDS to their new, positive, counterparts.
+    link_id_map = dict()
+
+    if links is None or len(links) == 0:
+        return link_id_map, resource_attrs, attrs
+
+    #Then add all the links.
+    logging.info("Adding links to network")
+    for link in links:
+        node_1_id = link.node_1_id
+        if link.node_1_id in node_id_map:
+            node_1_id = node_id_map[link.node_1_id]
+
+        node_2_id = link.node_2_id
+        if link.node_2_id in node_id_map:
+            node_2_id = node_id_map[link.node_2_id]
+
+        if node_1_id is None or node_2_id is None:
+            raise HydraError("Node IDS (%s, %s)are incorrect!"%(node_1_id, node_2_id))
+
+        net_i.add_link(link.name,
+                    link.description,
+                    link.layout,
+                    node_1_id,
+                    node_2_id)
+
+    last_link_idx = IfaceLib.bulk_insert(net_i.links, 'tLink')
+    start_time = datetime.datetime.now()
+    next_id = last_link_idx - len(net_i.links) + 1
+    idx = 0
+    while idx < len(net_i.links):
+        net_i.links[idx].db.link_id = next_id
+        net_i.links[idx].ref_id = next_id
+        next_id          = next_id + 1
+        idx              = idx     + 1
+
+    iface_links = {}
+
+    for l_i in net_i.links:
+        iface_links[(l_i.db.node_1_id, l_i.db.node_2_id)] = l_i
+
+    for link in links:
+        iface_link = iface_links[(node_id_map[link.node_1_id], node_id_map[link.node_2_id])]
+        _add_resource_types(iface_link, link.templates)
+        resource_attrs.extend(_add_attributes(iface_link, link.attributes))
+        attrs.extend(link.attributes)
+        link_id_map[link.id] = iface_link.db.link_id
+
+    logging.info("Links added in %s", get_timing(start_time))
+
+    return link_id_map, resource_attrs, attrs
+
+def add_resource_groups(net_i, resourcegroups):
+    start_time = datetime.datetime.now()
+    #List of HydraIface resource attributes
+    resource_attrs = []
+    #List of all complexmodel attributes
+    attrs          = []
+    #Map negative IDS to their new, positive, counterparts.
+    group_id_map = dict()
+
+    if resourcegroups is None or len(resourcegroups)==0:
+        return group_id_map, resource_attrs, attrs
+    #Then add all the groups.
+    logging.info("Adding groups to network")
+    if resourcegroups:
+        for group in resourcegroups:
+            net_i.add_group(group.name,
+                        group.description,
+                        group.status)
+
+        last_grp_idx = IfaceLib.bulk_insert(net_i.resourcegroups, 'tResourceGroup')
+
+        next_id = last_grp_idx - len(net_i.resourcegroups) + 1
+        idx = 0
+        while idx < len(net_i.resourcegroups):
+            net_i.resourcegroups[idx].db.group_id = next_id
+            net_i.resourcegroups[idx].ref_id = next_id
+            next_id          = next_id + 1
+            idx              = idx     + 1
+        iface_groups = {}
+        for g_i in net_i.resourcegroups:
+            iface_groups[g_i.db.group_name] = g_i
+        for group in resourcegroups:
+            grp_i = iface_groups[group.name]
+            resource_attrs.extend(_add_attributes(grp_i, group.attributes))
+            attrs.extend(group.attributes)
+            _add_resource_types(grp_i, group.templates)
+            group_id_map[group.id] = grp_i.db.group_id
+
+        logging.info("Groups added in %s", get_timing(start_time))
+
+    return group_id_map, resource_attrs, attrs
+
+
 class NetworkService(HydraService):
     """
         The network SOAP service.
@@ -147,7 +299,7 @@ class NetworkService(HydraService):
         The returned object will have positive IDS
 
         """
-
+        start_time = datetime.datetime.now()
         logging.info("Adding network")
 
         return_value = None
@@ -170,102 +322,59 @@ class NetworkService(HydraService):
         net_i.save()
         network.network_id = net_i.db.network_id
 
+        #These two lists are used for comparison and lookup, so when
+        #new attributes are added, these lists are extended.
+
+        #List of all the HydraIface resource attributes
         resource_attrs = []
+        #list of all the complex model resource attributes.
+        all_attributes     = []
 
         network_attrs  = _add_attributes(net_i, network.attributes)
         _add_resource_types(net_i, network.templates)
 
-        resource_attrs.extend(network_attrs)
-
-        all_attributes     = []
+        resource_attrs.extend(network_attrs) 
         all_attributes.extend(network.attributes)
+        
+        logging.info("Network attributes added in %s", get_timing(start_time))
 
-        #Maps temporary node_ids to real node_ids
-        node_ids = dict()
+        node_id_map, node_resource_attrs, node_cm_attrs = add_nodes(net_i, network.nodes)
+        resource_attrs.extend(node_resource_attrs)
+        all_attributes.extend(node_cm_attrs)
 
-         #First add all the nodes
-        logging.info("Adding nodes to network")
-        for node in network.nodes:
-            net_i.add_node(node.name, node.description, node.layout, node.x, node.y)
+        link_id_map, link_resource_attrs, link_cm_attrs = add_links(net_i, network.links, node_id_map)
 
-        IfaceLib.bulk_insert(net_i.nodes, 'tNode')
-        net_i.load_all()
+        resource_attrs.extend(link_resource_attrs)
+        all_attributes.extend(link_cm_attrs)
 
-        for n_i in net_i.nodes:
-            for node in network.nodes:
-                if node.id not in node_ids and node.x == n_i.db.node_x and node.y == n_i.db.node_y and node.name == n_i.db.node_name:
-                    node_attrs = _add_attributes(n_i, node.attributes)
-                    _add_resource_types(n_i, node.templates)
-                    resource_attrs.extend(node_attrs)
-                    all_attributes.extend(node.attributes)
-                    #If a temporary ID was given to the node
-                    #store the mapping to the real node_id
-                    if node.id is not None and node.id <= 0:
-                            node_ids[node.id] = n_i.db.node_id
-                    break
+        
+        grp_id_map, grp_resource_attrs, grp_cm_attrs = add_resource_groups(net_i, network.resourcegroups)
 
-        #Then add all the links.
-        logging.info("Adding links to network")
-        for link in network.links:
-            node_1_id = link.node_1_id
-            if link.node_1_id in node_ids:
-                node_1_id = node_ids[link.node_1_id]
+        resource_attrs.extend(grp_resource_attrs)
+        all_attributes.extend(grp_cm_attrs)
 
-            node_2_id = link.node_2_id
-            if link.node_2_id in node_ids:
-                node_2_id = node_ids[link.node_2_id]
 
-            if node_1_id is None or node_2_id is None:
-                raise HydraError("Node IDS (%s, %s)are incorrect!"%(node_1_id, node_2_id))
-
-            net_i.add_link(link.name,
-                           link.description,
-                           link.layout,
-                           node_1_id,
-                           node_2_id)
-
-        IfaceLib.bulk_insert(net_i.links, 'tLink')
-        net_i.load_all()
-        link_ids = dict()
-        for l_i in net_i.links:
-            for link in network.links:
-                node_1_from_map = node_ids[link.node_1_id]
-                node_2_from_map = node_ids[link.node_2_id]
-                if l_i.db.node_1_id == node_1_from_map and l_i.db.node_2_id == node_2_from_map:
-                    _add_resource_types(l_i, link.templates)
-                    resource_attrs.extend(_add_attributes(l_i, link.attributes))
-                    all_attributes.extend(link.attributes)
-                    link_ids[link.id] = l_i.db.link_id
-                    break
-
-        #Then add all the groups.
-        logging.info("Adding groups to network")
-        for group in network.resourcegroups:
-            net_i.add_group(group.name,
-                           group.description,
-                           group.status)
-
-        IfaceLib.bulk_insert(net_i.resourcegroups, 'tResourceGroup')
-        net_i.load_all()
-        group_ids = dict()
-        for g_i in net_i.resourcegroups:
-            for group in network.resourcegroups:
-                if group.name == g_i.db.group_name:
-                    resource_attrs.extend(_add_attributes(g_i, group.attributes))
-                    all_attributes.extend(group.attributes)
-                    _add_resource_types(g_i, group.templates)
-                    group_ids[group.id] = g_i.db.group_id
-                    break
-
+        start_time = datetime.datetime.now()
+        
         #insert all the resource attributes in one go!
         last_resource_attr_id = IfaceLib.bulk_insert(resource_attrs, "tResourceAttr")
 
         if last_resource_attr_id is not None:
             next_ra_id = last_resource_attr_id - len(all_attributes) + 1
             resource_attr_id_map = {}
+            idx = 0
             for attribute in all_attributes:
                 resource_attr_id_map[attribute.id] = next_ra_id
+                resource_attrs[idx].db.resource_attr_id = next_ra_id
                 next_ra_id = next_ra_id + 1
+                idx        = idx + 1
+
+        logging.info("Resource attributes added in %s", get_timing(start_time))
+        start_time = datetime.datetime.now()
+
+        attr_ra_map = dict()
+        for ra in resource_attrs:
+            attr_ra_map[ra.db.resource_attr_id] = ra
 
         if network.scenarios is not None:
             logging.info("Adding scenarios to network")
@@ -276,47 +385,47 @@ class NetworkService(HydraService):
                 scen.db.network_id           = net_i.db.network_id
                 scen.save()
 
-                for r_scen in s.resourcescenarios:
-                    r_scen.resource_attr_id = resource_attr_id_map[r_scen.resource_attr_id]
-
                 #extract the data from each resourcescenario
-                data = [r.value for r in s.resourcescenarios]
-
-                dataset_ids = scenario.DataService.bulk_insert_data(ctx, data)
-
+                data = []
                 #record all the resource attribute ids
-                resource_attr_ids = [r.resource_attr_id for r in s.resourcescenarios]
-
-                resource_scenarios = []
+                resource_attr_ids = []
+                for r_scen in s.resourcescenarios:
+                    ra_id = resource_attr_id_map[r_scen.resource_attr_id]
+                    r_scen.resource_attr_id = ra_id 
+                    data.append(r_scen.value)
+                    resource_attr_ids.append(ra_id)
+                
+                data_start_time = datetime.datetime.now()
+                datasets = scenario.bulk_insert_data(data, ctx.in_header.user_id)
+                logging.info("Data bulk insert took %s", get_timing(data_start_time))
                 for i, ra_id in enumerate(resource_attr_ids):
                     rs_i = HydraIface.ResourceScenario()
                     rs_i.db.resource_attr_id = ra_id
-                    rs_i.db.dataset_id       = dataset_ids[i]
+                    rs_i.db.dataset_id       = datasets[i].db.dataset_id
                     rs_i.db.scenario_id      = scen.db.scenario_id
-                    resource_scenarios.append(rs_i)
+                    rs_i.dataset = datasets[i]
+                    rs_i.resourceattr = attr_ra_map[ra_id]
+                    scen.resourcescenarios.append(rs_i)
 
-                IfaceLib.bulk_insert(resource_scenarios, 'tResourceScenario')
-
-                #This is to get the resource scenarios into the scenario
-                #object, so they are included into the scenario's complex model
-                scen.load_all()
-
+                IfaceLib.bulk_insert(scen.resourcescenarios, 'tResourceScenario')
+                
                 for constraint in s.constraints:
                     update_constraint_refs(constraint.constraintgroup, resource_attr_id_map)
                     ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint)
-
+ 
+                item_start_time = datetime.datetime.now()
                 group_items = []
                 for group_item in s.resourcegroupitems:
                     group_item_i = HydraIface.ResourceGroupItem()
                     group_item_i.db.scenario_id = scen.db.scenario_id
-                    group_item_i.db.group_id = group_ids[group_item.group_id]
+                    group_item_i.db.group_id = grp_id_map[group_item.group_id]
                     group_item_i.db.ref_key = group_item.ref_key
                     if group_item.ref_key == 'NODE':
-                        ref_id = node_ids[group_item.ref_id]
+                        ref_id = node_id_map[group_item.ref_id]
                     elif group_item.ref_key == 'LINK':
-                        ref_id = link_ids[group_item.ref_id]
+                        ref_id = link_id_map[group_item.ref_id]
                     elif group_item.ref_key == 'GROUP':
-                        ref_id = group_ids[group_item.ref_id]
+                        ref_id = grp_id_map[group_item.ref_id]
                     else:
                         raise HydraError("A ref key of %s is not valid for a "
                                          "resource group item.",\
@@ -327,31 +436,39 @@ class NetworkService(HydraService):
 
                 IfaceLib.bulk_insert(group_items, 'tResourceGroupItem')
 
+                logging.info("Group items insert took %s", get_timing(item_start_time))
                 net_i.scenarios.append(scen)
         
+        logging.info("Scenarios added in %s", get_timing(start_time))
         net_i.set_ownership(ctx.in_header.user_id)
 
         logging.info("Insertion of network took: %s",(datetime.datetime.now()-insert_start))
-        
+        start_time = datetime.datetime.now()
+        logging.info("Network created. Creating complex model")
+
         return_value = get_as_complexmodel(ctx, net_i)
+        logging.info("Network conversion took: %s",get_timing(start_time))
 
         logging.debug("Return value: %s", return_value)
         return return_value
 
-    @rpc(Integer, Integer, _returns=Network)
-    def get_network(ctx, network_id, scenario_id=None):
+    @rpc(Integer,
+         String(pattern="[YN]", default='Y'),
+         Integer(min_occurs="0", max_occurs="unbounded"),
+         _returns=Network)
+    def get_network(ctx, network_id, include_data, scenario_ids):
         """
-        Return a whole network as a complex model.
+            Return a whole network as a complex model.
         """
         net_i = HydraIface.Network(network_id = network_id)
-       
-        net_i.check_read_permission(ctx.in_header.user_id)
 
-        if net_i.load_all() is False:
+        net_i.check_read_permission(ctx.in_header.user_id)
+        
+        if net_i.load_all(scenario_ids) is False:
             raise ObjectNotFoundError("Network (network_id=%s) not found." %
                                       network_id)
 
-        net = get_as_complexmodel(ctx, net_i)
+        net = get_as_complexmodel(ctx, net_i, **dict(include_data=include_data))
         
         return net
 

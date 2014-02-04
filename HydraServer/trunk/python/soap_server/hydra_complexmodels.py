@@ -18,8 +18,10 @@ FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 current_module = sys.modules[__name__]
 
 
-def get_as_complexmodel(ctx, iface_obj):
-    obj_dict    = iface_obj.get_as_dict(user_id=int(ctx.in_header.user_id))
+def get_as_complexmodel(ctx, iface_obj, **kwargs):
+
+    kwargs['user_id'] = int(ctx.in_header.user_id)
+    obj_dict    = iface_obj.get_as_dict(**kwargs)
     object_type = obj_dict['object_type']
 
     cm = getattr(current_module, object_type)(obj_dict)
@@ -46,21 +48,6 @@ def parse_value(data):
 
     if data_type == 'descriptor':
         return value[0][0]
-    # elif data_type == '-timeseries':
-    #     # The brand new way to parse time series data:
-    #     ns = '{soap_server.hydra_complexmodels}'
-    #     ts = []
-    #     for ts_val in value[0][0][ns + 'TimeSeriesData']:
-    #         timestamp = ts_val[ns + 'ts_time'][0]
-    #         # Check if we have received a seasonal time series first
-    #         ordinal_ts_time = timestamp_to_server_time(timestamp)
-
-    #         series = []
-    #         for val in ts_val[ns + 'ts_value']:
-    #             series.append(eval(val))
-    #         ts.append((ordinal_ts_time, series))
-
-    #     return ts
     elif data_type == 'timeseries':
         # The brand new way to parse time series data:
         ts = []
@@ -138,8 +125,9 @@ class HydraComplexModel(ComplexModel):
             if type(attr) is list:
                 children = []
                 for child_obj_dict in attr:
-                    cm = getattr(current_module, child_obj_dict['object_type'])(child_obj_dict)
-                    children.append(cm)
+                    if child_obj_dict is not None:
+                        cm = getattr(current_module, child_obj_dict['object_type'])(child_obj_dict)
+                        children.append(cm)
                 setattr(self, attr_name, children)         
             else:
                 #turn someething like 'project_name' into just 'name'

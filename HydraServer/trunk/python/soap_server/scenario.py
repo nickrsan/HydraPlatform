@@ -68,6 +68,244 @@ def clone_constraint_group(constraint_id, grp_i):
 
     return new_grp_i
 
+def bulk_insert_data(bulk_data, user_id=None):
+    data_hashes     = hash_incoming_data(bulk_data)
+    existing_hashes = get_existing_data(data_hashes)
+
+
+    sql = """
+        select
+            max(dataset_id) as max_dataset_id
+        from
+            tDataset
+    """
+
+    unit = units.Units()
+
+    rs = HydraIface.execute(sql)
+    dataset_id = rs[0].max_dataset_id
+    if dataset_id is None:
+        dataset_id = 0
+
+    loaded_data = dict()
+
+    #A list of all the dataset objects
+    datasets = []
+
+    #Lists of all the data objects
+    descriptors  = []
+    timeseries   = []
+    timeseriesdata = []
+    eqtimeseries = []
+    scalars      = []
+    arrays       = []
+
+    #Lists which keep track of what index in the overall
+    #data list that a type is in. For example, if the data looks like:
+    #[descriptor, ts, ts, descriptor], that translates to [0, 3] in descriptor_idx
+    #and [1, 2] in timeseries_idx
+    descriptor_idx   = []
+    timeseries_idx   = []
+    eqtimeseries_idx = []
+    scalar_idx       = []
+    array_idx        = []
+
+    #This is what gets returned.
+    dataset_ids = []
+    for i, d in enumerate(bulk_data):
+        val = parse_value(d)
+
+        if val is None:
+            logging.info("Data is: %s",d)
+            logging.info("Cannot parse data (dataset_id=%s). Value not available.",d.dataset_id)
+            continue
+
+        dataset_i = HydraIface.Dataset()
+        dataset_i.db.data_type  = d.type
+        dataset_i.db.data_name  = d.name
+        dataset_i.db.data_units = d.unit
+        dataset_i.db.created_by = user_id
+
+        # Assign dimension if necessary
+        # It happens that d.dimension is and empty string. We set it to
+        # None to achieve consistency in the DB.
+        if d.unit is not None and d.dimension is None or \
+                d.unit is not None and len(d.dimension) == 0:
+            dataset_i.db.data_dimen = unit.get_dimension(d.unit)
+        else:
+            if d.dimension is None or len(d.dimension) == 0:
+                dataset_i.db.data_dimen = None
+            else:
+                dataset_i.db.data_dimen = d.dimension
+
+        current_hash = dataset_i.set_hash(val)
+
+        datasets.append(dataset_i)
+        #if this piece of data is already in the DB, then
+        #there is no need to insert it!
+        if current_hash in existing_hashes.keys():
+            dataset_id = existing_hashes[current_hash][0]
+            dataset_i.db.dataset_id = dataset_id
+            if current_hash not in loaded_data.keys():
+                dataset_i.load()
+                dataset_i.get_datum()
+                dataset_i.datum.load_all()
+                loaded_data[current_hash] = dataset_i
+
+            dataset_ids.append(loaded_data.get(current_hash))
+            continue
+        else:
+            #set a placeholder for a dataset_id we don't know yet.
+            #The placeholder is the hash, which is unique to this object and
+            #therefore easily identifiable.
+            dataset_ids.append(current_hash)
+        if d.type == 'descriptor':
+            data = HydraIface.Descriptor()
+            data.db.desc_val = val
+
+            descriptors.append(data)
+            descriptor_idx.append(i)
+
+        elif d.type == 'scalar':
+            data = HydraIface.Scalar()
+            data.db.param_value = val
+
+            scalars.append(data)
+            scalar_idx.append(i)
+
+        elif d.type == 'array':
+            data = HydraIface.Array()
+            data.db.arr_data = val
+
+            arrays.append(data)
+            array_idx.append(i)
+
+        elif d.type == 'timeseries':
+            data = HydraIface.TimeSeries()
+            data.set_ts_values(val)
+            timeseries.append(data)
+            timeseries_idx.append(i)
+
+        elif d.type == 'eqtimeseries':
+            data = HydraIface.EqTimeSeries()
+            data.db.start_time = val[0]
+            data.db.frequency  = val[1]
+            data.db.arr_data   = val[2]
+
+            eqtimeseries.append(data)
+            eqtimeseries_idx.append(i)
+        dataset_i.datum = data
+
+    last_descriptor_id = IfaceLib.bulk_insert(descriptors, 'tDescriptor')
+    #assign the data_ids to the correct data objects.
+    #We will need this later to ensure the correct dataset_id / data_id mappings
+    if last_descriptor_id:
+        next_id = last_descriptor_id - len(descriptors) + 1
+        idx = 0
+        while idx < len(descriptors):
+            descriptors[idx].db.data_id = next_id
+            next_id          = next_id + 1
+            idx              = idx     + 1
+
+    last_scalar_id     = IfaceLib.bulk_insert(scalars, 'tScalar')
+
+    if last_scalar_id:
+        next_id = last_scalar_id - len(scalars) + 1
+        idx = 0
+        while idx < len(scalars):
+            scalars[idx].db.data_id = next_id
+            next_id                 = next_id + 1
+            idx                     = idx     + 1
+
+    last_array_id      = IfaceLib.bulk_insert(arrays, 'tArray')
+
+    if last_array_id:
+        next_id = last_array_id - len(arrays) + 1
+        idx = 0
+        while idx < len(arrays):
+            arrays[idx].db.data_id = next_id
+            next_id                = next_id + 1
+            idx                    = idx     + 1
+
+    last_ts_id         = IfaceLib.bulk_insert(timeseries, 'tTimeSeries')
+
+    if last_ts_id:
+        next_id = last_ts_id - len(timeseries) + 1
+        idx = 0
+        while idx < len(timeseries):
+            timeseries[idx].db.data_id      = next_id
+
+            for d in timeseries[idx].timeseriesdatas:
+                d.db.data_id = next_id
+
+            next_id       = next_id + 1
+            idx              = idx  + 1
+
+        #Now that the data_ids have been generated, we need to add the actual
+        #timeseries data, which is stored in a separate table.
+        timeseriesdata = []
+        for idx, ts in enumerate(timeseries):
+            timeseriesdata.extend(ts.timeseriesdatas)
+
+        IfaceLib.bulk_insert(timeseriesdata, 'tTimeSeriesData')
+
+    last_eq_id         = IfaceLib.bulk_insert(eqtimeseries, 'tEqTimeSeries')
+
+    if last_eq_id:
+        next_id = last_eq_id - len(eqtimeseries) + 1
+        idx = 0
+        while idx < len(eqtimeseries):
+            eqtimeseries[idx].db.data_id = next_id
+            next_id        = next_id + 1
+            idx            = idx  + 1
+
+    #Now fill in the final piece of data before inserting the new
+    #scenario data rows -- the data ids generated from the data inserts.
+    for i, idx in enumerate(descriptor_idx):
+        datasets[idx].db.data_id = descriptors[i].db.data_id
+        datasets[idx].datum = descriptors[i]
+    for i, idx in enumerate(scalar_idx):
+        datasets[idx].db.data_id = scalars[i].db.data_id
+        datasets[idx].datum = scalars[i] 
+    for i, idx in enumerate(array_idx):
+        datasets[idx].db.data_id = arrays[i].db.data_id
+        datasets[idx].datum = arrays[i]
+    for i, idx in enumerate(timeseries_idx):
+        datasets[idx].db.data_id = timeseries[i].db.data_id
+        datasets[idx].datum = timeseries[i]
+    for i, idx in enumerate(eqtimeseries_idx):
+        datasets[idx].db.data_id = eqtimeseries[i].db.data_id
+        datasets[idx].datum = eqtimeseries[i]
+
+    #Isolate only the new datasets and insert them
+    new_scenario_data = []
+    for sd in datasets:
+        if sd.db.dataset_id is None:
+            new_scenario_data.append(sd)
+
+    if len(new_scenario_data) > 0:
+        last_dataset_id = IfaceLib.bulk_insert(new_scenario_data, 'tDataset')
+
+        #set the dataset ids on the new scenario data objects
+        next_id = last_dataset_id - len(new_scenario_data) + 1
+        idx = 0
+
+        while idx < len(new_scenario_data):
+            dataset_id     = next_id
+            new_scenario_data[idx].db.dataset_id = dataset_id
+            next_id        = next_id + 1
+            idx            = idx     + 1
+
+        #using the has of the new scenario data, find the placeholder in dataset_ids
+        #and replace it with the dataset_id.
+        for sd in new_scenario_data:
+            dataset_idx = dataset_ids.index(sd.db.data_hash)
+            dataset_ids[dataset_idx] = sd
+
+    return dataset_ids
+
+
+
 class ScenarioService(HydraService):
     """
         The scenario SOAP service
@@ -96,7 +334,7 @@ class ScenarioService(HydraService):
         #inserted in one go, rather than one at a time
         data = [r.value for r in scenario.resourcescenarios]
 
-        dataset_ids = DataService.bulk_insert_data(ctx, data)
+        datasets = bulk_insert_data(data, user_id=ctx.in_header.user_id)
 
         #record all the resource attribute ids
         resource_attr_ids = [r.resource_attr_id for r in scenario.resourcescenarios]
@@ -106,7 +344,7 @@ class ScenarioService(HydraService):
         for i, ra_id in enumerate(resource_attr_ids):
             rs_i = HydraIface.ResourceScenario()
             rs_i.db.resource_attr_id = ra_id
-            rs_i.db.dataset_id       = dataset_ids[i]
+            rs_i.db.dataset_id       = datasets[i].db.dataset_id
             rs_i.db.scenario_id      = scen.db.scenario_id
             resource_scenarios.append(rs_i)
 
@@ -538,232 +776,9 @@ class DataService(HydraService):
         """
             Insert sereral pieces of data at once.
         """
-
-        data_hashes     = hash_incoming_data(bulk_data)
-        existing_hashes = get_existing_data(data_hashes)
-
-
-        sql = """
-            select
-                max(dataset_id) as max_dataset_id
-            from
-                tDataset
-        """
-
-        user_id = ctx.in_header.user_id
-
-        unit = units.Units()
-
-        rs = HydraIface.execute(sql)
-        dataset_id = rs[0].max_dataset_id
-        if dataset_id is None:
-            dataset_id = 0
-
-        #A list of all the dataset objects
-        datasets = []
-
-        #Lists of all the data objects
-        descriptors  = []
-        timeseries   = []
-        timeseriesdata = []
-        eqtimeseries = []
-        scalars      = []
-        arrays       = []
-
-        #Lists which keep track of what index in the overall
-        #data list that a type is in. For example, if the data looks like:
-        #[descriptor, ts, ts, descriptor], that translates to [0, 3] in descriptor_idx
-        #and [1, 2] in timeseries_idx
-        descriptor_idx   = []
-        timeseries_idx   = []
-        eqtimeseries_idx = []
-        scalar_idx       = []
-        array_idx        = []
-
-        #This is what gets returned.
-        dataset_ids = []
-
-        for i, d in enumerate(bulk_data):
-            val = parse_value(d)
-
-            if val is None:
-                logging.info("Cannot parse data (dataset_id=%s). Value not available.",d.dataset_id)
-                continue
-
-            scenario_datum = HydraIface.Dataset()
-            scenario_datum.db.data_type  = d.type
-            scenario_datum.db.data_name  = d.name
-            scenario_datum.db.data_units = d.unit
-            scenario_datum.db.created_by = user_id
-
-            # Assign dimension if necessary
-            # It happens that d.dimension is and empty string. We set it to
-            # None to achieve consistency in the DB.
-            if d.unit is not None and d.dimension is None or \
-                    d.unit is not None and len(d.dimension) == 0:
-                scenario_datum.db.data_dimen = unit.get_dimension(d.unit)
-            else:
-                if d.dimension is None or len(d.dimension) == 0:
-                    scenario_datum.db.data_dimen = None
-                else:
-                    scenario_datum.db.data_dimen = d.dimension
-
-            current_hash = scenario_datum.set_hash(val)
-
-            datasets.append(scenario_datum)
-
-            #if this piece of data is already in the DB, then
-            #there is no need to insert it!
-            if current_hash in existing_hashes.keys():
-                dataset_id = existing_hashes[current_hash][0]
-                dataset_ids.append(dataset_id)
-                scenario_datum.db.dataset_id = dataset_id
-                continue
-            else:
-                #set a placeholder for a dataset_id we don't know yet.
-                #The placeholder is the hash, which is unique to this object and
-                #therefore easily identifiable.
-                dataset_ids.append(current_hash)
-
-            if d.type == 'descriptor':
-                data = HydraIface.Descriptor()
-                data.db.desc_val = val
-
-                descriptors.append(data)
-                descriptor_idx.append(i)
-
-            elif d.type == 'scalar':
-                data = HydraIface.Scalar()
-                data.db.param_value = val
-
-                scalars.append(data)
-                scalar_idx.append(i)
-
-            elif d.type == 'array':
-                data = HydraIface.Array()
-                data.db.arr_data = val
-
-                arrays.append(data)
-                array_idx.append(i)
-
-            elif d.type == 'timeseries':
-                data = HydraIface.TimeSeries()
-                data.set_ts_values(val)
-                timeseries.append(data)
-                timeseries_idx.append(i)
-
-            elif d.type == 'eqtimeseries':
-                data = HydraIface.EqTimeSeries()
-                data.db.start_time = val[0]
-                data.db.frequency  = val[1]
-                data.db.arr_data   = val[2]
-
-                eqtimeseries.append(data)
-                eqtimeseries_idx.append(i)
-
-        last_descriptor_id = IfaceLib.bulk_insert(descriptors, 'tDescriptor')
-
-        #assign the data_ids to the correct data objects.
-        #We will need this later to ensure the correct dataset_id / data_id mappings
-        if last_descriptor_id:
-            next_id = last_descriptor_id - len(descriptors) + 1
-            idx = 0
-            while idx < len(descriptors):
-                descriptors[idx].db.data_id = next_id
-                next_id          = next_id + 1
-                idx              = idx     + 1
-
-        last_scalar_id     = IfaceLib.bulk_insert(scalars, 'tScalar')
-
-        if last_scalar_id:
-            next_id = last_scalar_id - len(scalars) + 1
-            idx = 0
-            while idx < len(scalars):
-                scalars[idx].db.data_id = next_id
-                next_id                 = next_id + 1
-                idx                     = idx     + 1
-
-        last_array_id      = IfaceLib.bulk_insert(arrays, 'tArray')
-
-        if last_array_id:
-            next_id = last_array_id - len(arrays) + 1
-            idx = 0
-            while idx < len(arrays):
-                arrays[idx].db.data_id = next_id
-                next_id                = next_id + 1
-                idx                    = idx     + 1
-
-        last_ts_id         = IfaceLib.bulk_insert(timeseries, 'tTimeSeries')
-
-        if last_ts_id:
-            next_id = last_ts_id - len(timeseries) + 1
-            idx = 0
-            while idx < len(timeseries):
-                timeseries[idx].db.data_id      = next_id
-
-                for d in timeseries[idx].timeseriesdatas:
-                    d.db.data_id = next_id
-
-                next_id       = next_id + 1
-                idx              = idx  + 1
-
-            #Now that the data_ids have been generated, we need to add the actual
-            #timeseries data, which is stored in a separate table.
-            timeseriesdata = []
-            for idx, ts in enumerate(timeseries):
-                timeseriesdata.extend(ts.timeseriesdatas)
-
-            IfaceLib.bulk_insert(timeseriesdata, 'tTimeSeriesData')
-
-        last_eq_id         = IfaceLib.bulk_insert(eqtimeseries, 'tEqTimeSeries')
-
-        if last_eq_id:
-            next_id = last_eq_id - len(eqtimeseries) + 1
-            idx = 0
-            while idx < len(eqtimeseries):
-                eqtimeseries[idx].db.data_id = next_id
-                next_id        = next_id + 1
-                idx            = idx  + 1
-
-        #Now fill in the final piece of data before inserting the new
-        #scenario data rows -- the data ids generated from the data inserts.
-        for i, idx in enumerate(descriptor_idx):
-            datasets[idx].db.data_id = descriptors[i].db.data_id
-        for i, idx in enumerate(scalar_idx):
-            datasets[idx].db.data_id = scalars[i].db.data_id
-        for i, idx in enumerate(array_idx):
-            datasets[idx].db.data_id = arrays[i].db.data_id
-        for i, idx in enumerate(timeseries_idx):
-            datasets[idx].db.data_id = timeseries[i].db.data_id
-        for i, idx in enumerate(eqtimeseries_idx):
-            datasets[idx].db.data_id = eqtimeseries[i].db.data_id
-
-        #Isolate only the new datasets and insert them
-        new_scenario_data = []
-        for sd in datasets:
-            if sd.db.dataset_id is None:
-                new_scenario_data.append(sd)
-
-        if len(new_scenario_data) > 0:
-            last_dataset_id = IfaceLib.bulk_insert(new_scenario_data, 'tDataset')
-
-            #set the dataset ids on the new scenario data objects
-            next_id = last_dataset_id - len(new_scenario_data) + 1
-            idx = 0
-
-            while idx < len(new_scenario_data):
-                dataset_id     = next_id
-                new_scenario_data[idx].db.dataset_id = dataset_id
-                next_id        = next_id + 1
-                idx            = idx     + 1
-
-            #using the has of the new scenario data, find the placeholder in dataset_ids
-            #and replace it with the dataset_id.
-            for sd in new_scenario_data:
-                dataset_idx = dataset_ids.index(sd.db.data_hash)
-                dataset_ids[dataset_idx] = sd.db.dataset_id
-
-        return dataset_ids
+        datasets = bulk_insert_data(bulk_data, user_id=ctx.in_header.user_id)
+        
+        return [d.db.dataset_id for d in datasets]
 
     @rpc(Integer, Integer, Dataset, _returns=ResourceScenario)
     def add_data_to_attribute(ctx, scenario_id, resource_attr_id, dataset):
@@ -779,7 +794,7 @@ class DataService(HydraService):
         value = parse_value(dataset)
 
         if value is None:
-            raise HydraException("Cannot set value to attribute. "
+            raise HydraError("Cannot set value to attribute. "
                 "No value was sent with dataset %s", dataset.id)
 
         user_id = ctx.in_header.user_id

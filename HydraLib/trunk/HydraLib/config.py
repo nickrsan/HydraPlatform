@@ -32,11 +32,7 @@ def load_config():
     sysfiles = glob.glob('/etc/hydra/*.ini')
     repofiles = glob.glob(modulepath + '/../../../config/*.ini')
 
-    defaults={}
-    defaults['home_dir'] = os.path.expanduser(os.environ.get('HYDRA_HOME_DIR', '~'))
-    defaults['hydra_base_dir'] = os.path.expanduser(os.environ.get('HYDRA_BASE_DIR', '~/svn/HYDRA'))
-
-    config = ConfigParser.ConfigParser(defaults, allow_no_value=True)
+    config = ConfigParser.ConfigParser(allow_no_value=True)
 
     for ini_file in repofiles:
         config.read(ini_file)
@@ -46,6 +42,18 @@ def load_config():
         config.read(ini_file)
     for ini_file in localfiles:
         config.read(ini_file)
+    
+    try:
+        home_dir = config.get('DEFAULT', 'home_dir')
+    except:
+        home_dir = os.environ.get('HYDRA_HOME_DIR', '~')
+    config.set('DEFAULT', 'home_dir', os.path.expanduser(home_dir))
+
+    try:
+        hydra_base = config.get('DEFAULT', 'hydra_base_dir')
+    except:
+        hydra_base = os.environ.get('HYDRA_BASE_DIR', '~/svn/HYDRA')
+    config.set('DEFAULT', 'hydra_base_dir', os.path.expanduser(hydra_base))
     
     CONFIG = config
 

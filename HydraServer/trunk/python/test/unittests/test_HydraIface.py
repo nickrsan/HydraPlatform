@@ -101,7 +101,7 @@ class HydraIfaceTest(unittest.TestCase):
     def create_scenario_data(self, data_id):
         x = HydraIface.Dataset()
         x.db.data_id = data_id
-        x.db.data_type = "double"
+        x.db.data_type = "scalar"
         x.db.data_units = "metres cubed"
         x.db.data_name  = "output"
         x.db.data_dimen = "metres cubed"

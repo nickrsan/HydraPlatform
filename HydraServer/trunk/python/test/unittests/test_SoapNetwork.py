@@ -3,9 +3,33 @@
 
 import test_SoapServer
 import copy
-
+import logging
 
 class NetworkTest(test_SoapServer.SoapServerTest):
+
+    def test_get_network(self):
+        """
+            Test for the potentially likely case of creating a network with two
+            scenarios, then querying for the network without data to identify
+            the scenarios, then querying for the network with data but in only
+            a select few scenarios.
+        """
+        net = self.create_network_with_data()
+        scenario_id = net.scenarios.Scenario[0].id       
+
+        new_scenario = self.client.service.clone_scenario(scenario_id)
+
+        full_network = self.client.service.get_network(new_scenario.network_id, 'N')
+
+        for s in full_network.scenarios.Scenario:
+            assert s.resourcescenarios is None
+        
+        partial_network = self.client.service.get_network(new_scenario.network_id, 'Y', [scenario_id])
+        logging.debug(partial_network)
+
+        assert len(partial_network.scenarios.Scenario) == 1
+        for s in partial_network.scenarios.Scenario:
+            assert len(s.resourcescenarios.ResourceScenario) > 0
 
     def test_update(self):
         project = self.create_project('test')
@@ -272,6 +296,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         
         result = self.client.service.validate_network_topology(network.id)
         assert result == 'Orphan nodes are present.'
+
 
 if __name__ == '__main__':
     test_SoapServer.run()

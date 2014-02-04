@@ -2,7 +2,7 @@ import logging
 from decimal import Decimal
 from soap_server import hydra_complexmodels
 import config
-
+import datetime
 import MySqlIface
 
 global DB
@@ -31,8 +31,6 @@ class IfaceBase(object):
     """
     def __init__(self, parent, class_name):
     
-        logging.debug("Initialising %s", class_name)
-
         self.db = DB(class_name)
 
         self.name = class_name
@@ -121,6 +119,7 @@ class IfaceBase(object):
 
     def get_children(self):
         children = self.db.db_struct[self.db.table_name.lower()]['child_info']
+
         for name, rows in children.items():
             #turn 'link' into 'links'
             attr_name              = name[1:].lower() + 's'
@@ -179,7 +178,7 @@ class IfaceBase(object):
             self.parent = parent
             self.__setattr__(parent_name, parent)
 
-    def get_as_dict(self, user_id=None):
+    def get_as_dict(self,**kwargs):
         """
             Convert this object into a dict
             
@@ -187,13 +186,14 @@ class IfaceBase(object):
             what gets populated in the dictionary bases
             on a user's permission.
         """
+        t = datetime.datetime.now()
         obj_dict = dict(
             object_type = self.name
             )
 
         #If self is not in the DB, then return an empty dict
-        if self.in_db is False:
-            return obj_dict
+        #if self.in_db is False:
+        #    return obj_dict
 
         for attr in self.db.db_attrs:
             value = getattr(self.db, attr)
@@ -206,11 +206,12 @@ class IfaceBase(object):
             objs = getattr(self, child_name)
             child_objs = []
             for obj in objs:
-                obj.load_all()
-                child_cm = obj.get_as_dict(user_id=user_id)
+                child_cm = obj.get_as_dict(**kwargs)
                 child_objs.append(child_cm)
             obj_dict[child_name] = child_objs
-
+        time_taken = datetime.datetime.now() - t
+        if time_taken > datetime.timedelta(seconds=1):
+            logging.warn("%s: %s", self.name, time_taken) 
         return obj_dict
 
     def get_as_complexmodel(self):

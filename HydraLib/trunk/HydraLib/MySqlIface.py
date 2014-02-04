@@ -33,7 +33,6 @@ def execute(sql):
     #If the SQL never changes, we should be caching the result.
  #   update_rs_count(sql,rs)
     
-    logging.info("Execution returned %s results", len(rs))
     cursor.close()
 
     return rs
@@ -172,7 +171,7 @@ def bulk_insert(objs, table_name=""):
         vals  = ",".join('%s' for v in objs[0].db.db_attrs),
     )
 
-    logging.info("Running bulk insert: %s with vals %s", complete_insert, vals)
+    logging.info("Running bulk insert into %s", objs[0].db.table_name)
 
     cursor.executemany(complete_insert, vals)
 
@@ -279,7 +278,7 @@ class DBIface(object):
         if parent_key is None:
             return None
 
-        logging.debug("PARENT: %s", parent_key)
+        #logging.debug("PARENT: %s", parent_key)
 
         parent_class = DB_HIERARCHY[parent_key]['obj']
         parent_table = DB_HIERARCHY[parent_key]['table_name']
@@ -290,7 +289,7 @@ class DBIface(object):
                 logging.debug("Cannot load parent. %s is None", k)
                 return
 
-        logging.debug("Loading parent %s", self.table_name)
+        logging.debug("%s Loading parent %s", self.table_name, parent_key)
 
         base_parent_sql = """
             select
@@ -452,7 +451,7 @@ class DBIface(object):
 
         for r in rs:
             for k, v in r.get_as_dict().items():
-                logging.debug("Setting column %s to %s", k, v)
+                #logging.debug("Setting column %s to %s", k, v)
                 self.db_data[k] = v
        
         self.has_changed = False

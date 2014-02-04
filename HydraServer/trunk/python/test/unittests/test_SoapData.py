@@ -259,6 +259,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
             if d.value.type == 'timeseries':
                 attr_to_be_changed = d.resource_attr_id
                 data_to_hide = d.value.id
+                break
 
         self.client.service.lock_dataset(data_to_hide, [], 'Y', 'Y', 'Y')
         self.client.service.logout("UserA")

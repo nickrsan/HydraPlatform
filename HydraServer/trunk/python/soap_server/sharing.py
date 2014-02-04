@@ -1,6 +1,5 @@
 from HydraLib.HydraException import HydraError
 from spyne.model.primitive import String, Integer
-from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from db import HydraIface
 from hydra_base import HydraService
