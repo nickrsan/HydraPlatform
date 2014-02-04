@@ -37,8 +37,8 @@ def parse_attribute(attribute):
             raise HydraError(
                 "An attribute with name "
                 "%s already exists but with a different"
-                " dimension (%s). Please rename your attribute.",
-                (name, attr_i.db.dimension))
+                " dimension (%s). Please rename your attribute." %
+                (name, attr_i.db.attr_dimen))
 
     return attr_i
 
