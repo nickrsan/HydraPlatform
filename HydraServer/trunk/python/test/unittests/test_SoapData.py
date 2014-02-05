@@ -249,7 +249,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
         network_1 = self.create_network_with_data()
 
         #Let User B view network 1, but not edit it (read_only is 'Y')
-        self.client.service.share_network(network_1.id, ["UserB", "UserC"], 'N')
+        self.client.service.share_network(network_1.id, ["UserB"], 'N')
 
         scenario = network_1.scenarios.Scenario[0]
 

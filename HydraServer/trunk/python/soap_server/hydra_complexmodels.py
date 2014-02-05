@@ -97,7 +97,6 @@ def get_array(arr):
 
     return current_level
 
-
 class LoginResponse(ComplexModel):
     __namespace__ = 'soap_server.hydra_complexmodels'
     _type_info = [
@@ -122,6 +121,11 @@ class HydraComplexModel(ComplexModel):
         for attr_name, attr in obj_dict.items():
             if attr_name == 'object_type':
                 continue
+            elif attr_name.find('layout') >= 0:
+                if attr:
+                    attr = eval(attr)
+                else:
+                    attr = {}
             if type(attr) is list:
                 children = []
                 for child_obj_dict in attr:
@@ -370,7 +374,7 @@ class Node(Resource):
         ('id',          Integer(default=None)),
         ('name',        String(default=None)),
         ('description', String(min_occurs=1, default="")),
-        ('layout',      String(min_occurs=1, default="")),
+        ('layout',      AnyDict(min_occurs=0, max_occurs=1, default=None)),
         ('x',           Decimal(min_occurs=1, default=0)),
         ('y',           Decimal(min_occurs=1, default=0)),
         ('status',      String(default='A')),
@@ -390,7 +394,7 @@ class Link(Resource):
         ('id',          Integer(default=None)),
         ('name',        String(default=None)),
         ('description', String(min_occurs=1, default="")),
-        ('layout',      String(min_occurs=1, default="")),
+        ('layout',      AnyDict(min_occurs=0, max_occurs=1, default=None)),
         ('node_1_id',   Integer(default=None)),
         ('node_2_id',   Integer(default=None)),
         ('status',      String(default='A')),
@@ -607,7 +611,7 @@ class Network(Resource):
         ('description',         String(min_occurs=1, default=None)),
         ('created_by',          Integer(default=None)),
         ('cr_date',             String(default=None)),
-        ('layout',              String(min_occurs=1, default=None)),
+        ('layout',              AnyDict(min_occurs=0, max_occurs=1, default=None)),
         ('status',              String(default='A')),
         ('attributes',          SpyneArray(ResourceAttr, default=[])),
         ('scenarios',           SpyneArray(Scenario, default=[])),

@@ -89,7 +89,7 @@ def validate_layout(layout_xml):
     except etree.LxmlError, e:
         raise HydraError("Layout XML did not validate!: Error was: %s"%(e))
 
-
+    return xml_tree
 
 class GenericResource(IfaceBase):
     """
@@ -367,7 +367,7 @@ class GenericResource(IfaceBase):
             start = datetime.datetime.now()
 
         obj_dict = super(GenericResource, self).get_as_dict(**kwargs)
-
+       
         obj_dict.update(
             dict(attributes  = [],
             templates   = [],
@@ -755,7 +755,6 @@ class Network(GenericResource):
         l = Link(network=self)
         l.db.link_name        = name
         l.db.link_description = desc
-        l.validate_layout(layout)
         l.db.link_layout      = layout
         l.db.node_1_id        = node_1_id
         l.db.node_2_id        = node_2_id
@@ -776,7 +775,6 @@ class Network(GenericResource):
         node_i = Node(network=self)
         node_i.db.node_name        = name
         node_i.db.node_description = desc
-        node_i.validate_layout(layout)
         node_i.db.node_layout      = layout
         node_i.db.node_x           = node_x
         node_i.db.node_y           = node_y
@@ -1404,7 +1402,6 @@ class Dataset(IfaceBase):
             datum = Scalar(data_id = self.db.data_id)
         elif self.db.data_type == 'array':
             datum = Array(data_id = self.db.data_id)
-        logging.info(self.db.data_type)
         
         self.datum = datum
         return datum

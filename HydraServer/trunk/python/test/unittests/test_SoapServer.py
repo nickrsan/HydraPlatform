@@ -100,7 +100,7 @@ class SoapServerTest(unittest.TestCase):
         network.nodes = []
         network.links = []
         network.scenarios = []
-        network.layout = ""
+        network.layout = None
         network = self.client.service.add_network(network)
         return network
 
@@ -325,19 +325,12 @@ class SoapServerTest(unittest.TestCase):
         scenario_array.Scenario.append(scenario)
 
         logging.debug("Scenario definition took: %s"%(datetime.datetime.now()-start))
+        #This can also be defined as a simple dictionary, but I do it this
+        #way so I can check the value is correct after the network is created.
+        layout = self.client.factory.create("xs:anyType")
+        layout.color = 'red'
+        layout.shapefile = 'blah.shp'
 
-        layout = """
-            <resource_layout>
-                <layout>
-                    <name>color</name>
-                    <value>red</value>
-                </layout>
-                <layout>
-                    <name>shapefile</name>
-                    <value>blah.shp</value>
-                </layout>
-            </resource_layout>
-        """
         node_array = self.client.factory.create("hyd:NodeArray")
         node_array.Node = nodes
         link_array = self.client.factory.create("hyd:LinkArray")
@@ -357,6 +350,8 @@ class SoapServerTest(unittest.TestCase):
         start = datetime.datetime.now()
         logging.info("Creating network...")
         network = self.client.service.add_network(network)
+
+        assert repr(network.layout) == repr(layout)
 
         logging.info("Network Creation took: %s"%(datetime.datetime.now()-start))
 

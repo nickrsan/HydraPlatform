@@ -173,8 +173,9 @@ class TemplateService(HydraService):
                 if resource.find('layout') is not None and \
                    resource.find('layout').text is not None:
                     layout = unescape(resource.find('layout').text)
-                    HydraIface.validate_layout(layout)
-                    template_i.db.layout = layout
+                    layout_tree = HydraIface.validate_layout(layout)
+                    layout_string = convert_layout_xml_to_dict(layout_tree)
+                    template_i.db.layout = str(layout_string)
 
                 template_i.save()
 
@@ -593,3 +594,29 @@ def _make_attr_element(parent, resource_attr_i):
 
     return attr
 
+def convert_layout_xml_to_dict(layout_tree):
+    """
+    Convert something that looks like this:
+    <resource_layout>
+        <layout>
+            <name>color</name>
+            <value>red</value>
+        </layout>
+        <layout>
+            <name>shapefile</name>
+            <value>blah.shp</value>
+        </layout>
+    </resource_layout>
+    Into something that looks like this:
+    {
+        'color' : ['red'],
+        'shapefile' : ['blah.shp']
+    }
+    """
+    layout_dict = dict()
+
+    for layout in layout_tree.findall('layout'):
+        name = layout.find('name').text
+        value = layout.find('value').text
+        layout_dict[name] = [value]
+    return layout_dict

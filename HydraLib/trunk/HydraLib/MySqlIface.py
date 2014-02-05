@@ -3,7 +3,7 @@ from decimal import Decimal
 import config
 from HydraLib.hdb import HydraMySqlCursor
 from HydraException import HydraError
-from mysql.connector import IntegrityError
+from mysql.connector import IntegrityError, DatabaseError
 import inspect
 
 global DB_STRUCT
@@ -147,6 +147,8 @@ def bulk_insert(objs, table_name=""):
             return None
         elif db_type.find('varchar') != -1 or db_type in ('blob', 'datetime', 'timestamp') :
             return '%s'%val
+        elif db_type == 'text':
+            return repr(val)
         else:
             return val
 
@@ -388,7 +390,7 @@ class DBIface(object):
 
         try:
             cursor.execute(complete_insert)
-        except IntegrityError, e:
+        except DatabaseError, e:
             raise HydraError("Error inserting into %s: %s"%(self.table_name, e.msg))
 
         if self.seq is not None:
@@ -480,6 +482,8 @@ class DBIface(object):
             return 'null'
         elif db_type.find('varchar') != -1 or db_type in ('blob', 'datetime', 'timestamp') :
             return "'%s'"%val
+        elif db_type == 'text':
+            return repr(val)
         else:
             return str(val)
     

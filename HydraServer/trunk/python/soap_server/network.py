@@ -316,8 +316,7 @@ class NetworkService(HydraService):
         net_i.db.created_by          = ctx.in_header.user_id
         
         if network.layout is not None:
-            net_i.validate_layout(network.layout)
-            net_i.db.network_layout      = network.layout
+            net_i.db.network_layout = str(network.layout)
 
         net_i.save()
         network.network_id = net_i.db.network_id
