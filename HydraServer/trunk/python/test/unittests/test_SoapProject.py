@@ -6,9 +6,6 @@ import datetime
 import copy
 import logging
 
-def setup():
-    test_SoapServer.connect()
-
 class ProjectTest(test_SoapServer.SoapServerTest):
 
     #def __init__(self):

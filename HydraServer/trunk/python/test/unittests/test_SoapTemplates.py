@@ -550,8 +550,5 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         xmlschema.assertValid(xml_tree)
 
 
-def setup():
-    test_SoapServer.connect()
-
 if __name__ == '__main__':
     test_SoapServer.run()

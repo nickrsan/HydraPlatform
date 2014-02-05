@@ -184,9 +184,5 @@ class UnitsTest(test_SoapServer.SoapServerTest):
         assert result2 is False, \
             "Unit consistency check didn't work."
 
-
-#def setup():
-#    test_SoapServer.connect()
-
 if __name__ == '__main__':
     test_SoapServer.run()

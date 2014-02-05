@@ -5,7 +5,7 @@ import logging
 import shutil
 import os
 
-from HydraLib import hydra_logging, config
+from HydraLib import config
 
 from suds.client import Client
 from suds.plugin import MessagePlugin
@@ -39,7 +39,6 @@ def connect(login=True):
 class SoapServerTest(unittest.TestCase):
 
     def setUp(self):
-        hydra_logging.init(level='INFO')
         logging.getLogger('suds').setLevel(logging.ERROR)
         logging.getLogger('suds.client').setLevel(logging.CRITICAL)
         # Clear SUDS cache:
@@ -55,7 +54,6 @@ class SoapServerTest(unittest.TestCase):
 
     def tearDown(self):
         logging.debug("Tearing down")
-        hydra_logging.shutdown()
         self.logout('root')
 
     def login(self, username, password):
