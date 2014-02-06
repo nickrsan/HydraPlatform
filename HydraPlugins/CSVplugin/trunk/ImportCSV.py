@@ -129,6 +129,7 @@ from HydraLib import PluginLib
 from HydraLib import units
 
 from suds import WebFault
+import numpy
 
 import re
 
@@ -481,12 +482,17 @@ class ImportCSV(object):
                     res_attr.attr_is_var = 'Y'
 
                 else:
-
+                    
                     if units is not None:
                         dataset = self.create_dataset(data[i],
-                                                      res_attr, units[i])
+                                                      res_attr,
+                                                      units[i],
+                                                      resource.name)
                     else:
-                        dataset = self.create_dataset(data[i], res_attr, None)
+                        dataset = self.create_dataset(data[i],
+                                                      res_attr,
+                                                      None,
+                                                      resource.name)
 
                     self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
 
@@ -639,7 +645,7 @@ class ImportCSV(object):
     def parse_constraint_item(self, item_str):
         return item_str
 
-    def create_dataset(self, value, resource_attr, unit):
+    def create_dataset(self, value, resource_attr, unit, resource_name):
         resourcescenario = self.cli.factory.create('hyd:ResourceScenario')
         dataset          = self.cli.factory.create('hyd:Dataset')
 
@@ -667,8 +673,14 @@ class ImportCSV(object):
                     tmp_filedata = filedata.split('\n')
                     filedata = ''
                     for i, line in enumerate(tmp_filedata):
-                        if len(line) > 0 and line.strip()[0] != '#':
+                        #The name of the resource is how to identify the data for it.
+                        #Once this the correct line(s) has been identified, remove the 
+                        #name from the start of the line
+                        if len(line) > 0 and line.strip().startswith(resource_name):
+                            line = line[line.find(',')+1:]
                             filedata = filedata + line + '\n'
+                        else:
+                            continue
                     if self.is_timeseries(filedata):
                         dataset.type = 'timeseries'
                         ts = self.create_timeseries(filedata)
@@ -723,14 +735,24 @@ class ImportCSV(object):
                 ts_time = PluginLib.date_to_string(tstime,
                                                           seasonal=seasonal)
 
-                value_length = len(dataset) - 1
+                value_length = len(dataset[2:])
+                
+                if dataset[1] != '': 
+                    array_shape = tuple([int(a) for a in dataset[1].split(" ")])
+                else:
+                    array_shape = value_length
+
                 ts_value = []
                 for i in range(value_length):
                     ts_value.append(float(dataset[i + 1].strip()))
+                
+                ts_arr = numpy.array(ts_value)
+                ts_arr = numpy.reshape(ts_arr, array_shape) 
 
+                
                 ts_values.append({
                     'ts_time' : ts_time,
-                    'ts_value' : ts_value,
+                    'ts_value' : str(ts_arr.tolist()),
                     })
 
         timeseries = {'ts_values' : ts_values}
@@ -738,11 +760,27 @@ class ImportCSV(object):
         return timeseries
 
     def create_array(self, data):
-        arraystring = '[[' + data.strip().replace('\n', '], [') + ']]'
-        array = self.cli.factory.create('hyd:Array')
-        array.arr_data = arraystring
+        #Split the line into a list
+        dataset = data.split(',')
+        #First column is always the array dimensions
+        arr_shape = dataset[0]
+        #The actual data is everything after column 0
+        dataset = [eval(d) for d in dataset[1:]]
 
-        return array
+        #If the dimensions are not set, we assume the array is 1D
+        if arr_shape != '': 
+            array_shape = tuple([int(a) for a in arr_shape.split(" ")])
+        else:
+            array_shape = len(dataset)
+
+        #Reshape the array back to its correct dimensions 
+        array = numpy.array(dataset)
+        array = numpy.reshape(array, array_shape) 
+        
+        arr = self.cli.factory.create('hyd:Array')
+        arr.arr_data = str(array.tolist())
+
+        return arr
 
     def is_timeseries(self, data):
         date = data.split(',', 1)[0].strip()

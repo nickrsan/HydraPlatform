@@ -1396,6 +1396,7 @@ class Dataset(IfaceBase):
             datum = Descriptor(data_id = self.db.data_id)
         elif self.db.data_type == 'timeseries':
             datum = TimeSeries(data_id=self.db.data_id)
+            datum.load_all()
         elif self.db.data_type == 'eqtimeseries':
             datum = EqTimeSeries(data_id = self.db.data_id)
         elif self.db.data_type == 'scalar':

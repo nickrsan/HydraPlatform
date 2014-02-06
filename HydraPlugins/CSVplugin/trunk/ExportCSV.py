@@ -166,7 +166,8 @@ class ExportCSV(object):
 
         if network.attributes is not None:
             for r_attr in network.attributes.ResourceAttr:
-                value = self.get_attr_value(scenario, r_attr)
+                attr_name = network_attributes[r_attr.attr_id]
+                value = self.get_attr_value(scenario, r_attr, attr_name, network.name)
                 values[network_attributes.keys().index(r_attr.attr_id)] = value
         
         network_entry = "%(id)s,%(description)s,%(name)s,%(values)s\n"%{
@@ -229,7 +230,8 @@ class ExportCSV(object):
             
             if node.attributes is not None:
                 for r_attr in node.attributes.ResourceAttr:
-                    value = self.get_attr_value(scenario, r_attr)
+                    attr_name = node_attributes[r_attr.attr_id]
+                    value = self.get_attr_value(scenario, r_attr, attr_name, node.name)
                     values[node_attributes.keys().index(r_attr.attr_id)] = value
             
             node_entry = "%(name)s,%(x)s,%(y)s%(values)s,%(description)s\n"%{
@@ -275,7 +277,8 @@ class ExportCSV(object):
             values = ["" for attr_id in link_attributes.keys()]
             if link.attributes is not None:
                 for r_attr in link.attributes.ResourceAttr:
-                    value = self.get_attr_value(scenario, r_attr)
+                    attr_name = link_attributes[r_attr.attr_id]
+                    value = self.get_attr_value(scenario, r_attr, attr_name, link.name)
                     values[link_attributes.keys().index(r_attr.attr_id)] = value
 
             link_entry = "%(name)s,%(from)s,%(to)s%(values)s,%(description)s\n"%{
@@ -342,14 +345,15 @@ class ExportCSV(object):
                     return rs.value.unit
 
         logging.warning("Unit not found in scenario %s for attr: %s"%(scenario.id, attr_id))
-        return 'NULL'
+        return ''
 
-    def get_attr_value(self, scenario, resource_attr):
+    def get_attr_value(self, scenario, resource_attr, attr_name, resource_name):
         """
             Returns the value of a given resource attribute within a scenario
         """
 
         r_attr_id = resource_attr.id
+        attr_id   = resource_attr.attr_id
 
         if resource_attr.attr_is_var == 'Y':
             return 'NULL'
@@ -360,9 +364,13 @@ class ExportCSV(object):
                     value = rs.value.value.desc_val
                 elif rs.value.type == 'array':
                     value = rs.value.value.arr_data
-                    file_name = "array_%s.csv"%(rs.value.name) 
-                    ts_file = open(os.path.join(scenario.target_dir, file_name), 'w')
-                    np_val = numpy.array(eval(value.__repr__()))
+                    file_name = "array_%s_%s.csv"%(resource_attr.ref_key, attr_name) 
+                    file_loc = os.path.join(scenario.target_dir, file_name)
+                    if os.path.exists(file_loc):
+                        arr_file      = open(file_loc, 'a')
+                    else:
+                        arr_file      = open(file_loc, 'w')
+                    np_val = numpy.array(eval(repr(value)))
                     shape = np_val.shape
                     n = 1
                     shape_str = []
@@ -370,21 +378,27 @@ class ExportCSV(object):
                         n = n * x
                         shape_str.append(str(x))
                     one_dimensional_val = np_val.reshape(1, n)
-                    ts_file.write("%s,%s\n"%
-                                (
+                    arr_file.write("%s,%s,%s\n"%
+                                ( 
+                                    resource_name,
                                     ' '.join(shape_str), 
                                     ','.join([str(x) for x in one_dimensional_val.tolist()[0]]))
                                  )
                     
-                    ts_file.close()
+                    arr_file.close()
                     value = file_name
                 elif rs.value.type == 'scalar':
                     value = rs.value.value.param_value
                 elif rs.value.type == 'timeseries':
                     value = rs.value.value.ts_values
-                    file_name = "timeseries_%s.csv"%(rs.value.id) 
-                    ts_file = open(os.path.join(scenario.target_dir, file_name), 'w')
-                    for ts in value[0]:
+                    file_name = "timeseries_%s_%s.csv"%(resource_attr.ref_key, attr_name) 
+                    file_loc = os.path.join(scenario.target_dir, file_name)
+                    if os.path.exists(file_loc):
+                        ts_file      = open(file_loc, 'a')
+                    else:
+                        ts_file      = open(file_loc, 'w')
+                    
+                    for ts in value:
                         ts_time = ts['ts_time']
                         ts_val  = ts['ts_value']
                         np_val = numpy.array(eval(ts_val))
@@ -395,15 +409,42 @@ class ExportCSV(object):
                             n = n * x
                             shape_str.append(str(x))
                         one_dimensional_val = np_val.reshape(1, n)
-                        ts_file.write("%s,%s,%s\n"%
-                                      (ts_time, 
+                        ts_file.write("%s,%s,%s,%s\n"%
+                                     ( resource_name,
+                                       ts_time, 
                                        ' '.join(shape_str), 
                                        ','.join([str(x) for x in one_dimensional_val.tolist()[0]])))
                         
                     ts_file.close()
                     value = file_name
+
                 elif rs.value.type == 'eqtimeseries':
                     value = rs.value.value.arr_data
+                    file_name = "eq_timeseries_%s_%s.csv"%(resource_attr.ref_key, attr_name) 
+                    file_loc = os.path.join(scenario.target_dir, file_name)
+                    if os.path.exists(file_loc):
+                        arr_file      = open(file_loc, 'a')
+                    else:
+                        arr_file      = open(file_loc, 'w')
+                    np_val = numpy.array(eval(value.__repr__()))
+                    shape = np_val.shape
+                    n = 1
+                    shape_str = []
+                    for x in shape:
+                        n = n * x
+                        shape_str.append(str(x))
+                    one_dimensional_val = np_val.reshape(1, n)
+                    arr_file.write("%s,%s,%s\n"%
+                                ( 
+                                    resource_name,
+                                    rs.value.start_time,
+                                    rs.value.frequency,
+                                    ' '.join(shape_str), 
+                                    ','.join([str(x) for x in one_dimensional_val.tolist()[0]]))
+                                 )
+                    
+                    arr_file.close()
+                    value = file_name
                 return str(value)
         return ''
         #raise Exception("Value not found in scenario %s for resource attr: %s"%(scenario.id, r_attr_id))

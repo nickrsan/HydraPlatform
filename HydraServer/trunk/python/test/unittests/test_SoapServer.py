@@ -104,13 +104,13 @@ class SoapServerTest(unittest.TestCase):
         network = self.client.service.add_network(network)
         return network
 
-    def create_link(self, node_1_id, node_2_id):
+    def create_link(self, node_1_name, node_2_name, node_1_id, node_2_id):
 
         ra_array = self.client.factory.create('hyd:ResourceAttrArray')
 
         link = dict(
             id   = None,
-            name = 'Test',
+            name = "%s_to_%s"%(node_1_name, node_2_name),
             description = 'A test link between two nodes.',
             layout      = None,
             node_1_id = node_1_id,
@@ -137,12 +137,12 @@ class SoapServerTest(unittest.TestCase):
 
         return node
 
-    def create_attr(self, name="Test attribute"):
+    def create_attr(self, name="Test attribute", dimension="dimensionless"):
         attr = self.client.service.get_attribute(name)
         if attr is None:
             attr       = self.client.factory.create('hyd:Attr')
             attr.name  = name
-            attr.dimen = 'dimensionless'
+            attr.dimen = dimension
             attr = self.client.service.add_attribute(attr)
         return attr
 
@@ -166,11 +166,11 @@ class SoapServerTest(unittest.TestCase):
         start = datetime.datetime.now()
 
         #Create some attributes, which we can then use to put data on our nodes
-        link_attr1 = self.create_attr("link_attr_1")
-        link_attr2 = self.create_attr("link_attr_2")
-        node_attr1 = self.create_attr("node_attr_1")
-        node_attr2 = self.create_attr("node_attr_2")
-        group_attr = self.create_attr("group_attr")
+        link_attr1 = self.create_attr("link_attr_1", dimension='Pressure')
+        link_attr2 = self.create_attr("link_attr_2", dimension='Speed')
+        node_attr1 = self.create_attr("node_attr_1", dimension='Volume')
+        node_attr2 = self.create_attr("node_attr_2", dimension='Speed')
+        group_attr = self.create_attr("group_attr", dimension='Volume')
 
         logging.debug("Attribute creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
@@ -222,7 +222,11 @@ class SoapServerTest(unittest.TestCase):
 
             if prev_node is not None:
                 #Connect the two nodes with a link
-                link = self.create_link(node['id'], prev_node['id'])
+                link = self.create_link(
+                    node['name'],
+                    prev_node['name'],
+                    node['id'],
+                    prev_node['id'])
 
                 link_ra1         = dict(
                     ref_id  = None,
@@ -367,9 +371,9 @@ class SoapServerTest(unittest.TestCase):
         dataset = dict(
             id=None,
             type = 'descriptor',
-            name = 'Max Capacity',
-            unit = 'metres / second',
-            dimension = 'number of units per time unit',
+            name = 'Flow speed',
+            unit = 'm s^-1',
+            dimension = 'Speed',
             locked = 'N',
             value = descriptor,
         )
@@ -391,8 +395,8 @@ class SoapServerTest(unittest.TestCase):
             id=None,
             type = 'timeseries',
             name = 'my time series',
-            unit = 'feet cubed',
-            dimension = 'cubic capacity',
+            unit = 'cm^3',
+            dimension = 'Volume',
             locked = 'N',
             value = {'ts_values' : 
             [
@@ -401,8 +405,7 @@ class SoapServerTest(unittest.TestCase):
                 {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=1),
                 'ts_value' : str([10, 20, 30, 40, 50])},
             ]
-        }
-,
+        },
         )
 
         scenario_attr = dict(
@@ -424,8 +427,8 @@ class SoapServerTest(unittest.TestCase):
             id=None,
             type = 'array',
             name = 'my array',
-            unit = 'joules',
-            dimension = 'pressure',
+            unit = 'bar',
+            dimension = 'Pressure',
             locked = 'N',
             value = arr,
         )
