@@ -29,15 +29,15 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_add_group(self):
 
-        link_attr_1 = self.create_attr("link_attr_1") 
-        link_attr_2 = self.create_attr("link_attr_2") 
-        node_attr_1 = self.create_attr("node_attr_1") 
-        node_attr_2 = self.create_attr("node_attr_2") 
-        
+        link_attr_1 = self.create_attr("link_attr_1")
+        link_attr_2 = self.create_attr("link_attr_2")
+        node_attr_1 = self.create_attr("node_attr_1")
+        node_attr_2 = self.create_attr("node_attr_2")
+
         group = self.client.factory.create('hyd:TemplateGroup')
         group.name = 'Test Group @ %s'%datetime.datetime.now()
 
-        
+
         templates = self.client.factory.create('hyd:TemplateArray')
         #**********************
         #TEMPLATE 1           #
@@ -47,7 +47,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         template1.alias = "Test template alias"
 
         items = self.client.factory.create('hyd:TemplateItemArray')
-        
+
         item_1 = self.client.factory.create('hyd:TemplateItem')
         item_1.attr_id = node_attr_1.id
         items.TemplateItem.append(item_1)
@@ -55,9 +55,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         item_2 = self.client.factory.create('hyd:TemplateItem')
         item_2.attr_id = node_attr_2.id
         items.TemplateItem.append(item_2)
-        
+
         template1.templateitems = items
-        
+
         templates.Template.append(template1)
         #**********************
         #TEMPLATE 2           #
@@ -66,7 +66,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         template2.name = "Test template 2"
 
         items = self.client.factory.create('hyd:TemplateItemArray')
-        
+
         item_1 = self.client.factory.create('hyd:TemplateItem')
         item_1.attr_id = link_attr_1.id
         items.TemplateItem.append(item_1)
@@ -74,23 +74,23 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         item_2 = self.client.factory.create('hyd:TemplateItem')
         item_2.attr_id = link_attr_2.id
         items.TemplateItem.append(item_2)
-        
+
         template2.templateitems = items
 
         templates.Template.append(template2)
 
-        
+
         group.templates = templates
 
         new_group = self.client.service.add_templategroup(group)
-        
+
         assert new_group.name == group.name, "Names are not the same!"
         assert new_group.id is not None, "New Group has no ID!"
         assert new_group.id > 0, "New Group has incorrect ID!"
 
         assert len(new_group.templates) == 1, "Resource templates did not add correctly"
         for t in new_group.templates.Template[0].templateitems.TemplateItem:
-            assert t.attr_id in (node_attr_1.id, node_attr_2.id); 
+            assert t.attr_id in (node_attr_1.id, node_attr_2.id);
             "Node templates were not added correctly!"
 
         for t in new_group.templates.Template[1].templateitems.TemplateItem:
@@ -102,14 +102,14 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
     def test_update_group(self):
 
 
-        attr_1 = self.create_attr("testattr_1") 
-        attr_2 = self.create_attr("testattr_2") 
-        attr_3 = self.create_attr("testattr_3") 
-        
+        attr_1 = self.create_attr("testattr_1")
+        attr_2 = self.create_attr("testattr_2")
+        attr_3 = self.create_attr("testattr_3")
+
         group = self.client.factory.create('hyd:TemplateGroup')
-        
+
         group.name = 'Test Group @ %s'%datetime.datetime.now()
-        
+
         templates = self.client.factory.create('hyd:TemplateArray')
 
         template_1 = self.client.factory.create('hyd:Template')
@@ -122,7 +122,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         items_1 = self.client.factory.create('hyd:TemplateItemArray')
         items_2 = self.client.factory.create('hyd:TemplateItemArray')
-        
+
         item_1 = self.client.factory.create('hyd:TemplateItem')
         item_1.attr_id = attr_1.id
         items_1.TemplateItem.append(item_1)
@@ -130,24 +130,24 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         item_2 = self.client.factory.create('hyd:TemplateItem')
         item_2.attr_id = attr_2.id
         items_2.TemplateItem.append(item_2)
-        
+
         templates.Template.append(template_1)
         templates.Template.append(template_2)
 
         template_1.templateitems = items_1
         template_2.templateitems = items_2
-        
+
         group.templates = templates
 
         new_group = self.client.service.add_templategroup(group)
-        
+
         assert new_group.name == group.name, "Names are not the same!"
         assert new_group.id is not None, "New Group has no ID!"
         assert new_group.id > 0, "New Group has incorrect ID!"
 
         assert len(new_group.templates[0]) == 2, "Resource templates did not add correctly"
         assert len(new_group.templates[0][0].templateitems[0]) == 1, "Resource template items did not add correctly"
-        
+
         #update the name of one of the templates
         new_group.templates[0][0].name = "Test template 3"
         updated_template_id = new_group.templates[0][0].id
@@ -160,7 +160,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         updated_group = self.client.service.update_templategroup(new_group)
 
         assert updated_group.name == group.name, "Names are not the same!"
-        
+
         updated_template = None
         for tmpl in new_group.templates.Template:
             if tmpl.id == updated_template_id:
@@ -173,10 +173,10 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_add_template(self):
 
-        attr_1 = self.create_attr("testattr_1") 
-        attr_2 = self.create_attr("testattr_2") 
-        attr_3 = self.create_attr("testattr_3") 
-        
+        attr_1 = self.create_attr("testattr_1")
+        attr_2 = self.create_attr("testattr_2")
+        attr_3 = self.create_attr("testattr_3")
+
         template = self.client.factory.create('hyd:Template')
         template.name = "Test template name @ %s"%(datetime.datetime.now())
         template.alias = "%s alias" % template.name
@@ -194,7 +194,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         """
 
         items = self.client.factory.create('hyd:TemplateItemArray')
-        
+
         item_1 = self.client.factory.create('hyd:TemplateItem')
         item_1.attr_id = attr_1.id
         items.TemplateItem.append(item_1)
@@ -202,7 +202,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         item_2 = self.client.factory.create('hyd:TemplateItem')
         item_2.attr_id = attr_2.id
         items.TemplateItem.append(item_2)
-        
+
         item_3 = self.client.factory.create('hyd:TemplateItem')
         item_3.attr_id = attr_3.id
         items.TemplateItem.append(item_3)
@@ -210,7 +210,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         template.templateitems = items
 
         new_template = self.client.service.add_template(template)
-        
+
         assert new_template.name == template.name, "Names are not the same!"
         assert new_template.alias == template.alias, "Aliases are not the same!"
         assert new_template.layout == template.layout, "Layouts are not the same!"
@@ -218,22 +218,22 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         assert new_template.id > 0, "New template has incorrect ID!"
 
         assert len(new_template.templateitems[0]) == 3, "Resource template items did not add correctly"
-        
+
         return new_template
 
     def test_update_template(self):
 
-        attr_1 = self.create_attr("testattr_1") 
-        attr_2 = self.create_attr("testattr_2") 
-        attr_3 = self.create_attr("testattr_3") 
-        
+        attr_1 = self.create_attr("testattr_1")
+        attr_2 = self.create_attr("testattr_2")
+        attr_3 = self.create_attr("testattr_3")
+
         template = self.client.factory.create('hyd:Template')
         template.name = "Test template name @ %s" % (datetime.datetime.now())
         template.alias = template.name + " alias"
         template.group_id = self.get_group().id
 
         items = self.client.factory.create('hyd:TemplateItemArray')
-        
+
         item_1 = self.client.factory.create('hyd:TemplateItem')
         item_1.attr_id = attr_1.id
         items.TemplateItem.append(item_1)
@@ -243,25 +243,25 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         items.TemplateItem.append(item_2)
 
         template.templateitems = items
-        
+
         new_template = self.client.service.add_template(template)
-        
+
         assert new_template.name == template.name, "Names are not the same!"
         assert new_template.alias == template.alias, "Aliases are not the same!"
         assert new_template.id is not None, "New template has no ID!"
         assert new_template.id > 0, "New template has incorrect ID!"
 
         assert len(new_template.templateitems[0]) == 2, "Resource template items did not add correctly"
-        
+
         new_template.name = "Updated template name @ %s"%(datetime.datetime.now())
         new_template.alias = template.name + " alias"
-        
+
         items = self.client.factory.create('hyd:TemplateItemArray')
 
         item_3 = self.client.factory.create('hyd:TemplateItem')
         item_3.attr_id = attr_3.id
         items.TemplateItem.append(item_3)
-        
+
         new_template.templateitems = items
 
         updated_template = self.client.service.update_template(new_template)
@@ -287,17 +287,17 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
     def test_add_item(self):
 
 
-        attr_1 = self.create_attr("testattr_1") 
-        attr_2 = self.create_attr("testattr_2") 
-        attr_3 = self.create_attr("testattr_3") 
-        
+        attr_1 = self.create_attr("testattr_1")
+        attr_2 = self.create_attr("testattr_2")
+        attr_3 = self.create_attr("testattr_3")
+
         template = self.client.factory.create('hyd:Template')
         template.name = "Test template name @ %s"%(datetime.datetime.now())
         template.alias = template.name + " alias"
         template.group_id = self.get_group().id
 
         items = self.client.factory.create('hyd:TemplateItemArray')
-        
+
         item_1 = self.client.factory.create('hyd:TemplateItem')
         item_1.attr_id = attr_1.id
         items.TemplateItem.append(item_1)
@@ -307,13 +307,13 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         items.TemplateItem.append(item_2)
 
         template.templateitems = items
-        
+
         new_template = self.client.service.add_template(template)
-        
+
         item_3 = self.client.factory.create('hyd:TemplateItem')
         item_3.attr_id = attr_3.id
         item_3.template_id = new_template.id
-        
+
 
         updated_template = self.client.service.add_templateitem(item_3)
 
@@ -323,15 +323,15 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
     def test_delete_item(self):
 
 
-        attr_1 = self.create_attr("testattr_1") 
-        attr_2 = self.create_attr("testattr_2") 
-        
+        attr_1 = self.create_attr("testattr_1")
+        attr_2 = self.create_attr("testattr_2")
+
         template = self.client.factory.create('hyd:Template')
         template.name = "Test template name @ %s"%(datetime.datetime.now())
         template.alias = template.name + " alias"
 
         items = self.client.factory.create('hyd:TemplateItemArray')
-        
+
         item_1 = self.client.factory.create('hyd:TemplateItem')
         item_1.attr_id = attr_1.id
         items.TemplateItem.append(item_1)
@@ -341,11 +341,11 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         items.TemplateItem.append(item_2)
 
         template.templateitems = items
-        
+
         new_template = self.client.service.add_template(template)
-        
+
         item_2.template_id = new_template.id
-        
+
         updated_template = self.client.service.delete_templateitem(item_2)
 
         assert len(updated_template.templateitems[0]) == 1, "Resource template item did not add correctly"
@@ -356,7 +356,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         groups = self.client.service.get_templategroups()
         assert len(groups) > 0, "Groups were not retrieved!"
 
-    
+
     def test_get_group(self):
         group = self.get_group()
         new_group = self.client.service.get_templategroup(group.id)
@@ -399,13 +399,13 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             grp_summary = self.client.factory.create('hyd:GroupSummary')
             grp_summary.id = group.id
             grp_summary.name = group.name
-            
+
             tmpl_summary = self.client.factory.create('hyd:TemplateSummary')
             tmpl_summary.id = template_id
             tmpl_summary.name = template_name
-            
+
             grp_summary.templates.TemplateSummary.append(tmpl_summary)
-            
+
             node.templates.GroupSummary.append(grp_summary)
 
             nodes.Node.append(node)
@@ -459,13 +459,13 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             grp_summary = self.client.factory.create('hyd:GroupSummary')
             grp_summary.id = group.id
             grp_summary.name = group.name
-            
+
             tmpl_summary = self.client.factory.create('hyd:TemplateSummary')
             tmpl_summary.id = template_id
             tmpl_summary.name = template_name
-            
+
             grp_summary.templates.TemplateSummary.append(tmpl_summary)
-            
+
             node.templates.GroupSummary.append(grp_summary)
 
             nodes.Node.append(node)
@@ -495,15 +495,15 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         grp_summary = self.client.factory.create('hyd:GroupSummary')
         grp_summary.id = group.id
         grp_summary.name = group.name
-        
+
         tmpl_summary = self.client.factory.create('hyd:TemplateSummary')
         tmpl_summary.id   = new_template_id
         tmpl_summary.name = template_name
-        
+
         grp_summary.templates.TemplateSummary.append(tmpl_summary)
-        
+
         node.templates.GroupSummary.append(grp_summary)
-        
+
         del updated_node.templates.GroupSummary[0]
         updated_node.templates.GroupSummary.append(grp_summary)
 
@@ -525,7 +525,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         matching_templates = self.client.service.get_matching_resource_templates('NODE', node_to_check.id)
 
         assert len(matching_templates) > 0, "No templates returned!"
-        
+
         matching_template_ids = []
         for grp in matching_templates.GroupSummary:
             for tmpl in grp.templates.TemplateSummary:
@@ -533,20 +533,59 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         assert template_id in matching_template_ids, "Template ID not found in matching templates!"
 
+    def test_assign_type_to_resource(self):
+        network = self.create_network_with_data()
+        group = self.get_group()
+        template = group.templates.Template[0]
+
+        node_to_assign = network.nodes.Node[0]
+
+        result = self.client.service.assign_type_to_resource(template.id,
+                                                             'NODE',
+                                                             node_to_assign.id)
+
+        assert result.id == template.id and result.name == template.name, \
+            'Function did not return correct template.'
+
+        new_network = self.client.service.get_network(network.id)
+        for node in new_network.nodes.Node:
+            if node.id == node_to_assign.id:
+                new_node = node
+                break
+
+        assert new_node.templates is not None, \
+            'Assigning template did not work properly.'
+
+        template_group_names = []
+        template_names = []
+        template_ids = []
+        for tmpl_g in new_node.templates.GroupSummary:
+            template_group_names.append(tmpl_g.name)
+            for tmpl in tmpl_g.templates.TemplateSummary:
+                template_names.append(tmpl.name)
+                template_ids.append(tmpl.id)
+
+        assert group.name in template_group_names, \
+            'Assigning template did not work properly.'
+        assert template.name in template_names, \
+            'Assigning template did not work properly.'
+        assert template.id in template_ids, \
+            'Assigning template did not work properly.'
+
     def test_create_template_from_network(self):
         network = self.create_network_with_data()
 
         net_template = self.client.service.get_network_as_xml_template(network.id)
-        
+
         assert net_template is not None
 
         template_xsd_path = config.get('templates', 'template_xsd_path')
         xmlschema_doc = etree.parse(template_xsd_path)
-                        
+
         xmlschema = etree.XMLSchema(xmlschema_doc)
 
         xml_tree = etree.fromstring(net_template)
-        
+
         xmlschema.assertValid(xml_tree)
 
 

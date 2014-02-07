@@ -11,7 +11,7 @@ cmd_args = sys.argv
 gams_path = None
 
 for i, arg in enumerate(cmd_args):
-    if arg in ['-g', '--gams-path']:
+    if arg in ['-G', '--gams-path']:
         gams_path = cmd_args[i + 1]
 
 if gams_path:

@@ -59,7 +59,7 @@ class TemplateTest(test_HydraIface.HydraIfaceTest):
 
         x.delete()
         assert x.load() == False, "Delete did not work correctly."
-	
+
     def test_correct_fk(self):
         x = HydraIface.TemplateGroup()
         x.db.group_name = "test @ %s"%datetime.datetime.now()
@@ -132,7 +132,7 @@ class TemplateItemTest(test_HydraIface.HydraIfaceTest):
         x.commit()
         x.delete()
         assert x.load() == False, "Delete did not work correctly."
-	
+
     def test_fk(self):
         a = self.create_attribute("attr1")
         t = self.create_template("template1")
@@ -151,11 +151,10 @@ class TemplateItemTest(test_HydraIface.HydraIfaceTest):
         x.save()
         x.commit()
         x.load()
-       
+
         y = HydraIface.TemplateItem(attr_id = x.db.attr_id, template_id=x.db.template_id)
 
-        assert y.load() == True, "Load did not work correctly"
-
+        assert y.load() is True, "Load did not work correctly"
 
 
 if __name__ == "__main__":

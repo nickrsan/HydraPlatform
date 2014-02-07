@@ -79,7 +79,7 @@ class GAMSexport(object):
         self.time_index = []
 
         self.cli = PluginLib.connect()
-        net = self.cli.service.get_network(network_id, scenario_id)
+        net = self.cli.service.get_network(network_id, 'Y', scenario_id)
         attrs = self.cli.service.get_attributes()
 
         self.network = GAMSnetwork()

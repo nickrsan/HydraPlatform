@@ -93,7 +93,8 @@ def validate_layout(layout_xml):
 
 class GenericResource(IfaceBase):
     """
-        A superclass for all 'resource' types -- Network, Node, Link, Scenario and Project.
+        A superclass for all 'resource' types -- Network, Node, Link, Scenario,
+        Group and Project.
     """
     def __init__(self, parent, class_name, ref_key, ref_id=None):
         self.parent = parent
@@ -148,7 +149,7 @@ class GenericResource(IfaceBase):
                         ref_id = %(ref_id)s
                     and ref_key = '%(ref_key)s'
             """ % dict(ref_key = self.ref_key, ref_id = self.ref_id)
-        
+
         rs = execute(sql)
 
         for r in rs:
@@ -332,7 +333,7 @@ class GenericResource(IfaceBase):
             and rt.template_id = tmp.template_id
             and grp.group_id   = tmp.group_id
         """ % (self.ref_key, self.ref_id)
-        
+
         rs = execute(sql)
 
         group_dict   = {}
@@ -347,6 +348,9 @@ class GenericResource(IfaceBase):
 
         return group_dict
 
+    def add_templates(self, template_id):
+        pass
+
     def validate_layout(self, layout_xml):
         validate_layout(layout_xml)
 
@@ -354,7 +358,7 @@ class GenericResource(IfaceBase):
         """
             Converts this object into a spyne.model.ComplexModel type
             which can be used by the soap library.
-            
+
             The time paramater indicates that this function should
             be timed for debugging purposes
 
@@ -367,13 +371,13 @@ class GenericResource(IfaceBase):
             start = datetime.datetime.now()
 
         obj_dict = super(GenericResource, self).get_as_dict(**kwargs)
-       
+
         obj_dict.update(
             dict(attributes  = [],
             templates   = [],
             )
         )
-        
+
         if self.attributes == []:
             self.get_attributes()
 
@@ -383,7 +387,7 @@ class GenericResource(IfaceBase):
                 obj_dict['attributes'].append(rs_i.get_as_dict(**kwargs))
             else:
                 obj_dict['attributes'].append(attr.get_as_dict(**kwargs))
-        
+
         #Should this go into the complex model code?
         #It is not true to the structure of the DB...
         template_groups = self.get_templates()
@@ -399,7 +403,7 @@ class GenericResource(IfaceBase):
                     group_name    = group_name,
                     templates     = [],
             )
-            
+
             for template_id, template_name in templates:
                 template = dict(
                     object_type = "TemplateSummary",
@@ -462,11 +466,11 @@ class GenericResource(IfaceBase):
             logging.info("Complex model conversion of %s took: %s " % (self.name, datetime.datetime.now()-start))
 
         return cm
-    
+
     def set_ownership(self, user_id, read='Y', write='Y', share='Y'):
         owner = Owner()
         owner.db.ref_key = self.ref_key
-        
+
         if self.ref_key not in ('PROJECT', 'NETWORK'):
             raise HydraError("Only resources of type NETWORK and PROJECT may have an owner.")
 
@@ -484,7 +488,7 @@ class GenericResource(IfaceBase):
     def get_owners(self):
         if self.ref_key not in ('PROJECT', 'NETWORK'):
             return []
-      
+
         sql = """
             select
                 user_id
@@ -506,7 +510,7 @@ class GenericResource(IfaceBase):
 
         if self.ref_key not in ('PROJECT', 'NETWORK'):
             return
-      
+
         sql = """
             select
                 user_id
@@ -523,7 +527,7 @@ class GenericResource(IfaceBase):
 
         if len(rs) == 0:
             raise HydraError("Permission denied. User %s does not have read"
-                             " access on %s %s" % 
+                             " access on %s %s" %
                              (user_id, self.ref_key, self.ref_id))
 
     def check_write_permission(self, user_id):
@@ -533,7 +537,7 @@ class GenericResource(IfaceBase):
 
         if self.ref_key not in ('PROJECT', 'NETWORK'):
             return
-      
+
         sql = """
             select
                 user_id
@@ -551,7 +555,7 @@ class GenericResource(IfaceBase):
 
         if len(rs) == 0:
             raise HydraError("Permission denied. User %s does not have write"
-                             " access on %s %s" % 
+                             " access on %s %s" %
                              (user_id, self.ref_key, self.ref_id))
 
     def check_share_permission(self, user_id):
@@ -561,7 +565,7 @@ class GenericResource(IfaceBase):
 
         if self.ref_key not in ('PROJECT', 'NETWORK'):
             return
-      
+
         sql = """
             select
                 user_id
@@ -579,7 +583,7 @@ class GenericResource(IfaceBase):
 
         if len(rs) == 0:
             raise HydraError("Permission denied. User %s does not have share"
-                             " access on %s %s" % 
+                             " access on %s %s" %
                              (user_id, self.ref_key, self.ref_id))
 
 class Project(GenericResource):
@@ -611,7 +615,7 @@ class Scenario(GenericResource):
         self.db.scenario_id = scenario_id
         if scenario_id is not None:
             self.load()
-    
+
     def get_resourcegroupitems(self):
         sql = """
             select
@@ -673,7 +677,7 @@ class Scenario(GenericResource):
             item_i = ResourceGroupItem(item_id = r.item_id)
             item_i.load()
             self.resourcegroupitems.append(item_i)
-        
+
         return self.resourcegroupitems
 
 class Network(GenericResource):
@@ -702,12 +706,12 @@ class Network(GenericResource):
             #Remove scenarios as children of this network so they
             #are not all loaded in load all. Then only load the ones
             #we are interested in.
-            all_children = self.child_info.copy() 
+            all_children = self.child_info.copy()
             del(all_children['tScenario'])
             self.children = all_children
 
             load_ok = super(Network, self).load_all()
-            
+
             if load_ok is False:
                 return False
 
@@ -723,7 +727,7 @@ class Network(GenericResource):
             return True
         else:
             self.child_info = self.get_children()
-            return super(Network, self).load_all() 
+            return super(Network, self).load_all()
 
     def get_all_scenarios(self):
         """
@@ -762,9 +766,9 @@ class Network(GenericResource):
 
         #Do not call save here because it is likely that we may want
         #to bulk insert links, not one at a time.
-        
+
         self.links.append(l)
-        
+
         return l
 
 
@@ -782,7 +786,7 @@ class Network(GenericResource):
 
         #Do not call save here because it is likely that we may want
         #to bulk insert nodes, not one at a time.
-        
+
         self.nodes.append(node_i)
 
         return node_i
@@ -896,7 +900,7 @@ class ResourceGroupItem(IfaceBase):
         self.db.ref_key = ref_key
         self.db.ref_id = ref_id
         self.db.group_id = group_id
-        
+
         if item_id is None and None not in (group_id, ref_key, ref_id):
             self.get_pk()
 
@@ -906,7 +910,7 @@ class ResourceGroupItem(IfaceBase):
     def get_pk(self):
         sql = """
             select
-               item_id 
+               item_id
             from
                 tResourceGroupItem
             where
@@ -1012,7 +1016,7 @@ class ResourceAttr(IfaceBase):
             constraintitems.append(item_i)
 
         return constraintitems
-            
+
     def get_resource_scenarios(self):
         sql = """
             select
@@ -1205,6 +1209,11 @@ class ResourceType(IfaceBase):
         if None not in (ref_key, ref_id, template_id):
             self.load()
 
+    def get_template(self):
+        """Return the corresponding Template object.
+        """
+        return Template(template_id=self.db.template_id)
+
 class ResourceScenario(IfaceBase):
     """
         A resource scenario is what links the actual piece of data
@@ -1304,7 +1313,7 @@ class ResourceScenario(IfaceBase):
             dataset.id        = sd_i.db.dataset_id
             dataset.type      = sd_i.db.data_type
             dataset.name      = sd_i.db.data_name
-            
+
             if sd_i.db.locked == 'N':
                 dataset.dimension = sd_i.db.data_dimen
                 dataset.unit      = sd_i.db.data_units
@@ -1345,7 +1354,7 @@ class Dataset(IfaceBase):
 
         owner = Owner()
         owner.db.ref_key = 'DATASET'
-        
+
         owner.db.ref_id  = self.db.dataset_id
         owner.db.user_id = int(user_id)
         owner.load()
@@ -1378,7 +1387,7 @@ class Dataset(IfaceBase):
 
         if len(rs) == 0:
             raise HydraError("Permission denied. User %s does not have read"
-                             " access on dataset %s" % 
+                             " access on dataset %s" %
                              (user_id, self.db.dataset_id))
 
     def get_val(self, timestamp=None):
@@ -1403,7 +1412,7 @@ class Dataset(IfaceBase):
             datum = Scalar(data_id = self.db.data_id)
         elif self.db.data_type == 'array':
             datum = Array(data_id = self.db.data_id)
-        
+
         self.datum = datum
         return datum
 
@@ -1672,7 +1681,7 @@ class TimeSeries(IfaceBase):
         self.load_all()
         ts_datas = self.timeseriesdatas
         #Set the return value to be a list of tuples -- the default
-        #return value. 
+        #return value.
         val = []
         for ts in ts_datas:
             val.append((ts.db.ts_time,ts.db.ts_value))
@@ -1830,7 +1839,7 @@ class Scalar(IfaceBase):
         self.db.data_id = data_id
         if data_id is not None:
             self.load()
-    
+
     def get_val(self):
         """
             Get the value of this scalar. A number basically.
@@ -1997,9 +2006,9 @@ class ConstraintGroup(IfaceBase):
         return "(%s %s %s)"%(str_1, self.db.op, str_2)
 
     def get_as_dict(self, **kwargs):
-        
+
         obj_dict = super(ConstraintGroup, self).get_as_dict(**kwargs)
-        
+
         obj_dict.update(dict(
             groups     = [],
             items      = [],

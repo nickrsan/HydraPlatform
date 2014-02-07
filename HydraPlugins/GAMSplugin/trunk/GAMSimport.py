@@ -99,9 +99,10 @@ class GAMSimport(object):
     def load_network(self, network_id, scenario_id):
         """Load network and scenario from the server.
         """
-        self.network = self.cli.service.get_network(network_id, scenario_id)
-        self.res_scenario = \
-                self.network.scenarios.Scenario[0].resourcescenarios.ResourceScenario
+        self.network = self.cli.service.get_network(network_id, 'Y', scenario_id)
+        self.res_scenario = self.cli.factory.create('hyd:ResourceScenario')
+        #self.res_scenario = \
+        #        self.network.scenarios.Scenario[0].resourcescenarios.ResourceScenario
         attrslist = self.cli.service.get_attributes()
         for attr in attrslist.Attr:
             self.attrs.update({attr.id: attr.name})

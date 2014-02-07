@@ -1,6 +1,6 @@
 
 from spyne.model.complex import Array as SpyneArray
-from spyne.model.primitive import String, Integer, Unicode
+from spyne.model.primitive import String, Integer, Unicode, Boolean
 from spyne.decorator import rpc
 from hydra_complexmodels import Template,\
 TemplateGroup,\
@@ -223,6 +223,8 @@ class TemplateService(HydraService):
             resource_i = HydraIface.Node(node_id=resource_id)
         elif resource_type == 'LINK':
             resource_i = HydraIface.Link(link_id=resource_id)
+        elif resource_type == 'GROUP':
+            resource_i = HydraIface.ResourceGroup(link_id=resource_id)
 
         template_groups = resource_i.get_templates_by_attr()
         template_list = []
@@ -244,6 +246,60 @@ class TemplateService(HydraService):
             template_list.append(group_summary)
 
         return template_list
+
+    @rpc(Integer, String, Integer, _returns=Template)
+    def assign_type_to_resource(ctx, type_id, resource_type, resource_id):
+        """Assign new type to a resource. This function checks if the necessary
+        attributes are present and adds them if needed. Non existing attributes
+        are also added when the type is already assigned. This means that this
+        function can also be used to update resources, when a resource type has
+        changed.
+        """
+        # Get necessary information
+        resource_i = None
+        if resource_type == 'NETWORK':
+            resource_i = HydraIface.Network(network_id=resource_id)
+            res_id = resource_i.db.network_id
+        elif resource_type == 'NODE':
+            resource_i = HydraIface.Node(node_id=resource_id)
+            res_id = resource_i.db.node_id
+        elif resource_type == 'LINK':
+            resource_i = HydraIface.Link(link_id=resource_id)
+            res_id = resource_i.db.link_id
+        elif resource_type == 'GROUP':
+            resource_i = HydraIface.ResourceGroup(link_id=resource_id)
+            res_id = resource_i.db.group_id
+
+        resource_i.load_children()
+        existing_attr_ids = []
+        for attr in resource_i.attributes:
+            existing_attr_ids.append(attr.db.attr_id)
+
+        template_i = HydraIface.Template(template_id=type_id)
+        template_i.load_children()
+        tmpl_attrs = dict()
+        for tmplattr in template_i.templateitems:
+            tmpl_attrs.update({tmplattr.db.attr_id:
+                               tmplattr.db.attr_is_var})
+
+        # check if attributes exist
+        missing_attr_ids = set(tmpl_attrs.keys()) - set(existing_attr_ids)
+
+        # add attributes if necessary
+        for attr_id in missing_attr_ids:
+            resource_i.add_attribute(attr_id, attr_is_var=tmpl_attrs[attr_id])
+
+        resource_i.save()
+
+        # add type to tResourceType if it doesn't exist already
+        resource_type = HydraIface.ResourceType(ref_key=resource_type,
+                                                ref_id=res_id,
+                                                template_id=type_id)
+        if not resource_type.load():
+            resource_type.save()
+
+        template = resource_type.get_template()
+        return get_as_complexmodel(ctx, template)
 
     @rpc(TemplateGroup, _returns=TemplateGroup)
     def add_templategroup(ctx, group):
