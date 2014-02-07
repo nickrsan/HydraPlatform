@@ -157,5 +157,56 @@ class TemplateItemTest(test_HydraIface.HydraIfaceTest):
         assert y.load() is True, "Load did not work correctly"
 
 
+class TestResourceType(test_HydraIface.HydraIfaceTest):
+
+    def create_template(self, attribute):
+        x = HydraIface.Template()
+        x.db.template_name = "test @ %s"%(datetime.datetime.now())
+        x.save()
+        x.commit()
+        it = HydraIface.TemplateItem(attr_id=attribute.db.attr_id,
+                                     template_id=x.db.template_id)
+        it.save()
+        it.commit()
+        x.load()
+        return x
+
+    def create_resource(self):
+        proj = self.create_project('Test proj @ %s' % datetime.datetime.now())
+        netw = self.create_network('test @ %s' % datetime.datetime.now(),
+                                   proj.db.project_id)
+        node = self.create_node('test @ %s' % datetime.datetime.now(),
+                                netw.db.network_id)
+        return node
+
+    def test_load(self):
+        attr = self.create_attribute('attr2')
+        tmpl = self.create_template(attr)
+        node = self.create_resource()
+
+        x = HydraIface.ResourceType('NODE', node.db.node_id, tmpl.db.template_id)
+        x.save()
+        x.commit()
+        x.load()
+
+        y = HydraIface.ResourceType('NODE', node.db.node_id, tmpl.db.template_id)
+        assert y.load() is True, 'Loading resource type did not work properly.'
+
+    def test_get_template(self):
+        attr = self.create_attribute('attr2')
+        tmpl = self.create_template(attr)
+        node = self.create_resource()
+
+        x = HydraIface.ResourceType('NODE', node.db.node_id, tmpl.db.template_id)
+        x.save()
+        x.commit()
+        x.load()
+
+        new_tmpl = x.get_template()
+
+        assert tmpl.db.template_name == new_tmpl.db.template_name and \
+                tmpl.db.template_id == new_tmpl.db.template_id, \
+                'get_template did not work correctly.'
+
 if __name__ == "__main__":
     test_HydraIface.run() # run all tests
