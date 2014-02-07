@@ -157,7 +157,7 @@ class ExportCSV(object):
         network_heading   = "ID, Description, Name %s\n" % (network_attributes_string)
 
         network_attr_units = []
-        for attr_id in self.attributes.keys():
+        for attr_id in network_attributes.keys():
             network_attr_units.append(self.get_attr_unit(scenario, attr_id))
 
         network_units_heading  = "Units,,,%s\n"%(','.join(network_attr_units))
