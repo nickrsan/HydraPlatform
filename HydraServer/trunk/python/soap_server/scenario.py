@@ -72,7 +72,6 @@ def bulk_insert_data(bulk_data, user_id=None):
     data_hashes     = hash_incoming_data(bulk_data)
     existing_hashes = get_existing_data(data_hashes)
 
-
     sql = """
         select
             max(dataset_id) as max_dataset_id
@@ -112,7 +111,8 @@ def bulk_insert_data(bulk_data, user_id=None):
 
     #This is what gets returned.
     dataset_ids = []
-    for i, d in enumerate(bulk_data):
+    idx = 0
+    for d in bulk_data:
         val = parse_value(d)
 
         if val is None:
@@ -140,7 +140,6 @@ def bulk_insert_data(bulk_data, user_id=None):
 
         current_hash = dataset_i.set_hash(val)
 
-        datasets.append(dataset_i)
         #if this piece of data is already in the DB, then
         #there is no need to insert it!
         if current_hash in existing_hashes.keys():
@@ -153,38 +152,46 @@ def bulk_insert_data(bulk_data, user_id=None):
                 loaded_data[current_hash] = dataset_i
 
             dataset_ids.append(loaded_data.get(current_hash))
+            datasets.append(dataset_i)
+            idx = idx + 1
+            continue
+        elif current_hash in dataset_ids:
+            dataset_ids.append(current_hash)
             continue
         else:
             #set a placeholder for a dataset_id we don't know yet.
             #The placeholder is the hash, which is unique to this object and
             #therefore easily identifiable.
             dataset_ids.append(current_hash)
+            datasets.append(dataset_i)
+
         if d.type == 'descriptor':
             data = HydraIface.Descriptor()
             data.db.desc_val = val
 
             descriptors.append(data)
-            descriptor_idx.append(i)
+            descriptor_idx.append(idx)
 
         elif d.type == 'scalar':
             data = HydraIface.Scalar()
             data.db.param_value = val
 
             scalars.append(data)
-            scalar_idx.append(i)
+            scalar_idx.append(idx)
 
         elif d.type == 'array':
             data = HydraIface.Array()
             data.db.arr_data = val
 
             arrays.append(data)
-            array_idx.append(i)
+            array_idx.append(idx)
 
         elif d.type == 'timeseries':
+
             data = HydraIface.TimeSeries()
             data.set_ts_values(val)
             timeseries.append(data)
-            timeseries_idx.append(i)
+            timeseries_idx.append(idx)
 
         elif d.type == 'eqtimeseries':
             data = HydraIface.EqTimeSeries()
@@ -193,8 +200,10 @@ def bulk_insert_data(bulk_data, user_id=None):
             data.db.arr_data   = val[2]
 
             eqtimeseries.append(data)
-            eqtimeseries_idx.append(i)
+            eqtimeseries_idx.append(idx)
+     
         dataset_i.datum = data
+        idx = idx + 1
 
     last_descriptor_id = IfaceLib.bulk_insert(descriptors, 'tDescriptor')
     #assign the data_ids to the correct data objects.
@@ -296,15 +305,14 @@ def bulk_insert_data(bulk_data, user_id=None):
             next_id        = next_id + 1
             idx            = idx     + 1
 
-        #using the has of the new scenario data, find the placeholder in dataset_ids
+        #using the hash of the new scenario data, find the placeholders in dataset_ids
         #and replace it with the dataset_id.
         for sd in new_scenario_data:
-            dataset_idx = dataset_ids.index(sd.db.data_hash)
-            dataset_ids[dataset_idx] = sd
+            for idx, d in enumerate(dataset_ids):
+                if d == sd.db.data_hash:
+                    dataset_ids[idx] = sd
 
     return dataset_ids
-
-
 
 class ScenarioService(HydraService):
     """
