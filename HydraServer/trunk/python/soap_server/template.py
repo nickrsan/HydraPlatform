@@ -1,6 +1,6 @@
 
 from spyne.model.complex import Array as SpyneArray
-from spyne.model.primitive import String, Integer, Unicode, Boolean
+from spyne.model.primitive import String, Integer, Unicode
 from spyne.decorator import rpc
 from hydra_complexmodels import Template,\
 TemplateGroup,\

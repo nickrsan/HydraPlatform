@@ -42,7 +42,7 @@
 
     <dimension name="Volume">
         <unit name="barrel(oil)"          abbr="bbl"  lf="0.158987295"    cf="0" info="The standard oil barrel is used in the United States for crude oil or other petroleum products. 1 Oil barrel = 42 US gallons"/>
-        <unit name="centiliter"          abbr="cl"    lf="0.00001"          cf="0" />
+        <unit name="centilitre"          abbr="cl"    lf="0.00001"          cf="0" />
         <unit name="cubic centimetre"    abbr="cm^3"   lf="0.000001"         cf="0" />
         <unit name="cubic decimetre"     abbr="dm^3"   lf=".001"             cf="0" />
         <unit name="cubic hectometre"    abbr="hm^3"   lf="1e6"           cf="0" />
@@ -51,12 +51,13 @@
         <unit name="cubic metre"         abbr="m^3"    lf="1"          cf="0" />
         <unit name="cubic millimetre"    abbr="mm^3"   lf="0.000000001"      cf="0" />
         <unit name="cubic yard"          abbr="yd^3"   lf="0.764554857984" cf="0" />
-        <unit name="deciliter"           abbr="dl"    lf="0.0001"           cf="0" />
+        <unit name="decilitre"           abbr="dl"    lf="0.0001"           cf="0" />
         <unit name="fluid ounce(US)"     abbr="fl oz" lf="0.000029574"      cf="0" />
         <unit name="gallon, liquid(US)"  abbr="gal"   lf="0.003785411784"   cf="0" info="US liquid gallon is 231 in^3 or 128 fl oz or 3.785411784 L."/>
-        <unit name="liter"               abbr="L"     lf="1"             cf="0" info="A litre is defined as a special name for a cubic decimetre (1 L = 1 dm^3)."/>
-        <unit name="deciliter"           abbr="dl"    lf="0.0001"           cf="0" />
-        <unit name="milliliter"          abbr="ml"    lf="0.000001"         cf="0" />
+        <unit name="megalitre"           abbr="Ml"    lf="1000"             cf="0" info="A megalitre is a unit used in water management (1 Ml = 10^3 m^3)."/>
+        <unit name="litre"               abbr="l"     lf="0.001"             cf="0" info="A litre is defined as a special name for a cubic decimetre (1 L = 1 dm^3)."/>
+        <unit name="decilitre"           abbr="dl"    lf="0.0001"           cf="0" />
+        <unit name="millilitre"          abbr="ml"    lf="0.000001"         cf="0" />
         <unit name="pint, liquid(US)"    abbr="pt"    lf="0.000473176475"   cf="0" />
         <unit name="acre-foot"           abbr="ac-ft" lf="1.23348184"    cf="0" info="An acre foot is the volume of water that covers one acre in one foot. This unit is popular among irrigation people in the US." />
         <unit name="acre-inch"           abbr="ac-in" lf="0.102790153"    cf="0" info="See acre-foot." />
@@ -232,6 +233,16 @@
         <unit name="acre-inch per hour"      abbr="ac-in h^-1"   lf="0.0285528203" cf="0" info=""/>
         <unit name="acre-inch per day"       abbr="ac-in day^-1" lf="0.00118970085" cf="0" info=""/>
         <unit name="acre-inch per month"     abbr="ac-in mon^-1" lf="3.90875157e-05" cf="0" info=""/>
+        <unit name="litre per second"    abbr="l s^-1"   lf="0.001"          cf="0" info=""/>
+        <unit name="litre per minute"    abbr="l min^-1" lf="1.66666667e-05" cf="0" info=""/>
+        <unit name="litre per hour"      abbr="l h^-1"   lf="2.77777778e-07" cf="0" info=""/>
+        <unit name="litre per day"       abbr="l day^-1" lf="1.15740741e-08" cf="0" info=""/>
+        <unit name="litre per month"     abbr="l mon^-1" lf="3.80265176e-10" cf="0" info=""/>
+        <unit name="megalitre per second"    abbr="Ml s^-1"   lf="1000"           cf="0" info=""/>
+        <unit name="megalitre per minute"    abbr="Ml min^-1" lf="1.66666667" cf="0" info=""/>
+        <unit name="megalitre per hour"      abbr="Ml h^-1"   lf="2.77777778e-01" cf="0" info=""/>
+        <unit name="megalitre per day"       abbr="Ml day^-1" lf="1.15740741e-02" cf="0" info=""/>
+        <unit name="megalitre per month"     abbr="Ml mon^-1" lf="3.80265176e-04" cf="0" info=""/>
     </dimension>
     <dimension name="Monetary value">
         <unit abbr="$" cf="0" info="" lf="1" name="US Dollar"/>
@@ -242,6 +253,7 @@
         <unit name="USDollars per joule" abbr="$ J^-1"    lf="1" cf="0" info="Cost in US Dollars per energy unit (joule)."/>
     </dimension>
     <dimension name="Dimensionless">
-        <unit abbr="%" cf="0" info="" lf="1" name="Percent"/>
+        <unit abbr="-" cf="0" info="" lf="1" name="No unit"/>
+        <unit abbr="%" cf="0" info="" lf="0.01" name="Percent"/>
     </dimension>
 </UNITS>
