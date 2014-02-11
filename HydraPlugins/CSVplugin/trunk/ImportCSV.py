@@ -482,7 +482,7 @@ class ImportCSV(object):
                     res_attr.attr_is_var = 'Y'
 
                 else:
-                    
+
                     if units is not None:
                         dataset = self.create_dataset(data[i],
                                                       res_attr,
@@ -674,7 +674,7 @@ class ImportCSV(object):
                     filedata = ''
                     for i, line in enumerate(tmp_filedata):
                         #The name of the resource is how to identify the data for it.
-                        #Once this the correct line(s) has been identified, remove the 
+                        #Once this the correct line(s) has been identified, remove the
                         #name from the start of the line
                         if len(line) > 0 and line.strip().startswith(resource_name):
                             line = line[line.find(',')+1:]
@@ -736,20 +736,21 @@ class ImportCSV(object):
                                                           seasonal=seasonal)
 
                 value_length = len(dataset[2:])
-                
-                if dataset[1] != '': 
-                    array_shape = tuple([int(a) for a in dataset[1].split(" ")])
+
+                if dataset[1] != '':
+                    array_shape = tuple([int(a) for a in
+                                         dataset[1].strip().split(" ")])
                 else:
                     array_shape = value_length
 
                 ts_value = []
                 for i in range(value_length):
-                    ts_value.append(float(dataset[i + 1].strip()))
-                
-                ts_arr = numpy.array(ts_value)
-                ts_arr = numpy.reshape(ts_arr, array_shape) 
+                    ts_value.append(float(dataset[i + 2].strip()))
 
-                
+                ts_arr = numpy.array(ts_value)
+                ts_arr = numpy.reshape(ts_arr, array_shape)
+
+
                 ts_values.append({
                     'ts_time' : ts_time,
                     'ts_value' : str(ts_arr.tolist()),
@@ -768,15 +769,15 @@ class ImportCSV(object):
         dataset = [eval(d) for d in dataset[1:]]
 
         #If the dimensions are not set, we assume the array is 1D
-        if arr_shape != '': 
-            array_shape = tuple([int(a) for a in arr_shape.split(" ")])
+        if arr_shape != '':
+            array_shape = tuple([int(a) for a in arr_shape.strip().split(" ")])
         else:
             array_shape = len(dataset)
 
-        #Reshape the array back to its correct dimensions 
+        #Reshape the array back to its correct dimensions
         array = numpy.array(dataset)
-        array = numpy.reshape(array, array_shape) 
-        
+        array = numpy.reshape(array, array_shape)
+
         arr = self.cli.factory.create('hyd:Array')
         arr.arr_data = str(array.tolist())
 
@@ -799,12 +800,37 @@ class ImportCSV(object):
 
         if self.update_network_flag:
             self.Network = self.cli.service.update_network(self.Network)
-            logging.info("Network updated. Network ID is %s", self.Network.id)
         else:
             self.Network = self.cli.service.add_network(self.Network)
-            logging.info("Network created. Network ID is %s", self.Network.id)
 
-        logging.info("Network Scenarios are: %s",[s.id for s in self.Network.scenarios.Scenario])
+        logging.info("Network updated. Network ID is %s", self.Network.id)
+        logging.info("Network Scenarios are: %s", \
+                     [s.id for s in self.Network.scenarios.Scenario])
+
+    def return_xml(self):
+        """This is a fist version of a possible XML output.
+        """
+        from lxml import etree
+        # create xml
+        root = etree.Element("plugin_result")
+        name = etree.SubElement(root, "plugin_name")
+        name.text = "ImportCSV"
+        mess = etree.SubElement(root, "message")
+        mess.text = "Import CSV completed successfully."
+        net_id = etree.SubElement(root, "network_id")
+        net_id.text = str(self.Network.id)
+        for s in self.Network.scenarios.Scenario:
+            scen_id = etree.SubElement(root, "scenario_id")
+            scen_id.text = str(s.id)
+
+        root.append(etree.Element("errors"))
+        root.append(etree.Element("warnings"))
+        root.append(etree.Element("files"))
+
+        # validate xml
+
+        # return xml
+        print etree.tostring(root, pretty_print=True)
 
 
 def commandline_parser():
@@ -813,6 +839,7 @@ def commandline_parser():
 
 Written by Philipp Meier <philipp@diemeiers.ch>
 (c) Copyright 2013, University College London.
+
         """, epilog="For more information visit www.hydra-network.com",
         formatter_class=ap.RawDescriptionHelpFormatter)
     parser.add_argument('-p', '--project',
@@ -880,6 +907,7 @@ if __name__ == '__main__':
                 csv.read_constraints(constraintfile)
 
         csv.commit()
+        csv.return_xml()
 
     else:
         logging.info('No nodes found. Nothing imported.')
