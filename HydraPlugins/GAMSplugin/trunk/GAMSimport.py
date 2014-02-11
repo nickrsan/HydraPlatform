@@ -90,9 +90,9 @@ class GAMSimport(object):
         """Load network and scenario from the server.
         """
         self.network = self.cli.service.get_network(network_id, 'Y', scenario_id)
-        self.res_scenario = self.cli.factory.create('hyd:ResourceScenario')
-        #self.res_scenario = \
-        #        self.network.scenarios.Scenario[0].resourcescenarios.ResourceScenario
+        #self.res_scenario = self.cli.factory.create('hyd:ResourceScenario')
+        self.res_scenario = \
+                self.network.scenarios.Scenario[0].resourcescenarios.ResourceScenario
         attrslist = self.cli.service.get_attributes()
         for attr in attrslist.Attr:
             self.attrs.update({attr.id: attr.name})
@@ -323,12 +323,19 @@ class GAMSimport(object):
                         self.res_scenario.append(res_scen)
 
     def create_timeseries(self, index, data):
-        timeseries = self.cli.factory.create('hyd:TimeSeries')
+        #timeseries = self.cli.factory.create('hyd:TimeSeries')
+        #for i, idx in enumerate(index):
+        #    tsdata = self.cli.factory.create('hyd:TimeSeriesData')
+        #    tsdata.ts_time = self.time_axis[int(idx)]
+        #    tsdata.ts_value = [float(data[i])]
+        #    timeseries.ts_values.TimeSeriesData.append(tsdata)
+
+        timeseries = {'ts_values': []}
         for i, idx in enumerate(index):
-            tsdata = self.cli.factory.create('hyd:TimeSeriesData')
-            tsdata.ts_time = self.time_axis[int(idx)]
-            tsdata.ts_value = [float(data[i])]
-            timeseries.ts_values.TimeSeriesData.append(tsdata)
+            timeseries['ts_values'].append({'ts_time':
+                                            self.time_axis[int(idx)],
+                                            'ts_value':
+                                            [float(data[i])]})
 
         return timeseries
 

@@ -28,6 +28,9 @@ Option                 Short  Parameter  Description
                                          exported.
 --scenario             -s     SCENARIO   ID of the scenario that will be
                                          exported.
+--template-id          -tp    TEMPLATE   ID of the template used for exporting
+                                         resources. Attributes that don't
+                                         belong to this template are ignored.
 --output               -o     OUTPUT     Filename of the output file.
 --start-date           -st    START_DATE Start date of the time period used for
                                          simulation.

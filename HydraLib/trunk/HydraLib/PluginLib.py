@@ -26,7 +26,9 @@ class FixNamespace(MessagePlugin):
 
 
 class HydraResource(object):
-    """
+    """A prototype for Hydra resources. It supports attributes and groups
+    object types by template. This allows to export group nodes by object
+    type based on the template used.
     """
     def __init__(self):
         self.name = None

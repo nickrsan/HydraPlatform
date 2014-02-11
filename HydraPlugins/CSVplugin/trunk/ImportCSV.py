@@ -732,8 +732,7 @@ class ImportCSV(object):
                 tstime = datetime.strptime(dataset[0].strip(), timeformat)
                 tstime = self.timezone.localize(tstime)
 
-                ts_time = PluginLib.date_to_string(tstime,
-                                                          seasonal=seasonal)
+                ts_time = PluginLib.date_to_string(tstime, seasonal=seasonal)
 
                 value_length = len(dataset[2:])
 
@@ -750,13 +749,11 @@ class ImportCSV(object):
                 ts_arr = numpy.array(ts_value)
                 ts_arr = numpy.reshape(ts_arr, array_shape)
 
+                ts_values.append({'ts_time': ts_time,
+                                  'ts_value': str(ts_arr.tolist()),
+                                  })
 
-                ts_values.append({
-                    'ts_time' : ts_time,
-                    'ts_value' : str(ts_arr.tolist()),
-                    })
-
-        timeseries = {'ts_values' : ts_values}
+        timeseries = {'ts_values': ts_values}
 
         return timeseries
 
