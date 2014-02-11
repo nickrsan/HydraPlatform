@@ -292,9 +292,9 @@ class HydraAttribute(object):
         self.name = attr.name
         self.attr_id = attr.id
         self.resource_attr_id = res_attr.id
-        if res_scen is None:
+        if res_attr.attr_is_var == 'Y':
             self.is_var = True
-        else:
+        if res_scen is not None:
             self.dataset_id = res_scen.value.id
             self.dataset_type = res_scen.value.type
             self.value = res_scen.value.value

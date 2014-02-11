@@ -192,7 +192,7 @@ class GAMSexport(object):
         islink = isinstance(resources[0], GAMSlink)
         attributes = []
         for attr in resources[0].attributes:
-            if attr.dataset_type == datatype:
+            if attr.dataset_type == datatype and attr.is_var is False:
                 attr.name = translate_attr_name(attr.name)
                 attributes.append(attr)
         if len(attributes) > 0:
@@ -230,7 +230,7 @@ class GAMSexport(object):
         islink = isinstance(resources[0], GAMSlink)
         attributes = []
         for attr in resources[0].attributes:
-            if attr.dataset_type == 'timeseries':
+            if attr.dataset_type == 'timeseries' and attr.is_var is False:
                 attr.name = translate_attr_name(attr.name)
                 attributes.append(attr)
         if len(attributes) > 0:
@@ -276,7 +276,7 @@ class GAMSexport(object):
         """
         attributes = []
         for attr in resources[0].attributes:
-            if attr.dataset_type == 'array':
+            if attr.dataset_type == 'array' and attr.is_var is False:
                 attr.name = translate_attr_name(attr.name)
                 attributes.append(attr)
         if len(attributes) > 0:
