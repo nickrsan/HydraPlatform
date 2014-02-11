@@ -8,10 +8,7 @@ Basics
 The GAMS import and export plug-in provides pre- and post-processing facilities
 for GAMS models. The basic idea is that this plug-in exports data and
 constraints from Hydra to a text file which can be imported into an existing
-GAMS model using the ``$ import`` statement. It should also provide a GAMS
-script handling the output of data from GAMS to a text file. That way we can
-guarantee that results from GAMS can be imported back into Hydra in a
-onsistent way.
+GAMS model using the ``$ import`` statement.
 
 API docs
 ~~~~~~~~
@@ -52,6 +49,8 @@ class GAMSnetwork(HydraNetwork):
                                        res_attr,
                                        None)
 
+        self.set_type(soap_net.templates)
+
         # load nodes
         for node in soap_net.nodes.Node:
             new_node = HydraResource()
@@ -69,6 +68,7 @@ class GAMSnetwork(HydraNetwork):
                                                res_attr,
                                                None)
 
+            new_node.set_type(node.templates)
             self.add_node(new_node)
             del new_node
 
@@ -91,6 +91,7 @@ class GAMSnetwork(HydraNetwork):
                                                res_attr,
                                                None)
 
+            new_link.set_type(link.templates)
             self.add_link(new_link)
 
 

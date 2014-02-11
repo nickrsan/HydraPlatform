@@ -9,22 +9,13 @@ Basics
 The GAMS import and export plug-in provides pre- and post-processing facilities
 for GAMS models. The basic idea is that this plug-in exports data and
 constraints from Hydra to a text file which can be imported into an existing
-GAMS model using the ``$ import`` statement. It should also provide a GAMS
-script handling the output of data from GAMS to a text file. That way we can
-guarantee that results from GAMS can be imported back into Hydra in a
-onsistent way.
+GAMS model using the ``$ import`` statement.
 
 Input data for GAMS
 -------------------
 
 There are four types of parameters that can be exported: scalars, descriptors,
 time series and arrays.
-
-Constraints
------------
-
-Output data
------------
 
 
 Options
@@ -85,6 +76,8 @@ class GAMSexport(object):
         self.network = GAMSnetwork()
         self.network.load(net, attrs)
 
+        self.template_id = None
+
         self.output = """* Data exported from Hydra using GAMSplugin.
 * (c) Copyright 2013, University College London
 * (c) Copyright 2013, University of Manchester
@@ -116,7 +109,7 @@ class GAMSexport(object):
         self.output += '* Node types\n\n'
         self.output += 'SETS\n\n'
         # Group nodes by type
-        for object_type in self.network.node_types:
+        for object_type in self.network.get_node_types(template_id=self.template_id):
             self.output += object_type + '(i) /\n'
             for node in self.network.get_node(node_type=object_type):
                 self.output += node.name + '\n'
@@ -138,7 +131,7 @@ class GAMSexport(object):
         self.output += '    /\n\n'
         # Group links by type
         self.output += '* Link types\n\n'
-        for object_type in self.network.link_types:
+        for object_type in self.network.get_link_types(template_id=self.template_id):
             self.output += object_type + '(i,j) /\n'
             for link in self.network.get_link(link_type=object_type):
                 self.output += link.gams_name + '\n'
@@ -171,30 +164,29 @@ class GAMSexport(object):
     def export_data(self):
         # Export node data for each node type
         self.output += '* Node data\n\n'
-        for node_type in self.network.node_types:
+        for node_type in self.network.get_node_types(template_id=self.template_id):
             self.output += '* Data for node type %s\n\n' % node_type
             nodes = self.network.get_node(node_type=node_type)
-            self.export_parameters(nodes, 'scalar')
-            self.export_parameters(nodes, 'descriptor')
-            self.export_timeseries(nodes)
+            self.export_parameters(nodes, node_type, 'scalar')
+            self.export_parameters(nodes, node_type, 'descriptor')
+            self.export_timeseries(nodes, node_type)
             self.export_arrays(nodes)
 
         # Export link data for each node type
         self.output += '* Link data\n\n'
-        for link_type in self.network.link_types:
+        for link_type in self.network.get_link_types(template_id=self.template_id):
             self.output += '* Data for link type %s\n\n' % link_type
             links = self.network.get_link(link_type=link_type)
-            self.export_parameters(links, 'scalar')
-            self.export_parameters(links, 'descriptor')
-            self.export_timeseries(links)
+            self.export_parameters(links, link_type, 'scalar')
+            self.export_parameters(links, link_type,'descriptor')
+            self.export_timeseries(links, link_type)
             self.export_arrays(links)
 
-    def export_parameters(self, resources, datatype):
+    def export_parameters(self, resources, obj_type, datatype):
         """Export scalars or descriptors.
         """
         islink = isinstance(resources[0], GAMSlink)
         attributes = []
-        obj_type = resources[0].object_type
         for attr in resources[0].attributes:
             if attr.dataset_type == datatype:
                 attr.name = translate_attr_name(attr.name)
@@ -228,12 +220,11 @@ class GAMSexport(object):
                 self.output += '\n'
             self.output += '\n\n'
 
-    def export_timeseries(self, resources):
+    def export_timeseries(self, resources, obj_type):
         """Export time series.
         """
         islink = isinstance(resources[0], GAMSlink)
         attributes = []
-        obj_type = resources[0].object_type
         for attr in resources[0].attributes:
             if attr.dataset_type == 'timeseries':
                 attr.name = translate_attr_name(attr.name)
@@ -288,11 +279,6 @@ class GAMSexport(object):
             # We have to write the complete array information for every single
             # node, because they might have different sizes.
             for resource in resources:
-                #self.output += 'SETS\n\n'  # Needed before sets are defined
-                #self.output += resource.name + '_' + '_arrays /\n'
-                #for attribute in attributes:
-                #    self.output += attribute.name + '\n'
-                #self.output += '/\n\n'
                 # This exporter only supports 'rectangular' arrays
                 for attribute in attributes:
                     attr = resource.get_attribute(attr_name=attribute.name)
@@ -402,11 +388,9 @@ def translate_attr_name(name):
         translator = ''.join(chr(c) if chr(c).isalnum()
                              else '_' for c in range(256))
     elif isinstance(name, unicode):
-        print name
         translator = UnicodeTranslate()
 
     name = name.translate(translator)
-    print name
 
     return name
 
@@ -439,6 +423,8 @@ Written by Philipp Meier <philipp@diemeiers.ch>
                         help='''ID of the network that will be exported.''')
     parser.add_argument('-s', '--scenario',
                         help='''ID of the scenario that will be exported.''')
+    parser.add_argument('-tp', '--template-id',
+                        help='''ID of the template to be used.''')
     parser.add_argument('-o', '--output',
                         help='''Filename of the output file.''')
     parser.add_argument('-st', '--start-date', nargs='+',
@@ -449,13 +435,6 @@ Written by Philipp Meier <philipp@diemeiers.ch>
                         simulation.''')
     parser.add_argument('-dt', '--time-step', nargs='+',
                         help='''Time step used for simulation.''')
-    parser.add_argument('-nt', '--node-type-attr',
-                        help='''The name of the attribute specifying the node
-                        type.''')
-    parser.add_argument('-lt', '--link-type-attr',
-                        help='''The name of the attribute specifying the link
-                        type.''')
-
     # Optional arguments
     parser.add_argument('-gn', '--group-nodes-by', nargs='+',
                         help='''Group nodes by this attribute(s).''')
@@ -471,8 +450,8 @@ if __name__ == '__main__':
 
     exporter = GAMSexport(int(args.network), int(args.scenario), args.output)
 
-    exporter.network.set_node_type(args.node_type_attr)
-    exporter.network.set_link_type(args.link_type_attr)
+    if args.template_id is not None:
+        exporter.template_id = int(args.template_id)
 
     if args.group_nodes_by is not None:
         for ngroup in args.group_nodes_by:

@@ -9,17 +9,7 @@ Basics
 The GAMS import and export plug-in provides pre- and post-processing facilities
 for GAMS models. The basic idea is that this plug-in exports data and
 constraints from Hydra to a text file which can be imported into an existing
-GAMS model using the ``$ import`` statement. It should also provide a GAMS
-script handling the output of data from GAMS to a text file. That way we can
-guarantee that results from GAMS can be imported back into Hydra in a
-onsistent way.
-
-Constraints
------------
-
-Output data
------------
-
+GAMS model using the ``$ import`` statement.
 
 Options
 ~~~~~~~
