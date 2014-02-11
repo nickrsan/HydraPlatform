@@ -57,6 +57,7 @@ from datetime import timedelta
 from string import ascii_lowercase
 
 from HydraLib import PluginLib
+from HydraLib.HydraException import HydraPluginError
 
 from GAMSplugin import GAMSnetwork
 from GAMSplugin import GAMSlink
@@ -326,25 +327,40 @@ class GAMSexport(object):
                             self.output += '\n'
                         self.output += '\n\n'
 
-    def write_time_index(self, start_time, end_time, time_step):
-        start_time = ' '.join(start_time)
-        end_time = ' '.join(end_time)
-        start_date = self.parse_date(start_time)
-        end_date = self.parse_date(end_time)
-        delta_t = self.parse_time_step(time_step)
+    def write_time_index(self, start_time=None, end_time=None, time_step=None,
+                         time_axis=None):
 
         self.output += 'SETS\n\n'
         self.output += '* Time index\n'
         self.output += 't time index /\n'
-        t = 0
-        while start_date < end_date:
 
-            self.output += '%s\n' % t
-            self.time_index.append(start_date)
-            start_date += timedelta(delta_t)
-            t += 1
+        if time_axis is None:
+            start_time = ' '.join(start_time)
+            end_time = ' '.join(end_time)
+            start_date = self.parse_date(start_time)
+            end_date = self.parse_date(end_time)
+            delta_t = self.parse_time_step(time_step)
 
-        self.output += '/\n\n'
+            t = 0
+            while start_date < end_date:
+
+                self.output += '%s\n' % t
+                self.time_index.append(start_date)
+                start_date += timedelta(delta_t)
+                t += 1
+
+            self.output += '/\n\n'
+
+        else:
+            time_axis = ' '.join(time_axis).split(',')
+            t = 0
+            for timestamp in time_axis:
+                date = self.parse_date(timestamp.strip())
+                self.time_index.append(date)
+                self.output += '%s\n' % t
+                t += 1
+
+            self.output += '/\n\n'
 
         self.output += '* define time steps dependent on time index (t)\n\n'
         self.output += 'Parameter timestamp(t) ;\n\n'
@@ -367,7 +383,6 @@ class GAMSexport(object):
             units = time_step[valuelen:].strip()
 
         return self.cli.service.convert_units(value, units, 'day')
-        #return self.unit_conversion.convert(value, units, 'day')
 
     def parse_date(self, date):
         """Parse date string supplied from the user. All formats supported by
@@ -438,6 +453,9 @@ Written by Philipp Meier <philipp@diemeiers.ch>
                         simulation.''')
     parser.add_argument('-dt', '--time-step', nargs='+',
                         help='''Time step used for simulation.''')
+    parser.add_argument('-tx', '--time-axis', nargs='+',
+                        help='''Time axis for the modelling period (a list of
+                        comma separated time stamps).''')
     # Optional arguments
     parser.add_argument('-gn', '--group-nodes-by', nargs='+',
                         help='''Group nodes by this attribute(s).''')
@@ -465,7 +483,16 @@ if __name__ == '__main__':
             exporter.network.create_link_groups(lgroup)
 
     exporter.export_network()
-    exporter.write_time_index(args.start_date, args.end_date, args.time_step)
+
+    if args.start_date is not None and args.end_date is not None \
+            and args.time_step is not None:
+        exporter.write_time_index(start_time=args.start_date,
+                                  end_time=args.end_date,
+                                  time_step=args.time_step)
+    elif args.time_axis is not None:
+        exporter.write_time_index(time_axis=args.time_axis)
+    else:
+        raise HydraPluginError('Time axis not specified.')
     exporter.export_data()
 
     #exporter = GAMSexport(int(args.network),

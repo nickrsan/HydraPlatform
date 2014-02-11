@@ -89,10 +89,10 @@ class GAMSimport(object):
     def load_network(self, network_id, scenario_id):
         """Load network and scenario from the server.
         """
-        self.network = self.cli.service.get_network(network_id, 'Y', scenario_id)
-        #self.res_scenario = self.cli.factory.create('hyd:ResourceScenario')
+        self.network = self.cli.service.get_network(network_id, 'Y',
+                                                    scenario_id)
         self.res_scenario = \
-                self.network.scenarios.Scenario[0].resourcescenarios.ResourceScenario
+            self.network.scenarios.Scenario[0].resourcescenarios.ResourceScenario
         attrslist = self.cli.service.get_attributes()
         for attr in attrslist.Attr:
             self.attrs.update({attr.id: attr.name})
@@ -323,19 +323,12 @@ class GAMSimport(object):
                         self.res_scenario.append(res_scen)
 
     def create_timeseries(self, index, data):
-        #timeseries = self.cli.factory.create('hyd:TimeSeries')
-        #for i, idx in enumerate(index):
-        #    tsdata = self.cli.factory.create('hyd:TimeSeriesData')
-        #    tsdata.ts_time = self.time_axis[int(idx)]
-        #    tsdata.ts_value = [float(data[i])]
-        #    timeseries.ts_values.TimeSeriesData.append(tsdata)
-
         timeseries = {'ts_values': []}
         for i, idx in enumerate(index):
             timeseries['ts_values'].append({'ts_time':
                                             self.time_axis[int(idx)],
                                             'ts_value':
-                                            [float(data[i])]})
+                                            str([float(data[i])])})
 
         return timeseries
 
@@ -404,7 +397,8 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-t', '--network',
                         help='ID of the network the data will be imported to.')
     parser.add_argument('-s', '--scenario',
-                        help='ID of the scenario the data will be imported to.')
+                        help='''ID of the scenario the data will be imported
+                        to.''')
     parser.add_argument('-f', '--gdx-file',
                         help='GDX file containing GAMS results.')
     parser.add_argument('-m', '--gms-file',
