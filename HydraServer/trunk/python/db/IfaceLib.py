@@ -1,7 +1,7 @@
 import logging
 from decimal import Decimal
 from soap_server import hydra_complexmodels
-import config
+from HydraLib import config
 import datetime
 import MySqlIface
 
@@ -11,12 +11,12 @@ def init(cnx, db_hierarchy):
     global DB
     db_instance = config.get('db', 'instance')
     if db_instance == 'MySQL':
-        from MySqlIface import DBIface as DB 
+        from MySqlIface import DBIface as DB
         import MySqlIface as DBIface
     elif db_instance == 'SQLite':
         from SQLiteIface import DBIface as DB
         import SQLiteIface as DBIface
-    
+
     DBIface.init(cnx, db_hierarchy)
 
 def execute(sql):
@@ -30,7 +30,7 @@ class IfaceBase(object):
         The base database interface class.
     """
     def __init__(self, parent, class_name):
-    
+
         self.db = DB(class_name)
 
         self.name = class_name
@@ -123,7 +123,7 @@ class IfaceBase(object):
         for name, rows in children.items():
             #turn 'link' into 'links'
             attr_name              = name[1:].lower() + 's'
-            
+
             if self.db.db_hierarchy.get(name[1:].lower())['parent'] == self.name.lower():
                 #if it's not already set, set it to a default []
                 if hasattr(self, attr_name) is False:
@@ -181,7 +181,7 @@ class IfaceBase(object):
     def get_as_dict(self,**kwargs):
         """
             Convert this object into a dict
-            
+
             The user_id parameter is used for controlling
             what gets populated in the dictionary bases
             on a user's permission.
@@ -200,7 +200,7 @@ class IfaceBase(object):
             if type(value) == Decimal:
                 value = float(value)
             obj_dict[attr] = value
-        
+
         #get my children, convert them and add them to the dict.
         for child_name in self.children:
             objs = getattr(self, child_name)
@@ -211,7 +211,7 @@ class IfaceBase(object):
             obj_dict[child_name] = child_objs
         time_taken = datetime.datetime.now() - t
         if time_taken > datetime.timedelta(seconds=1):
-            logging.warn("%s: %s", self.name, time_taken) 
+            logging.warn("%s: %s", self.name, time_taken)
         return obj_dict
 
     def get_as_complexmodel(self):
@@ -250,6 +250,6 @@ class IfaceBase(object):
                 obj.load_all()
                 child_cm = obj.get_as_complexmodel()
                 child_objs.append(child_cm)
-            setattr(cm, name, child_objs) 
+            setattr(cm, name, child_objs)
 
         return cm

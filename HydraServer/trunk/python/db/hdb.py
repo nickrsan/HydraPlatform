@@ -1,6 +1,6 @@
 import mysql.connector
 import logging
-import config
+from HydraLib import config
 import sqlite3
 
 global CNX

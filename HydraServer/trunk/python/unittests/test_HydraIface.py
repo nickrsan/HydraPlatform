@@ -5,7 +5,8 @@ if "../../../../../HydraLib/trunk/" not in sys.path:
     sys.path.append("../../../../../HydraLib/trunk/")
 import unittest
 from db import HydraIface
-from HydraLib import hydra_logging, hdb
+from db import hdb
+from HydraLib import hydra_logging
 import logging
 import datetime
 
@@ -84,7 +85,7 @@ class HydraIfaceTest(unittest.TestCase):
             where
                 attr_name = '%s'
         """ % name
-        
+
         rs = HydraIface.execute(sql)
 
         if len(rs) == 0:

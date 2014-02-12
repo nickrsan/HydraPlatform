@@ -9,7 +9,7 @@ from spyne.model.primitive import Double
 import datetime
 from spyne.util.odict import odict
 import sys
-from HydraLib.util import timestamp_to_server_time
+from HydraLib.util import timestamp_to_ordinal
 import logging
 global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
@@ -57,7 +57,7 @@ def parse_value(data):
                     #The value is a list, so must get index 0
                     timestamp = ts_val[key][0]
                     # Check if we have received a seasonal time series first
-                    ordinal_ts_time = timestamp_to_server_time(timestamp)
+                    ordinal_ts_time = timestamp_to_ordinal(timestamp)
                 elif key.find('ts_value') > 0:
                     series = []
                     for val in ts_val[key]:
@@ -111,7 +111,7 @@ class HydraComplexModel(ComplexModel):
 
     def __init__(self, obj_dict=None):
         super(HydraComplexModel, self).__init__()
-        
+
         if obj_dict is None:
             return
 
@@ -132,7 +132,7 @@ class HydraComplexModel(ComplexModel):
                     if child_obj_dict is not None:
                         cm = getattr(current_module, child_obj_dict['object_type'])(child_obj_dict)
                         children.append(cm)
-                setattr(self, attr_name, children)         
+                setattr(self, attr_name, children)
             else:
                 #turn someething like 'project_name' into just 'name'
                 #So that it's project.name instead of project.project_name.
@@ -167,10 +167,10 @@ class Dataset(HydraComplexModel):
 
         if obj_dict.get('value', None):
             val = obj_dict['value']
-        
+
             self.value     = getattr(current_module, val['object_type'])(val)
             self.value     = self.value.__dict__
-        
+
 class Descriptor(HydraComplexModel):
     _type_info = [
         ('desc_val', String),
@@ -279,7 +279,7 @@ class ResourceAttr(HydraComplexModel):
         super(ResourceAttr, self).__init__(obj_dict)
         if obj_dict is None:
             return
-        
+
         self.id = obj_dict['resource_attr_id']
 
 class TemplateItem(HydraComplexModel):
@@ -445,7 +445,7 @@ class ResourceGroup(HydraComplexModel):
 
     def __init__(self, obj_dict=None):
         super(ResourceGroup, self).__init__(obj_dict)
-        
+
         if obj_dict is None:
             return
 
@@ -504,7 +504,7 @@ class Constraint(HydraComplexModel):
 
     def __init__(self, obj_dict=None):
         super(Constraint, self).__init__()
-        
+
         if obj_dict is None:
             return
 

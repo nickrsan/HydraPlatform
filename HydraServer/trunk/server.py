@@ -37,7 +37,8 @@ from soap_server.sharing import SharingService, DataSharingService
 
 from HydraLib.HydraException import HydraError
 
-from HydraLib import hdb, config
+from HydraLib import config
+from db import hdb
 from db import HydraIface
 
 import datetime

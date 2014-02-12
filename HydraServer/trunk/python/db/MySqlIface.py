@@ -1,8 +1,8 @@
 import logging
 from decimal import Decimal
-import config
-from HydraLib.hdb import HydraMySqlCursor
-from HydraException import HydraError
+from HydraLib import config
+from hdb import HydraMySqlCursor
+from HydraLib.HydraException import HydraError
 from mysql.connector import IntegrityError, DatabaseError
 import inspect
 
@@ -25,14 +25,14 @@ SQL_RESULT_DIFF_COUNT = {}
 
 def execute(sql):
 #    update_call_count(sql)
-    
+
     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
     rs = cursor.execute_sql(sql)
-    
+
     #Keep track of result sets changing for a given piece of sql.
     #If the SQL never changes, we should be caching the result.
  #   update_rs_count(sql,rs)
-    
+
     cursor.close()
 
     return rs
@@ -46,7 +46,7 @@ def update_call_count(sql):
         SQL_CALL_COUNT[sql] = 1
 
 def update_rs_count(sql, new_rs):
-    global SQL_RESULT_DIFF_COUNT 
+    global SQL_RESULT_DIFF_COUNT
     new = [r.get_as_dict() for r in new_rs]
 
     if sql in SQL_RESULT_DIFF_COUNT.keys():
@@ -416,7 +416,7 @@ class DBIface(object):
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         cursor.execute(complete_update)
         cursor.close()
-        
+
         self.has_changed = False
 
     def load(self):
@@ -455,7 +455,7 @@ class DBIface(object):
             for k, v in r.get_as_dict().items():
                 #logging.debug("Setting column %s to %s", k, v)
                 self.db_data[k] = v
-       
+
         self.has_changed = False
 
         return True
@@ -486,6 +486,6 @@ class DBIface(object):
             return repr(val)
         else:
             return str(val)
-    
+
     def commit(self):
         CONNECTION.commit()

@@ -9,10 +9,9 @@ from hydra_complexmodels import TemplateGroup,\
         get_as_complexmodel
 
 from hydra_base import HydraService
-from HydraLib import IfaceLib
+from db import IfaceLib
 
-
-from HydraLib import hdb
+from db import hdb
 
 def get_resource(ref_key, ref_id):
     if ref_key == 'NODE':

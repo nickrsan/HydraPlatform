@@ -10,7 +10,7 @@ Scenario,\
 ResourceGroup,\
 get_as_complexmodel
 from db import HydraIface
-from HydraLib import hdb, IfaceLib
+from db import hdb, IfaceLib
 from hydra_base import HydraService, ObjectNotFoundError
 import scenario
 from constraints import ConstraintService
@@ -129,7 +129,7 @@ def get_timing(time):
 
 def add_nodes(net_i, nodes):
     start_time = datetime.datetime.now()
-   
+
     #List of HydraIface resource attributes
     resource_attrs = []
     #List of all complexmodel attributes
@@ -137,7 +137,7 @@ def add_nodes(net_i, nodes):
 
     #Maps temporary node_ids to real node_ids
     node_id_map = dict()
-    
+
     if nodes is None or len(nodes) == 0:
         return node_id_map, resource_attrs, attrs
 
@@ -175,7 +175,7 @@ def add_nodes(net_i, nodes):
 
     return node_id_map, resource_attrs, attrs
 
-def add_links(net_i, links, node_id_map): 
+def add_links(net_i, links, node_id_map):
     start_time = datetime.datetime.now()
 
     #List of HydraIface resource attributes
@@ -306,7 +306,7 @@ class NetworkService(HydraService):
         insert_start = datetime.datetime.now()
 
         net_i = HydraIface.Network()
-        
+
         proj_i = HydraIface.Project(project_id = network.project_id)
         proj_i.check_write_permission(ctx.in_header.user_id)
 
@@ -314,7 +314,7 @@ class NetworkService(HydraService):
         net_i.db.network_name        = network.name
         net_i.db.network_description = network.description
         net_i.db.created_by          = ctx.in_header.user_id
-        
+
         if network.layout is not None:
             net_i.db.network_layout = str(network.layout)
 
@@ -332,9 +332,9 @@ class NetworkService(HydraService):
         network_attrs  = _add_attributes(net_i, network.attributes)
         _add_resource_types(net_i, network.templates)
 
-        resource_attrs.extend(network_attrs) 
+        resource_attrs.extend(network_attrs)
         all_attributes.extend(network.attributes)
-        
+
         logging.info("Network attributes added in %s", get_timing(start_time))
 
         node_id_map, node_resource_attrs, node_cm_attrs = add_nodes(net_i, network.nodes)
@@ -346,7 +346,7 @@ class NetworkService(HydraService):
         resource_attrs.extend(link_resource_attrs)
         all_attributes.extend(link_cm_attrs)
 
-        
+
         grp_id_map, grp_resource_attrs, grp_cm_attrs = add_resource_groups(net_i, network.resourcegroups)
 
         resource_attrs.extend(grp_resource_attrs)
@@ -354,7 +354,7 @@ class NetworkService(HydraService):
 
 
         start_time = datetime.datetime.now()
-        
+
         #insert all the resource attributes in one go!
         last_resource_attr_id = IfaceLib.bulk_insert(resource_attrs, "tResourceAttr")
 
@@ -390,10 +390,10 @@ class NetworkService(HydraService):
                 resource_attr_ids = []
                 for r_scen in s.resourcescenarios:
                     ra_id = resource_attr_id_map[r_scen.resource_attr_id]
-                    r_scen.resource_attr_id = ra_id 
+                    r_scen.resource_attr_id = ra_id
                     data.append(r_scen.value)
                     resource_attr_ids.append(ra_id)
-                
+
                 data_start_time = datetime.datetime.now()
                 datasets = scenario.bulk_insert_data(data, ctx.in_header.user_id)
                 logging.info("Data bulk insert took %s", get_timing(data_start_time))
@@ -407,11 +407,11 @@ class NetworkService(HydraService):
                     scen.resourcescenarios.append(rs_i)
 
                 IfaceLib.bulk_insert(scen.resourcescenarios, 'tResourceScenario')
-                
+
                 for constraint in s.constraints:
                     update_constraint_refs(constraint.constraintgroup, resource_attr_id_map)
                     ConstraintService.add_constraint(ctx, scen.db.scenario_id, constraint)
- 
+
                 item_start_time = datetime.datetime.now()
                 group_items = []
                 for group_item in s.resourcegroupitems:
@@ -437,7 +437,7 @@ class NetworkService(HydraService):
 
                 logging.info("Group items insert took %s", get_timing(item_start_time))
                 net_i.scenarios.append(scen)
-        
+
         logging.info("Scenarios added in %s", get_timing(start_time))
         net_i.set_ownership(ctx.in_header.user_id)
 
@@ -462,13 +462,13 @@ class NetworkService(HydraService):
         net_i = HydraIface.Network(network_id = network_id)
 
         net_i.check_read_permission(ctx.in_header.user_id)
-        
+
         if net_i.load_all(scenario_ids) is False:
             raise ObjectNotFoundError("Network (network_id=%s) not found." %
                                       network_id)
 
         net = get_as_complexmodel(ctx, net_i, **dict(include_data=include_data))
-        
+
         return net
 
     @rpc(String, Integer, _returns=Network)
@@ -497,7 +497,7 @@ class NetworkService(HydraService):
 
 
         net_i = HydraIface.Network(network_id = network_id)
-        
+
         net_i.check_read_permission(ctx.in_header.user_id)
 
         if net_i.load_all() is False:
@@ -671,7 +671,7 @@ class NetworkService(HydraService):
                 group_item_i.save()
 
         net_i.load_all()
-        
+
         net = get_as_complexmodel(ctx, net_i)
 
         hdb.commit()
@@ -733,7 +733,7 @@ class NetworkService(HydraService):
 
         net_i = HydraIface.Network(network_id = network_id)
         net_i.check_write_permission(ctx.in_header.user_id)
-        
+
         node_i = HydraIface.Node()
         node_i.db.network_id = network_id
         node_i.db.node_name = node.name
@@ -790,12 +790,12 @@ class NetworkService(HydraService):
         """
         node = None
 
-        
+
         x = HydraIface.Node(node_id = node.id)
-        
+
         net_i = HydraIface.Network(network_id = x.db.network_id)
         net_i.check_write_permission(ctx.in_header.user_id)
-        
+
         x.db.node_name = node.name
         x.db.node_x    = node.x
         x.db.node_y    = node.y
@@ -831,7 +831,7 @@ class NetworkService(HydraService):
         """
         success = True
         x = HydraIface.Node(node_id = node_id)
-        
+
         net_i = HydraIface.Network(network_id=x.db.network_id)
         net_i.check_write_permission(ctx.in_header.user_id)
 
@@ -852,10 +852,10 @@ class NetworkService(HydraService):
 
         """
         x = HydraIface.Node(node_id = node_id)
-        
+
         net_i = HydraIface.Network(network_id=x.db.network_id)
         net_i.check_write_permission(ctx.in_header.user_id)
-        
+
         x.delete(purge_data=purge_data)
         x.save()
         x.commit()
@@ -869,7 +869,7 @@ class NetworkService(HydraService):
 
         net_i = HydraIface.Network(network_id=network_id)
         net_i.check_write_permission(ctx.in_header.user_id)
-        
+
         x = HydraIface.Link()
 
         x.db.network_id = network_id
@@ -893,10 +893,10 @@ class NetworkService(HydraService):
             Update a link.
         """
         x = HydraIface.Link(link_id = link.id)
-        
+
         net_i = HydraIface.Network(network_id=x.db.network_id)
         net_i.check_write_permission(ctx.in_header.user_id)
-        
+
         x.db.link_name = link.name
         x.db.node_1_id = link.node_1_id
         x.db.node_2_id = link.node_2_id
@@ -909,7 +909,7 @@ class NetworkService(HydraService):
         x.commit()
 
         link = get_as_complexmodel(ctx, x)
-        
+
         return link
 
     @rpc(Integer, _returns=Link)
@@ -919,10 +919,10 @@ class NetworkService(HydraService):
         """
         success = True
         x = HydraIface.Link(link_id = link_id)
-        
+
         net_i = HydraIface.Network(network_id=x.db.network_id)
         net_i.check_write_permission(ctx.in_header.user_id)
-        
+
         x.db.status = 'X'
         x.save()
         x.commit()
@@ -938,10 +938,10 @@ class NetworkService(HydraService):
             will be deleted.
         """
         x = HydraIface.Link(link_id = link_id)
-        
+
         net_i = HydraIface.Network(network_id=x.db.network_id)
         net_i.check_write_permission(ctx.in_header.user_id)
-        
+
         x.delete(purge_data=purge_data)
         x.save()
         x.commit()
@@ -977,7 +977,7 @@ class NetworkService(HydraService):
             Get all the scenarios in a given network.
         """
         net = HydraIface.Network(network_id=network_id)
-        
+
         net_i = HydraIface.Network(network_id=network_id)
         net_i.check_read_permission(ctx.in_header.user_id)
 
@@ -1000,7 +1000,7 @@ class NetworkService(HydraService):
 
         net_i = HydraIface.Network(network_id=network_id)
         net_i.check_read_permission(ctx.in_header.user_id)
-        
+
         net_i = HydraIface.Network(network_id=network_id)
         net_i.load_all()
 

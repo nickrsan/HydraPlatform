@@ -6,8 +6,9 @@ from HydraLib.util import convert_ordinal_to_datetime
 
 from HydraLib.HydraException import HydraError
 
-from HydraLib import IfaceLib, config
-from HydraLib.IfaceLib import IfaceBase, execute
+from HydraLib import config
+import IfaceLib
+from IfaceLib import IfaceBase, execute
 
 from lxml import etree
 import os

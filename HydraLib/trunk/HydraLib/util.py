@@ -5,33 +5,6 @@ import glob
 import ConfigParser
 
 
-def load_csv(cnx, cursor, filepath):
-
-    sql = "insert into %(table_name)s (%(col_names)s) values (%(values)s)"
-
-    filename = filepath.split('/')[-1]
-
-    with open(filepath, 'r') as f:
-        col_names = f.readlines[0]
-        for w in f.readlines()[1:]:
-            w = w.strip()
-            entry = w.split(',')
-            params = dict(
-                table_name=filename,
-                col_names=col_names,
-                values=entry,
-            )
-
-        dt = datetime.datetime.strptime("%s %s" % (entry[0], entry[1]),
-                                        "%d/%m/%Y %H:%M:%S")
-
-        params['time'] = dt
-
-        cursor.execute(sql, params)
-        cnx.commit()
-        cursor.close()
-        cnx.close()
-
 def get_datetime(timestamp):
 
     if isinstance(timestamp, datetime.datetime):
@@ -61,7 +34,7 @@ def get_datetime(timestamp):
 
     return ts_time
 
-def timestamp_to_server_time(timestamp):
+def timestamp_to_ordinal(timestamp):
     """Convert a timestamp as defined in the soap interface to the time format
     stored in the database.
     """

@@ -22,8 +22,9 @@ from hydra_complexmodels import Scenario,\
         get_as_complexmodel
 
 from db import HydraIface
-from HydraLib import units, IfaceLib
-from HydraLib.util import timestamp_to_server_time, get_datetime
+from HydraLib import units
+from db import IfaceLib
+from HydraLib.util import timestamp_to_ordinal, get_datetime
 
 from hydra_base import HydraService
 import datetime
@@ -201,7 +202,7 @@ def bulk_insert_data(bulk_data, user_id=None):
 
             eqtimeseries.append(data)
             eqtimeseries_idx.append(idx)
-     
+
         dataset_i.datum = data
         idx = idx + 1
 
@@ -275,7 +276,7 @@ def bulk_insert_data(bulk_data, user_id=None):
         datasets[idx].datum = descriptors[i]
     for i, idx in enumerate(scalar_idx):
         datasets[idx].db.data_id = scalars[i].db.data_id
-        datasets[idx].datum = scalars[i] 
+        datasets[idx].datum = scalars[i]
     for i, idx in enumerate(array_idx):
         datasets[idx].db.data_id = arrays[i].db.data_id
         datasets[idx].datum = arrays[i]
@@ -585,7 +586,7 @@ class ScenarioService(HydraService):
             item.ref_key  = s2_only_item[1]
             item.ref_id   = s2_only_item[2]
             scenario_2_items.append(item)
-        
+
         groupdiff.scenario_1_items = scenario_1_items
         groupdiff.scenario_2_items = scenario_2_items
         scenariodiff.groups = groupdiff
@@ -689,13 +690,13 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False, user_id=
     res = r_a.get_resource()
 
     data_type = resource_scenario.value.type.lower()
-    
+
     value = parse_value(resource_scenario.value)
 
     if value is None:
         logging.info("Cannot set data on resource attribute %s",ra_id)
         return None
-    
+
     dimension = resource_scenario.value.dimension
     data_unit = resource_scenario.value.unit
 
@@ -785,7 +786,7 @@ class DataService(HydraService):
             Insert sereral pieces of data at once.
         """
         datasets = bulk_insert_data(bulk_data, user_id=ctx.in_header.user_id)
-        
+
         return [d.db.dataset_id for d in datasets]
 
     @rpc(Integer, Integer, Dataset, _returns=ResourceScenario)
@@ -975,7 +976,7 @@ class DataService(HydraService):
         the last value.  """
         t = []
         for time in timestamps:
-            t.append(timestamp_to_server_time(time))
+            t.append(timestamp_to_ordinal(time))
         td = HydraIface.Dataset(dataset_id=dataset_id)
         #for time in t:
         #    data.append(td.get_val(timestamp=time))
@@ -989,12 +990,12 @@ class DataService(HydraService):
         server_start_time = get_datetime(start_time)
         server_end_time   = get_datetime(end_time)
 
-        times = [timestamp_to_server_time(server_start_time)]
+        times = [timestamp_to_ordinal(server_start_time)]
 
         next_time = server_start_time
         while next_time < server_end_time:
             next_time = next_time  + datetime.timedelta(**{timestep:1})
-            times.append(timestamp_to_server_time(next_time))
+            times.append(timestamp_to_ordinal(next_time))
 
         td = HydraIface.Dataset(dataset_id=dataset_id)
         logging.debug("Number of times to fetch: %s", len(times))
