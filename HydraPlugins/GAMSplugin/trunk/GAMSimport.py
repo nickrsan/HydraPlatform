@@ -377,6 +377,8 @@ class GAMSimport(object):
         return descriptor
 
     def save(self):
+        import pudb
+        pudb.set_trace()
         self.network.scenarios.Scenario[0].resourcescenarios.ResourceScenario \
             = self.res_scenario
         self.cli.service.update_network(self.network)

@@ -495,15 +495,4 @@ if __name__ == '__main__':
         raise HydraPluginError('Time axis not specified.')
     exporter.export_data()
 
-    #exporter = GAMSexport(int(args.network),
-    #                      int(args.scenario),
-    #                      args.output)
-    #exporter.export_network(args.node_type_attr,
-    #                        args.link_type_attr,
-    #                        args.group_nodes_by,
-    #                        args.group_links_by)
-    #exporter.export_data(args.start_date,
-    #                     args.end_date,
-    #                     args.time_step)
-
     exporter.write_file()
