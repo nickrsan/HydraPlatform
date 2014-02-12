@@ -4,9 +4,12 @@ from cx_Freeze import setup, Executable
 includes = ["encodings.utf_8",
             "encodings.ascii",
             "lxml._elementpath",
+            "lxml.etree",
             "ConfigParser",
             "suds",
             "HydraLib",
+            "HydraLib.util",
+            "numpy",
             ]
 
 setup(name="Hydra CSV plug-in",
