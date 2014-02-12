@@ -147,7 +147,6 @@ class ImportCSV(object):
     update_network_flag = False
     timezone = pytz.utc
     expand_filenames = False
-    unit_class = units.Units()
 
     basepath = ''
 
@@ -422,7 +421,7 @@ class ImportCSV(object):
         attribute = self.cli.factory.create('hyd:Attr')
         attribute.name = name
         if unit is not None and len(unit.strip()) > 0:
-            attribute.dimen = self.unit_class.get_dimension(unit.strip())
+            attribute.dimen = self.cli.service.get_dimension(unit.strip())
         #attribute = self.cli.service.add_attribute(attribute)
 
         return attribute
@@ -698,7 +697,7 @@ class ImportCSV(object):
 
         dataset.unit = unit
         if unit is not None:
-            dataset.dimension = self.unit_class.get_dimension(unit)
+            dataset.dimension = self.cli.service.get_dimension(unit)
 
         dataset.name = "Import CSV data"
 
