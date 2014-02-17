@@ -9,7 +9,8 @@ includes = ["encodings.utf_8",\
             "suds",\
 	    "pytz",\
             "spyne",\
-            "spyne.service",]
+            "spyne.service",
+            "sqlite3"]
 
 setup(
     name = "On Dijkstra's Algorithm",
