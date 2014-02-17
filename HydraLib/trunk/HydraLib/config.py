@@ -42,7 +42,7 @@ def load_config():
         config.read(ini_file)
     for ini_file in localfiles:
         config.read(ini_file)
-    
+
     try:
         home_dir = config.get('DEFAULT', 'home_dir')
     except:
@@ -54,7 +54,7 @@ def load_config():
     except:
         hydra_base = os.environ.get('HYDRA_BASE_DIR', '~/svn/HYDRA')
     config.set('DEFAULT', 'hydra_base_dir', os.path.expanduser(hydra_base))
-    
+
     CONFIG = config
 
     return config
@@ -71,4 +71,4 @@ def getint(section, option):
     if CONFIG is None:
         load_config()
 
-    return CONFIG.getint(section, option) 
+    return CONFIG.getint(section, option)
