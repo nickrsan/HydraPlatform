@@ -336,22 +336,25 @@ class DBIface(object):
             if self.db_data[name] is None:
                 return None
 
-            val = str(self.db_data[name])
+            val = self.db_data[name]
 
             #Cast the value to the correct DB data type
             if db_type.lower().find("double") != -1:
-                return Decimal(val)
+                if type(val) == Decimal:
+                    return val
+                dec_val = Decimal(repr(val))
+                return dec_val
             elif db_type.find('int') != -1:
-                return int(val)
+                return int(str(val))
             elif db_type == 'blob':
                 try:
-                    return eval(val)
+                    return eval(str(val))
                 except:
-                    return val
+                    return str(val)
             elif db_type == 'datetime':
                 return self.db_data[name]
 
-            return val
+            return str(val)
 
         else:
             raise AttributeError("Attribute %s not set."%name)

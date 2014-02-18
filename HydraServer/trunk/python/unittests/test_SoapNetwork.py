@@ -297,6 +297,29 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         result = self.client.service.validate_network_topology(network.id)
         assert result == 'Orphan nodes are present.'
 
+    def test_consistency_of_update(self):
+        """
+            Test to ensure that updating a network which has not changed
+            does not cause any changes to the network.
+            Procedure:
+                1: Create a network.
+                2: Immediately update the network without changing it.
+                3: Check that the original network and the updated network
+                   are identical.
+        """
+        net = self.create_network_with_data()
+        for node in net.nodes.Node:
+            assert node.templates is not None and  len(node.templates) > 0
+
+        updated_net = self.client.service.update_network(net)
+
+        for node in updated_net.nodes.Node:
+            assert node.templates is not None and  len(node.templates) > 0
+
+        for attr in net.__keylist__:
+            a = net.__getitem__(attr)
+            b = updated_net.__getitem__(attr)
+            assert str(a) == str(b)
 
 if __name__ == '__main__':
     test_SoapServer.run()

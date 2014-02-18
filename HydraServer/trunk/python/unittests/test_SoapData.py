@@ -3,6 +3,7 @@
 
 import test_SoapServer
 import datetime
+import logging
 
 class DataGroupTest(test_SoapServer.SoapServerTest):
 
@@ -31,8 +32,12 @@ class DataGroupTest(test_SoapServer.SoapServerTest):
         itemarray = self.client.factory.create('ns1:DatasetGroupItemArray')
         item1 = self.client.factory.create('ns1:DatasetGroupItem')
         item1.dataset_id = scenario_data.Dataset[0].id
-        item2 = self.client.factory.create('ns1:DatasetGroupItem')
-        item2.dataset_id = scenario_data.Dataset[1].id
+        for d in scenario_data.Dataset:
+            if d.type == 'timeseries' and d.id != item1.dataset_id:
+
+                item2 = self.client.factory.create('ns1:DatasetGroupItem')
+                item2.dataset_id = d.id
+                break
         itemarray.DatasetGroupItem.append(item1)
         itemarray.DatasetGroupItem.append(item2)
 

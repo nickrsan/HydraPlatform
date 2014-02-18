@@ -5,6 +5,7 @@ import test_SoapServer
 import datetime
 from lxml import etree
 from HydraLib import config
+import logging
 
 class TemplatesTest(test_SoapServer.SoapServerTest):
 
@@ -365,11 +366,16 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
 
 
-    def test_get_group_by_name(self):
+    def test_get_group_by_name_good(self):
         group = self.get_group()
         new_group = self.client.service.get_templategroup_by_name(group.name)
 
         assert new_group.name == group.name, "Names are not the same! Retrieval by name did not work!"
+
+    def test_get_group_by_name_bad(self):
+        new_group = self.client.service.get_templategroup_by_name("Not a group!")
+
+        assert new_group is None
 
     def test_add_resource_template(self):
 
@@ -431,87 +437,6 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         for node in network.nodes.Node:
             assert node.templates is not None and node.templates.GroupSummary[0].templates.TemplateSummary[0].name == "Test template 1"; "Template was not added correctly!"
 
-    def test_update_resource_template(self):
-
-        group = self.get_group()
-        templates = group.templates.Template
-        template_name = templates[0].name
-        template_id   = templates[0].id
-
-        project = self.create_project('test')
-        network = self.client.factory.create('hyd:Network')
-        nodes = self.client.factory.create('hyd:NodeArray')
-        links = self.client.factory.create('hyd:LinkArray')
-
-        nnodes = 3
-        nlinks = 2
-        x = [0, 0, 1]
-        y = [0, 1, 0]
-
-        for i in range(nnodes):
-            node = self.client.factory.create('hyd:Node')
-            node.id = i * -1
-            node.name = 'Node ' + str(i)
-            node.description = 'Test node ' + str(i)
-            node.x = x[i]
-            node.y = y[i]
-
-            grp_summary = self.client.factory.create('hyd:GroupSummary')
-            grp_summary.id = group.id
-            grp_summary.name = group.name
-
-            tmpl_summary = self.client.factory.create('hyd:TemplateSummary')
-            tmpl_summary.id = template_id
-            tmpl_summary.name = template_name
-
-            grp_summary.templates.TemplateSummary.append(tmpl_summary)
-
-            node.templates.GroupSummary.append(grp_summary)
-
-            nodes.Node.append(node)
-
-        for i in range(nlinks):
-            link = self.client.factory.create('hyd:Link')
-            link.id = i * -1
-            link.name = 'Link ' + str(i)
-            link.description = 'Test link ' + str(i)
-            link.node_1_id = nodes.Node[i].id
-            link.node_2_id = nodes.Node[i + 1].id
-
-            links.Link.append(link)
-
-        network.project_id = project.id
-        network.name = 'Test'
-        network.description = 'A network for SOAP unit tests.'
-        network.nodes = nodes
-        network.links = links
-
-        network = self.client.service.add_network(network)
-
-        new_template_id   = templates[1].id
-
-        updated_node = network.nodes.Node[0]
-
-        grp_summary = self.client.factory.create('hyd:GroupSummary')
-        grp_summary.id = group.id
-        grp_summary.name = group.name
-
-        tmpl_summary = self.client.factory.create('hyd:TemplateSummary')
-        tmpl_summary.id   = new_template_id
-        tmpl_summary.name = template_name
-
-        grp_summary.templates.TemplateSummary.append(tmpl_summary)
-
-        node.templates.GroupSummary.append(grp_summary)
-
-        del updated_node.templates.GroupSummary[0]
-        updated_node.templates.GroupSummary.append(grp_summary)
-
-        new_network = self.client.service.update_network(network)
-
-        for node in new_network.nodes.Node:
-            if node.id == updated_node.id:
-                assert node.templates is not None and node.templates.GroupSummary[0].templates.TemplateSummary[0].name == "Test template 2", "Template was not added correctly!"
 
     def test_find_matching_resource_templates(self):
 

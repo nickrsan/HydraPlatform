@@ -57,22 +57,17 @@ def _add_resource_types(resource_i, groups):
         templates = group.templates
 
         for template in templates:
+            new_template_ids.append(template.id)
+
             if template.id in existing_template_ids:
                 continue
 
-            new_template_ids.append(template.id)
 
             rt_i = HydraIface.ResourceType()
             rt_i.db.template_id = template.id
             rt_i.db.ref_key     = resource_i.ref_key
             rt_i.db.ref_id      = resource_i.ref_id
             rt_i.save()
-
-    for obsolete_template_id in set(existing_template_ids) - set(new_template_ids):
-        rt_i = HydraIface.ResourceType(template_id=obsolete_template_id,
-                                      ref_id = resource_i.ref_id,
-                                      ref_key = resource_i.ref_key)
-        rt_i.delete()
 
     return new_template_ids
 
@@ -586,14 +581,11 @@ class NetworkService(HydraService):
 
         group_id_map = dict()
 
-        #record which groups existed before the update, so groups that are no longer
-        #sent are removed.
-        all_items_before = []
         #Next all the groups
         for group in network.resourcegroups:
 
             #If we get a negative or null group id, we know
-            #it is a new node.
+            #it is a new group.
             if group.id is not None and group.id > 0:
                 g_i = net_i.get_group(group.id)
                 g_i.db.group_name        = group.name
@@ -610,10 +602,7 @@ class NetworkService(HydraService):
             resource_attr_id_map.update(group_attr_id_map)
 
             group_id_map[group.id] = g_i.db.group_id
-            for item in g_i.resourcegroupitems:
-                all_items_before.append(item.db.item_id)
 
-        all_items_after = []
         if network.scenarios is not None:
             for s in network.scenarios:
                 if s.id is not None and s.id > 0:
@@ -622,6 +611,7 @@ class NetworkService(HydraService):
                 else:
                     scenario_id = get_scenario_by_name(network.id, s.name)
                     scen = HydraIface.Scenario(scenario_id = scenario_id)
+
                 scen.db.scenario_name        = s.name
                 scen.db.scenario_description = s.description
                 scen.db.network_id           = net_i.db.network_id
@@ -662,16 +652,8 @@ class NetworkService(HydraService):
 
                     group_item_i.db.ref_id = ref_id
                     group_item_i.save()
-                    all_items_after.append(group_item_i.db.item_id)
-
-            items_to_delete = set(all_items_before) - set(all_items_after)
-            for item_id in items_to_delete:
-                group_item_i = HydraIface.ResourceGroupItem(item_id=item_id)
-                group_item_i.delete()
-                group_item_i.save()
 
         net_i.load_all()
-
         net = get_as_complexmodel(ctx, net_i)
 
         hdb.commit()

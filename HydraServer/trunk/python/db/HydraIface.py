@@ -1,7 +1,7 @@
 import logging
 from soap_server import hydra_complexmodels
 import datetime
-
+from decimal import Decimal
 from HydraLib.util import convert_ordinal_to_datetime
 
 from HydraLib.HydraException import HydraError
@@ -30,6 +30,9 @@ def add_dataset(data_type, val, units, dimension, name="", dataset_id=None, user
 
         A typical use of this would be for setting default values on template items.
     """
+
+    if data_type == 'scalar':
+        val = Decimal(val)
 
     hash_string = "%s %s %s %s %s"
     data_hash  = hash(hash_string%(name, units, dimension, data_type, str(val)))
@@ -82,7 +85,6 @@ def validate_layout(layout_xml):
 
     xmlschema = etree.XMLSchema(xmlschema_doc)
 
-    logging.info(layout_xml)
     try:
         xml_tree = etree.fromstring(layout_xml)
 
@@ -218,9 +220,8 @@ class GenericResource(IfaceBase):
         rs.db.resource_attr_id=resource_attr_id
         rs.load()
 
-        hash_string = "%s %s %s %s %s"
-        data_hash  = hash(hash_string%(name, units, dimension, data_type, str(val)))
-
+        hash_string = "%s %s %s %s %s"%(name, units, dimension, data_type, str(val))
+        data_hash  = hash(hash_string)
         existing_dataset_id = get_data_from_hash(data_hash)
 
         if existing_dataset_id is not None:
@@ -1401,7 +1402,6 @@ class Dataset(IfaceBase):
     def get_datum(self):
         if self.datum is not None:
             return self.datum
-
         if self.db.data_type == 'descriptor':
             datum = Descriptor(data_id = self.db.data_id)
         elif self.db.data_type == 'timeseries':
@@ -1413,6 +1413,8 @@ class Dataset(IfaceBase):
             datum = Scalar(data_id = self.db.data_id)
         elif self.db.data_type == 'array':
             datum = Array(data_id = self.db.data_id)
+        else:
+            raise HydraError("Unrecognised data type: %s"%self.db.data_type)
 
         self.datum = datum
         return datum
@@ -1562,12 +1564,13 @@ class Dataset(IfaceBase):
         return groups
 
     def set_hash(self, val):
-        hash_string = "%s %s %s %s %s"
-        data_hash  = hash(hash_string%(self.db.data_name,
+        hash_string = "%s %s %s %s %s"%(self.db.data_name,
                                        self.db.data_units,
                                        self.db.data_dimen,
                                        self.db.data_type,
-                                       str(val)))
+                                       str(val))
+
+        data_hash  = hash(hash_string)
 
         self.db.data_hash = data_hash
         return data_hash

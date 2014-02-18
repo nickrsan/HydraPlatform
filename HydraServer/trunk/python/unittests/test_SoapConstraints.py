@@ -123,9 +123,11 @@ class TestGroupsInNetwork(test_SoapServer.SoapServerTest):
 
         assert len(resourcegroupitems) == 2
 
-        del(resourcegroupitems[0])
+        result = self.client.service.delete_resourcegroupitem(resourcegroupitems[0].id)
 
-        updated_net = self.client.service.update_network(net)
+        assert result == 'OK'
+
+        updated_net = self.client.service.get_network(net.id)
 
         updated_scenario = updated_net.scenarios.Scenario[0]
         updated_items    = updated_scenario.resourcegroupitems.ResourceGroupItem

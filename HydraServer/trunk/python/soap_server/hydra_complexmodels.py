@@ -61,7 +61,6 @@ def parse_value(data):
                 elif key.find('ts_value') > 0:
                     series = []
                     for val in ts_val[key]:
-                        logging.debug("Evaluating value: %s"%val)
                         series.append(eval(val))
                         ts.append((ordinal_ts_time, eval(val)))
 

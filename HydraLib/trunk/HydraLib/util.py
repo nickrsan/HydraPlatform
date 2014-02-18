@@ -1,9 +1,5 @@
 import datetime
-import logging
-import os
-import glob
-import ConfigParser
-
+from decimal import Decimal
 
 def get_datetime(timestamp):
 
@@ -40,14 +36,14 @@ def timestamp_to_ordinal(timestamp):
     """
     ts_time = get_datetime(timestamp)
     # Convert time to Gregorian ordinal (1 = January 1st, year 1)
-    ordinal_ts_time = ts_time.toordinal()
+    ordinal_ts_time = Decimal(ts_time.toordinal())
     fraction = (ts_time -
                 datetime.datetime(ts_time.year,
                                   ts_time.month,
                                   ts_time.day,
                                   0, 0, 0)).total_seconds()
 
-    fraction = fraction / (86400)
+    fraction = Decimal(fraction) / Decimal(86400)
 
     ordinal_ts_time += fraction
 
@@ -58,7 +54,7 @@ def convert_ordinal_to_datetime(date):
     day = int(date)
     time = date - day
 
-    time_in_secs_ms = time * 86400
+    time_in_secs_ms = Decimal(time) * Decimal(86400)
 
     time_in_secs = int(time_in_secs_ms)
     time_in_ms = int((time_in_secs_ms - time_in_secs) * 100000)

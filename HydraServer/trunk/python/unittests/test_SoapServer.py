@@ -86,6 +86,81 @@ class SoapServerTest(unittest.TestCase):
         new_user = self.client.service.add_user(user)
         return new_user
 
+    def create_template_group(self):
+        group = self.client.service.get_templategroup_by_name('Test Group')
+
+        if group is not None:
+            return group
+
+        link_attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
+        link_attr_2 = self.create_attr("link_attr_2", dimension='Speed')
+        node_attr_1 = self.create_attr("node_attr_1", dimension='Volume')
+        node_attr_2 = self.create_attr("node_attr_2", dimension='Speed')
+
+        group = self.client.factory.create('hyd:TemplateGroup')
+        group.name = 'Test Group'
+
+
+        templates = self.client.factory.create('hyd:TemplateArray')
+        #**********************
+        #TEMPLATE 1           #
+        #**********************
+        template1 = self.client.factory.create('hyd:Template')
+        template1.name = "Test template 1"
+        template1.alias = "Test template alias"
+
+        items = self.client.factory.create('hyd:TemplateItemArray')
+
+        item_1 = self.client.factory.create('hyd:TemplateItem')
+        item_1.attr_id = node_attr_1.id
+        items.TemplateItem.append(item_1)
+
+        item_2 = self.client.factory.create('hyd:TemplateItem')
+        item_2.attr_id = node_attr_2.id
+        items.TemplateItem.append(item_2)
+
+        template1.templateitems = items
+
+        templates.Template.append(template1)
+        #**********************
+        #TEMPLATE 2           #
+        #**********************
+        template2 = self.client.factory.create('hyd:Template')
+        template2.name = "Test template 2"
+
+        items = self.client.factory.create('hyd:TemplateItemArray')
+
+        item_1 = self.client.factory.create('hyd:TemplateItem')
+        item_1.attr_id = link_attr_1.id
+        items.TemplateItem.append(item_1)
+
+        item_2 = self.client.factory.create('hyd:TemplateItem')
+        item_2.attr_id = link_attr_2.id
+        items.TemplateItem.append(item_2)
+
+        template2.templateitems = items
+
+        templates.Template.append(template2)
+
+        group.templates = templates
+
+        new_group = self.client.service.add_templategroup(group)
+
+        assert new_group.name == group.name, "Names are not the same!"
+        assert new_group.id is not None, "New Group has no ID!"
+        assert new_group.id > 0, "New Group has incorrect ID!"
+
+        assert len(new_group.templates) == 1, "Resource templates did not add correctly"
+        for t in new_group.templates.Template[0].templateitems.TemplateItem:
+            assert t.attr_id in (node_attr_1.id, node_attr_2.id);
+            "Node templates were not added correctly!"
+
+        for t in new_group.templates.Template[1].templateitems.TemplateItem:
+            assert t.attr_id in (link_attr_1.id, link_attr_2.id);
+            "Node templates were not added correctly!"
+
+        return new_group
+
     def create_project(self, name):
         project = self.client.factory.create('hyd:Project')
         project.name = 'SOAP test %s'%(datetime.datetime.now())
@@ -108,15 +183,15 @@ class SoapServerTest(unittest.TestCase):
 
         ra_array = self.client.factory.create('hyd:ResourceAttrArray')
 
-        link = dict(
-            id   = None,
-            name = "%s_to_%s"%(node_1_name, node_2_name),
-            description = 'A test link between two nodes.',
-            layout      = None,
-            node_1_id = node_1_id,
-            node_2_id = node_2_id,
-            attributes = ra_array,
-        )
+        link = {
+            'id'          : None,
+            'name'        : "%s_to_%s"%(node_1_name, node_2_name),
+            'description' : 'A test link between two nodes.',
+            'layout'      : None,
+            'node_1_id'   : node_1_id,
+            'node_2_id'   : node_2_id,
+            'attributes'  : ra_array,
+        }
 
         return link
 
@@ -165,12 +240,13 @@ class SoapServerTest(unittest.TestCase):
         logging.debug("Project creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
 
-        #Create some attributes, which we can then use to put data on our nodes
         link_attr1 = self.create_attr("link_attr_1", dimension='Pressure')
         link_attr2 = self.create_attr("link_attr_2", dimension='Speed')
         node_attr1 = self.create_attr("node_attr_1", dimension='Volume')
         node_attr2 = self.create_attr("node_attr_2", dimension='Speed')
         group_attr = self.create_attr("group_attr", dimension='Volume')
+
+        templategroup = self.create_template_group()
 
         logging.debug("Attribute creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
@@ -217,7 +293,23 @@ class SoapServerTest(unittest.TestCase):
             ra_index = ra_index + 1
 
             node['attributes'].ResourceAttr = [node_ra1, node_ra2] 
-            
+
+            grp_summary_arr = self.client.factory.create('hyd:GroupSummaryArray')
+
+            grp_summary = self.client.factory.create('hyd:GroupSummary')
+            grp_summary.id = templategroup.id
+            grp_summary.name = templategroup.name
+
+            tmpl_summary = self.client.factory.create('hyd:TemplateSummary')
+            tmpl_summary.id = templategroup.templates.Template[0].id
+            tmpl_summary.name = templategroup.templates.Template[0].name
+
+            grp_summary.templates.TemplateSummary.append(tmpl_summary)
+
+            grp_summary_arr.GroupSummary.append(grp_summary)
+
+            node['templates'] = grp_summary_arr
+
             nodes.append(node)
 
             if prev_node is not None:
@@ -350,6 +442,7 @@ class SoapServerTest(unittest.TestCase):
             'scenarios'   : scenario_array,
             'resourcegroups' : group_array,
         }
+
         #logging.debug(network)
         start = datetime.datetime.now()
         logging.info("Creating network...")

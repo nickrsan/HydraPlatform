@@ -62,7 +62,7 @@ def parse_templateitem(template_id, attribute):
         unit = default.find('unit').text
         val  = default.find('value').text
         try:
-            Decimal(val)
+            val = Decimal(val)
             data_type = 'scalar'
         except:
             data_type = 'descriptor'
@@ -406,7 +406,8 @@ class TemplateService(HydraService):
         rs = HydraIface.execute(sql)
 
         if len(rs) != 1:
-            raise HydraError("%s is not a valid identifier for a group"%(name))
+            logging.info("%s is not a valid identifier for a group",name)
+            return None
 
         group_id = rs[0].group_id
 
