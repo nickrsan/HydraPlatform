@@ -1,5 +1,4 @@
 import logging
-from soap_server import hydra_complexmodels
 import datetime
 from decimal import Decimal
 from HydraLib.util import convert_ordinal_to_datetime
@@ -421,54 +420,6 @@ class GenericResource(IfaceBase):
 
         return obj_dict
 
-    def get_as_complexmodel(self, time=False):
-        """
-            Converts this object into a spyne.model.ComplexModel type
-            which can be used by the soap library.
-        """
-
-        if time:
-            start = datetime.datetime.now()
-        cm = super(GenericResource, self).get_as_complexmodel()
-
-        #if I have attributes, convert them
-        #and assign them to the new object too.
-        if hasattr(self, 'attributes'):
-            attributes = []
-            for attr in self.get_attributes():
-                if self.name == 'Project':
-                    rs_i = ResourceScenario(scenario_id = 1, resource_attr_id=attr.db.resource_attr_id)
-                    attributes.append(rs_i.get_as_complexmodel())
-                else:
-                    attributes.append(attr.get_as_complexmodel())
-            setattr(cm, 'attributes', attributes)
-            template_groups = self.get_templates()
-
-            template_list = []
-            for group_id, group in template_groups.items():
-                group_name = group['group_name']
-                templates  = group['templates']
-
-                group_summary = hydra_complexmodels.GroupSummary()
-                group_summary.id   = group_id
-                group_summary.name = group_name
-                group_summary.templates = []
-
-                for template_id, template_name in templates:
-                    template_summary = hydra_complexmodels.TemplateSummary()
-                    template_summary.id = template_id
-                    template_summary.name = template_name
-                    group_summary.templates.append(template_summary)
-
-                template_list.append(group_summary)
-
-            setattr(cm, 'templates', template_list)
-
-        if time:
-            logging.info("Complex model conversion of %s took: %s " % (self.name, datetime.datetime.now()-start))
-
-        return cm
-
     def set_ownership(self, user_id, read='Y', write='Y', share='Y'):
         owner = Owner()
         owner.db.ref_key = self.ref_key
@@ -646,21 +597,6 @@ class Scenario(GenericResource):
         obj_dict['resourcegroupitems'] = dict_items
 
         return obj_dict
-
-    def get_as_complexmodel(self):
-        """
-            Override the base function as it needs to add
-            resourcegroup data as well, which isn't picked up
-            by the hydraiface structure.
-        """
-        cm = super(Scenario, self).get_as_complexmodel()
-
-        resourcegroupitems = []
-        for rgi in self.get_resourcegroupitems():
-            resourcegroupitems.append(rgi.get_as_complexmodel())
-        cm.resourcegroupitems = resourcegroupitems
-
-        return cm
 
     def get_resource_items(self):
         self.resourcegroupitems = []
@@ -884,13 +820,6 @@ class ResourceGroup(GenericResource):
         if group_id is not None:
             self.load()
 
-    def get_as_complexmodel(self):
-        cm             = super(ResourceGroup, self).get_as_complexmodel()
-        cm.id          = self.db.group_id
-        cm.name        = self.db.group_name
-        cm.description = self.db.group_description
-        return cm
-
 class ResourceGroupItem(IfaceBase):
     """
         A set of nodes and links
@@ -928,11 +857,6 @@ class ResourceGroupItem(IfaceBase):
             return None
 
         return self.db.resource_group_id
-
-    def get_as_complexmodel(self):
-        cm             = super(ResourceGroupItem, self).get_as_complexmodel()
-        cm.id          = self.db.item_id
-        return cm
 
 class Attr(IfaceBase):
     """
@@ -1067,11 +991,6 @@ class ResourceAttr(IfaceBase):
         #delete the resource attribute
         super(ResourceAttr, self).delete()
 
-    def get_as_complexmodel(self):
-        cm = super(ResourceAttr, self).get_as_complexmodel()
-        cm.id = self.db.resource_attr_id
-
-        return cm
 
 class TemplateItem(IfaceBase):
     """
@@ -1129,22 +1048,6 @@ class Template(IfaceBase):
 
         return item_i
 
-    def get_as_complexmodel(self):
-        tmp          =  hydra_complexmodels.Template()
-        tmp.id       = self.db.template_id
-        tmp.name     = self.db.template_name
-        tmp.alias    = self.db.alias
-        tmp.layout   = self.db.layout
-        tmp.group_id = self.db.group_id
-
-        items = []
-        for item in self.templateitems:
-            items.append(item.get_as_complexmodel())
-
-        tmp.templateitems = items
-
-        return tmp
-
     def delete(self):
         for tmpl_item in self.templateitems:
             tmpl_item.delete()
@@ -1173,19 +1076,6 @@ class TemplateGroup(IfaceBase):
         self.templates.append(template_i)
 
         return template_i
-
-    def get_as_complexmodel(self):
-        grp =  hydra_complexmodels.TemplateGroup()
-        grp.name = self.db.group_name
-        grp.id   = self.db.group_id
-
-        templates = []
-        for template in self.templates:
-            templates.append(template.get_as_complexmodel())
-
-        grp.templates = templates
-
-        return grp
 
     def delete(self):
         for template in self.templates:
@@ -1295,38 +1185,6 @@ class ResourceScenario(IfaceBase):
         obj_dict['value'] = self.dataset.get_as_dict(**kwargs)
 
         return obj_dict
-
-    def get_as_complexmodel(self):
-        """
-            This method overrides the base method as it hides
-            some of the DB complexities from the soap interface
-            and makes a simpler structure
-        """
-        #first create the appropriate soap complex model
-        cm = hydra_complexmodels.ResourceScenario()
-        cm.resource_attr_id = self.db.resource_attr_id
-        cm.attr_id = self.resourceattr.db.attr_id
-
-        if self.get_dataset() is not None:
-            sd_i              = self.dataset
-
-            dataset           = hydra_complexmodels.Dataset()
-            dataset.locked    = sd_i.db.locked
-            dataset.id        = sd_i.db.dataset_id
-            dataset.type      = sd_i.db.data_type
-            dataset.name      = sd_i.db.data_name
-
-            if sd_i.db.locked == 'N':
-                dataset.dimension = sd_i.db.data_dimen
-                dataset.unit      = sd_i.db.data_units
-                dataset.value     = sd_i.get_as_complexmodel()
-            else:
-                #Check if the user requesting this data has permission to see it.
-                pass
-
-            cm.value          = dataset
-
-        return cm
 
 class Dataset(IfaceBase):
     """
@@ -1486,59 +1344,6 @@ class Dataset(IfaceBase):
         obj_dict['value'] = datum.get_as_dict(**kwargs)
 
         return obj_dict
-
-    def get_as_complexmodel(self):
-        """
-            This method overrides the base method as it hides
-            some of the DB complexities from the soap interface
-            and makes a simpler structure, in a ScenarioAttr object.
-        """
-
-        complexmodel = None
-        if self.db.data_type == 'descriptor':
-            d = Descriptor(data_id = self.db.data_id)
-            complexmodel = {'desc_val': [d.get_val()]}
-        elif self.db.data_type == 'timeseries':
-            ts = TimeSeries(data_id=self.db.data_id)
-            ts.load_all()
-            ts_datas = ts.timeseriesdatas
-            ts_values = []
-            for ts in ts_datas:
-                ts_values.append(
-                    {
-                    'ts_time'  : [ts.get_timestamp()],
-                    'ts_value' : ts.db.ts_value
-                })
-            complexmodel = {
-                'ts_values' : ts_values
-            }
-        elif self.db.data_type == 'eqtimeseries':
-            eqts = EqTimeSeries(data_id = self.db.data_id)
-            starttime = convert_ordinal_to_datetime(eqts.db.start_time)
-            starttime = self.time_format.format(starttime.year,
-                                                starttime.month,
-                                                starttime.day,
-                                                starttime.hour,
-                                                starttime.minute,
-                                                starttime.second,
-                                                starttime.microsecond)
-            complexmodel = {
-                'start_time' : starttime,
-                'frequency'  : eqts.db.frequency,
-                'arr_data'   : [eqts.db.arr_data],
-            }
-        elif self.db.data_type == 'scalar':
-            s = Scalar(data_id = self.db.data_id)
-            complexmodel = {
-                 'param_value' : [s.db.param_value],
-            }
-        elif self.db.data_type == 'array':
-            a = Array(data_id = self.db.data_id)
-            complexmodel = {
-                'arr_data' : [a.db.arr_data]
-            }
-
-        return complexmodel
 
     def get_groups(self):
         """
@@ -1888,18 +1693,6 @@ class Constraint(IfaceBase):
 
         return condition_string
 
-    def get_as_complexmodel(self):
-        cm = hydra_complexmodels.Constraint()
-        cm.id = self.db.constraint_id
-        cm.scenario_id = self.db.scenario_id
-        cm.constant    = self.db.constant
-        cm.op          = self.db.op
-
-        grp_1 = ConstraintGroup(constraint=self, group_id = self.db.group_id)
-        cm.value = grp_1.get_as_complexmodel()
-
-        return cm
-
     def get_as_dict(self, **kwargs):
         self.load_all()
         obj_dict = super(Constraint, self).get_as_dict(**kwargs)
@@ -2032,38 +1825,6 @@ class ConstraintGroup(IfaceBase):
             obj_dict['items'].append(item.get_as_dict(**kwargs))
 
         return obj_dict
-
-    def get_as_complexmodel(self):
-
-        str_1 = None
-        str_2 = None
-
-        if self.db.ref_key_1 == 'GRP':
-            group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_1)
-            str_1 = group.get_as_complexmodel()
-        elif self.db.ref_key_1 == 'ITEM':
-            item = ConstraintItem(item_id=self.db.ref_id_1)
-
-            #str_1 = item.db.resource_attr_id
-            if item.db.constant is None:
-                attr_name, ref_key, ref_id, resource_name = item.get_item_details()
-                str_1 = "%s[%s][%s]" % (ref_key, ref_id, attr_name)
-            else:
-                str_1 = item.db.constant
-
-        if self.db.ref_key_2 == 'GRP':
-            group = ConstraintGroup(self.constraint, group_id=self.db.ref_id_2)
-            str_2 = group.get_as_complexmodel()
-        elif self.db.ref_key_2 == 'ITEM':
-            item = ConstraintItem(item_id=self.db.ref_id_2)
-            #str_2 = item.db.resource_attr_id
-            if item.db.constant is None:
-                attr_name, ref_key, ref_id, resource_name = item.get_item_details()
-                str_2 = "%s[%s][%s]" % (ref_key, ref_id, attr_name)
-            else:
-                str_2 = item.db.constant
-
-        return "(%s %s %s)" % (str_1, self.db.op, str_2)
 
 class ConstraintItem(IfaceBase):
     """
