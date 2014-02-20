@@ -7,7 +7,7 @@ if "../../HydraLib/trunk/" not in sys.path:
 
 import logging
 from decimal import getcontext
-getcontext().prec = 15
+getcontext().prec = 26
 
 from spyne.application import Application
 from spyne.protocol.soap import Soap11

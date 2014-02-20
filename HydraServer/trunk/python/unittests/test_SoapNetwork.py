@@ -308,6 +308,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
                    are identical.
         """
         net = self.create_network_with_data()
+
         for node in net.nodes.Node:
             assert node.templates is not None and  len(node.templates) > 0
 
@@ -320,6 +321,16 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             a = net.__getitem__(attr)
             b = updated_net.__getitem__(attr)
             assert str(a) == str(b)
+            #if attr == 'scenarios':
+            #    for s0 in net.scenarios.Scenario:
+            #        for s1 in updated_net.scenarios.Scenario:
+            #            if s0.id == s1.id:
+            #                for rs0 in s0.resourcescenarios.ResourceScenario:
+            #                    for rs1 in s1.resourcescenarios.ResourceScenario:
+            #                        if rs0.resource_attr_id == rs1.resource_attr_id:
+            #                            assert str(rs0.value) == str(rs1.value)
+            #else:
+            #    assert str(a) == str(b)
 
 if __name__ == '__main__':
     test_SoapServer.run()

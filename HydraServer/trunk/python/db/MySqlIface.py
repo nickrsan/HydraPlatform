@@ -142,13 +142,14 @@ def bulk_insert(objs, table_name=""):
 
     def get_val(attr, db_type):
         val = attr
-
         if val is None:
             return None
         elif db_type.find('varchar') != -1 or db_type in ('blob', 'datetime', 'timestamp') :
             return '%s'%val
         elif db_type == 'text':
             return repr(val)
+        elif db_type.lower().find('double') >= 0 or db_type.lower().find('decimal') >= 0:
+            return str(val)
         else:
             return val
 
@@ -339,7 +340,7 @@ class DBIface(object):
             val = self.db_data[name]
 
             #Cast the value to the correct DB data type
-            if db_type.lower().find("double") != -1:
+            if db_type.lower().find("double") != -1 or db_type.lower().find('decimal') >= 0:
                 if type(val) == Decimal:
                     return val
                 dec_val = Decimal(repr(val))

@@ -446,13 +446,13 @@ class SoapServerTest(unittest.TestCase):
         #logging.debug(network)
         start = datetime.datetime.now()
         logging.info("Creating network...")
-        network = self.client.service.add_network(network)
+        new_net = self.client.service.add_network(network)
 
-        assert repr(network.layout) == repr(layout)
+        assert repr(new_net.layout) == repr(layout)
 
         logging.info("Network Creation took: %s"%(datetime.datetime.now()-start))
 
-        return network
+        return new_net
 
     def create_descriptor(self, ResourceAttr, val="test"):
         #A scenario attribute is a piece of data associated

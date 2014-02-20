@@ -1,5 +1,6 @@
 import datetime
-from decimal import Decimal
+import logging
+from decimal import Decimal, ROUND_HALF_UP
 
 def get_datetime(timestamp):
 
@@ -37,15 +38,15 @@ def timestamp_to_ordinal(timestamp):
     ts_time = get_datetime(timestamp)
     # Convert time to Gregorian ordinal (1 = January 1st, year 1)
     ordinal_ts_time = Decimal(ts_time.toordinal())
-    fraction = (ts_time -
+    total_seconds = (ts_time -
                 datetime.datetime(ts_time.year,
                                   ts_time.month,
                                   ts_time.day,
                                   0, 0, 0)).total_seconds()
 
-    fraction = Decimal(fraction) / Decimal(86400)
-
+    fraction = Decimal(repr(total_seconds)) / Decimal(86400)
     ordinal_ts_time += fraction
+    logging.debug("%s converted to %s", timestamp, ordinal_ts_time)
 
     return ordinal_ts_time
 
@@ -53,14 +54,14 @@ def timestamp_to_ordinal(timestamp):
 def convert_ordinal_to_datetime(date):
     day = int(date)
     time = date - day
-
-    time_in_secs_ms = Decimal(time) * Decimal(86400)
+    time_in_secs_ms = (time * Decimal(86400)).quantize(Decimal('.000001'), rounding=ROUND_HALF_UP)
 
     time_in_secs = int(time_in_secs_ms)
-    time_in_ms = int((time_in_secs_ms - time_in_secs) * 100000)
+    time_in_ms = int((time_in_secs_ms - time_in_secs) * 1000000)
 
     td = datetime.timedelta(seconds=int(time_in_secs), microseconds=time_in_ms)
     d = datetime.datetime.fromordinal(day) + td
+    logging.debug("%s converted to %s", date, d)
 
     return d
 
