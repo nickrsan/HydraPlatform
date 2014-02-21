@@ -212,10 +212,13 @@ def add_links(net_i, links, node_id_map):
     iface_links = {}
 
     for l_i in net_i.links:
-        iface_links[(l_i.db.node_1_id, l_i.db.node_2_id)] = l_i
+        iface_links[(l_i.db.node_1_id, l_i.db.node_2_id, l_i.db.link_name)] \
+            = l_i
 
     for link in links:
-        iface_link = iface_links[(node_id_map[link.node_1_id], node_id_map[link.node_2_id])]
+        iface_link = iface_links[(node_id_map[link.node_1_id],
+                                  node_id_map[link.node_2_id],
+                                  link.name)]
         _add_resource_types(iface_link, link.types)
         resource_attrs.extend(_add_attributes(iface_link, link.attributes))
         attrs.extend(link.attributes)

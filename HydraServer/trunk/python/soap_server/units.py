@@ -56,7 +56,7 @@ class UnitService(HydraService):
             new_unit.cf = 0               # Constant conversion factor
             new_unit.lf = 1.47867648e-05  # Linear conversion factor
             new_unit.dimension = 'Volumetric flow rate'
-            new_unit.info = 'A flow of one tablespoon per second.'
+            new_unit.info = 'A flow of one teaspoon per second.'
 
             cli.service.add_unit(new_unit)
         """
