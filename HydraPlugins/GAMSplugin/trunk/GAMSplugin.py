@@ -49,7 +49,7 @@ class GAMSnetwork(HydraNetwork):
                                        res_attr,
                                        None)
 
-        self.set_type(soap_net.templates)
+        self.set_type(soap_net.types)
 
         # load nodes
         for node in soap_net.nodes.Node:
@@ -68,7 +68,7 @@ class GAMSnetwork(HydraNetwork):
                                                res_attr,
                                                None)
 
-            new_node.set_type(node.templates)
+            new_node.set_type(node.types)
             self.add_node(new_node)
             del new_node
 
@@ -91,7 +91,7 @@ class GAMSnetwork(HydraNetwork):
                                                res_attr,
                                                None)
 
-            new_link.set_type(link.templates)
+            new_link.set_type(link.types)
             self.add_link(new_link)
 
 

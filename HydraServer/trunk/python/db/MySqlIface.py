@@ -343,8 +343,12 @@ class DBIface(object):
             if db_type.lower().find("double") != -1 or db_type.lower().find('decimal') >= 0:
                 if type(val) == Decimal:
                     return val
-                dec_val = Decimal(repr(val))
-                return dec_val
+                elif type(val) == str:
+                    return Decimal(val)
+                else:
+                    #otherwise it's a float. To preserve precision repr needs
+                    #to be used
+                    return Decimal(repr(val))
             elif db_type.find('int') != -1:
                 return int(str(val))
             elif db_type == 'blob':

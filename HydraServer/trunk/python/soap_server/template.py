@@ -3,10 +3,9 @@ from spyne.model.complex import Array as SpyneArray
 from spyne.model.primitive import String, Integer, Unicode
 from spyne.decorator import rpc
 from hydra_complexmodels import Template,\
-TemplateGroup,\
-TemplateItem,\
-GroupSummary,\
-TemplateSummary,\
+TemplateType,\
+TypeAttr,\
+TypeSummary,\
 get_as_complexmodel
 
 from db import HydraIface
@@ -42,20 +41,20 @@ def parse_attribute(attribute):
 
     return attr_i
 
-def parse_templateitem(template_id, attribute):
+def parse_typeattr(type_id, attribute):
 
     attr_i = parse_attribute(attribute)
 
     dimension = attribute.find('dimension').text
 
-    templateitem_i = HydraIface.TemplateItem()
-    templateitem_i.db.attr_id = attr_i.db.attr_id
-    templateitem_i.db.template_id = template_id
+    typeattr_i = HydraIface.TypeAttr()
+    typeattr_i.db.attr_id = attr_i.db.attr_id
+    typeattr_i.db.type_id = type_id
 
-    templateitem_i.load()
+    typeattr_i.load()
 
     if attribute.find('is_var') is not None:
-        templateitem_i.db.attr_is_var = attribute.find('is_var').text
+        typeattr_i.db.attr_is_var = attribute.find('is_var').text
 
     if attribute.find('default') is not None:
         default = attribute.find('default')
@@ -72,24 +71,24 @@ def parse_templateitem(template_id, attribute):
                                unit,
                                dimension,
                                name="%s Default"%attr_i.db.attr_name,)
-        templateitem_i.db.default_dataset_id = dataset_id
+        typeattr_i.db.default_dataset_id = dataset_id
 
-    templateitem_i.save()
+    typeattr_i.save()
 
-    return templateitem_i
+    return typeattr_i
 
 class TemplateService(HydraService):
     """
         The template SOAP service
     """
 
-    @rpc(Unicode, _returns=TemplateGroup)
+    @rpc(Unicode, _returns=Template)
     def upload_template_xml(ctx, template_xml):
         """
-            Add the group, template and items described
+            Add the template, type and typeattrs described
             in an XML file.
 
-            Delete template, templateitem entries in the DB that are not in the XML file
+            Delete type, typeattr entries in the DB that are not in the XML file
             The assumption is that they have been deleted and are no longer required.
         """
 
@@ -102,92 +101,92 @@ class TemplateService(HydraService):
 
         xmlschema.assertValid(xml_tree)
 
-        group_name = xml_tree.find('template_name').text
+        template_name = xml_tree.find('template_name').text
 
         sql = """
             select
-                grp.group_id,
-                grp.group_name,
-                tmpl.template_name,
                 tmpl.template_id,
-                tmpl.alias,
-                tmpl.layout,
+                tmpl.template_name,
+                type.type_name,
+                type.type_id,
+                type.alias,
+                type.layout,
                 attr.attr_name,
                 attr.attr_id
             from
-                tTemplateGroup grp,
                 tTemplate tmpl,
-                tTemplateItem item,
+                tTemplateType type,
+                tTypeAttr typeattr,
                 tAttr attr
             where
-                grp.group_name = '%s'
-            and tmpl.group_id  = grp.group_id
-            and item.template_id = tmpl.template_id
-            and attr.attr_id     = item.attr_id
-        """ % group_name
+                tmpl.template_name = '%s'
+            and type.template_id   = tmpl.template_id
+            and typeattr.type_id   = type.type_id
+            and attr.attr_id       = typeattr.attr_id
+        """ % template_name
 
         rs = HydraIface.execute(sql)
 
         if len(rs) > 0:
-            grp_i = HydraIface.TemplateGroup(group_id = rs[0].group_id)
-            grp_i.load_all()
+            tmpl_i = HydraIface.Template(template_id = rs[0].template_id)
+            tmpl_i.load_all()
         else:
-            grp_i = HydraIface.TemplateGroup()
-            grp_i.db.group_name = group_name
-            grp_i.save()
+            tmpl_i = HydraIface.Template()
+            tmpl_i.db.template_name = template_name
+            tmpl_i.save()
 
-        templates = xml_tree.find('resources')
+        types = xml_tree.find('resources')
 
-        #Delete any templates which are in the DB but no longer in the XML file
-        template_name_map = {r.template_name:r.template_id for r in rs}
+        #Delete any types which are in the DB but no longer in the XML file
+        type_name_map = {r.type_name:r.type_id for r in rs}
 
-        existing_templates = set([r.template_name for r in rs])
+        existing_types = set([r.type_name for r in rs])
 
-        new_templates = set([r.find('name').text for r in templates.findall('resource')])
+        new_types = set([r.find('name').text for r in types.findall('resource')])
 
-        templates_to_delete = existing_templates - new_templates
+        types_to_delete = existing_types - new_types
 
-        for template_to_delete in templates_to_delete:
-            template_id = template_name_map[template_to_delete]
-            template_i = HydraIface.Template(template_id=template_id)
-            template_i.load_all()
-            template_i.delete()
-            template_i.save()
+        for type_to_delete in types_to_delete:
+            type_id = type_name_map[type_to_delete]
+            type_i = HydraIface.TemplateType(type_id=type_id)
+            type_i.load_all()
+            type_i.delete()
+            type_i.save()
 
-        #Add or update templates.
-        for resource in templates.findall('resource'):
-            template_name = resource.find('name').text
-            #check if the template is already in the DB. If not, create a new one.
+        #Add or update types.
+        for resource in types.findall('resource'):
+            type_name = resource.find('name').text
+            #check if the type is already in the DB. If not, create a new one.
             for r in rs:
-                if r.template_name == template_name:
-                    template_i = HydraIface.Template(template_id=r.template_id)
+                if r.type_name == type_name:
+                    type_i = HydraIface.TemplateType(type_id=r.type_id)
                     break
             else:
-                template_i = HydraIface.Template()
-                template_i.db.group_id = grp_i.db.group_id
-                template_i.db.template_name = resource.find('name').text
+                type_i = HydraIface.TemplateType()
+                type_i.db.template_id = tmpl_i.db.template_id
+                type_i.db.type_name = resource.find('name').text
 
                 if resource.find('alias') is not None:
-                    template_i.db.alias = resource.find('alias').text
+                    type_i.db.alias = resource.find('alias').text
 
                 if resource.find('layout') is not None and \
                    resource.find('layout').text is not None:
                     layout = unescape(resource.find('layout').text)
                     layout_tree = HydraIface.validate_layout(layout)
                     layout_string = convert_layout_xml_to_dict(layout_tree)
-                    template_i.db.layout = str(layout_string)
+                    type_i.db.layout = str(layout_string)
 
-                template_i.save()
+                type_i.save()
 
-            #delete any TemplateItems which are in the DB but not in the XML file
+            #delete any TypeAttrs which are in the DB but not in the XML file
             existing_attrs = []
             for r in rs:
-                if r.template_name == template_name:
+                if r.type_name == type_name:
                     existing_attrs.append(r.attr_name)
 
             existing_attrs = set(existing_attrs)
 
-            attr_name_map = {r.attr_name:(r.attr_id,r.template_id) for r in rs}
+            attr_name_map = {r.attr_name:(r.attr_id,r.type_id) for r in rs}
 
 
             new_attrs = set([r.find('name').text for r in resource.findall('attribute')])
@@ -195,26 +194,26 @@ class TemplateService(HydraService):
             attrs_to_delete = existing_attrs - new_attrs
 
             for attr_to_delete in attrs_to_delete:
-                attr_id, template_id = attr_name_map[attr_to_delete]
-                attr_i = HydraIface.TemplateItem(attr_id=attr_id, template_id=template_id)
+                attr_id, type_id = attr_name_map[attr_to_delete]
+                attr_i = HydraIface.TypeAttr(attr_id=attr_id, type_id=type_id)
                 attr_i.delete()
                 attr_i.save()
 
-            #Add or update template items
+            #Add or update type typeattrs
             for attribute in resource.findall('attribute'):
-                parse_templateitem(template_i.db.template_id, attribute)
+                parse_typeattr(type_i.db.type_id, attribute)
 
-        grp_i.load_all()
+        tmpl_i.load_all()
 
-        return get_as_complexmodel(ctx, grp_i)
+        return get_as_complexmodel(ctx, tmpl_i)
 
-    @rpc(String, Integer, _returns=SpyneArray(GroupSummary))
-    def get_matching_resource_templates(ctx, resource_type, resource_id):
+    @rpc(String, Integer, _returns=SpyneArray(TypeSummary))
+    def get_matching_resource_types(ctx, resource_type, resource_id):
         """
-            Get the possible types (templates) of a resource by checking its attributes
-            against all available templates.
+            Get the possible types of a resource by checking its attributes
+            against all available types.
 
-            @returns A list of GroupSummary objects.
+            @returns A list of TypeSummary objects.
         """
         resource_i = None
         if resource_type == 'NETWORK':
@@ -226,28 +225,24 @@ class TemplateService(HydraService):
         elif resource_type == 'GROUP':
             resource_i = HydraIface.ResourceGroup(link_id=resource_id)
 
-        template_groups = resource_i.get_templates_by_attr()
-        template_list = []
-        for group_id, group in template_groups.items():
-            group_name = group['group_name']
-            templates  = group['templates']
+        templates = resource_i.get_types_by_attr()
+        type_list = []
+        for template_id, template in templates.items():
+            template_name = template['template_name']
+            types  = template['types']
 
-            group_summary           = GroupSummary()
-            group_summary.id        = group_id
-            group_summary.name      = group_name
-            group_summary.templates = []
+            for type_id, type_name in types:
+                type_summary      = TypeSummary()
+                type_summary.id   = template_id
+                type_summary.name = template_name
+                type_summary.id   = type_id
+                type_summary.name = type_name
 
-            for template_id, template_name in templates:
-                template_summary      = TemplateSummary()
-                template_summary.id   = template_id
-                template_summary.name = template_name
-                group_summary.templates.append(template_summary)
+                type_list.append(type_summary)
 
-            template_list.append(group_summary)
+        return type_list
 
-        return template_list
-
-    @rpc(Integer, String, Integer, _returns=Template)
+    @rpc(Integer, String, Integer, _returns=TemplateType)
     def assign_type_to_resource(ctx, type_id, resource_type, resource_id):
         """Assign new type to a resource. This function checks if the necessary
         attributes are present and adds them if needed. Non existing attributes
@@ -275,238 +270,148 @@ class TemplateService(HydraService):
         for attr in resource_i.attributes:
             existing_attr_ids.append(attr.db.attr_id)
 
-        template_i = HydraIface.Template(template_id=type_id)
-        template_i.load_children()
-        tmpl_attrs = dict()
-        for tmplattr in template_i.templateitems:
-            tmpl_attrs.update({tmplattr.db.attr_id:
-                               tmplattr.db.attr_is_var})
+        type_i = HydraIface.TemplateType(type_id=type_id)
+        type_i.load_children()
+        type_attrs = dict()
+        for typeattr in type_i.typeattrs:
+            type_attrs.update({typeattr.db.attr_id:
+                               typeattr.db.attr_is_var})
 
         # check if attributes exist
-        missing_attr_ids = set(tmpl_attrs.keys()) - set(existing_attr_ids)
+        missing_attr_ids = set(type_attrs.keys()) - set(existing_attr_ids)
 
         # add attributes if necessary
         for attr_id in missing_attr_ids:
-            resource_i.add_attribute(attr_id, attr_is_var=tmpl_attrs[attr_id])
+            resource_i.add_attribute(attr_id, attr_is_var=type_attrs[attr_id])
 
         resource_i.save()
 
         # add type to tResourceType if it doesn't exist already
         resource_type = HydraIface.ResourceType(ref_key=resource_type,
                                                 ref_id=res_id,
-                                                template_id=type_id)
+                                                type_id=type_id)
         if not resource_type.load():
             resource_type.save()
 
-        template = resource_type.get_template()
-        return get_as_complexmodel(ctx, template)
+        templatetype = resource_type.get_type()
+        return get_as_complexmodel(ctx, templatetype)
 
-    @rpc(TemplateGroup, _returns=TemplateGroup)
-    def add_templategroup(ctx, group):
+    @rpc(Template, _returns=Template)
+    def add_template(ctx, template):
         """
-            Add group and a template and items.
+            Add template and a type and typeattrs.
         """
-        grp_i = HydraIface.TemplateGroup()
-        grp_i.db.group_name = group.name
+        tmpl_i = HydraIface.Template()
+        tmpl_i.db.template_name = template.name
 
-        grp_i.save()
+        tmpl_i.save()
 
-        for template in group.templates:
-            rt_i = grp_i.add_template(template.name)
-            for item in template.templateitems:
-                rt_i.add_item(item.attr_id)
+        for templatetype in template.types:
+            rt_i = tmpl_i.add_type(templatetype.name)
+            for typeattr in templatetype.typeattrs:
+                rt_i.add_typeattr(typeattr.attr_id)
 
-        return get_as_complexmodel(ctx, grp_i)
+        return get_as_complexmodel(ctx, tmpl_i)
 
-    @rpc(TemplateGroup, _returns=TemplateGroup)
-    def update_templategroup(ctx, group):
+    @rpc(Template, _returns=Template)
+    def update_template(ctx, template):
         """
-            Update group and a template and items.
+            Update template and a type and typeattrs.
         """
-        grp_i = HydraIface.TemplateGroup(group_id=group.id)
-        grp_i.db.group_name = group.name
-        grp_i.load_all()
+        tmpl_i = HydraIface.Template(template_id=template.id)
+        tmpl_i.db.template_name = template.name
+        tmpl_i.load_all()
 
-        for template in group.templates:
-            if template.id is not None:
-                for tmpl_i in grp_i.templates:
-                    if tmpl_i.db.template_id == template.id:
-                        tmpl_i.db.template_name = template.name
-                        tmpl_i.db.alias = template.alias
-                        tmpl_i.db.layout = template.layout
-                        HydraIface.validate_layout(tmpl_i.db.layout)
-                        tmpl_i.save()
-                        tmpl_i.load_all()
+        for templatetype in template.types:
+            if templatetype.id is not None:
+                for type_i in tmpl_i.templatetypes:
+                    if type_i.db.template_id == templatetype.id:
+                        type_i.db.type_name = templatetype.name
+                        type_i.db.alias     = templatetype.alias
+                        type_i.db.layout    = templatetype.layout
+                        HydraIface.validate_layout(type_i.db.layout)
+                        type_i.save()
+                        type_i.load_all()
                         break
             else:
-                tmpl_i = grp_i.add_template(template.name)
+                type_i = tmpl_i.add_type(templatetype.name)
 
-            for item in template.templateitems:
-                for item_i in tmpl_i.templateitems:
-                    if item_i.db.attr_id == item.attr_id:
+            for typeattr in templatetype.typeattrs:
+                for typeattr_i in type_i.typeattrs:
+                    if typeattr_i.db.attr_id == typeattr.attr_id:
                         break
                 else:
-                    tmpl_i.add_item(item.attr_id)
-                    tmpl_i.save()
+                    type_i.add_typeattr(typeattr.attr_id)
+                    type_i.save()
 
-        grp_i.commit()
-        return get_as_complexmodel(ctx, grp_i)
+        tmpl_i.commit()
+        return get_as_complexmodel(ctx, tmpl_i)
 
-    @rpc(_returns=SpyneArray(TemplateGroup))
-    def get_templategroups(ctx):
+    @rpc(_returns=SpyneArray(Template))
+    def get_templates(ctx):
         """
-            Get all resource template groups.
+            Get all resource template templates.
         """
 
-        groups = []
+        templates = []
 
         sql = """
             select
-                group_id
+                template_id
             from
-                tTemplateGroup
+                tTemplate
         """
 
         rs = HydraIface.execute(sql)
 
         for r in rs:
-            grp_i = HydraIface.TemplateGroup(group_id=r.group_id)
-            grp_i.load_all()
-            grp = get_as_complexmodel(ctx, grp_i)
-            groups.append(grp)
+            tmpl_i = HydraIface.Template(template_id=r.template_id)
+            tmpl_i.load_all()
+            tmpl = get_as_complexmodel(ctx, tmpl_i)
+            templates.append(tmpl)
 
-        return groups
+        return templates
 
-    @rpc(Integer, _returns=TemplateGroup)
-    def get_templategroup(ctx, group_id):
-        """
-            Get a specific resource template group, either by ID or name.
+    @rpc(Integer, Integer, _returns=TemplateType)
+    def remove_attr_from_type(ctx, type_id, attr_id):
         """
 
-        grp_i = HydraIface.TemplateGroup(group_id=group_id)
-        grp_i.load_all()
-        grp = get_as_complexmodel(ctx, grp_i)
-
-        return grp
-
-    @rpc(String, _returns=TemplateGroup)
-    def get_templategroup_by_name(ctx, name):
+            Remove an attribute from a type
         """
-            Get a specific resource template group, either by ID or name.
-        """
-        sql = """
-            select
-                group_id
-            from
-                tTemplateGroup
-            where
-                group_name = '%s'
-        """ % name
-
-        rs = HydraIface.execute(sql)
-
-        if len(rs) != 1:
-            logging.info("%s is not a valid identifier for a group",name)
-            return None
-
-        group_id = rs[0].group_id
-
-        grp_i = HydraIface.TemplateGroup(group_id=group_id)
-        grp_i.load_all()
-        grp = get_as_complexmodel(ctx, grp_i)
-
-        return grp
-
-    @rpc(Template, _returns=Template)
-    def add_template(ctx, template):
-        """
-            Add a resource template with items.
-        """
-        rt_i = HydraIface.Template()
-        rt_i.db.template_name  = template.name
-        rt_i.db.alias  = template.alias
-        rt_i.db.layout = template.layout
-        HydraIface.validate_layout(rt_i.db.layout)
-
-        if template.group_id is not None:
-            rt_i.db.group_id = template.group_id
-        else:
-            rt_i.db.group_id = 1 # 1 is always the default group
-
-        rt_i.save()
-
-        for item in template.templateitems:
-            rt_i.add_item(item.attr_id)
-
-        return get_as_complexmodel(ctx, rt_i)
-
-    @rpc(Template, _returns=Template)
-    def update_template(ctx, template):
-        """
-            Update a resource template and its items.
-            New items will be added. Items not sent will be ignored.
-            To delete items, call delete_templateitem
-        """
-        rt_i = HydraIface.Template(template_id = template.id)
-        rt_i.db.template_name  = template.name
-        rt_i.db.alias  = template.alias
-        rt_i.db.layout = template.layout
-        HydraIface.validate_layout(rt_i.db.layout)
-        rt_i.load_all()
-
-        if template.group_id is not None:
-            rt_i.db.group_id = template.group_id
-        else:
-            rt_i.db.group_id = 1 # 1 is always the default group
-
-        for item in template.templateitems:
-            for item_i in rt_i.templateitems:
-                if item_i.db.attr_id == item.attr_id:
-                    break
-            else:
-                rt_i.add_item(item.attr_id)
-
-        rt_i.save()
-
-        return get_as_complexmodel(ctx, rt_i)
+        typeattr_i = HydraIface.TypeAttr(type_id=type_id, attr_id=attr_id)
+        typeattr_i.delete()
 
     @rpc(Integer, _returns=Template)
     def get_template(ctx, template_id):
         """
-            Get a specific resource template by ID.
+            Get a specific resource template template, either by ID or name.
         """
+
         tmpl_i = HydraIface.Template(template_id=template_id)
         tmpl_i.load_all()
         tmpl = get_as_complexmodel(ctx, tmpl_i)
 
         return tmpl
 
-    @rpc(Integer, String, _returns=Template)
-    def get_template_by_name(ctx, group_id, template_name):
+    @rpc(String, _returns=Template)
+    def get_template_by_name(ctx, name):
         """
-            Get a specific resource template by name.
+            Get a specific resource template, either by ID or name.
         """
-
-        if group_id is None:
-            logging.info("Group is empty, setting group to default group (group_id=1)")
-            group_id = 1 # group 1 is the default
-
         sql = """
             select
-                tmpl.template_id
+                template_id
             from
-                tTemplate tmpl,
-                tTemplateGroup grp
+                tTemplate
             where
-                grp.group_id = %s
-            and tmpl.group_id = grp.group_id
-            and tmpl.template_name = '%s'
-        """ % (group_id, template_name)
+                template_name = '%s'
+        """ % name
 
         rs = HydraIface.execute(sql)
 
         if len(rs) != 1:
-            raise HydraError("%s is not a valid identifier for a template"%(template_name))
+            logging.info("%s is not a valid identifier for a template",name)
+            return None
 
         template_id = rs[0].template_id
 
@@ -516,27 +421,126 @@ class TemplateService(HydraService):
 
         return tmpl
 
-    @rpc(TemplateItem, _returns=Template)
-    def add_templateitem(ctx, item):
+    @rpc(TemplateType, _returns=TemplateType)
+    def add_templatetype(ctx, templatetype):
         """
-            Add an item to an existing template.
+            Add a template type with typeattrs.
         """
-        rt_i = HydraIface.Template(template_id = item.template_id)
+        rt_i = HydraIface.TemplateType()
+        rt_i.db.type_name  = templatetype.name
+        rt_i.db.alias  = templatetype.alias
+        rt_i.db.layout = templatetype.layout
+        HydraIface.validate_layout(rt_i.db.layout)
+
+        if templatetype.template_id is not None:
+            rt_i.db.template_id = templatetype.template_id
+        else:
+            rt_i.db.template_id = 1 # 1 is always the default template
+
+        rt_i.save()
+
+        for typeattr in templatetype.typeattrs:
+            rt_i.add_typeattr(typeattr.attr_id)
+
+        return get_as_complexmodel(ctx, rt_i)
+
+    @rpc(TemplateType, _returns=TemplateType)
+    def update_templatetype(ctx, templatetype):
+        """
+            Update a resource type and its typeattrs.
+            New typeattrs will be added. typeattrs not sent will be ignored.
+            To delete typeattrs, call delete_typeattr
+        """
+        type_i = HydraIface.TemplateType(type_id = templatetype.id)
+        type_i.db.type_name  = templatetype.name
+        type_i.db.alias  = templatetype.alias
+        type_i.db.layout = templatetype.layout
+        HydraIface.validate_layout(type_i.db.layout)
+        type_i.load_all()
+
+        if templatetype.template_id is not None:
+            type_i.db.template_id = templatetype.template_id
+        else:
+            type_i.db.template_id = 1 # 1 is always the default template
+
+        for typeattr in templatetype.typeattrs:
+            for typeattr_i in type_i.typeattrs:
+                if typeattr_i.db.attr_id == typeattr.attr_id:
+                    break
+            else:
+                type_i.add_typeattr(typeattr.attr_id)
+
+        type_i.save()
+
+        return get_as_complexmodel(ctx, type_i)
+
+    @rpc(Integer, _returns=TemplateType)
+    def get_templatetype(ctx, type_id):
+        """
+            Get a specific resource type by ID.
+        """
+        type_i = HydraIface.TemplateType(type_id=type_id)
+        type_i.load_all()
+        templatetype = get_as_complexmodel(ctx, type_i)
+
+        return templatetype
+
+    @rpc(Integer, String, _returns=TemplateType)
+    def get_templatetype_by_name(ctx, template_id, type_name):
+        """
+            Get a specific resource type by name.
+        """
+
+        if template_id is None:
+            logging.info("Template is empty, setting template to default template (template_id=1)")
+            template_id = 1 # template 1 is the default
+
+        sql = """
+            select
+                type.type_id
+            from
+                tTemplateType type,
+                tTemplate tmpl
+            where
+                tmpl.template_id = %s
+            and type.template_id = tmpl.template_id
+            and type.type_name = '%s'
+        """ % (template_id, type_name)
+
+        rs = HydraIface.execute(sql)
+
+        if len(rs) != 1:
+            raise HydraError("%s is not a valid identifier for a type"%(type_name))
+
+        type_id = rs[0].type_id
+
+        type_i = HydraIface.TemplateType(type_id=type_id)
+        type_i.load_all()
+        tmpltype = get_as_complexmodel(ctx, type_i)
+
+        return tmpltype
+
+    @rpc(TypeAttr, _returns=TemplateType)
+    def add_typeattr(ctx, typeattr):
+        """
+            Add an typeattr to an existing type.
+        """
+        rt_i = HydraIface.TemplateType(type_id = typeattr.type_id)
         rt_i.load_all()
-        rt_i.add_item(item.attr_id)
+        rt_i.add_typeattr(typeattr.attr_id)
         rt_i.save()
         return get_as_complexmodel(ctx, rt_i)
 
 
-    @rpc(TemplateItem, _returns=Template)
-    def delete_templateitem(ctx, item):
+    @rpc(TypeAttr, _returns=TemplateType)
+    def delete_typeattr(ctx, typeattr):
         """
-            Remove an item from an existing template
+            Remove an typeattr from an existing type
         """
-        rt_i = HydraIface.Template(template_id = item.template_id)
+        rt_i = HydraIface.TemplateType(type_id = typeattr.type_id)
 
         rt_i.load_all()
-        rt_i.remove_item(item.attr_id)
+        rt_i.remove_typeattr(typeattr.attr_id)
         rt_i.save()
 
         return get_as_complexmodel(ctx, rt_i)
@@ -544,7 +548,7 @@ class TemplateService(HydraService):
     @rpc(Integer, _returns=Unicode)
     def get_network_as_xml_template(ctx, network_id):
         """
-            Turn an existing network into an xml template
+            Turn an existing network into an xml template 
             using its attributes.
             If an optional scenario ID is passed in, default
             values will be populated from that scenario.
@@ -554,8 +558,8 @@ class TemplateService(HydraService):
         net_i = HydraIface.Network(network_id=network_id)
         net_i.load_all()
 
-        template_name = etree.SubElement(template_xml, "template_name")
-        template_name.text = "Templated from Network %s"%(net_i.db.network_name)
+        type_name = etree.SubElement(template_xml, "template_name")
+        type_name.text = "TemplateType from Network %s"%(net_i.db.network_name)
 
         resources = etree.SubElement(template_xml, "resources")
         if net_i.get_attributes():
@@ -574,11 +578,11 @@ class TemplateService(HydraService):
             for net_attr in net_i.get_attributes():
                 _make_attr_element(net_resource, net_attr)
 
-        existing_tmpls = {'NODE': [], 'LINK': []}
+        existing_types = {'NODE': [], 'LINK': []}
         for node_i in net_i.nodes:
             node_attributes = node_i.get_attributes()
             attr_ids = [attr.db.attr_id for attr in node_attributes]
-            if attr_ids>0 and attr_ids not in existing_tmpls['NODE']:
+            if attr_ids>0 and attr_ids not in existing_types['NODE']:
 
                 node_resource    = etree.Element("resource")
 
@@ -595,13 +599,13 @@ class TemplateService(HydraService):
                 for node_attr in node_attributes:
                     _make_attr_element(node_resource, node_attr)
 
-                existing_tmpls['NODE'].append(attr_ids)
+                existing_types['NODE'].append(attr_ids)
                 resources.append(node_resource)
 
         for link_i in net_i.links:
             link_attributes = link_i.get_attributes()
             attr_ids = [attr.db.attr_id for attr in link_attributes]
-            if attr_ids>0 and attr_ids not in existing_tmpls['LINK']:
+            if attr_ids>0 and attr_ids not in existing_types['LINK']:
                 link_resource    = etree.Element("resource")
 
                 resource_type   = etree.SubElement(link_resource, "type")
@@ -617,7 +621,7 @@ class TemplateService(HydraService):
                 for link_attr in link_attributes:
                     _make_attr_element(link_resource, link_attr)
 
-                existing_tmpls['LINK'].append(attr_ids)
+                existing_types['LINK'].append(attr_ids)
                 resources.append(link_resource)
 
         xml_string = etree.tostring(template_xml)
@@ -677,3 +681,4 @@ def convert_layout_xml_to_dict(layout_tree):
         value = layout.find('value').text
         layout_dict[name] = [value]
     return layout_dict
+

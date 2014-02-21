@@ -1,5 +1,5 @@
 <template_definition>
-    <template_name>Test Template</template_name>
+    <template_name>Test XML Template</template_name>
     <resources>
         <resource>
             <type>NODE</type>

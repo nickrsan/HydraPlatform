@@ -27,7 +27,7 @@ def add_dataset(data_type, val, units, dimension, name="", dataset_id=None, user
         Data can exist without scenarios. This is the mechanism whereby
         single pieces of data can be added without doing it through a scenario.
 
-        A typical use of this would be for setting default values on template items.
+        A typical use of this would be for setting default values on types.
     """
 
     if data_type == 'scalar':
@@ -250,12 +250,12 @@ class GenericResource(IfaceBase):
         return rs
 
 
-    def get_templates_by_attr(self):
+    def get_types_by_attr(self):
         """
             Using the attributes of the resource, get all the
-            templates that this resource is in.
-            @returns a dictionary, keyed on the group name, with the
-            value being the list of template names which match the resources
+            types that this resource matches.
+            @returns a dictionary, keyed on the template name, with the
+            value being the list of type names which match the resources
             attributes.
         """
 
@@ -268,103 +268,96 @@ class GenericResource(IfaceBase):
         #Get all template information.
         template_sql = """
             select
-                grp.group_name,
-                grp.group_id,
-                tmpl.template_id,
                 tmpl.template_name,
-                item.attr_id
+                tmpl.template_id,
+                typ.type_id,
+                typ.type_name,
+                tattr.attr_id
             from
-                tTemplateGroup grp,
                 tTemplate tmpl,
-                tTemplateItem item
+                tTemplateType typ,
+                tTypeAttr tattr
             where
-                grp.group_id   = tmpl.group_id
-                and tmpl.template_id = item.template_id
+                tmpl.template_id   = typ.template_id
+                and typ.type_id = tattr.type_id
         """
         rs = execute(template_sql)
 
-        group_dict   = {}
-        template_name_map = {}
+        template_dict   = {}
+        type_name_map = {}
         for r in rs:
-            template_name_map[r.template_id] = r.template_name
+            type_name_map[r.type_id] = r.type_name
 
-            if group_dict.get(r.group_id):
-                if group_dict[r.group_id].get(r.template_id):
-                    group_dict[r.group_id]['templates'][r.template_id].add(r.attr_id)
+            if template_dict.get(r.template_id):
+                if template_dict[r.template_id].get(r.type_id):
+                    template_dict[r.template_id]['types'][r.type_id].add(r.attr_id)
                 else:
-                    group_dict[r.group_id]['templates'][r.template_id] = set([r.attr_id])
+                    template_dict[r.template_id]['types'][r.type_id] = set([r.attr_id])
             else:
-                group_dict[r.group_id] = {
-                                            'group_name' : r.group_name,
-                                            'templates'  : {r.template_id:set([r.attr_id])}
+                template_dict[r.template_id] = {
+                                            'template_name' : r.template_name,
+                                            'types'  : {r.type_id:set([r.attr_id])}
                                          }
 
-        resource_template_groups = {}
-        #Find which template IDS this resources matches by checking if all
-        #the templates attributes are in the resources attribute list.
-        for grp_id, grp in group_dict.items():
-            group_name = grp['group_name']
-            grp_templates = grp['templates']
-            resource_templates = []
-            for template_id, template_items in grp_templates.items():
-                if template_items.issubset(all_attr_ids):
-                    resource_templates.append((template_id, template_name_map[template_id]))
+        resource_type_templates = {}
+        #Find which type IDS this resources matches by checking if all
+        #the types attributes are in the resources attribute list.
+        for tmpl_id, tmpl in template_dict.items():
+            template_name = tmpl['template_name']
+            tmpl_types = tmpl['types']
+            resource_types = []
+            for type_id, type_attrs in tmpl_types.items():
+                if type_attrs.issubset(all_attr_ids):
+                    resource_types.append((type_id, type_name_map[type_id]))
 
-            if len(resource_templates) > 0:
-                resource_template_groups[grp_id] = {'group_name' : group_name,
-                                                    'templates'  : resource_templates
+            if len(resource_types) > 0:
+                resource_type_templates[tmpl_id] = {'template_name' : template_name,
+                                                    'types'  : resource_types
                                                    }
 
-        return resource_template_groups
+        return resource_type_templates
 
-    def get_templates(self):
+    def get_templates_and_types(self):
+        """
+        """
         sql = """
             select
-                rt.template_id,
-                tmp.template_name,
-                grp.group_name,
-                grp.group_id
+                rt.type_id,
+                type.type_name,
+                tmpl.template_name,
+                tmpl.template_id
             from
                 tResourceType rt,
-                tTemplate tmp,
-                tTemplateGroup grp
+                tTemplateType type,
+                tTemplate tmpl
             where
-                rt.ref_key = '%s'
-            and rt.ref_id  = %s
-            and rt.template_id = tmp.template_id
-            and grp.group_id   = tmp.group_id
+                rt.ref_key       = '%s'
+            and rt.ref_id        = %s
+            and rt.type_id       = type.type_id
+            and tmpl.template_id = type.template_id
         """ % (self.ref_key, self.ref_id)
 
         rs = execute(sql)
 
-        group_dict   = {}
+        template_dict   = {}
         for r in rs:
-            if group_dict.get(r.group_id):
-                group_dict[r.group_id]['templates'].append((r.template_id, r.template_name))
+            if template_dict.get(r.template_id):
+                template_dict[r.template_id]['types'].append((r.type_id, r.type_name))
             else:
-                group_dict[r.group_id] = {
-                                            'group_name' : r.group_name,
-                                            'templates'  : [(r.template_id, r.template_name)]
+                template_dict[r.template_id] = {
+                                            'template_name' : r.template_name,
+                                            'types'  : [(r.type_id, r.type_name)]
                                          }
 
-        return group_dict
-
-    def add_templates(self, template_id):
-        pass
+        return template_dict
 
     def validate_layout(self, layout_xml):
         validate_layout(layout_xml)
 
     def get_as_dict(self, **kwargs):
         """
-            Converts this object into a spyne.model.ComplexModel type
-            which can be used by the soap library.
-
-            The time paramater indicates that this function should
-            be timed for debugging purposes
-
-            The user_id parameter controls the contents of the dict
-            should a user not have sufficient privilages to see things
+            Turns object into a dictionary structure so it can be easily
+            transformed into soap objects in the soap library
         """
         time = kwargs.get('time', False)
 
@@ -374,8 +367,9 @@ class GenericResource(IfaceBase):
         obj_dict = super(GenericResource, self).get_as_dict(**kwargs)
 
         obj_dict.update(
-            dict(attributes  = [],
-            templates   = [],
+            dict(
+                attributes  = [],
+                types   = [],
             )
         )
 
@@ -389,31 +383,24 @@ class GenericResource(IfaceBase):
             else:
                 obj_dict['attributes'].append(attr.get_as_dict(**kwargs))
 
-        #Should this go into the complex model code?
         #It is not true to the structure of the DB...
-        template_groups = self.get_templates()
+        templates = self.get_templates_and_types()
 
-        template_list = []
-        for group_id, group in template_groups.items():
-            group_name = group['group_name']
-            templates  = group['templates']
+        type_list = []
+        for template_id, template in templates.items():
+            template_name = template['template_name']
+            types  = template['types']
 
-            group_summary  = dict(
-                    object_type   = "GroupSummary",
-                    group_id      = group_id,
-                    group_name    = group_name,
-                    templates     = [],
-            )
-
-            for template_id, template_name in templates:
-                template = dict(
-                    object_type = "TemplateSummary",
-                    template_id = template_id,
-                    template_name = template_name,
+            for type_id, type_name in types:
+                type_summary = dict(
+                    object_type = "TypeSummary",
+                    template_id      = template_id,
+                    template_name    = template_name,
+                    type_id = type_id,
+                    type_name = type_name,
                     )
-                group_summary['templates'].append(template)
-            template_list.append(group_summary)
-        obj_dict['templates'] = template_list
+                type_list.append(type_summary)
+        obj_dict['types'] = type_list
 
         if time:
             logging.info("get_as_dict of %s took: %s ", self.name, datetime.datetime.now()-start)
@@ -992,119 +979,122 @@ class ResourceAttr(IfaceBase):
         super(ResourceAttr, self).delete()
 
 
-class TemplateItem(IfaceBase):
+class TypeAttr(IfaceBase):
     """
-        A resource template item is a link between a resource template
+        A resource type item is a link between a resource type
         and attributes.
     """
-    def __init__(self, template=None, attr_id = None, template_id = None):
-        IfaceBase.__init__(self, template, self.__class__.__name__)
+    def __init__(self, templatetype=None, attr_id = None, type_id = None):
+        IfaceBase.__init__(self, templatetype, self.__class__.__name__)
 
         self.db.attr_id = attr_id
-        self.db.template_id = template_id
+        self.db.type_id = type_id
 
-        if attr_id is not None and template_id is not None:
+        if attr_id is not None and type_id is not None:
             self.load()
+
+class TemplateType(IfaceBase):
+    """
+        A resource type is a grouping of attributes which define
+        a resource. For example, a "reservoir" type may have "volume",
+        "discharge" and "daily throughput".
+    """
+    def __init__(self, template=None, type_id = None):
+        IfaceBase.__init__(self, template, self.__class__.__name__)
+
+        self.db.type_id = type_id
+        self.typeattrs = []
+
+        if type_id is not None:
+            self.load()
+
+    def add_typeattr(self, attr_id):
+        """
+            Add a resource type item to a resource type.
+        """
+        tattr_i = TypeAttr(templatetype=self)
+        tattr_i.db.attr_id = attr_id
+        tattr_i.db.type_id = self.db.type_id
+
+        #If the item already exists, there's no need to add it again.
+        if tattr_i.load() == False:
+            tattr_i.save()
+            self.typeattrs.append(tattr_i)
+
+        return tattr_i 
+
+    def remove_typeattr(self, attr_id):
+        """
+            remove a type attribute from a template type.
+        """
+        #Only remove the item if it is there.
+        for tattr_i in self.typeattrs:
+            if attr_id == tattr_i.db.attr_id:
+                self.typeattrs.remove(tattr_i)
+                tattr_i.save()
+
+        return tattr_i
+
+    def delete(self):
+        for type_attr in self.typeattrs:
+            type_attr.delete()
+
+        super(TemplateType, self).delete()
 
 class Template(IfaceBase):
     """
-        A resource template is a grouping of attributes which define
-        a resource. For example, a "reservoir" template may have "volume",
-        "discharge" and "daily throughput".
+        A template is a set of types, usually categorised
+        by the plugin which they were defined for.
     """
-    def __init__(self, templategroup = None, template_id = None):
-        IfaceBase.__init__(self, templategroup, self.__class__.__name__)
+    def __init__(self, template_id = None):
+        IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.template_id = template_id
-        self.templateitems = []
-
         if template_id is not None:
             self.load()
 
-    def add_item(self, attr_id):
-        """
-            Add a resource template item to a resource template.
-        """
-        item_i = TemplateItem(template=self)
-        item_i.db.attr_id = attr_id
-        item_i.db.template_id = self.db.template_id
 
-        #If the item already exists, there's no need to add it again.
-        if item_i.load() == False:
-            item_i.save()
-            self.templateitems.append(item_i)
+    def add_templatetype(self, name):
+        type_i = TemplateType(template=self)
+        type_i.db.template_id = self.db.template_id
+        type_i.db.type_name = name
+        type_i.save()
 
-        return item_i
+        self.templatetypes.append(type_i)
 
-    def remove_item(self, attr_id):
-        """
-            remove a resource template item from a resource template.
-        """
-        #Only remove the item if it is there.
-        for item_i in self.templateitems:
-            if attr_id == item_i.db.attr_id:
-                self.templateitems.remove(item_i)
-                item_i.save()
+        return type_i
 
-        return item_i
+    def add_type(self, name):#
+        return self.add_templatetype(name)
 
     def delete(self):
-        for tmpl_item in self.templateitems:
-            tmpl_item.delete()
+        for templatetype in self.templatetypes:
+            templatetype.delete()
 
         super(Template, self).delete()
 
-class TemplateGroup(IfaceBase):
-    """
-        A resource template group is a set of templates, usually categorised
-        by the plugin which they were defined for.
-    """
-    def __init__(self, group_id = None):
-        IfaceBase.__init__(self, None, self.__class__.__name__)
-
-        self.db.group_id = group_id
-        if group_id is not None:
-            self.load()
-
-
-    def add_template(self, name):
-        template_i = Template(templategroup=self)
-        template_i.db.group_id = self.db.group_id
-        template_i.db.template_name = name
-        template_i.save()
-
-        self.templates.append(template_i)
-
-        return template_i
-
-    def delete(self):
-        for template in self.templates:
-            template.delete()
-
-        super(TemplateGroup, self).delete()
-
     def get_as_dict(self, **kwargs):
-        obj_dict = super(TemplateGroup, self).get_as_dict(**kwargs)
+        obj_dict = super(Template, self).get_as_dict(**kwargs)
         return obj_dict
 
 class ResourceType(IfaceBase):
     """
         Records whether a node, link or network has been
-        created based on a particulare template.
+        created based on a particulare type.
     """
-    def __init__(self, ref_key=None, ref_id=None, template_id=None):
+    def __init__(self, ref_key=None, ref_id=None, type_id=None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
         self.db.ref_key = ref_key
         self.db.ref_id = ref_id
-        self.db.template_id = template_id
+        self.db.type_id = type_id
 
-        if None not in (ref_key, ref_id, template_id):
+        if None not in (ref_key, ref_id, type_id):
             self.load()
 
-    def get_template(self):
-        """Return the corresponding Template object.
+    def get_type(self):
+        """Return the corresponding TemplateType object.
         """
-        return Template(template_id=self.db.template_id)
+        return TemplateType(type_id=self.db.type_id)
 
 class ResourceScenario(IfaceBase):
     """
@@ -2091,29 +2081,29 @@ db_hierarchy = dict(
             'resourcescenarios' : ResourceAttr.get_resource_scenarios
         }
     ),
+    templatetype  = dict(
+        obj   = TemplateType,
+        parent = 'template',
+        table_name = 'tTemplateType',
+        pk     = ['type_id']
+    ),
+    typeattr  = dict(
+        obj   = TypeAttr,
+        parent = 'templatetype',
+        table_name = 'tTypeAttr',
+        pk     = ['attr_id', 'type_id'],
+    ),
     template  = dict(
         obj   = Template,
-        parent = 'templategroup',
+        parent = None,
         table_name = 'tTemplate',
         pk     = ['template_id']
-    ),
-    templateitem  = dict(
-        obj   = TemplateItem,
-        parent = 'template',
-        table_name = 'tTemplateItem',
-        pk     = ['attr_id', 'template_id'],
-    ),
-    templategroup  = dict(
-        obj   = TemplateGroup,
-        parent = None,
-        table_name = 'tTemplateGroup',
-        pk     = ['group_id']
     ),
     resourcetype = dict(
         obj   = ResourceType,
         parent = None,
         table_name = 'tResourceType',
-        pk  = ['ref_key', 'ref_id', 'template_id'],
+        pk  = ['ref_key', 'ref_id', 'type_id'],
     ),
     resourcescenario  = dict(
         obj   = ResourceScenario,

@@ -1,26 +1,25 @@
 import test_HydraIface
-import mysql.connector
 from db import HydraIface
 import datetime
 from HydraLib.HydraException import HydraError
 
-class TemplateGroupTest(test_HydraIface.HydraIfaceTest):
+class TemplateTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
-        x = HydraIface.TemplateGroup()
-        x.db.group_name = "test @ %s"%datetime.datetime.now()
+        x = HydraIface.Template()
+        x.db.template_name = "test @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
 
         new_name = "new test @ %s"%datetime.datetime.now()
-        x.db.group_name = new_name
+        x.db.template_name = new_name
         x.save()
         x.commit()
         x.load()
-        assert x.db.group_name == new_name, "Template did not update correctly"
+        assert x.db.template_name == new_name, "Template did not update correctly"
 
     def test_delete(self):
-        x = HydraIface.TemplateGroup()
-        x.db.group_name = "test @ %s"%datetime.datetime.now()
+        x = HydraIface.Template()
+        x.db.template_name = "test @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
 
@@ -28,32 +27,32 @@ class TemplateGroupTest(test_HydraIface.HydraIfaceTest):
         assert x.load() == False, "Delete did not work correctly."
 
     def test_load(self):
-        x = HydraIface.TemplateGroup()
-        x.db.group_name = "test @ %s"%datetime.datetime.now()
+        x = HydraIface.Template()
+        x.db.template_name = "test @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
-        y = HydraIface.TemplateGroup(group_id=x.db.group_id)
+        y = HydraIface.Template(template_id=x.db.template_id)
         assert y.load() == True, "Load did not work correctly"
 
 
-class TemplateTest(test_HydraIface.HydraIfaceTest):
+class TemplateTypeTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
-        x = HydraIface.Template()
+        x = HydraIface.TemplateType()
 
-        x.db.template_name = "test"
+        x.db.type_name = "test"
         x.save()
         x.commit()
 
-        x.db.template_name = "test_new"
+        x.db.type_name = "test_new"
         x.save()
         x.commit()
         x.load()
-        assert x.db.template_name == "test_new", "Template did not update correctly"
+        assert x.db.type_name == "test_new", "TemplateType did not update correctly"
 
     def test_delete(self):
-        x = HydraIface.Template()
-        x.db.template_name = "test @ %s" % datetime.datetime.now()
+        x = HydraIface.TemplateType()
+        x.db.type_name = "test @ %s" % datetime.datetime.now()
         x.save()
         x.commit()
 
@@ -61,47 +60,47 @@ class TemplateTest(test_HydraIface.HydraIfaceTest):
         assert x.load() == False, "Delete did not work correctly."
 
     def test_correct_fk(self):
-        x = HydraIface.TemplateGroup()
-        x.db.group_name = "test @ %s"%datetime.datetime.now()
+        x = HydraIface.Template()
+        x.db.template_name = "test @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
 
-        y = HydraIface.Template()
-        y.db.template_name = 'test_fk'
-        y.db.group_id      = x.db.group_id
+        y = HydraIface.TemplateType()
+        y.db.type_name = 'test_fk'
+        y.db.template_id      = x.db.template_id
 
         y.save()
         y.commit()
         y.load()
 
     def test_incorrect_fk(self):
-        x = HydraIface.TemplateGroup()
-        x.db.group_name = "test @ %s"%datetime.datetime.now()
+        x = HydraIface.Template()
+        x.db.template_name = "test @ %s"%datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
 
-        y = HydraIface.Template()
-        y.db.template_name = 'test_fk'
-        y.db.group_id      = x.db.group_id + 1
+        y = HydraIface.TemplateType()
+        y.db.type_name = 'test_fk'
+        y.db.template_id      = x.db.template_id + 1
         self.assertRaises(HydraError, y.save)
 
     def test_load(self):
-        x = HydraIface.Template()
-        x.db.template_name = "test @ %s" % datetime.datetime.now()
+        x = HydraIface.TemplateType()
+        x.db.type_name = "test @ %s" % datetime.datetime.now()
         x.save()
         x.commit()
         x.load()
-        y = HydraIface.Template(template_id=x.db.template_id)
+        y = HydraIface.TemplateType(type_id=x.db.type_id)
         assert y.load() == True, "Load did not work correctly"
 
-class TemplateItemTest(test_HydraIface.HydraIfaceTest):
+class TypeAttrTest(test_HydraIface.HydraIfaceTest):
 
 
-    def create_template(self, name):
-        x = HydraIface.Template()
-        x.db.template_name = "test @ %s"%(datetime.datetime.now())
+    def create_type(self, name):
+        x = HydraIface.TemplateType()
+        x.db.type_name = "test @ %s"%(datetime.datetime.now())
         x.save()
         x.commit()
         x.load()
@@ -110,24 +109,24 @@ class TemplateItemTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
 
         a = self.create_attribute("attr1")
-        t = self.create_template("template1")
-        t1 = self.create_template("template2")
+        t = self.create_type("type1")
+        t1 = self.create_type("type2")
 
-        x = HydraIface.TemplateItem(attr_id = a.db.attr_id, template_id=t.db.template_id)
+        x = HydraIface.TypeAttr(attr_id = a.db.attr_id, type_id=t.db.type_id)
         x.save()
         x.commit()
 
-        x.db.template_id = t1.db.template_id
+        x.db.type_id = t1.db.type_id
         x.save()
         x.commit()
         x.load()
-        assert x.db.template_id == t1.db.template_id, "TemplateItem did not update correctly"
+        assert x.db.type_id == t1.db.type_id, "TypeAttr did not update correctly"
 
     def test_delete(self):
         a = self.create_attribute("attr1")
-        t = self.create_template("template1")
+        t = self.create_type("type1")
 
-        x = HydraIface.TemplateItem(attr_id = a.db.attr_id, template_id=t.db.template_id)
+        x = HydraIface.TypeAttr(attr_id = a.db.attr_id, type_id=t.db.type_id)
         x.save()
         x.commit()
         x.delete()
@@ -135,37 +134,37 @@ class TemplateItemTest(test_HydraIface.HydraIfaceTest):
 
     def test_fk(self):
         a = self.create_attribute("attr1")
-        t = self.create_template("template1")
+        t = self.create_type("type1")
 
-        x = HydraIface.TemplateItem(attr_id=a.db.attr_id, template_id=0)
+        x = HydraIface.TypeAttr(attr_id=a.db.attr_id, type_id=0)
         self.assertRaises(HydraError, x.save)
 
-        y = HydraIface.TemplateItem(attr_id=0, template_id=t.db.template_id)
+        y = HydraIface.TypeAttr(attr_id=0, type_id=t.db.type_id)
         self.assertRaises(HydraError, y.save)
 
     def test_load(self):
         a = self.create_attribute("attr1")
-        t = self.create_template("template1")
+        t = self.create_type("type1")
 
-        x = HydraIface.TemplateItem(attr_id = a.db.attr_id, template_id=t.db.template_id)
+        x = HydraIface.TypeAttr(attr_id = a.db.attr_id, type_id=t.db.type_id)
         x.save()
         x.commit()
         x.load()
 
-        y = HydraIface.TemplateItem(attr_id = x.db.attr_id, template_id=x.db.template_id)
+        y = HydraIface.TypeAttr(attr_id = x.db.attr_id, type_id=x.db.type_id)
 
         assert y.load() is True, "Load did not work correctly"
 
 
 class TestResourceType(test_HydraIface.HydraIfaceTest):
 
-    def create_template(self, attribute):
-        x = HydraIface.Template()
-        x.db.template_name = "test @ %s"%(datetime.datetime.now())
+    def create_type(self, attribute):
+        x = HydraIface.TemplateType()
+        x.db.type_name = "test @ %s"%(datetime.datetime.now())
         x.save()
         x.commit()
-        it = HydraIface.TemplateItem(attr_id=attribute.db.attr_id,
-                                     template_id=x.db.template_id)
+        it = HydraIface.TypeAttr(attr_id=attribute.db.attr_id,
+                                     type_id=x.db.type_id)
         it.save()
         it.commit()
         x.load()
@@ -181,32 +180,32 @@ class TestResourceType(test_HydraIface.HydraIfaceTest):
 
     def test_load(self):
         attr = self.create_attribute('attr2')
-        tmpl = self.create_template(attr)
+        tmpl = self.create_type(attr)
         node = self.create_resource()
 
-        x = HydraIface.ResourceType('NODE', node.db.node_id, tmpl.db.template_id)
+        x = HydraIface.ResourceType('NODE', node.db.node_id, tmpl.db.type_id)
         x.save()
         x.commit()
         x.load()
 
-        y = HydraIface.ResourceType('NODE', node.db.node_id, tmpl.db.template_id)
+        y = HydraIface.ResourceType('NODE', node.db.node_id, tmpl.db.type_id)
         assert y.load() is True, 'Loading resource type did not work properly.'
 
-    def test_get_template(self):
+    def test_get_type(self):
         attr = self.create_attribute('attr2')
-        tmpl = self.create_template(attr)
+        tmpl = self.create_type(attr)
         node = self.create_resource()
 
-        x = HydraIface.ResourceType('NODE', node.db.node_id, tmpl.db.template_id)
+        x = HydraIface.ResourceType('NODE', node.db.node_id, tmpl.db.type_id)
         x.save()
         x.commit()
         x.load()
 
-        new_tmpl = x.get_template()
+        new_tmpl = x.get_type()
 
-        assert tmpl.db.template_name == new_tmpl.db.template_name and \
-                tmpl.db.template_id == new_tmpl.db.template_id, \
-                'get_template did not work correctly.'
+        assert tmpl.db.type_name == new_tmpl.db.type_name and \
+                tmpl.db.type_id == new_tmpl.db.type_id, \
+                'get_type did not work correctly.'
 
 if __name__ == "__main__":
     test_HydraIface.run() # run all tests

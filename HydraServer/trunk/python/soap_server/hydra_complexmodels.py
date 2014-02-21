@@ -281,89 +281,77 @@ class ResourceAttr(HydraComplexModel):
 
         self.id = obj_dict['resource_attr_id']
 
-class TemplateItem(HydraComplexModel):
+class TypeAttr(HydraComplexModel):
     _type_info = [
         ('attr_id',     Integer),
-        ('template_id', Integer),
+        ('type_id', Integer),
     ]
 
-class Template(HydraComplexModel):
+class TemplateType(HydraComplexModel):
     _type_info = [
         ('id',                    Integer(default=None)),
         ('name',                  String(default=None)),
         ('alias',                 String(default=None)),
         ('layout',                String(default=None)),
-        ('group_id',              Integer(min_occurs=1, default=None)),
-        ('templateitems', SpyneArray(TemplateItem, default=[])),
+        ('template_id',           Integer(min_occurs=1, default=None)),
+        ('typeattrs',             SpyneArray(TypeAttr, default=[])),
     ]
 
     def __init__(self, obj_dict=None):
-        super(Template, self).__init__()
+        super(TemplateType, self).__init__()
         if obj_dict is None:
             return
 
-        self.id        = obj_dict['template_id']
-        self.name      = obj_dict['template_name']
+        self.id        = obj_dict['type_id']
+        self.name      = obj_dict['type_name']
         self.alias     = obj_dict['alias']
         self.layout    = obj_dict['layout']
-        self.group_id  = obj_dict['group_id']
+        self.template_id  = obj_dict['template_id']
 
-        items = []
-        for item_dict in obj_dict['templateitems']:
-            items.append(TemplateItem(item_dict))
+        typeattrs = []
+        for typeattr_dict in obj_dict['typeattrs']:
+            typeattrs.append(TypeAttr(typeattr_dict))
 
-        self.templateitems = items
+        self.typeattrs = typeattrs
 
-class TemplateGroup(HydraComplexModel):
+class Template(HydraComplexModel):
     _type_info = [
         ('id',        Integer(default=None)),
         ('name',      String(default=None)),
-        ('templates', SpyneArray(Template, default=[])),
+        ('types',     SpyneArray(TemplateType, default=[])),
     ]
 
     def __init__(self, obj_dict=None):
-        super(TemplateGroup, self).__init__(obj_dict)
-        if obj_dict is None:
-            return
-
-        self.name = obj_dict['group_name']
-        self.id   = obj_dict['group_id']
-
-class TemplateSummary(HydraComplexModel):
-    _type_info = [
-        ('name',    String),
-        ('id',      Integer),
-    ]
-
-    def __init__(self, obj_dict=None):
-        super(TemplateSummary, self).__init__()
-
+        super(Template, self).__init__(obj_dict)
         if obj_dict is None:
             return
 
         self.name = obj_dict['template_name']
         self.id   = obj_dict['template_id']
 
-class GroupSummary(HydraComplexModel):
+        types = []
+        for templatetype in obj_dict['templatetypes']:
+            types.append(TemplateType(templatetype))
+        self.types = types
+
+class TypeSummary(HydraComplexModel):
     _type_info = [
         ('name',    String),
         ('id',      Integer),
-        ('templates', SpyneArray(TemplateSummary)),
+        ('template_name', String),
+        ('template_id', Integer),
     ]
 
     def __init__(self, obj_dict=None):
-        super(GroupSummary, self).__init__()
+        super(TypeSummary, self).__init__()
 
         if obj_dict is None:
             return
-        self.name = obj_dict['group_name']
-        self.id   = obj_dict['group_id']
 
-        templates = []
-        for template_dict in obj_dict['templates']:
-            templates.append(TemplateSummary(template_dict))
-
-        self.templates = templates
+        self.name = obj_dict['type_name']
+        self.id   = obj_dict['type_id']
+        self.template_name = obj_dict['template_name']
+        self.template_id   = obj_dict['template_id']
 
 class Resource(HydraComplexModel):
     pass
@@ -378,7 +366,7 @@ class Node(Resource):
         ('y',           Decimal(min_occurs=1, default=0)),
         ('status',      String(default='A')),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
-        ('templates',   SpyneArray(GroupSummary, default=[])),
+        ('types',       SpyneArray(TypeSummary, default=[])),
     ]
     def __eq__(self, other):
         super(Node, self).__init__()
@@ -398,7 +386,7 @@ class Link(Resource):
         ('node_2_id',   Integer(default=None)),
         ('status',      String(default='A')),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
-        ('templates',   SpyneArray(GroupSummary, default=[])),
+        ('types',       SpyneArray(TypeSummary, default=[])),
     ]
 
 class ResourceScenario(Resource):
@@ -439,7 +427,7 @@ class ResourceGroup(HydraComplexModel):
         ('description', String(min_occurs=1, default="")),
         ('status',      String(default='A')),
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
-        ('templates',   SpyneArray(GroupSummary, default=[])),
+        ('types',       SpyneArray(TypeSummary, default=[])),
     ]
 
     def __init__(self, obj_dict=None):
@@ -617,7 +605,7 @@ class Network(Resource):
         ('nodes',               SpyneArray(Node, default=[])),
         ('links',               SpyneArray(Link, default=[])),
         ('resourcegroups',      SpyneArray(ResourceGroup, default=[])),
-        ('templates',           SpyneArray(GroupSummary, default=[])),
+        ('types',               SpyneArray(TypeSummary, default=[])),
     ]
 
 class NetworkSummary(Resource):

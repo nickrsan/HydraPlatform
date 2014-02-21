@@ -30,23 +30,23 @@ link_type_dict = {('GW1_Urb1', 'Desal1_Urb2', 'WWTP1_Urb2', 'WWTP1_J2',
                    'Ag1_J2', 'SR4_Ag1', 'J2_Ag2', 'J3_EndPt'): 'defLink'}
 network_type_name = 'hydro-econ'
 
-template_ids = dict()
+type_ids = dict()
 
-for tmpl_name in node_type_dict.values():
-    for tmpl in template.templates.Template:
-        if tmpl.name == tmpl_name:
-            template_ids.update({tmpl.name: tmpl.id})
+for type_name in node_type_dict.values():
+    for tmpltype in template.types.TemplateType:
+        if tmpltype.name == type_name:
+            type_ids.update({tmpltype.name: tmpltype.id})
             break
 
-for tmpl_name in link_type_dict.values():
-    for tmpl in template.templates.Template:
-        if tmpl.name == tmpl_name:
-            template_ids.update({tmpl.name: tmpl.id})
+for type_name in link_type_dict.values():
+    for tmpltype in template.types.TemplateType:
+        if tmpltype.name == type_name:
+            type_ids.update({tmpltype.name: tmpltype.id})
             break
 
-for tmpl in template.templates.Template:
-    if tmpl.name == network_type_name:
-        template_ids.update({tmpl.name: tmpl.id})
+for tmpltype in template.types.TemplateType:
+    if tmpltype.name == network_type_name:
+        type_ids.update({tmpltype.name: tmpltype.id})
         break
 
 with open('result.xml') as f:
@@ -64,15 +64,15 @@ network = cli.service.get_network(network_id, 'N')
 for node in network.nodes.Node:
     for node_name_list in node_type_dict.keys():
         if node.name in node_name_list:
-            type_id = template_ids[node_type_dict[node_name_list]]
+            type_id = type_ids[node_type_dict[node_name_list]]
             cli.service.assign_type_to_resource(type_id, 'NODE', node.id)
 
 
 for link in network.links.Link:
     for link_name_list in link_type_dict.keys():
         if link.name in link_name_list:
-            type_id = template_ids[link_type_dict[link_name_list]]
+            type_id = type_ids[link_type_dict[link_name_list]]
             cli.service.assign_type_to_resource(type_id, 'LINK', link.id)
 
-cli.service.assign_type_to_resource(template_ids[network_type_name], \
+cli.service.assign_type_to_resource(type_ids[network_type_name], \
                                     'NETWORK', network_id)

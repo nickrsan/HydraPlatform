@@ -86,80 +86,80 @@ class SoapServerTest(unittest.TestCase):
         new_user = self.client.service.add_user(user)
         return new_user
 
-    def create_template_group(self):
-        group = self.client.service.get_templategroup_by_name('Test Group')
+    def create_template(self):
+        template = self.client.service.get_template_by_name('Test Template')
 
-        if group is not None:
-            return group
+        if template is not None:
+            return template
 
         link_attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
         link_attr_2 = self.create_attr("link_attr_2", dimension='Speed')
         node_attr_1 = self.create_attr("node_attr_1", dimension='Volume')
         node_attr_2 = self.create_attr("node_attr_2", dimension='Speed')
 
-        group = self.client.factory.create('hyd:TemplateGroup')
-        group.name = 'Test Group'
+        template = self.client.factory.create('hyd:Template')
+        template.name = 'Test Template'
 
 
-        templates = self.client.factory.create('hyd:TemplateArray')
+        types = self.client.factory.create('hyd:TemplateTypeArray')
         #**********************
-        #TEMPLATE 1           #
+        #type 1           #
         #**********************
-        template1 = self.client.factory.create('hyd:Template')
-        template1.name = "Test template 1"
-        template1.alias = "Test template alias"
+        type1 = self.client.factory.create('hyd:TemplateType')
+        type1.name = "Test type 1"
+        type1.alias = "Test type alias"
 
-        items = self.client.factory.create('hyd:TemplateItemArray')
+        typeattrs = self.client.factory.create('hyd:TypeAttrArray')
 
-        item_1 = self.client.factory.create('hyd:TemplateItem')
-        item_1.attr_id = node_attr_1.id
-        items.TemplateItem.append(item_1)
+        typeattr_1 = self.client.factory.create('hyd:TypeAttr')
+        typeattr_1.attr_id = node_attr_1.id
+        typeattrs.TypeAttr.append(typeattr_1)
 
-        item_2 = self.client.factory.create('hyd:TemplateItem')
-        item_2.attr_id = node_attr_2.id
-        items.TemplateItem.append(item_2)
+        typeattr_2 = self.client.factory.create('hyd:TypeAttr')
+        typeattr_2.attr_id = node_attr_2.id
+        typeattrs.TypeAttr.append(typeattr_2)
 
-        template1.templateitems = items
+        type1.typeattrs = typeattrs
 
-        templates.Template.append(template1)
+        types.TemplateType.append(type1)
         #**********************
-        #TEMPLATE 2           #
+        #type 2           #
         #**********************
-        template2 = self.client.factory.create('hyd:Template')
-        template2.name = "Test template 2"
+        type2 = self.client.factory.create('hyd:TemplateType')
+        type2.name = "Test type 2"
 
-        items = self.client.factory.create('hyd:TemplateItemArray')
+        typeattrs = self.client.factory.create('hyd:TypeAttrArray')
 
-        item_1 = self.client.factory.create('hyd:TemplateItem')
-        item_1.attr_id = link_attr_1.id
-        items.TemplateItem.append(item_1)
+        typeattr_1 = self.client.factory.create('hyd:TypeAttr')
+        typeattr_1.attr_id = link_attr_1.id
+        typeattrs.TypeAttr.append(typeattr_1)
 
-        item_2 = self.client.factory.create('hyd:TemplateItem')
-        item_2.attr_id = link_attr_2.id
-        items.TemplateItem.append(item_2)
+        typeattr_2 = self.client.factory.create('hyd:TypeAttr')
+        typeattr_2.attr_id = link_attr_2.id
+        typeattrs.TypeAttr.append(typeattr_2)
 
-        template2.templateitems = items
+        type2.typeattrs = typeattrs
 
-        templates.Template.append(template2)
+        types.TemplateType.append(type2)
 
-        group.templates = templates
+        template.types = types
 
-        new_group = self.client.service.add_templategroup(group)
+        new_template = self.client.service.add_template(template)
 
-        assert new_group.name == group.name, "Names are not the same!"
-        assert new_group.id is not None, "New Group has no ID!"
-        assert new_group.id > 0, "New Group has incorrect ID!"
+        assert new_template.name == template.name, "Names are not the same!"
+        assert new_template.id is not None, "New Template has no ID!"
+        assert new_template.id > 0, "New Template has incorrect ID!"
 
-        assert len(new_group.templates) == 1, "Resource templates did not add correctly"
-        for t in new_group.templates.Template[0].templateitems.TemplateItem:
+        assert len(new_template.types) == 1, "Resource types did not add correctly"
+        for t in new_template.types.TemplateType[0].typeattrs.TypeAttr:
             assert t.attr_id in (node_attr_1.id, node_attr_2.id);
-            "Node templates were not added correctly!"
+            "Node types were not added correctly!"
 
-        for t in new_group.templates.Template[1].templateitems.TemplateItem:
+        for t in new_template.types.TemplateType[1].typeattrs.TypeAttr:
             assert t.attr_id in (link_attr_1.id, link_attr_2.id);
-            "Node templates were not added correctly!"
+            "Node types were not added correctly!"
 
-        return new_group
+        return new_template
 
     def create_project(self, name):
         project = self.client.factory.create('hyd:Project')
@@ -246,7 +246,7 @@ class SoapServerTest(unittest.TestCase):
         node_attr2 = self.create_attr("node_attr_2", dimension='Speed')
         group_attr = self.create_attr("group_attr", dimension='Volume')
 
-        templategroup = self.create_template_group()
+        template = self.create_template()
 
         logging.debug("Attribute creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
@@ -294,21 +294,18 @@ class SoapServerTest(unittest.TestCase):
 
             node['attributes'].ResourceAttr = [node_ra1, node_ra2] 
 
-            grp_summary_arr = self.client.factory.create('hyd:GroupSummaryArray')
+            type_summary_arr = self.client.factory.create('hyd:TypeSummaryArray')
 
-            grp_summary = self.client.factory.create('hyd:GroupSummary')
-            grp_summary.id = templategroup.id
-            grp_summary.name = templategroup.name
 
-            tmpl_summary = self.client.factory.create('hyd:TemplateSummary')
-            tmpl_summary.id = templategroup.templates.Template[0].id
-            tmpl_summary.name = templategroup.templates.Template[0].name
+            type_summary = self.client.factory.create('hyd:TypeSummary')
+            type_summary.id = template.id
+            type_summary.name = template.name
+            type_summary.id = template.types.TemplateType[0].id
+            type_summary.name = template.types.TemplateType[0].name
 
-            grp_summary.templates.TemplateSummary.append(tmpl_summary)
+            type_summary_arr.TypeSummary.append(type_summary)
 
-            grp_summary_arr.GroupSummary.append(grp_summary)
-
-            node['templates'] = grp_summary_arr
+            node['types'] = type_summary_arr
 
             nodes.append(node)
 

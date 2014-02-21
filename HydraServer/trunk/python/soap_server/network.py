@@ -30,46 +30,42 @@ def _add_attributes(resource_i, attributes):
 
     return resource_i.attributes
 
-def _add_resource_types(resource_i, groups):
+def _add_resource_types(resource_i, types):
     """
-    Save a reference to the templates used for this resource.
+    Save a reference to the types used for this resource.
 
-    Template references in the DB but not passed into this
+    Type references in the DB but not passed into this
     function are considered obsolete and are deleted.
 
-    @returns a list of template_ids representing the template ids
+    @returns a list of type_ids representing the type ids
     on the resource.
 
     """
-    if groups is None:
+    if types is None:
         return []
 
-    existing_groups = resource_i.get_templates()
+    existing_templates = resource_i.get_templates_and_types()
 
-    existing_template_ids = []
-    for group_id, group in existing_groups.items():
-        for template_id, template_name in group['templates']:
-            existing_template_ids.append(template_id)
+    existing_type_ids = []
+    for template_id, template in existing_templates.items():
+        for type_id, type_name in template['types']:
+            existing_type_ids.append(type_id)
 
-    new_template_ids = []
-    for group in groups:
+    new_type_ids = []
+    for templatetype in types:
+        new_type_ids.append(templatetype.id)
 
-        templates = group.templates
-
-        for template in templates:
-            new_template_ids.append(template.id)
-
-            if template.id in existing_template_ids:
-                continue
+        if templatetype.id in existing_type_ids:
+            continue
 
 
-            rt_i = HydraIface.ResourceType()
-            rt_i.db.template_id = template.id
-            rt_i.db.ref_key     = resource_i.ref_key
-            rt_i.db.ref_id      = resource_i.ref_id
-            rt_i.save()
+        rt_i = HydraIface.ResourceType()
+        rt_i.db.type_id     = templatetype.id
+        rt_i.db.ref_key     = resource_i.ref_key
+        rt_i.db.ref_id      = resource_i.ref_id
+        rt_i.save()
 
-    return new_template_ids
+    return new_type_ids
 
 def _update_attributes(resource_i, attributes):
     resource_attr_id_map = dict()
@@ -158,7 +154,7 @@ def add_nodes(net_i, nodes):
         if node.id not in node_id_map:
             node_i = iface_nodes[(node.x,node.y,node.name)]
             node_attrs = _add_attributes(node_i, node.attributes)
-            _add_resource_types(node_i, node.templates)
+            _add_resource_types(node_i, node.types)
             resource_attrs.extend(node_attrs)
             attrs.extend(node.attributes)
             #If a temporary ID was given to the node
@@ -220,7 +216,7 @@ def add_links(net_i, links, node_id_map):
 
     for link in links:
         iface_link = iface_links[(node_id_map[link.node_1_id], node_id_map[link.node_2_id])]
-        _add_resource_types(iface_link, link.templates)
+        _add_resource_types(iface_link, link.types)
         resource_attrs.extend(_add_attributes(iface_link, link.attributes))
         attrs.extend(link.attributes)
         link_id_map[link.id] = iface_link.db.link_id
@@ -264,7 +260,7 @@ def add_resource_groups(net_i, resourcegroups):
             grp_i = iface_groups[group.name]
             resource_attrs.extend(_add_attributes(grp_i, group.attributes))
             attrs.extend(group.attributes)
-            _add_resource_types(grp_i, group.templates)
+            _add_resource_types(grp_i, group.types)
             group_id_map[group.id] = grp_i.db.group_id
 
         logging.info("Groups added in %s", get_timing(start_time))
@@ -325,7 +321,7 @@ class NetworkService(HydraService):
         all_attributes     = []
 
         network_attrs  = _add_attributes(net_i, network.attributes)
-        _add_resource_types(net_i, network.templates)
+        _add_resource_types(net_i, network.types)
 
         resource_attrs.extend(network_attrs)
         all_attributes.extend(network.attributes)
@@ -518,7 +514,7 @@ class NetworkService(HydraService):
         net_i.db.network_layout      = network.layout
 
         resource_attr_id_map = _update_attributes(net_i, network.attributes)
-        _add_resource_types(net_i, network.templates)
+        _add_resource_types(net_i, network.types)
 
         #Maps temporary node_ids to real node_ids
         node_id_map = dict()
@@ -544,7 +540,7 @@ class NetworkService(HydraService):
             n.save()
 
             node_attr_id_map = _update_attributes(n, node.attributes)
-            _add_resource_types(n, node.templates)
+            _add_resource_types(n, node.types)
             resource_attr_id_map.update(node_attr_id_map)
 
             node_id_map[node.id] = n.db.node_id
@@ -575,7 +571,7 @@ class NetworkService(HydraService):
             l.save()
 
             link_attr_id_map = _update_attributes(l, link.attributes)
-            _add_resource_types(l, link.templates)
+            _add_resource_types(l, link.types)
             resource_attr_id_map.update(link_attr_id_map)
             link_id_map[link.id] = l.db.link_id
 
@@ -598,7 +594,7 @@ class NetworkService(HydraService):
             g_i.save()
 
             group_attr_id_map = _update_attributes(g_i, group.attributes)
-            _add_resource_types(g_i, group.templates)
+            _add_resource_types(g_i, group.types)
             resource_attr_id_map.update(group_attr_id_map)
 
             group_id_map[group.id] = g_i.db.group_id
@@ -725,7 +721,7 @@ class NetworkService(HydraService):
         node_i.save()
 
         _add_attributes(node_i, node.attributes)
-        _add_resource_types(node_i, node.templates)
+        _add_resource_types(node_i, node.types)
 
         hdb.commit()
         net = get_as_complexmodel(ctx, node_i)
@@ -784,7 +780,7 @@ class NetworkService(HydraService):
         x.db.node_description = node.description
 
         _add_attributes(x, node.attributes)
-        _add_resource_types(x, node.templates)
+        _add_resource_types(x, node.types)
 
         x.save()
         x.commit()
@@ -862,7 +858,7 @@ class NetworkService(HydraService):
         x.save()
 
         _add_attributes(x, link.attributes)
-        _add_resource_types(x, link.templates)
+        _add_resource_types(x, link.types)
         x.commit()
 
         link = get_as_complexmodel(ctx, x)
@@ -885,7 +881,7 @@ class NetworkService(HydraService):
         x.db.link_description = link.description
 
         _add_attributes(x, link.attributes)
-        _add_resource_types(x, link.templates)
+        _add_resource_types(x, link.types)
 
         x.save()
         x.commit()
@@ -946,7 +942,7 @@ class NetworkService(HydraService):
         res_grp_i.save()
 
         _add_attributes(res_grp_i, group.attributes)
-        _add_resource_types(res_grp_i, group.templates)
+        _add_resource_types(res_grp_i, group.types)
         res_grp_i.commit()
 
         group = get_as_complexmodel(ctx, res_grp_i)

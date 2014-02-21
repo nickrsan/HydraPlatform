@@ -5,183 +5,182 @@ import test_SoapServer
 import datetime
 from lxml import etree
 from HydraLib import config
-import logging
 
 class TemplatesTest(test_SoapServer.SoapServerTest):
 
-    def set_group(self, group):
-        self.group = group
+    def set_template(self, template):
+        self.template = template
 
-    def get_group(self):
-        if hasattr(self, 'group'):
-            return self.group
+    def get_template(self):
+        if hasattr(self, 'template'):
+            return self.template
         else:
-            self.test_add_group()
-        return self.group
+            self.test_add_template()
+        return self.template
 
     def test_add_xml(self):
         template_file = open('template.xml', 'r')
 
         file_contents = template_file.read()
 
-        new_grp = self.client.service.upload_template_xml(file_contents)
+        new_tmpl = self.client.service.upload_template_xml(file_contents)
 
-        assert new_grp is not None, "Adding template from XML was not successful!"
+        assert new_tmpl is not None, "Adding template from XML was not successful!"
 
-    def test_add_group(self):
+    def test_add_template(self):
 
         link_attr_1 = self.create_attr("link_attr_1")
         link_attr_2 = self.create_attr("link_attr_2")
         node_attr_1 = self.create_attr("node_attr_1")
         node_attr_2 = self.create_attr("node_attr_2")
 
-        group = self.client.factory.create('hyd:TemplateGroup')
-        group.name = 'Test Group @ %s'%datetime.datetime.now()
+        template = self.client.factory.create('hyd:Template')
+        template.name = 'Test template @ %s'%datetime.datetime.now()
 
 
-        templates = self.client.factory.create('hyd:TemplateArray')
+        types = self.client.factory.create('hyd:TemplateTypeArray')
         #**********************
-        #TEMPLATE 1           #
+        #type 1           #
         #**********************
-        template1 = self.client.factory.create('hyd:Template')
-        template1.name = "Test template 1"
-        template1.alias = "Test template alias"
+        type1 = self.client.factory.create('hyd:TemplateType')
+        type1.name = "Test type 1"
+        type1.alias = "Test type alias"
 
-        items = self.client.factory.create('hyd:TemplateItemArray')
+        tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
-        item_1 = self.client.factory.create('hyd:TemplateItem')
-        item_1.attr_id = node_attr_1.id
-        items.TemplateItem.append(item_1)
+        tattr_1 = self.client.factory.create('hyd:TypeAttr')
+        tattr_1.attr_id = node_attr_1.id
+        tattrs.TypeAttr.append(tattr_1)
 
-        item_2 = self.client.factory.create('hyd:TemplateItem')
-        item_2.attr_id = node_attr_2.id
-        items.TemplateItem.append(item_2)
+        tattr_2 = self.client.factory.create('hyd:TypeAttr')
+        tattr_2.attr_id = node_attr_2.id
+        tattrs.TypeAttr.append(tattr_2)
 
-        template1.templateitems = items
+        type1.typeattrs = tattrs
 
-        templates.Template.append(template1)
+        types.TemplateType.append(type1)
         #**********************
-        #TEMPLATE 2           #
+        #type 2           #
         #**********************
-        template2 = self.client.factory.create('hyd:Template')
-        template2.name = "Test template 2"
+        type2 = self.client.factory.create('hyd:TemplateType')
+        type2.name = "Test type 2"
 
-        items = self.client.factory.create('hyd:TemplateItemArray')
+        tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
-        item_1 = self.client.factory.create('hyd:TemplateItem')
-        item_1.attr_id = link_attr_1.id
-        items.TemplateItem.append(item_1)
+        tattr_1 = self.client.factory.create('hyd:TypeAttr')
+        tattr_1.attr_id = link_attr_1.id
+        tattrs.TypeAttr.append(tattr_1)
 
-        item_2 = self.client.factory.create('hyd:TemplateItem')
-        item_2.attr_id = link_attr_2.id
-        items.TemplateItem.append(item_2)
+        tattr_2 = self.client.factory.create('hyd:TypeAttr')
+        tattr_2.attr_id = link_attr_2.id
+        tattrs.TypeAttr.append(tattr_2)
 
-        template2.templateitems = items
+        type2.typeattrs = tattrs
 
-        templates.Template.append(template2)
+        types.TemplateType.append(type2)
 
 
-        group.templates = templates
+        template.types = types
 
-        new_group = self.client.service.add_templategroup(group)
+        new_template = self.client.service.add_template(template)
 
-        assert new_group.name == group.name, "Names are not the same!"
-        assert new_group.id is not None, "New Group has no ID!"
-        assert new_group.id > 0, "New Group has incorrect ID!"
+        assert new_template.name == template.name, "Names are not the same!"
+        assert new_template.id is not None, "New Template has no ID!"
+        assert new_template.id > 0, "New Template has incorrect ID!"
 
-        assert len(new_group.templates) == 1, "Resource templates did not add correctly"
-        for t in new_group.templates.Template[0].templateitems.TemplateItem:
+        assert len(new_template.types) == 1, "Resource types did not add correctly"
+        for t in new_template.types.TemplateType[0].typeattrs.TypeAttr:
             assert t.attr_id in (node_attr_1.id, node_attr_2.id);
-            "Node templates were not added correctly!"
+            "Node types were not added correctly!"
 
-        for t in new_group.templates.Template[1].templateitems.TemplateItem:
+        for t in new_template.types.TemplateType[1].typeattrs.TypeAttr:
             assert t.attr_id in (link_attr_1.id, link_attr_2.id);
-            "Node templates were not added correctly!"
+            "Node types were not added correctly!"
 
-        self.set_group(new_group)
+        self.set_template(new_template)
 
-    def test_update_group(self):
+    def test_update_template(self):
 
-
-        attr_1 = self.create_attr("testattr_1")
-        attr_2 = self.create_attr("testattr_2")
-        attr_3 = self.create_attr("testattr_3")
-
-        group = self.client.factory.create('hyd:TemplateGroup')
-
-        group.name = 'Test Group @ %s'%datetime.datetime.now()
-
-        templates = self.client.factory.create('hyd:TemplateArray')
-
-        template_1 = self.client.factory.create('hyd:Template')
-        template_1.name = "Test template 1"
-        template_1.name = "Test template 1 alias"
-
-        template_2 = self.client.factory.create('hyd:Template')
-        template_2.name = "Test template 2"
-        template_2.name = "Test template 2 alias"
-
-        items_1 = self.client.factory.create('hyd:TemplateItemArray')
-        items_2 = self.client.factory.create('hyd:TemplateItemArray')
-
-        item_1 = self.client.factory.create('hyd:TemplateItem')
-        item_1.attr_id = attr_1.id
-        items_1.TemplateItem.append(item_1)
-
-        item_2 = self.client.factory.create('hyd:TemplateItem')
-        item_2.attr_id = attr_2.id
-        items_2.TemplateItem.append(item_2)
-
-        templates.Template.append(template_1)
-        templates.Template.append(template_2)
-
-        template_1.templateitems = items_1
-        template_2.templateitems = items_2
-
-        group.templates = templates
-
-        new_group = self.client.service.add_templategroup(group)
-
-        assert new_group.name == group.name, "Names are not the same!"
-        assert new_group.id is not None, "New Group has no ID!"
-        assert new_group.id > 0, "New Group has incorrect ID!"
-
-        assert len(new_group.templates[0]) == 2, "Resource templates did not add correctly"
-        assert len(new_group.templates[0][0].templateitems[0]) == 1, "Resource template items did not add correctly"
-
-        #update the name of one of the templates
-        new_group.templates[0][0].name = "Test template 3"
-        updated_template_id = new_group.templates[0][0].id
-
-        #add an item to one of the templates
-        item_3 = self.client.factory.create('hyd:TemplateItem')
-        item_3.attr_id = attr_3.id
-        new_group.templates[0][0].templateitems.TemplateItem.append(item_3)
-
-        updated_group = self.client.service.update_templategroup(new_group)
-
-        assert updated_group.name == group.name, "Names are not the same!"
-
-        updated_template = None
-        for tmpl in new_group.templates.Template:
-            if tmpl.id == updated_template_id:
-                updated_template = tmpl
-                break
-
-        assert updated_template.name == "Test template 3", "Resource templates did not update correctly"
-
-        assert len(updated_template.templateitems[0]) == 2, "Resource template items did not update correctly"
-
-    def test_add_template(self):
 
         attr_1 = self.create_attr("testattr_1")
         attr_2 = self.create_attr("testattr_2")
         attr_3 = self.create_attr("testattr_3")
 
         template = self.client.factory.create('hyd:Template')
-        template.name = "Test template name @ %s"%(datetime.datetime.now())
-        template.alias = "%s alias" % template.name
-        template.layout = """
+
+        template.name = 'Test Template @ %s'%datetime.datetime.now()
+
+        types = self.client.factory.create('hyd:TemplateTypeArray')
+
+        type_1 = self.client.factory.create('hyd:TemplateType')
+        type_1.name = "Test type 1"
+        type_1.name = "Test type 1 alias"
+
+        type_2 = self.client.factory.create('hyd:TemplateType')
+        type_2.name = "Test type 2"
+        type_2.name = "Test type 2 alias"
+
+        tattrs_1 = self.client.factory.create('hyd:TypeAttrArray')
+        tattrs_2 = self.client.factory.create('hyd:TypeAttrArray')
+
+        tattr_1 = self.client.factory.create('hyd:TypeAttr')
+        tattr_1.attr_id = attr_1.id
+        tattrs_1.TypeAttr.append(tattr_1)
+
+        tattr_2 = self.client.factory.create('hyd:TypeAttr')
+        tattr_2.attr_id = attr_2.id
+        tattrs_2.TypeAttr.append(tattr_2)
+
+        types.TemplateType.append(type_1)
+        types.TemplateType.append(type_2)
+
+        type_1.typeattrs = tattrs_1
+        type_2.typeattrs = tattrs_2
+
+        template.types = types
+
+        new_template = self.client.service.add_template(template)
+
+        assert new_template.name == template.name, "Names are not the same!"
+        assert new_template.id is not None, "New Template has no ID!"
+        assert new_template.id > 0, "New Template has incorrect ID!"
+
+        assert len(new_template.types[0]) == 2, "Resource types did not add correctly"
+        assert len(new_template.types[0][0].typeattrs[0]) == 1, "Resource type attrs did not add correctly"
+
+        #update the name of one of the types
+        new_template.types[0][0].name = "Test type 3"
+        updated_type_id = new_template.types[0][0].id
+
+        #add an template attr to one of the types
+        tattr_3 = self.client.factory.create('hyd:TypeAttr')
+        tattr_3.attr_id = attr_3.id
+        new_template.types[0][0].typeattrs.TypeAttr.append(tattr_3)
+
+        updated_template = self.client.service.update_template(new_template)
+
+        assert updated_template.name == template.name, "Names are not the same!"
+
+        updated_type = None
+        for tmpltype in new_template.types.TemplateType:
+            if tmpltype.id == updated_type_id:
+                updated_type = tmpltype
+                break
+
+        assert updated_type.name == "Test type 3", "Resource types did not update correctly"
+
+        assert len(updated_type.typeattrs[0]) == 2, "Resource type template attr did not update correctly"
+
+    def test_add_type(self):
+
+        attr_1 = self.create_attr("testattr_1")
+        attr_2 = self.create_attr("testattr_2")
+        attr_3 = self.create_attr("testattr_3")
+
+        templatetype = self.client.factory.create('hyd:TemplateType')
+        templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
+        templatetype.alias = "%s alias" % templatetype.name
+        templatetype.layout = """
             <resource_layout>
                 <layout>
                     <name>color</name>
@@ -194,195 +193,195 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             </resource_layout>
         """
 
-        items = self.client.factory.create('hyd:TemplateItemArray')
+        tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
-        item_1 = self.client.factory.create('hyd:TemplateItem')
-        item_1.attr_id = attr_1.id
-        items.TemplateItem.append(item_1)
+        tattr_1 = self.client.factory.create('hyd:TypeAttr')
+        tattr_1.attr_id = attr_1.id
+        tattrs.TypeAttr.append(tattr_1)
 
-        item_2 = self.client.factory.create('hyd:TemplateItem')
-        item_2.attr_id = attr_2.id
-        items.TemplateItem.append(item_2)
+        tattr_2 = self.client.factory.create('hyd:TypeAttr')
+        tattr_2.attr_id = attr_2.id
+        tattrs.TypeAttr.append(tattr_2)
 
-        item_3 = self.client.factory.create('hyd:TemplateItem')
-        item_3.attr_id = attr_3.id
-        items.TemplateItem.append(item_3)
+        tattr_3 = self.client.factory.create('hyd:TypeAttr')
+        tattr_3.attr_id = attr_3.id
+        tattrs.TypeAttr.append(tattr_3)
 
-        template.templateitems = items
+        templatetype.typeattrs = tattrs
 
-        new_template = self.client.service.add_template(template)
+        new_type = self.client.service.add_templatetype(templatetype)
 
-        assert new_template.name == template.name, "Names are not the same!"
-        assert new_template.alias == template.alias, "Aliases are not the same!"
-        assert new_template.layout == template.layout, "Layouts are not the same!"
-        assert new_template.id is not None, "New template has no ID!"
-        assert new_template.id > 0, "New template has incorrect ID!"
+        assert new_type.name == templatetype.name, "Names are not the same!"
+        assert new_type.alias == templatetype.alias, "Aliases are not the same!"
+        assert new_type.layout == templatetype.layout, "Layouts are not the same!"
+        assert new_type.id is not None, "New type has no ID!"
+        assert new_type.id > 0, "New type has incorrect ID!"
 
-        assert len(new_template.templateitems[0]) == 3, "Resource template items did not add correctly"
+        assert len(new_type.typeattrs[0]) == 3, "Resource type attrs did not add correctly"
 
-        return new_template
+        return new_type 
 
-    def test_update_template(self):
+    def test_update_type(self):
 
         attr_1 = self.create_attr("testattr_1")
         attr_2 = self.create_attr("testattr_2")
         attr_3 = self.create_attr("testattr_3")
 
-        template = self.client.factory.create('hyd:Template')
-        template.name = "Test template name @ %s" % (datetime.datetime.now())
-        template.alias = template.name + " alias"
-        template.group_id = self.get_group().id
+        templatetype = self.client.factory.create('hyd:TemplateType')
+        templatetype.name = "Test type name @ %s" % (datetime.datetime.now())
+        templatetype.alias = templatetype.name + " alias"
+        templatetype.template_id = self.get_template().id
 
-        items = self.client.factory.create('hyd:TemplateItemArray')
+        tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
-        item_1 = self.client.factory.create('hyd:TemplateItem')
-        item_1.attr_id = attr_1.id
-        items.TemplateItem.append(item_1)
+        tattr_1 = self.client.factory.create('hyd:TypeAttr')
+        tattr_1.attr_id = attr_1.id
+        tattrs.TypeAttr.append(tattr_1)
 
-        item_2 = self.client.factory.create('hyd:TemplateItem')
-        item_2.attr_id = attr_2.id
-        items.TemplateItem.append(item_2)
+        tattr_2 = self.client.factory.create('hyd:TypeAttr')
+        tattr_2.attr_id = attr_2.id
+        tattrs.TypeAttr.append(tattr_2)
 
-        template.templateitems = items
+        templatetype.typeattrs = tattrs
 
-        new_template = self.client.service.add_template(template)
+        new_type = self.client.service.add_templatetype(templatetype)
 
-        assert new_template.name == template.name, "Names are not the same!"
-        assert new_template.alias == template.alias, "Aliases are not the same!"
-        assert new_template.id is not None, "New template has no ID!"
-        assert new_template.id > 0, "New template has incorrect ID!"
+        assert new_type.name == templatetype.name, "Names are not the same!"
+        assert new_type.alias == templatetype.alias, "Aliases are not the same!"
+        assert new_type.id is not templatetype, "New type has no ID!"
+        assert new_type.id > 0, "New type has incorrect ID!"
 
-        assert len(new_template.templateitems[0]) == 2, "Resource template items did not add correctly"
+        assert len(new_type.typeattrs[0]) == 2, "Resource type attrs did not add correctly"
 
-        new_template.name = "Updated template name @ %s"%(datetime.datetime.now())
-        new_template.alias = template.name + " alias"
+        new_type.name = "Updated type name @ %s"%(datetime.datetime.now())
+        new_type.alias = templatetype.name + " alias"
 
-        items = self.client.factory.create('hyd:TemplateItemArray')
+        tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
-        item_3 = self.client.factory.create('hyd:TemplateItem')
-        item_3.attr_id = attr_3.id
-        items.TemplateItem.append(item_3)
+        tattr_3 = self.client.factory.create('hyd:TypeAttr')
+        tattr_3.attr_id = attr_3.id
+        tattrs.TypeAttr.append(tattr_3)
 
-        new_template.templateitems = items
+        new_type.typeattrs = tattrs
 
-        updated_template = self.client.service.update_template(new_template)
+        updated_type = self.client.service.update_templatetype(new_type)
 
-        assert new_template.name == updated_template.name, "Names are not the same!"
-        assert new_template.alias == updated_template.alias, "Aliases are not the same!"
-        assert new_template.id == updated_template.id, "template ids to not match!"
-        assert new_template.id > 0, "New template has incorrect ID!"
+        assert new_type.name == updated_type.name, "Names are not the same!"
+        assert new_type.alias == updated_type.alias, "Aliases are not the same!"
+        assert new_type.id == updated_type.id, "type ids to not match!"
+        assert new_type.id > 0, "New type has incorrect ID!"
 
-        assert len(updated_template.templateitems[0]) == 3, "Resource template items did not update correctly"
+        assert len(updated_type.typeattrs[0]) == 3, "Resource type attrs did not update correctly"
+
+    def test_get_type(self):
+        new_type = self.get_template().types.TemplateType[0]
+        new_type = self.client.service.get_templatetype(new_type.id)
+        assert new_type is not None, "Resource type attrs not retrived by ID!"
+
+    def test_get_type_by_name(self):
+        new_type = self.get_template().types.TemplateType[0]
+        new_type = self.client.service.get_templatetype_by_name(new_type.template_id, new_type.name)
+        assert new_type is not None, "Resource type attrs not retrived by name!"
+
+
+    def test_add_typeattr(self):
+
+
+        attr_1 = self.create_attr("testattr_1")
+        attr_2 = self.create_attr("testattr_2")
+        attr_3 = self.create_attr("testattr_3")
+
+        templatetype = self.client.factory.create('hyd:TemplateType')
+        templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
+        templatetype.alias = templatetype.name + " alias"
+        templatetype.template_id = self.get_template().id
+
+        tattrs = self.client.factory.create('hyd:TypeAttrArray')
+
+        tattr_1 = self.client.factory.create('hyd:TypeAttr')
+        tattr_1.attr_id = attr_1.id
+        tattrs.TypeAttr.append(tattr_1)
+
+        tattr_2 = self.client.factory.create('hyd:TypeAttr')
+        tattr_2.attr_id = attr_2.id
+        tattrs.TypeAttr.append(tattr_2)
+
+        templatetype.typeattrs = tattrs
+
+        new_type = self.client.service.add_templatetype(templatetype)
+
+        tattr_3 = self.client.factory.create('hyd:TypeAttr')
+        tattr_3.attr_id = attr_3.id
+        tattr_3.type_id = new_type.id
+
+
+        updated_type = self.client.service.add_typeattr(tattr_3)
+
+        assert len(updated_type.typeattrs[0]) == 3, "Resource type attr did not add correctly"
+
+
+    def test_delete_typeattr(self):
+
+
+        attr_1 = self.create_attr("testattr_1")
+        attr_2 = self.create_attr("testattr_2")
+
+        templatetype = self.client.factory.create('hyd:TemplateType')
+        templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
+        templatetype.alias = templatetype.name + " alias"
+
+        tattrs = self.client.factory.create('hyd:TypeAttrArray')
+
+        tattr_1 = self.client.factory.create('hyd:TypeAttr')
+        tattr_1.attr_id = attr_1.id
+        tattrs.TypeAttr.append(tattr_1)
+
+        tattr_2 = self.client.factory.create('hyd:TypeAttr')
+        tattr_2.attr_id = attr_2.id
+        tattrs.TypeAttr.append(tattr_2)
+
+        templatetype.typeattrs = tattrs
+
+        new_type = self.client.service.add_templatetype(templatetype)
+
+        tattr_2.type_id = new_type.id
+
+        updated_type = self.client.service.delete_typeattr(tattr_2)
+
+        assert len(updated_type.typeattrs[0]) == 1, "Resource type attr did not add correctly"
+
+
+
+    def test_get_templates(self):
+        templates = self.client.service.get_templates()
+        assert len(templates) > 0, "Templates were not retrieved!"
+
 
     def test_get_template(self):
-        new_template = self.get_group().templates.Template[0]
-        new_template = self.client.service.get_template(new_template.id)
-        assert new_template is not None, "Resource template items not retrived by ID!"
+        template = self.get_template()
+        new_template = self.client.service.get_template(template.id)
 
-    def test_get_template_by_name(self):
-        new_template = self.get_group().templates.Template[0]
-        new_template = self.client.service.get_template(new_template.group_id, new_template.name)
-        assert new_template is not None, "Resource template items not retrived by name!"
-
-
-    def test_add_item(self):
-
-
-        attr_1 = self.create_attr("testattr_1")
-        attr_2 = self.create_attr("testattr_2")
-        attr_3 = self.create_attr("testattr_3")
-
-        template = self.client.factory.create('hyd:Template')
-        template.name = "Test template name @ %s"%(datetime.datetime.now())
-        template.alias = template.name + " alias"
-        template.group_id = self.get_group().id
-
-        items = self.client.factory.create('hyd:TemplateItemArray')
-
-        item_1 = self.client.factory.create('hyd:TemplateItem')
-        item_1.attr_id = attr_1.id
-        items.TemplateItem.append(item_1)
-
-        item_2 = self.client.factory.create('hyd:TemplateItem')
-        item_2.attr_id = attr_2.id
-        items.TemplateItem.append(item_2)
-
-        template.templateitems = items
-
-        new_template = self.client.service.add_template(template)
-
-        item_3 = self.client.factory.create('hyd:TemplateItem')
-        item_3.attr_id = attr_3.id
-        item_3.template_id = new_template.id
-
-
-        updated_template = self.client.service.add_templateitem(item_3)
-
-        assert len(updated_template.templateitems[0]) == 3, "Resource template item did not add correctly"
-
-
-    def test_delete_item(self):
-
-
-        attr_1 = self.create_attr("testattr_1")
-        attr_2 = self.create_attr("testattr_2")
-
-        template = self.client.factory.create('hyd:Template')
-        template.name = "Test template name @ %s"%(datetime.datetime.now())
-        template.alias = template.name + " alias"
-
-        items = self.client.factory.create('hyd:TemplateItemArray')
-
-        item_1 = self.client.factory.create('hyd:TemplateItem')
-        item_1.attr_id = attr_1.id
-        items.TemplateItem.append(item_1)
-
-        item_2 = self.client.factory.create('hyd:TemplateItem')
-        item_2.attr_id = attr_2.id
-        items.TemplateItem.append(item_2)
-
-        template.templateitems = items
-
-        new_template = self.client.service.add_template(template)
-
-        item_2.template_id = new_template.id
-
-        updated_template = self.client.service.delete_templateitem(item_2)
-
-        assert len(updated_template.templateitems[0]) == 1, "Resource template item did not add correctly"
+        assert new_template.name == template.name, "Names are not the same! Retrieval by ID did not work!"
 
 
 
-    def test_get_groups(self):
-        groups = self.client.service.get_templategroups()
-        assert len(groups) > 0, "Groups were not retrieved!"
+    def test_get_template_by_name_good(self):
+        template = self.get_template()
+        new_template = self.client.service.get_template_by_name(template.name)
 
+        assert new_template.name == template.name, "Names are not the same! Retrieval by name did not work!"
 
-    def test_get_group(self):
-        group = self.get_group()
-        new_group = self.client.service.get_templategroup(group.id)
+    def test_get_template_by_name_bad(self):
+        new_template = self.client.service.get_template_by_name("Not a template!")
 
-        assert new_group.name == group.name, "Names are not the same! Retrieval by ID did not work!"
+        assert new_template is None
 
+    def test_add_resource_type(self):
 
-
-    def test_get_group_by_name_good(self):
-        group = self.get_group()
-        new_group = self.client.service.get_templategroup_by_name(group.name)
-
-        assert new_group.name == group.name, "Names are not the same! Retrieval by name did not work!"
-
-    def test_get_group_by_name_bad(self):
-        new_group = self.client.service.get_templategroup_by_name("Not a group!")
-
-        assert new_group is None
-
-    def test_add_resource_template(self):
-
-        group = self.get_group()
-        templates = group.templates.Template
-        template_name = templates[0].name
-        template_id   = templates[0].id
+        template = self.get_template()
+        types = template.types.TemplateType
+        type_name = types[0].name
+        type_id   = types[0].id
 
         project = self.create_project('test')
         network = self.client.factory.create('hyd:Network')
@@ -402,17 +401,13 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             node.x = x[i]
             node.y = y[i]
 
-            grp_summary = self.client.factory.create('hyd:GroupSummary')
-            grp_summary.id = group.id
-            grp_summary.name = group.name
+            type_summary = self.client.factory.create('hyd:TypeSummary')
+            type_summary.template_id = template.id
+            type_summary.template_name = template.name
+            type_summary.id = type_id
+            type_summary.name = type_name
 
-            tmpl_summary = self.client.factory.create('hyd:TemplateSummary')
-            tmpl_summary.id = template_id
-            tmpl_summary.name = template_name
-
-            grp_summary.templates.TemplateSummary.append(tmpl_summary)
-
-            node.templates.GroupSummary.append(grp_summary)
+            node.types.TypeSummary.append(type_summary)
 
             nodes.Node.append(node)
 
@@ -435,42 +430,41 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         network = self.client.service.add_network(network)
 
         for node in network.nodes.Node:
-            assert node.templates is not None and node.templates.GroupSummary[0].templates.TemplateSummary[0].name == "Test template 1"; "Template was not added correctly!"
+            assert node.types is not None and node.types.TypeSummary[0].name == "Test type 1"; "type was not added correctly!"
 
 
-    def test_find_matching_resource_templates(self):
+    def test_find_matching_resource_types(self):
 
-        group       = self.get_group()
-        templates   = group.templates.Template
-        template_id = templates[0].id
+        template       = self.get_template()
+        types   = template.types.TemplateType
+        type_id = types[0].id
 
         network = self.create_network_with_data()
 
         node_to_check = network.nodes.Node[0]
-        matching_templates = self.client.service.get_matching_resource_templates('NODE', node_to_check.id)
+        matching_types = self.client.service.get_matching_resource_types('NODE', node_to_check.id)
 
-        assert len(matching_templates) > 0, "No templates returned!"
+        assert len(matching_types) > 0, "No types returned!"
 
-        matching_template_ids = []
-        for grp in matching_templates.GroupSummary:
-            for tmpl in grp.templates.TemplateSummary:
-                matching_template_ids.append(tmpl.id)
+        matching_type_ids = []
+        for tmpltype in matching_types.TypeSummary:
+            matching_type_ids.append(tmpltype.id)
 
-        assert template_id in matching_template_ids, "Template ID not found in matching templates!"
+        assert type_id in matching_type_ids, "TemplateType ID not found in matching types!"
 
     def test_assign_type_to_resource(self):
         network = self.create_network_with_data()
-        group = self.get_group()
-        template = group.templates.Template[0]
+        template = self.get_template()
+        templatetype = template.types.TemplateType[0]
 
         node_to_assign = network.nodes.Node[0]
 
-        result = self.client.service.assign_type_to_resource(template.id,
+        result = self.client.service.assign_type_to_resource(templatetype.id,
                                                              'NODE',
                                                              node_to_assign.id)
 
-        assert result.id == template.id and result.name == template.name, \
-            'Function did not return correct template.'
+        assert result.id == templatetype.id and result.name == templatetype.name, \
+            'Function did not return correct type.'
 
         new_network = self.client.service.get_network(network.id)
         for node in new_network.nodes.Node:
@@ -478,24 +472,23 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
                 new_node = node
                 break
 
-        assert new_node.templates is not None, \
-            'Assigning template did not work properly.'
+        assert new_node.types is not None, \
+            'Assigning type did not work properly.'
 
-        template_group_names = []
-        template_names = []
-        template_ids = []
-        for tmpl_g in new_node.templates.GroupSummary:
-            template_group_names.append(tmpl_g.name)
-            for tmpl in tmpl_g.templates.TemplateSummary:
-                template_names.append(tmpl.name)
-                template_ids.append(tmpl.id)
+        type_template_names = []
+        type_names = []
+        type_ids = []
+        for tmpltype in new_node.types.TypeSummary:
+            type_template_names.append(tmpltype.template_name)
+            type_names.append(tmpltype.name)
+            type_ids.append(tmpltype.id)
 
-        assert group.name in template_group_names, \
-            'Assigning template did not work properly.'
-        assert template.name in template_names, \
-            'Assigning template did not work properly.'
-        assert template.id in template_ids, \
-            'Assigning template did not work properly.'
+        assert template.name in type_template_names, \
+            'Assigning type did not work properly.'
+        assert templatetype.name in type_names, \
+            'Assigning type did not work properly.'
+        assert templatetype.id in type_ids, \
+            'Assigning type did not work properly.'
 
     def test_create_template_from_network(self):
         network = self.create_network_with_data()

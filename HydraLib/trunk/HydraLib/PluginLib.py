@@ -54,16 +54,15 @@ class HydraResource(object):
         elif attr_id is not None:
             return self._get_attr_by_id(attr_id)
 
-    def set_type(self, templates):
-        for obj_group in templates.GroupSummary:
+    def set_type(self, types):
+        for obj_type in types.TypeSummary:
             # Add resource type to template dictionary
-            if obj_group.id not in self.template.keys():
-                self.template[obj_group.id] = []
-            for obj_tmpl in obj_group.templates.TemplateSummary:
-                self.template[obj_group.id].append(obj_tmpl.name)
-                # Add resource type to default entry holding all resource types
-                if obj_tmpl.name not in self.template[None]:
-                    self.template[None].append(obj_tmpl.name)
+            if obj_type.template_id not in self.template.keys():
+                self.template[obj_type.template_id] = []
+            self.template[obj_type.template_id].append(obj_type.name)
+            # Add resource type to default entry holding all resource types
+            if obj_type.name not in self.template[None]:
+                self.template[None].append(obj_type.name)
 
     def group(self, group_attr):
         attr = self._get_attr_by_name(group_attr)
@@ -111,7 +110,7 @@ class HydraNetwork(HydraResource):
         self.ID = soap_net.id
         self.description = soap_net.description
         self.scenario_id = soap_net.scenarios.Scenario[0].id
-        self.set_type(soap_net.templates)
+        self.set_type(soap_net.types)
 
         if soap_net.attributes is not None:
             for res_attr in soap_net.attributes.Attr:
@@ -140,7 +139,7 @@ class HydraNetwork(HydraResource):
                                                res_attr,
                                                None)
 
-            new_node.set_type(node.templates)
+            new_node.set_type(node.types)
             self.add_node(new_node)
             del new_node
 
@@ -161,7 +160,7 @@ class HydraNetwork(HydraResource):
                         new_link.add_attribute(attributes[res_attr.attr_id],
                                                res_attr,
                                                None)
-            new_link.set_type(link.templates)
+            new_link.set_type(link.types)
 
             self.add_link(new_link)
             del new_link
@@ -178,9 +177,9 @@ class HydraNetwork(HydraResource):
         elif node_id is not None:
             return self._get_node_by_id(node_id)
         elif node_type is not None:
-            return self._get_node_by_type(node_type)
+            return self._get_nodes_by_type(node_type)
         elif group is not None:
-            return self._get_node_by_group(group)
+            return self._get_nodes_by_group(group)
 
     def add_link(self, link):
         self.links.append(link)
@@ -194,9 +193,9 @@ class HydraNetwork(HydraResource):
         elif link_id is not None:
             return self._get_link_by_id(link_id)
         elif link_type is not None:
-            return self._get_link_by_type(link_type)
+            return self._get_links_by_type(link_type)
         elif group is not None:
-            return self._get_link_by_group(group)
+            return self._get_links_by_group(group)
 
     def get_node_types(self, template_id=None):
         node_types = []
@@ -236,14 +235,14 @@ class HydraNetwork(HydraResource):
             if node.ID == ID:
                 return node
 
-    def _get_node_by_type(self, node_type):
+    def _get_nodes_by_type(self, node_type):
         nodes = []
         for node in self.nodes:
             if node_type in node.template[None]:
                 nodes.append(node)
         return nodes
 
-    def _get_node_by_group(self, node_group):
+    def _get_nodes_by_group(self, node_group):
         nodes = []
         for node in self.nodes:
             if node_group not in node.groups:
@@ -260,14 +259,14 @@ class HydraNetwork(HydraResource):
             if link.ID == ID:
                 return link
 
-    def _get_link_by_type(self, link_type):
+    def _get_links_by_type(self, link_type):
         links = []
         for link in self.links:
             if link_type in link.template[None]:
                 links.append(link)
         return links
 
-    def _get_link_by_group(self, link_group):
+    def _get_links_by_group(self, link_group):
         links = []
         for link in self.links:
             if link_group not in link.groups:
