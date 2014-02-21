@@ -447,30 +447,38 @@ def guess_timefmt(datestr):
     return None
 
 
-def create_xml_response(plugin_name, network_id, errors=[], warnings=[], message=None):
-    xml_string = """
-        <plugin_result>
-            <message>%(message)s</message>
-            <plugin_name>%(plugin_name)s</plugin_name>
-            <network_id>%(network_id)s</network_id>
-            <errors>
-                %(error_list)s
-            </errors>
-            <warnings>
-                %(warning_list)s
-            </warnings>
-        </plugin_result>
-    """
+def create_xml_response(plugin_name, network_id, scenaro_ids,
+                        errors=[], warnings=[], message=None, files=[]):
+    xml_string = """<plugin_result>
+    <message>%(message)s</message>
+    <plugin_name>%(plugin_name)s</plugin_name>
+    <network_id>%(network_id)s</network_id>
+    %(scenario_list)s
+    <errors>
+        %(error_list)s
+    </errors>
+    <warnings>
+        %(warning_list)s
+    </warnings>
+    <files>
+        %(file_list)s
+    </files>
+</plugin_result>"""
 
+    scenario_string = "<scenario>%s</scenario>"
     error_string = "<error>%s</error>"
     warning_string = "<warning>%s</warning>"
+    file_string = "<file>%s<file>"
 
     xml_string = xml_string % dict(
         plugin_name  = plugin_name,
         network_id   = network_id,
+        scenario_list = "\n".join([scenario_string % scen_id
+                                   for scen_id in scenaro_ids]),
         message      = message if message is not None else "",
         error_list   = "\n".join([error_string%error for error in errors]),
-        warning_list = "\n".join([warning_string%warning for warning in warnings])
+        warning_list = "\n".join([warning_string%warning for warning in warnings]),
+        file_list = "\n".join([file_string % f for f in files]),
     )
 
     return xml_string
@@ -491,3 +499,27 @@ def write_xml_result(plugin_name, xml_string, file_path=None):
     f.write(output_string)
 
     f.close()
+
+
+def set_resource_types(client, network, template_xml,
+                       nodetype_dict, linktype_dict, networktype):
+    template = client.service.upload_template_xml(template_xml)
+
+    template_ids = dict()
+
+    for tmpl_name in node_type_dict.values():
+        for tmpl in template.templates.Template:
+            if tmpl.name == tmpl_name:
+                template_ids.update({tmpl.name: tmpl.id})
+                break
+
+    for tmpl_name in link_type_dict.values():
+        for tmpl in template.templates.Template:
+            if tmpl.name == tmpl_name:
+                template_ids.update({tmpl.name: tmpl.id})
+                break
+
+    for tmpl in template.templates.Template:
+        if tmpl.name == network_type_name:
+            template_ids.update({tmpl.name: tmpl.id})
+            break

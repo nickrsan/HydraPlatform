@@ -74,7 +74,8 @@ class Units(object):
 
         for element in self.unittree:
             dimension = element.get('name')
-            self.dimensions.update({dimension: []})
+            if dimension not in self.dimensions.keys():
+                self.dimensions.update({dimension: []})
             for unit in element:
                 self.dimensions[dimension].append(unit.get('abbr'))
                 self.units.update({unit.get('abbr'):
@@ -124,7 +125,7 @@ class Units(object):
         """
         try:
             float(unit[0])
-            factor, unit = unit.split()
+            factor, unit = unit.split(' ', 1)
             return unit, float(factor)
         except ValueError:
             return unit, 1.0
