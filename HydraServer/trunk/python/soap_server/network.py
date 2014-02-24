@@ -442,7 +442,7 @@ class NetworkService(HydraService):
         return_value = get_as_complexmodel(ctx, net_i)
         logging.info("Network conversion took: %s",get_timing(start_time))
 
-        logging.debug("Return value: %s", return_value)
+        #logging.debug("Return value: %s", return_value)
         return return_value
 
     @rpc(Integer,
