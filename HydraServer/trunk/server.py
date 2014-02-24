@@ -1,5 +1,7 @@
+
 #!/usr/local/bin/python
 import sys
+import spyne.service #Needed for build script.
 #if "./python" not in sys.path:
 #    sys.path.append("./python")
 #if "../../HydraLib/trunk/" not in sys.path:

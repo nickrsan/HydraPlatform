@@ -1,8 +1,20 @@
 import logging
 import config
+import os
 
 def init(level=None):
-
+    if level is None:
+        level = config.get('DEFAULT', 'log_level')
+        
+    if os.name == "nt":
+        logging.addLevelName( logging.INFO, logging.getLevelName(logging.INFO))
+        logging.addLevelName( logging.DEBUG, logging.getLevelName(logging.DEBUG))
+        logging.addLevelName( logging.WARNING, logging.getLevelName(logging.WARNING))
+        logging.addLevelName( logging.ERROR, logging.getLevelName(logging.ERROR))
+        logging.addLevelName( logging.CRITICAL, logging.getLevelName(logging.CRITICAL))
+        logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=level)
+        return
+    
     if level is None:
         level = config.get('DEFAULT', 'log_level')
 
