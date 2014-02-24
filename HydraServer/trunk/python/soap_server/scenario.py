@@ -332,6 +332,9 @@ class ScenarioService(HydraService):
         scen.db.scenario_name        = scenario.name
         scen.db.scenario_description = scenario.description
         scen.db.network_id           = network_id
+        scen.db.start_time           = scenario.start_time
+        scen.db.end_time             = scenario.end_time
+        scen.db.time_step            = scenario.time_step
 
         #Just in case someone puts in a negative ID for the scenario.
         if scenario.id < 0:
@@ -394,6 +397,9 @@ class ScenarioService(HydraService):
         scen = HydraIface.Scenario(scenario_id=scenario.id)
         scen.db.scenario_name = scenario.name
         scen.db.scenario_description = scenario.description
+        scen.db.start_time           = scenario.start_time
+        scen.db.end_time             = scenario.end_time
+        scen.db.time_step            = scenario.time_step
         scen.save()
 
         for r_scen in scenario.resourcescenarios:
@@ -472,6 +478,11 @@ class ScenarioService(HydraService):
         cloned_scen.db.network_id           = scen_i.db.network_id
         cloned_scen.db.scenario_name        = "%s (clone)"%(scen_i.db.scenario_name)
         cloned_scen.db.scenario_description = scen_i.db.scenario_description
+
+        cloned_scen.db.start_time           = scen_i.db.start_time
+        cloned_scen.db.end_time             = scen_i.db.end_time
+        cloned_scen.db.time_step            = scen_i.db.time_step
+
         cloned_scen.save()
         cloned_scen.load()
 

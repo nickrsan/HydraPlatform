@@ -348,8 +348,11 @@ class SoapServerTest(unittest.TestCase):
         #Create the scenario
         scenario = self.client.factory.create('hyd:Scenario')
         scenario.id = -1
-        scenario.name = 'Scenario 1'
+        scenario.name        = 'Scenario 1'
         scenario.description = 'Scenario Description'
+        scenario.start_time  = datetime.datetime.now()
+        scenario.end_time    = scenario.start_time + datetime.timedelta(hours=1)
+        scenario.time_step   = 1 # one second intervals.
 
         #Multiple data (Called ResourceScenario) means an array.
         scenario_data = self.client.factory.create('hyd:ResourceScenarioArray')

@@ -375,6 +375,9 @@ class NetworkService(HydraService):
                 scen = HydraIface.Scenario(network=net_i)
                 scen.db.scenario_name        = s.name
                 scen.db.scenario_description = s.description
+                scen.db.start_time           = s.start_time
+                scen.db.end_time             = s.end_time
+                scen.db.time_step            = s.time_step
                 scen.db.network_id           = net_i.db.network_id
                 scen.save()
 
@@ -613,6 +616,9 @@ class NetworkService(HydraService):
 
                 scen.db.scenario_name        = s.name
                 scen.db.scenario_description = s.description
+                scen.db.start_time           = s.start_time
+                scen.db.end_time             = s.end_time
+                scen.db.time_step            = s.time_step
                 scen.db.network_id           = net_i.db.network_id
                 scen.save()
 

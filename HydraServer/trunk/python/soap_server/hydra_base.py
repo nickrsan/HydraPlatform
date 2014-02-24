@@ -4,6 +4,7 @@ from spyne.model.complex import ComplexModel
 from spyne.decorator import srpc, rpc
 from db import HydraIface
 from hydra_complexmodels import LoginResponse
+import pytz
 
 import datetime
 
@@ -104,7 +105,7 @@ class AuthenticationService(ServiceBase):
         else:
            raise AuthenticationError(username)
 
-        user_i.db.last_login = datetime.datetime.now()
+        user_i.db.last_login = datetime.datetime.now(tz=pytz.utc)
         user_i.save()
 
         loginresponse = LoginResponse()

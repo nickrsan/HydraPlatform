@@ -3,8 +3,8 @@ from decimal import Decimal
 from HydraLib import config
 from hdb import HydraMySqlCursor
 from HydraLib.HydraException import HydraError
-from mysql.connector import IntegrityError, DatabaseError
-import inspect
+from mysql.connector import DatabaseError
+import pytz
 
 global DB_STRUCT
 DB_STRUCT = {}
@@ -357,7 +357,11 @@ class DBIface(object):
                 except:
                     return str(val)
             elif db_type == 'datetime':
-                return self.db_data[name]
+                dt = self.db_data[name]
+                if dt.tzinfo is None:
+                    return pytz.utc.localize(dt)
+                else:
+                    return dt
 
             return str(val)
 
@@ -366,7 +370,8 @@ class DBIface(object):
 
     def __setattr__(self, name, value):
         if name != 'db_attrs' and name in self.db_attrs:
-            old_val = self.db_data[name]
+            #old_val = self.db_data[name]
+            old_val = self.__getattr__(name)
             if value != old_val:
                 self.db_data[name] = value
                 self.has_changed = True

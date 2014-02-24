@@ -1387,8 +1387,8 @@ class DatasetGroupItem(IfaceBase):
     """
         Each data item in a dataset group
     """
-    def __init__(self, group_id=None, dataset_id=None):
-        IfaceBase.__init__(self, None, self.__class__.__name__)
+    def __init__(self, datasetgroup=None, group_id=None, dataset_id=None):
+        IfaceBase.__init__(self, datasetgroup, self.__class__.__name__)
 
         self.db.group_id = group_id
         self.db.dataset_id = dataset_id
