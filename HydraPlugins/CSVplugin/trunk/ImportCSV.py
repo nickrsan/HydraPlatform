@@ -64,24 +64,24 @@ number of attributes for nodes and links.
 
 For nodes a valid file looks like this::
 
-    Name , x, y, attribute_1, attribute_2, ..., attribute_n, description
-    Units,  ,  ,           m,    m^3 s^-1, ...,           -,
-    node1, 2, 1,         4.0,      3421.9, ...,  Crop: corn, Irrigation node 1
-    node2, 2, 3,         2.4,       988.4, ...,  Crop: rice, Irrigation node 2
+    Name , x, y, type, attribute_1, attribute_2, ..., attribute_n, description
+    Units,  ,  ,     ,           m,    m^3 s^-1, ...,           -,
+    node1, 2, 1, irr ,         4.0,      3421.9, ...,  Crop: corn, Irrigation node 1
+    node2, 2, 3, irr ,         2.4,       988.4, ...,  Crop: rice, Irrigation node 2
 
 For links, the following is a valid file::
 
-    Name ,       from,       to, attribute_1, ..., attribute_n, description
-    Units,           ,         ,           m, ...,    m^2 s^-1,
-    link1,      node1,    node2,         453, ...,        0.34, Water transfer
+    Name ,       from,       to, type, attribute_1, ..., attribute_n, description
+    Units,           ,         ,     ,           m, ...,    m^2 s^-1,
+    link1,      node1,    node2, tran,         453, ...,        0.34, Water transfer
 
 It is optional to supply a network file. If you decide to do so, it needs to
 follow this structure::
 
     # A test network created as a set of CSV files
-    ID, Name            , attribute_1, ..., Description
-    Units,              ,            ,    ,
-    1 , My first network, test       ,    , A network create from CSV files
+    ID, Name            , type, attribute_1, ..., Description
+    Units,              ,     ,            ,    ,
+    1 , My first network, net , test       ,    , A network create from CSV files
 
 
 Lines starting with the ``#`` character are ignored.
@@ -94,6 +94,10 @@ Lines starting with the ``#`` character are ignored.
    keywords, the plug-in will assume that the first column specifies the name,
    the second X, the third Y and the last the description (name, from, to and
    description for links).
+
+.. note::
+
+    The ``type`` column is optional.
 
 Please also consider the following:
 
@@ -126,7 +130,6 @@ from datetime import datetime
 import pytz
 
 from HydraLib import PluginLib
-from HydraLib import units
 
 from suds import WebFault
 import numpy
@@ -138,19 +141,24 @@ class ImportCSV(object):
     """
     """
 
-    Project = None
-    Network = None
-    Scenario = None
-    Nodes = dict()
-    Links = dict()
-    Attributes = dict()
-    update_network_flag = False
-    timezone = pytz.utc
-    expand_filenames = False
-
-    basepath = ''
-
     def __init__(self):
+        self.Project = None
+        self.Network = None
+        self.Scenario = None
+        self.Nodes = dict()
+        self.Links = dict()
+        self.Attributes = dict()
+        self.update_network_flag = False
+        self.timezone = pytz.utc
+        self.expand_filenames = False
+
+        self.basepath = ''
+
+        self.add_attrs = True
+        self.nodetype_dict = dict()
+        self.linktype_dict = dict()
+        self.networktype = ''
+
         self.cli = PluginLib.connect()
         self.node_id = PluginLib.temp_ids()
         self.link_id = PluginLib.temp_ids()
@@ -202,6 +210,9 @@ class ImportCSV(object):
             units = self.net_data[1].split(',')
             # A network file should only have one line of data
             data = self.net_data[2].split(',')
+
+            for i, unit in enumerate(units):
+                units[i] = unit.strip()
 
             # We assume a standard order of the network information (Name,
             # Description, attributes,...).
@@ -299,14 +310,20 @@ class ImportCSV(object):
         self.create_nodes()
 
     def create_nodes(self):
+        self.add_attrs = True
+
         keys = self.node_data[0].split(',')
         units = self.node_data[1].split(',')
         data = self.node_data[2:-1]
+
+        for i, unit in enumerate(units):
+            units[i] = unit.strip()
 
         name_idx = 0
         desc_idx = -1  # Should be the last one
         x_idx = 1
         y_idx = 2
+        type_idx = None
         # Guess parameter position:
         for i, key in enumerate(keys):
             if key.lower().strip() == 'name':
@@ -317,6 +334,8 @@ class ImportCSV(object):
                 x_idx = i
             elif key.lower().strip() == 'y':
                 y_idx = i
+            elif key.lower().strip() == 'type':
+                type_idx = i
 
         attrs = dict()
 
@@ -364,9 +383,14 @@ class ImportCSV(object):
         self.create_links()
 
     def create_links(self):
+        self.add_attrs = True
+
         keys = self.link_data[0].split(',')
         units = self.link_data[1].split(',')
         data = self.link_data[2:-1]
+
+        for i, unit in enumerate(units):
+            units[i] = unit.strip()
 
         name_idx = 0
         desc_idx = -1  # Should be the last one
@@ -455,9 +479,13 @@ class ImportCSV(object):
             attributes.Attr.append(attribute)
 
         # Add all attributes. If they exist already, we retrieve the real id.
-        attributes = self.cli.service.add_attributes(attributes)
-        for attr in attributes.Attr:
-            self.Attributes.update({attr.name: attr})
+        # Also, we add the attributes only once (that's why we use the
+        # add_attrs flag).
+        if self.add_attrs:
+            attributes = self.cli.service.add_attributes(attributes)
+            self.add_attrs = False
+            for attr in attributes.Attr:
+                self.Attributes.update({attr.name: attr})
 
         # Add data to each attribute
         for i in attrs.keys():
@@ -481,15 +509,20 @@ class ImportCSV(object):
                     res_attr.attr_is_var = 'Y'
 
                 else:
-
                     if units is not None:
+                        if units[i] is not None and len(units[i]) > 0:
+                            dimension = attr.dimen
+                        else:
+                            dimension = None
                         dataset = self.create_dataset(data[i],
                                                       res_attr,
                                                       units[i],
+                                                      dimension,
                                                       resource.name)
                     else:
                         dataset = self.create_dataset(data[i],
                                                       res_attr,
+                                                      None,
                                                       None,
                                                       resource.name)
 
@@ -640,11 +673,19 @@ class ImportCSV(object):
 
         return group_str
 
-
     def parse_constraint_item(self, item_str):
         return item_str
 
-    def create_dataset(self, value, resource_attr, unit, resource_name):
+    def set_resource_types(self, template_file):
+        with open(template_file) as f:
+            template_xml = f.read()
+        return PluginLib.set_resource_type(self.cli, template_xml,
+                                           self.Network,
+                                           self.nodetypedict,
+                                           self.linktypedict,
+                                           self.networktype)
+
+    def create_dataset(self, value, resource_attr, unit, dimension, resource_name):
         resourcescenario = self.cli.factory.create('hyd:ResourceScenario')
         dataset          = self.cli.factory.create('hyd:Dataset')
 
@@ -697,7 +738,7 @@ class ImportCSV(object):
 
         dataset.unit = unit
         if unit is not None:
-            dataset.dimension = self.cli.service.get_dimension(unit)
+            dataset.dimension = dimension
 
         dataset.name = "Import CSV data"
 
@@ -806,27 +847,15 @@ class ImportCSV(object):
     def return_xml(self):
         """This is a fist version of a possible XML output.
         """
-        from lxml import etree
-        # create xml
-        root = etree.Element("plugin_result")
-        name = etree.SubElement(root, "plugin_name")
-        name.text = "ImportCSV"
-        mess = etree.SubElement(root, "message")
-        mess.text = "Import CSV completed successfully."
-        net_id = etree.SubElement(root, "network_id")
-        net_id.text = str(self.Network.id)
+        scen_ids = []
         for s in self.Network.scenarios.Scenario:
-            scen_id = etree.SubElement(root, "scenario_id")
-            scen_id.text = str(s.id)
+            scen_ids.append(s.id)
 
-        root.append(etree.Element("errors"))
-        root.append(etree.Element("warnings"))
-        root.append(etree.Element("files"))
+        xml_response = PluginLib.create_xml_response('ImportCSV',
+                                                     self.Network.id,
+                                                     scen_ids)
 
-        # validate xml
-
-        # return xml
-        print etree.tostring(root, pretty_print=True)
+        print xml_response
 
 
 def commandline_parser():
@@ -857,6 +886,9 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-l', '--links', nargs='+',
                         help='''One or multiple files containing information
                         on links.''')
+    parser.add_argument('-m', '--template',
+                        help='''Template XML file, needed if node and link
+                        types are specified,''')
     parser.add_argument('-r', '--rules', nargs='+',
                         help='''File(s) containing rules or constraints as
                         mathematical expressions.''')
@@ -903,6 +935,10 @@ if __name__ == '__main__':
                 csv.read_constraints(constraintfile)
 
         csv.commit()
+
+        if args.template is not None:
+            csv.set_resource_types(args.template)
+
         csv.return_xml()
 
     else:
