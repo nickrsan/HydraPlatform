@@ -10,6 +10,7 @@ class UserTest(test_HydraIface.HydraIfaceTest):
         x = HydraIface.User()
         x.db.username = "test"
         x.db.password = "12345"
+        x.db.display_name = 'display name'
         x.save()
         x.commit()
 
@@ -23,6 +24,7 @@ class UserTest(test_HydraIface.HydraIfaceTest):
         x = HydraIface.User()
         x.db.username = "test"
         x.db.password = "12345"
+        x.db.display_name = 'display name'
         x.save()
         x.commit()
 
@@ -33,6 +35,7 @@ class UserTest(test_HydraIface.HydraIfaceTest):
         x = HydraIface.User()
         x.db.username = "test"
         x.db.password = "12345"
+        x.db.display_name = 'display name'
         x.save()
         x.commit()
         x.load()
@@ -124,6 +127,7 @@ class RoleUserTest(test_HydraIface.HydraIfaceTest):
         x = HydraIface.User()
         x.db.username = username
         x.db.password = "12345"
+        x.db.display_name = 'display name'
         x.save()
         x.commit()
         x.load()

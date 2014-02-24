@@ -25,7 +25,7 @@ class UsersTest(test_SoapServer.SoapServerTest):
 
         updated_user = self.client.service.update_user_display_name(new_user)
 
-        assert updated_user.display_name == new_user.display_nae
+        assert updated_user.display_name == new_user.display_name
 
         delete_result = self.client.service.delete_user(new_user)
 

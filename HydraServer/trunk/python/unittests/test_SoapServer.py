@@ -82,6 +82,7 @@ class SoapServerTest(unittest.TestCase):
         user = self.client.factory.create('hyd:User')
         user.username = name
         user.password = "password"
+        user.display_name = "test useer"
 
         new_user = self.client.service.add_user(user)
         return new_user
