@@ -124,6 +124,7 @@ class HydraServer():
         user = HydraIface.User()
         user.db.username = 'root'
         user.db.password =  bcrypt.hashpw('', bcrypt.gensalt())
+        user.db.display_name = 'Root user'
 
         if user.get_user_id() is None:
             user.save()

@@ -24,7 +24,8 @@ class UserService(HydraService):
         """
         user_i = HydraIface.User()
         
-        user_i.db.username = user.username
+        user_i.db.username     = user.username
+        user_i.db.display_name = user.display_name
         
         user_id = user_i.get_user_id()
 
@@ -35,6 +36,33 @@ class UserService(HydraService):
 
         user_i.db.password = bcrypt.hashpw(user.password, bcrypt.gensalt())
         
+        user_i.save()
+
+        return get_as_complexmodel(ctx, user_i)
+
+    @rpc(User, _returns=User)
+    def update_user_display_name(ctx, user):
+        """
+            Add a new user.
+        """
+        user_i = HydraIface.User(user_id=user.id)
+
+        user_i.db.display_name = user.display_name
+
+        user_i.save()
+
+        return get_as_complexmodel(ctx, user_i)
+
+
+    @rpc(Integer, String, _returns=User)
+    def update_user_password(ctx, user_id, new_password):
+        """
+            Add a new user.
+        """
+        user_i = HydraIface.User(user_id=user_id)
+
+        user_i.db.password = bcrypt.hashpw(new_password, bcrypt.gensalt())
+
         user_i.save()
 
         return get_as_complexmodel(ctx, user_i)
@@ -212,6 +240,7 @@ class UserService(HydraService):
         sql = """
             select
                 username,
+                display_name,
                 user_id
             from
                 tUser
@@ -222,6 +251,7 @@ class UserService(HydraService):
         for r in rs:
             user = User()
             user.username = r.username
+            user.display_name = r.display_name
             user.id  = r.user_id
             users.append(user)
 

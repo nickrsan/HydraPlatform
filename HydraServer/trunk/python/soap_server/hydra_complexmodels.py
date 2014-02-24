@@ -640,8 +640,9 @@ class ProjectSummary(Resource):
 class User(HydraComplexModel):
     _type_info = [
         ('id',  Integer),
-        ('username', String),
-        ('password', String),
+        ('username', String(default=None)),
+        ('display_name', String(default=None)),
+        ('password', String(default=None)),
     ]
 
 class Perm(HydraComplexModel):

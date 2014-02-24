@@ -12,17 +12,49 @@ class UsersTest(test_SoapServer.SoapServerTest):
         user = self.client.factory.create('hyd:User')
         user.username = "test_user @ %s" % (datetime.datetime.now())
         user.password = "test_user_password"
+        user.display_name = "Tom"
 
         new_user = self.client.service.add_user(user)
 
         assert new_user.username == user.username, "Usernames are not the same!"
 
         assert bcrypt.hashpw(user.password, new_user.password.encode('utf-8')) == new_user.password
+        assert new_user.display_name == user.display_name 
+
+        new_user.display_name = 'Tom Update'
+
+        updated_user = self.client.service.update_user_display_name(new_user)
+
+        assert updated_user.display_name == new_user.display_nae
 
         delete_result = self.client.service.delete_user(new_user)
 
         assert delete_result == 'OK', "User was not removed!"
 
+    def test_update_user_password(self):
+        user = self.client.factory.create('hyd:User')
+        user.username = "test_user @ %s" % (datetime.datetime.now())
+        user.password = "test_user_password"
+        user.display_name = "Tom"
+        new_user = self.client.service.add_user(user)
+
+        old_client = self.client
+        new_client = test_SoapServer.connect()
+        self.client = new_client
+
+        self.login(new_user.username, user.password)
+        self.client.service.logout(user.username)
+
+        self.client = old_client
+        self.client.service.update_user_password(new_user.id, 'new_test_user_password')
+        self.client = new_client
+
+        self.assertRaises(suds.WebFault, self.login, user.username, user.password)
+
+        self.login(user.username, 'new_test_user_password')
+        self.client.service.logout(user.username)
+
+        self.client = old_client
 
     def test_add_role(self):
         role = self.client.factory.create('hyd:Role')
@@ -61,6 +93,7 @@ class UsersTest(test_SoapServer.SoapServerTest):
         user = self.client.factory.create('hyd:User')
         user.username = "test_user @ %s" % datetime.datetime.now()
         user.password = "test_user_password"
+        user.display_name = "Tom"
 
         new_user = self.client.service.add_user(user)
 
