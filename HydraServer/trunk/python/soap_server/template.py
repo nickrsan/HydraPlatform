@@ -294,6 +294,7 @@ class TemplateService(HydraService):
             resource_type.save()
 
         templatetype = resource_type.get_type()
+
         return get_as_complexmodel(ctx, templatetype)
 
     @rpc(Template, _returns=Template)

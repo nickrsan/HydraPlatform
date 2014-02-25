@@ -1,5 +1,5 @@
 from spyne.decorator import rpc
-from spyne.model.primitive import Integer, Boolean
+from spyne.model.primitive import Integer, String 
 from spyne.model.complex import Array as SpyneArray
 from db import HydraIface
 from hydra_complexmodels import Project,\
@@ -41,6 +41,7 @@ class ProjectService(HydraService):
             returns a project complexmodel
         """
 
+        #check_perm(ctx.in_header.user_id, 'add_project')
         proj_i = HydraIface.Project()
         proj_i.db.project_name = project.name
         proj_i.db.project_description = project.description
@@ -64,6 +65,7 @@ class ProjectService(HydraService):
             returns a project complexmodel
         """
 
+        #check_perm(ctx.in_header.user_id, 'update_project')
         proj_i = HydraIface.Project(project_id = project.id)
         
         proj_i.check_write_permission(ctx.in_header.user_id)
@@ -140,19 +142,19 @@ class ProjectService(HydraService):
         return projects
 
 
-    @rpc(Integer, _returns=Boolean)
+    @rpc(Integer, _returns=String)
     def delete_project(ctx, project_id):
         """
             Set the status of a project to 'X'
         """
-        success = True
+        #check_perm(ctx.in_header.user_id, 'update_project')
         x = HydraIface.Project(project_id = project_id)
         x.check_write_permission(ctx.in_header.user_id)
         x.db.status = 'X'
         x.save()
         x.commit()
 
-        return success
+        return 'OK' 
 
     @rpc(Integer, _returns=SpyneArray(Network))
     def get_networks(ctx, project_id):

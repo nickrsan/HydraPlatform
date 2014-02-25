@@ -85,6 +85,12 @@ class SoapServerTest(unittest.TestCase):
         user.display_name = "test useer"
 
         new_user = self.client.service.add_user(user)
+
+        #make the user an admin user by default
+        role =  self.client.service.get_role_by_code('admin')
+
+        self.client.service.set_user_role(new_user.id, role.id)
+
         return new_user
 
     def create_template(self):

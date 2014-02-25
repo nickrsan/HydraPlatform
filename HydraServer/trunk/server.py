@@ -18,7 +18,6 @@ from spyne.server.wsgi import WsgiApplication
 import spyne.decorator
 
 from spyne.error import Fault, ArgumentError
-import bcrypt
 
 from soap_server.network import NetworkService
 from soap_server.project import ProjectService
@@ -34,6 +33,7 @@ from soap_server.units import UnitService
 from soap_server.hydra_base import AuthenticationService,\
     LogoutService,\
     get_session_db,\
+    make_root_user,\
     AuthenticationError,\
     ObjectNotFoundError,\
     HydraServiceError
@@ -46,7 +46,7 @@ from db import hdb
 from db import HydraIface
 
 import datetime
-import sys, traceback
+import traceback
 
 
 def _on_method_call(ctx):
@@ -121,16 +121,7 @@ class HydraServer():
         connection = hdb.connect()
         HydraIface.init(connection)
 
-        user = HydraIface.User()
-        user.db.username = 'root'
-        user.db.password =  bcrypt.hashpw('', bcrypt.gensalt())
-        user.db.display_name = 'Root user'
-
-        if user.get_user_id() is None:
-            user.save()
-            user.commit()
-        else:
-            logging.info("Root user exists.")
+        make_root_user()
 
     def create_application(self):
 

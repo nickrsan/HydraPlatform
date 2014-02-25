@@ -5,6 +5,8 @@ from spyne.decorator import srpc, rpc
 from db import HydraIface
 from hydra_complexmodels import LoginResponse
 import pytz
+import logging
+from HydraLib.HydraException import HydraError
 
 import datetime
 
@@ -21,6 +23,36 @@ def get_session_db():
 
 def get_user_id(username):
     return _user_map.get(username)
+
+def make_root_user():
+    user = HydraIface.User()
+    user.db.username = 'root'
+    user.db.password =  bcrypt.hashpw('', bcrypt.gensalt())
+    user.db.display_name = 'Root user'
+
+    if user.get_user_id() is None:
+        user.save()
+        user.commit()
+    else:
+        logging.info("Root user exists.")
+
+    sql = """
+        select
+            role_id
+        from
+            tRole
+        where
+            role_code = 'admin'
+    """
+    rs = HydraIface.execute(sql)
+    if len(rs) == 0:
+        raise HydraError("Admin role not found.")
+
+    role_id = rs[0].role_id
+    userrole = HydraIface.RoleUser(role_id=role_id,user_id=user.db.user_id) 
+    if not userrole.load():
+        userrole.save()
+    userrole.commit()
 
 class RequestHeader(ComplexModel):
     __namespace__ = 'hydra.base'

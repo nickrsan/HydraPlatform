@@ -15,6 +15,7 @@ from hydra_base import HydraService, ObjectNotFoundError
 import scenario
 from constraints import ConstraintService
 import datetime
+from util.permissions import check_perm
 
 from HydraLib.util import timestamp_to_ordinal
 
@@ -121,6 +122,9 @@ def get_timing(time):
     return datetime.datetime.now() - time
 
 def add_nodes(net_i, nodes):
+
+    #check_perm(ctx.in_header.user_id, 'edit_topology')
+    
     start_time = datetime.datetime.now()
 
     #List of HydraIface resource attributes
@@ -169,6 +173,9 @@ def add_nodes(net_i, nodes):
     return node_id_map, resource_attrs, attrs
 
 def add_links(net_i, links, node_id_map):
+
+    #check_perm(ctx.in_header.user_id, 'edit_topology')
+
     start_time = datetime.datetime.now()
 
     #List of HydraIface resource attributes
@@ -295,6 +302,9 @@ class NetworkService(HydraService):
         The returned object will have positive IDS
 
         """
+
+        #check_perm(ctx.in_header.user_id, 'add_network')
+
         start_time = datetime.datetime.now()
         logging.info("Adding network")
 
@@ -383,6 +393,7 @@ class NetworkService(HydraService):
                 scen.db.network_id           = net_i.db.network_id
                 scen.save()
 
+                #check_perm(ctx.in_header.user_id, 'edit_data')
                 #extract the data from each resourcescenario
                 data = []
                 #record all the resource attribute ids
@@ -466,6 +477,11 @@ class NetworkService(HydraService):
             raise ObjectNotFoundError("Network (network_id=%s) not found." %
                                       network_id)
 
+        #try:
+        #    check_perm(ctx.in_header.user_id, 'view_data')
+        #except:
+        #    include_data='N'
+
         net = get_as_complexmodel(ctx, net_i, **dict(include_data=include_data))
 
         return net
@@ -503,7 +519,13 @@ class NetworkService(HydraService):
             raise ObjectNotFoundError("Network (network_id=%s) not found." % \
                                       network_id)
 
-        net = get_as_complexmodel(ctx, net_i)
+        include_data = 'Y'
+        #try:
+        #    check_perm(ctx.in_header.user_id, 'view_data')
+        #except:
+        #    include_data='N'
+
+        net = get_as_complexmodel(ctx, net_i, **dict(include_data=include_data))
 
         return net
 
@@ -512,6 +534,9 @@ class NetworkService(HydraService):
         """
             Update an entire network
         """
+
+        #check_perm(ctx.in_header.user_id, 'update_network')
+
         net = None
         net_i = HydraIface.Network(network_id = network.id)
         net_i.check_write_permission(ctx.in_header.user_id)
@@ -674,6 +699,7 @@ class NetworkService(HydraService):
         just sets the status to 'X', meaning it can no longer be seen by the
         user.
         """
+        #check_perm(ctx.in_header.user_id, 'delete_network')
         success = True
         net_i = HydraIface.Network(network_id = network_id)
         net_i.check_read_permission(ctx.in_header.user_id)
@@ -695,6 +721,7 @@ class NetworkService(HydraService):
 
     @rpc(Integer, Node, _returns=Node)
     def add_node(ctx, network_id, node):
+
         """
         Add a node to a network:
 
@@ -818,6 +845,7 @@ class NetworkService(HydraService):
         """
             Set the status of a node to 'X'
         """
+        #check_perm(ctx.in_header.user_id, 'edit_topology')
         success = True
         x = HydraIface.Node(node_id = node_id)
 
@@ -856,6 +884,7 @@ class NetworkService(HydraService):
             Add a link to a network
         """
 
+        #check_perm(ctx.in_header.user_id, 'edit_topology')
         net_i = HydraIface.Network(network_id=network_id)
         net_i.check_write_permission(ctx.in_header.user_id)
 
@@ -881,6 +910,7 @@ class NetworkService(HydraService):
         """
             Update a link.
         """
+        #check_perm(ctx.in_header.user_id, 'edit_topology')
         x = HydraIface.Link(link_id = link.id)
 
         net_i = HydraIface.Network(network_id=x.db.network_id)
@@ -906,6 +936,7 @@ class NetworkService(HydraService):
         """
             Set the status of a link to 'X'
         """
+        #check_perm(ctx.in_header.user_id, 'edit_topology')
         success = True
         x = HydraIface.Link(link_id = link_id)
 
