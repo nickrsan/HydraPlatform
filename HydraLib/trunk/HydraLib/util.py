@@ -35,6 +35,10 @@ def timestamp_to_ordinal(timestamp):
     """Convert a timestamp as defined in the soap interface to the time format
     stored in the database.
     """
+
+    if timestamp is None:
+        return None
+
     ts_time = get_datetime(timestamp)
     # Convert time to Gregorian ordinal (1 = January 1st, year 1)
     ordinal_ts_time = Decimal(ts_time.toordinal())
@@ -52,6 +56,9 @@ def timestamp_to_ordinal(timestamp):
 
 
 def convert_ordinal_to_datetime(date):
+    if date is None:
+        return None
+
     day = int(date)
     time = date - day
     time_in_secs_ms = (time * Decimal(86400)).quantize(Decimal('.000001'), rounding=ROUND_HALF_UP)
