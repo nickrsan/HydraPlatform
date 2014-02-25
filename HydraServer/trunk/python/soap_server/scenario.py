@@ -332,8 +332,8 @@ class ScenarioService(HydraService):
         scen.db.scenario_name        = scenario.name
         scen.db.scenario_description = scenario.description
         scen.db.network_id           = network_id
-        scen.db.start_time           = scenario.start_time
-        scen.db.end_time             = scenario.end_time
+        scen.db.start_time           = timestamp_to_ordinal(scenario.start_time)
+        scen.db.end_time             = timestamp_to_ordinal(scenario.end_time)
         scen.db.time_step            = scenario.time_step
 
         #Just in case someone puts in a negative ID for the scenario.
@@ -397,8 +397,8 @@ class ScenarioService(HydraService):
         scen = HydraIface.Scenario(scenario_id=scenario.id)
         scen.db.scenario_name = scenario.name
         scen.db.scenario_description = scenario.description
-        scen.db.start_time           = scenario.start_time
-        scen.db.end_time             = scenario.end_time
+        scen.db.start_time           = timestamp_to_ordinal(scenario.start_time)
+        scen.db.end_time             = timestamp_to_ordinal(scenario.end_time)
         scen.db.time_step            = scenario.time_step
         scen.save()
 

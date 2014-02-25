@@ -48,7 +48,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         new_scenario.description = 'Scenario 2 Description'
         new_scenario.start_time = datetime.datetime.now()
         new_scenario.end_time = new_scenario.start_time + datetime.timedelta(hours=10)
-        new_scenario.time_step = 60 #measured in seconds
+        new_scenario.time_step = "1 day"
 
         node_attrs = network.nodes.Node[0].attributes
 
@@ -84,7 +84,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         scenario.description = 'Updated Scenario Description'
         scenario.start_time = datetime.datetime.now()
         scenario.end_time = scenario.start_time + datetime.timedelta(hours=10)
-        scenario.time_step = 60 #measured in seconds
+        scenario.time_step = "1 day" #measured in seconds
       
         #Identify 2 nodes to play around with -- the first and last in the list.
         node1 = network.nodes.Node[0]
@@ -110,8 +110,8 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         assert updated_scenario.id == scenario.id
         assert updated_scenario.name == scenario.name 
         assert updated_scenario.description == scenario.description
-        assert updated_scenario.start_time == scenario.start_time
-        assert updated_scenario.end_time   == scenario.end_time
+        assert updated_scenario.start_time == str(scenario.start_time)
+        assert updated_scenario.end_time   == str(scenario.end_time)
         assert updated_scenario.time_step  == scenario.time_step
         assert len(updated_scenario.resourcegroupitems.ResourceGroupItem) > 0
         for i in updated_scenario.resourcegroupitems.ResourceGroupItem:

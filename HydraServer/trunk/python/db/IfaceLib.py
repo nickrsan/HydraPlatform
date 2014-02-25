@@ -37,6 +37,8 @@ class IfaceBase(object):
 
         self.in_db = False
 
+        self.time_format = '{:0>4d}-{:0>2d}-{:02d} {:0>2d}:{:0>2d}:{:0>2d}.{:}'
+        
         #Indicates that the 'delete' function has been called on this object
         self.deleted = False
 

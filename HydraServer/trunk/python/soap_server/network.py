@@ -16,6 +16,8 @@ import scenario
 from constraints import ConstraintService
 import datetime
 
+from HydraLib.util import timestamp_to_ordinal
+
 def _add_attributes(resource_i, attributes):
     if attributes is None:
         return []
@@ -375,8 +377,8 @@ class NetworkService(HydraService):
                 scen = HydraIface.Scenario(network=net_i)
                 scen.db.scenario_name        = s.name
                 scen.db.scenario_description = s.description
-                scen.db.start_time           = s.start_time
-                scen.db.end_time             = s.end_time
+                scen.db.start_time           = timestamp_to_ordinal(s.start_time)
+                scen.db.end_time             = timestamp_to_ordinal(s.end_time)
                 scen.db.time_step            = s.time_step
                 scen.db.network_id           = net_i.db.network_id
                 scen.save()
@@ -616,8 +618,8 @@ class NetworkService(HydraService):
 
                 scen.db.scenario_name        = s.name
                 scen.db.scenario_description = s.description
-                scen.db.start_time           = s.start_time
-                scen.db.end_time             = s.end_time
+                scen.db.start_time           = timestamp_to_ordinal(s.start_time)
+                scen.db.end_time             = timestamp_to_ordinal(s.end_time)
                 scen.db.time_step            = s.time_step
                 scen.db.network_id           = net_i.db.network_id
                 scen.save()

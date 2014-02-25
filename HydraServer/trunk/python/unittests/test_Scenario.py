@@ -1,6 +1,7 @@
 import test_HydraIface
 from db import HydraIface
 import datetime
+from HydraLib.util import timestamp_to_ordinal
 
 class ScenarioTest(test_HydraIface.HydraIfaceTest):
 
@@ -10,6 +11,9 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
         x = HydraIface.Scenario()
         x.db.scenario_name = "test"
         x.db.scenario_description = "test description"
+        x.db.start_time = timestamp_to_ordinal(datetime.datetime.now())
+        x.db.end_time   = timestamp_to_ordinal(datetime.datetime.now() + datetime.timedelta(hours=1))
+        x.db.time_step = "1 day"
         x.db.network_id = net.db.network_id
         x.save()
         x.commit()

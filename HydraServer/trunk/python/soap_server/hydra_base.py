@@ -105,7 +105,7 @@ class AuthenticationService(ServiceBase):
         else:
            raise AuthenticationError(username)
 
-        user_i.db.last_login = datetime.datetime.now(tz=pytz.utc)
+        user_i.db.last_login = datetime.datetime.now()
         user_i.save()
 
         loginresponse = LoginResponse()

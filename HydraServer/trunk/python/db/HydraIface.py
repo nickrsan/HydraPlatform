@@ -577,6 +577,9 @@ class Scenario(GenericResource):
     def get_as_dict(self, **kwargs):
         obj_dict = super(Scenario, self).get_as_dict(**kwargs)
 
+        obj_dict['start_time'] = self.get_timestamp(self.db.start_time)
+        obj_dict['end_time']   = self.get_timestamp(self.db.end_time)
+
         dict_items = []
         for rgi in self.get_resourcegroupitems():
             dict_items.append(rgi.get_as_dict(**kwargs))
@@ -604,6 +607,17 @@ class Scenario(GenericResource):
             self.resourcegroupitems.append(item_i)
 
         return self.resourcegroupitems
+
+    def get_timestamp(self, ordinal):
+        timestamp = convert_ordinal_to_datetime(ordinal)
+        timestamp = self.time_format.format(timestamp.year,
+                                            timestamp.month,
+                                            timestamp.day,
+                                            timestamp.hour,
+                                            timestamp.minute,
+                                            timestamp.second,
+                                            timestamp.microsecond)
+        return timestamp
 
 class Network(GenericResource):
     """
@@ -1186,7 +1200,6 @@ class Dataset(IfaceBase):
         IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.dataset_id = dataset_id
-        self.time_format = '{:0>4d}-{:0>2d}-{:02d} {:0>2d}:{:0>2d}:{:0>2d}.{:}'
         self.datum = None
 
         if dataset_id is not None:
@@ -1434,8 +1447,6 @@ class TimeSeries(IfaceBase):
     def __init__(self, data_id = None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
 
-        self.time_format = '{:0>4d}-{:0>2d}-{:02d} {:0>2d}:{:0>2d}:{:0>2d}.{:}'
-
         self.db.data_id = data_id
         if data_id is not None:
             self.load()
@@ -1548,7 +1559,6 @@ class TimeSeriesData(IfaceBase):
     """
     def __init__(self, timeseries=None, data_id = None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
-        self.time_format = '{:0>4d}-{:0>2d}-{:02d} {:0>2d}:{:0>2d}:{:0>2d}.{:}'
 
         self.db.data_id = data_id
         if data_id is not None:
@@ -1580,8 +1590,6 @@ class EqTimeSeries(IfaceBase):
     """
     def __init__(self, data_id = None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
-
-        self.time_format = '{:0>4d}-{:0>2d}-{:02d} {:0>2d}:{:0>2d}:{:0>2d}.{:}'
 
         self.db.data_id = data_id
 
