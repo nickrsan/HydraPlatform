@@ -576,9 +576,11 @@ class Scenario(GenericResource):
 
     def get_as_dict(self, **kwargs):
         obj_dict = super(Scenario, self).get_as_dict(**kwargs)
-
-        obj_dict['start_time'] = self.get_timestamp(self.db.start_time)
-        obj_dict['end_time']   = self.get_timestamp(self.db.end_time)
+ 
+        if self.db.start_time is not None:
+            obj_dict['start_time'] = self.get_timestamp(self.db.start_time)
+        if self.db.end_time is not None:
+            obj_dict['end_time']   = self.get_timestamp(self.db.end_time)
 
         dict_items = []
         for rgi in self.get_resourcegroupitems():
