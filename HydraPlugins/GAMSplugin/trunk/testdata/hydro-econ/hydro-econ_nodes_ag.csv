@@ -1,5 +1,5 @@
-Name  , X               , Y               , stor_group, dem_group, Consumption, linCoeff           , quadCoeff           ,           BC , test_array        , agBenefits, delivery, infeasQ, Description
-Units ,                 ,                 ,           ,          ,            ,                    ,                     ,              ,                   ,           ,         ,        ,
-Ag1   , 494488.136203141, 148849.926599253, nonstor   , dem      , 0.7        , TS/ag_linCoeff.csv, TS/ag_quadCoeff.csv, TS/BC.csv,                   , NULL      , NULL    , NULL   ,
-Ag2   , 494352.782720372, 144315.584926486, nonstor   , dem      , 0.7        , TS/ag_linCoeff.csv, TS/ag_quadCoeff.csv,              ,                   , NULL      , NULL    , NULL   ,
-EndPt , 501129.818489039, 140506.889165248, nonstor   , dem      , 1.0        ,                    ,                     ,              , arr/EndPtArray.csv, NULL      , NULL    , NULL   ,
+Name  , X               , Y               , Type, stor_group, dem_group, Consumption, linCoeff           , quadCoeff           ,           BC , test_array        , agBenefits, delivery, infeasQ, Description
+Units ,                 ,                 ,     ,           ,          ,            ,                    ,                     ,              ,                   ,           ,         ,        ,
+Ag1   , 494488.136203141, 148849.926599253, ag  , nonstor   , dem      , 0.7        , TS/ag_linCoeff.csv, TS/ag_quadCoeff.csv, TS/BC.csv,                   , NULL      , NULL    , NULL   ,
+Ag2   , 494352.782720372, 144315.584926486, ag  , nonstor   , dem      , 0.7        , TS/ag_linCoeff.csv, TS/ag_quadCoeff.csv,              ,                   , NULL      , NULL    , NULL   ,
+EndPt , 501129.818489039, 140506.889165248, ag  , nonstor   , dem      , 1.0        ,                    ,                     ,              , arr/EndPtArray.csv, NULL      , NULL    , NULL   ,

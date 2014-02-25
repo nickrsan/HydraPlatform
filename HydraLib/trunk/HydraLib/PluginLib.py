@@ -501,25 +501,43 @@ def write_xml_result(plugin_name, xml_string, file_path=None):
     f.close()
 
 
-def set_resource_types(client, network, template_xml,
+def set_resource_types(client, xml_template, network,
                        nodetype_dict, linktype_dict, networktype):
-    template = client.service.upload_template_xml(template_xml)
 
-    template_ids = dict()
+    template = client.service.upload_template_xml(xml_template)
 
-    for tmpl_name in node_type_dict.values():
-        for tmpl in template.templates.Template:
-            if tmpl.name == tmpl_name:
-                template_ids.update({tmpl.name: tmpl.id})
+    type_ids = dict()
+
+    for type_name in nodetype_dict.keys():
+        for tmpltype in template.types.TemplateType:
+            if tmpltype.name == type_name:
+                type_ids.update({tmpltype.name: tmpltype.id})
                 break
 
-    for tmpl_name in link_type_dict.values():
-        for tmpl in template.templates.Template:
-            if tmpl.name == tmpl_name:
-                template_ids.update({tmpl.name: tmpl.id})
+    for type_name in linktype_dict.keys():
+        for tmpltype in template.types.TemplateType:
+            if tmpltype.name == type_name:
+                type_ids.update({tmpltype.name: tmpltype.id})
                 break
 
-    for tmpl in template.templates.Template:
-        if tmpl.name == network_type_name:
-            template_ids.update({tmpl.name: tmpl.id})
+    for tmpltype in template.types.TemplateType:
+        if tmpltype.name == networktype:
+            type_ids.update({tmpltype.name: tmpltype.id})
             break
+
+    client.service.assign_type_to_resource(type_ids[networktype],
+                                           'NETWORK', network.id)
+
+    for node in network.nodes.Node:
+        for typename, node_name_list in nodetype_dict.items():
+            if node.name in node_name_list:
+                type_id = type_ids[typename]
+                client.service.assign_type_to_resource(type_id, 'NODE',
+                                                       node.id)
+
+    for link in network.links.Link:
+        for typename, link_name_list in linktype_dict.items():
+            if link.name in link_name_list:
+                type_id = type_ids[typename]
+                client.service.assign_type_to_resource(type_id, 'LINK',
+                                                       link.id)

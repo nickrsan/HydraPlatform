@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""A Hydra plug-in to export a network and a scenario to a set of files, which
-can be imported into a GAMS model.
+"""A Hydra plug-in to import results from a GAMS model run. All results need to
+be stored in a *.gdx file (the GAMS proprietary binary format). Also, variables
+that will be imported need to be present in HydraPlatform, before results can
+be loaded. We strongly recommend the use of a template.
 
 Basics
 ~~~~~~
 
-The GAMS import and export plug-in provides pre- and post-processing facilities
-for GAMS models. The basic idea is that this plug-in exports data and
-constraints from Hydra to a text file which can be imported into an existing
-GAMS model using the ``$ import`` statement.
+The GAMS import plug-in provides an easy to use tool to import results from a
+model run back into HydraPlatform. It is recommended that the input data for
+this GAMS model is generated using the GAMSexport plug-in. This is because
+GAMSimport depends on a specific definition of the time axis and on the
+presence of variables (attributes) in HydraPlatform that will hold the results
+after import.
 
 Options
 ~~~~~~~
@@ -18,15 +22,22 @@ Options
 Option                 Short  Parameter  Description
 ====================== ====== ========== ======================================
 --gams-path            -G     GAMS_PATH  File path of the GAMS installation.
---network              -t     NETWORK    ID of the network that will be
-                                         exported.
---scenario             -s     SCENARIO   ID of the scenario that will be
-                                         exported.
+--network              -t     NETWORK    ID of the network where results will
+                                         be imported to. Ideally this coincides
+                                         with the network exported to GAMS.
+--scenario             -s     SCENARIO   ID of the underlying scenario used for
+                                         the most recent simulation run.
 --gdx-file             -f     GDX_FILE   GDX file containing GAMS results
 --gams-model           -m     GMS_FILE   Full path to the GAMS model (*.gms)
                                          used for the simulation.
 ====================== ====== ========== ======================================
 
+.. note::
+
+    GAMSimport needs a wrapper script that sets an environment variable
+    (``LD_LIBRARY_PATH``) before the gamsAPI library is loaded. This can not be
+    done at run-time because environment variables can not be set from a
+    running process.
 
 API docs
 ~~~~~~~~

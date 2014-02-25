@@ -216,31 +216,34 @@ class ImportCSV(object):
 
             # We assume a standard order of the network information (Name,
             # Description, attributes,...).
-            id_idx = 0
-            name_idx = 1
-            desc_idx = 2
+            field_idx = {'id': 0,
+                         'name': 1,
+                         'description': 2,
+                         'type': None,
+                         }
             # If the file does not follow the standard, we can at least try to
             # guess what is stored where.
             for i, key in enumerate(keys):
-                if key.lower().strip() == 'id':
-                    id_idx = i
-                elif key.lower().strip() == 'name':
-                    name_idx = i
-                elif key.lower().strip() == 'description':
-                    desc_idx = i
+                if key.lower().strip() in field_idx.keys():
+                    field_idx[key.lower().strip()] = i
+
+            if field_idx['type'] is not None:
+                self.networktype = data[field_idx['type']].strip()
 
             try:
-                ID = int(data[id_idx])
+                ID = int(data[field_idx['id']])
             except ValueError:
                 ID = None
 
             if ID is not None:
                 # Check if network exists on the server.
                 try:
-                    self.Network = self.cli.service.get_network(data[id_idx])
+                    self.Network = \
+                        self.cli.service.get_network(data[field_idx['id']])
                     # Assign name and description in case anything has changed
-                    self.Network.name = data[name_idx].strip()
-                    self.Network.description = data[desc_idx].strip()
+                    self.Network.name = data[field_idx['name']].strip()
+                    self.Network.description = \
+                        data[field_idx['description']].strip()
                     self.update_network_flag = True
                     logging.info('Loading existing network (ID=%s)' % ID)
                     # load existing nodes
@@ -273,14 +276,15 @@ class ImportCSV(object):
                 #    self.cli.factory.create('hyd:LinkArray')
                 #self.Network.scenarios = \
                 #    self.cli.factory.create('hyd:ScenarioArray')
-                self.Network.name = data[name_idx].strip()
-                self.Network.description = data[desc_idx].strip()
+                self.Network.name = data[field_idx['name']].strip()
+                self.Network.description = \
+                    data[field_idx['description']].strip()
 
             # Everything that is not name or description is an attribute
             attrs = dict()
 
             for i, key in enumerate(keys):
-                if i != id_idx and i != name_idx and i != desc_idx:
+                if i not in field_idx.values():
                     attrs.update({i: key.strip()})
 
             if len(attrs.keys()) > 0:
@@ -319,33 +323,26 @@ class ImportCSV(object):
         for i, unit in enumerate(units):
             units[i] = unit.strip()
 
-        name_idx = 0
-        desc_idx = -1  # Should be the last one
-        x_idx = 1
-        y_idx = 2
-        type_idx = None
+        field_idx = {'name': 0,
+                     'description': -1,
+                     'x': 1,
+                     'y': 2,
+                     'type': None,
+                     }
         # Guess parameter position:
         for i, key in enumerate(keys):
-            if key.lower().strip() == 'name':
-                name_idx = i
-            elif key.lower().strip() == 'description':
-                desc_idx = i
-            elif key.lower().strip() == 'x':
-                x_idx = i
-            elif key.lower().strip() == 'y':
-                y_idx = i
-            elif key.lower().strip() == 'type':
-                type_idx = i
+            if key.lower().strip() in field_idx.keys():
+                field_idx[key.lower().strip()] = i
 
         attrs = dict()
 
         for i, key in enumerate(keys):
-            if i != name_idx and i != desc_idx and i != x_idx and i != y_idx:
+            if i not in field_idx.values():
                 attrs.update({i: key.strip()})
 
         for line in data:
             linedata = line.split(',')
-            nodename = linedata[name_idx].strip()
+            nodename = linedata[field_idx['name']].strip()
             if nodename in self.Nodes.keys():
                 node = self.Nodes[nodename]
                 logging.info('Node %s exists.' % nodename)
@@ -353,19 +350,25 @@ class ImportCSV(object):
                 node = self.cli.factory.create('hyd:Node')
                 node.id = self.node_id.next()
                 node.name = nodename
-                node.description = linedata[desc_idx].strip()
+                node.description = linedata[field_idx['description']].strip()
                 try:
-                    node.x = float(linedata[x_idx])
+                    node.x = float(linedata[field_idx['x']])
                 except ValueError:
                     node.x = 0
                     logging.info('X coordinate of node %s is not a number.'
                                  % node.name)
                 try:
-                    node.y = float(linedata[y_idx])
+                    node.y = float(linedata[field_idx['y']])
                 except ValueError:
                     node.y = 0
                     logging.info('Y coordinate of node %s is not a number.'
                                  % node.name)
+                if field_idx['type'] is not None:
+                    node_type = linedata[field_idx['type']].strip()
+                    if node_type not in self.nodetype_dict.keys():
+                        self.nodetype_dict.update({node_type: (nodename,)})
+                    else:
+                        self.nodetype_dict[node_type] += (nodename,)
 
             if len(attrs) > 0:
                 node = self.add_data(node, attrs, linedata, units=units)
@@ -392,31 +395,26 @@ class ImportCSV(object):
         for i, unit in enumerate(units):
             units[i] = unit.strip()
 
-        name_idx = 0
-        desc_idx = -1  # Should be the last one
-        from_idx = 1
-        to_idx = 2
+        field_idx = {'name': 0,
+                     'description': -1,
+                     'from': 1,
+                     'to': 2,
+                     'type': None,
+                     }
         # Guess parameter position:
         for i, key in enumerate(keys):
-            if key.lower().strip() == 'name':
-                name_idx = i
-            elif key.lower().strip() == 'description':
-                desc_idx = i
-            elif key.lower().strip() == 'from':
-                from_idx = i
-            elif key.lower().strip() == 'to':
-                to_idx = i
+            if key.lower().strip() in field_idx.keys():
+                field_idx[key.lower().strip()] = i
 
         attrs = dict()
 
         for i, key in enumerate(keys):
-            if i != name_idx and i != desc_idx and \
-                    i != from_idx and i != to_idx:
+            if i not in field_idx.values():
                 attrs.update({i: key.strip()})
 
         for line in data:
             linedata = line.split(',')
-            linkname = linedata[name_idx].strip()
+            linkname = linedata[field_idx['name']].strip()
             if linkname in self.Links.keys():
                 link = self.Links[linkname]
                 logging.info('Link %s exists.' % linkname)
@@ -424,19 +422,26 @@ class ImportCSV(object):
                 link = self.cli.factory.create('hyd:Link')
                 link.id = self.link_id.next()
                 link.name = linkname
-                link.description = linedata[desc_idx].strip()
+                link.description = linedata[field_idx['description']].strip()
 
                 try:
-                    fromnode = self.Nodes[linedata[from_idx].strip()]
-                    tonode = self.Nodes[linedata[to_idx].strip()]
+                    fromnode = self.Nodes[linedata[field_idx['from']].strip()]
+                    tonode = self.Nodes[linedata[field_idx['to']].strip()]
                     link.node_1_id = fromnode.id
                     link.node_2_id = tonode.id
 
                 except KeyError:
                     logging.info(('Start or end node not found (%s -- %s).' +
                                   ' No link created.') %
-                                 (linedata[from_idx].strip(),
-                                  linedata[to_idx].strip()))
+                                 (linedata[field_idx['from']].strip(),
+                                  linedata[field_idx['to']].strip()))
+
+                if field_idx['type'] is not None:
+                    link_type = linedata[field_idx['type']].strip()
+                    if link_type not in self.linktype_dict.keys():
+                        self.linktype_dict.update({link_type: (linkname,)})
+                    else:
+                        self.linktype_dict[link_type] += (linkname,)
             if len(attrs) > 0:
                 link = self.add_data(link, attrs, linedata, units=units)
             self.Links.update({link.name: link})
@@ -498,10 +503,10 @@ class ImportCSV(object):
                 res_attr.id = self.attr_id.next()
                 res_attr.attr_id = attr.id
 
-                resource.attributes.ResourceAttr.append(res_attr)
-
             # create dataset and assign to attribute (if not empty)
             if len(data[i].strip()) > 0:
+
+                resource.attributes.ResourceAttr.append(res_attr)
 
                 if data[i].strip() in ('NULL',
                                        'I AM NOT A NUMBER! I AM A FREE MAN!'):
@@ -510,7 +515,7 @@ class ImportCSV(object):
 
                 else:
                     if units is not None:
-                        if units[i] is not None and len(units[i]) > 0:
+                        if units[i] is not None and len(units[i].strip()) > 0:
                             dimension = attr.dimen
                         else:
                             dimension = None
@@ -677,13 +682,15 @@ class ImportCSV(object):
         return item_str
 
     def set_resource_types(self, template_file):
+
         with open(template_file) as f:
-            template_xml = f.read()
-        return PluginLib.set_resource_type(self.cli, template_xml,
-                                           self.Network,
-                                           self.nodetypedict,
-                                           self.linktypedict,
-                                           self.networktype)
+            xml_template = f.read()
+
+        return PluginLib.set_resource_types(self.cli, xml_template,
+                                            self.Network,
+                                            self.nodetype_dict,
+                                            self.linktype_dict,
+                                            self.networktype)
 
     def create_dataset(self, value, resource_attr, unit, dimension, resource_name):
         resourcescenario = self.cli.factory.create('hyd:ResourceScenario')

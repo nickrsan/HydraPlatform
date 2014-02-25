@@ -6,10 +6,17 @@ can be imported into a GAMS model.
 Basics
 ~~~~~~
 
-The GAMS import and export plug-in provides pre- and post-processing facilities
-for GAMS models. The basic idea is that this plug-in exports data and
-constraints from Hydra to a text file which can be imported into an existing
-GAMS model using the ``$ import`` statement.
+The GAMS import plug-in provides an easy to use tool for exporting data from
+HydraPlatform to custom GAMS models. The basic idea is that this plug-in
+exports a network and associated data from HydraPlatform to a text file which
+can be imported into an existing GAMS model using the ``$ import`` statement.
+
+.. note::
+
+    The main goal of this plug-in is to provide a *generic* tool for exporting
+    network topologies and data to a file readable by GAMS. In most cases it
+    will be necessary to adapt existing GAMS models to the naming conventions
+    used by this plug-in.
 
 Input data for GAMS
 -------------------
@@ -20,6 +27,8 @@ time series and arrays.
 
 Options
 ~~~~~~~
+
+**Mandatory arguments:**
 
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
@@ -32,15 +41,32 @@ Option                 Short  Parameter  Description
                                          resources. Attributes that don't
                                          belong to this template are ignored.
 --output               -o     OUTPUT     Filename of the output file.
+====================== ====== ========== ======================================
+
+One of the following two options for specifying the time domain of the model is
+mandatory:
+
+**Option 1:**
+====================== ====== ========== ======================================
 --start-date           -st    START_DATE Start date of the time period used for
                                          simulation.
 --end-date             -en    END_DATE   End date of the time period used for
                                          simulation.
---time-step            -dt    TIME_STEP  Time step used for simulation.
---node-type-attr       -nt    NODE_TYPE_ATTR The name of the attribute
-                                         specifying the node type.
---link-type-attr       -lt    LINK_TYPE_ATTR The name of the attribute
-                                         specifying the link type.
+--time-step            -dt    TIME_STEP  Time step used for simulation. The
+                                         time step needs to be specified as a
+                                         valid time length as supported by
+                                         Hydra's unit conversion function (e.g.
+                                         1 s, 3 min, 2 h, 4 day, 1 mon, 1 yr)
+====================== ====== ========== ======================================
+
+**Option 2:**
+====================== ====== ========== ======================================
+--time-axis            -tx    TIME_AXIS  Time axis for the modelling period (a
+                                         list of comma separated time stamps).
+====================== ====== ========== ======================================
+
+**Optional arguments:**
+====================== ====== ========== ======================================
 --group-nodes-by       -gn    GROUP_ATTR Group nodes by this attribute(s).
 --group_links-by       -gl    GROUP_ATTR Group links by this attribute(s).
 ====================== ====== ========== ======================================
