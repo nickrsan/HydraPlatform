@@ -9,6 +9,7 @@ TypeSummary,\
 get_as_complexmodel
 
 from db import HydraIface
+from db import IfaceLib
 from hydra_base import HydraService
 from HydraLib.HydraException import HydraError
 import logging
@@ -281,8 +282,13 @@ class TemplateService(HydraService):
         missing_attr_ids = set(type_attrs.keys()) - set(existing_attr_ids)
 
         # add attributes if necessary
+        new_res_attrs = []
         for attr_id in missing_attr_ids:
-            resource_i.add_attribute(attr_id, attr_is_var=type_attrs[attr_id])
+            ra_i = resource_i.add_attribute(attr_id,
+                                            attr_is_var=type_attrs[attr_id])
+            new_res_attrs.append(ra_i)
+
+        IfaceLib.bulk_insert(new_res_attrs, 'tResourceAttr')
 
         resource_i.save()
 
@@ -549,7 +555,7 @@ class TemplateService(HydraService):
     @rpc(Integer, _returns=Unicode)
     def get_network_as_xml_template(ctx, network_id):
         """
-            Turn an existing network into an xml template 
+            Turn an existing network into an xml template
             using its attributes.
             If an optional scenario ID is passed in, default
             values will be populated from that scenario.

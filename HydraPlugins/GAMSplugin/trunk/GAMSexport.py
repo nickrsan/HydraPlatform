@@ -312,6 +312,7 @@ class GAMSexport(object):
                 # This exporter only supports 'rectangular' arrays
                 for attribute in attributes:
                     attr = resource.get_attribute(attr_name=attribute.name)
+                    print attr.value
                     if attr.value is not None:
                         array = eval(attr.value.__getitem__(0))
                         dim = array_dim(array)

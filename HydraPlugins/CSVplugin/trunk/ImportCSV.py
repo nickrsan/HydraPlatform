@@ -130,9 +130,14 @@ from datetime import datetime
 import pytz
 
 from HydraLib import PluginLib
+from HydraLib import config
+
+from HydraLib.HydraException import HydraPluginError
 
 from suds import WebFault
 import numpy
+
+from lxml import etree
 
 import re
 
@@ -686,6 +691,20 @@ class ImportCSV(object):
         with open(template_file) as f:
             xml_template = f.read()
 
+        # Validate XML
+
+        logging.info('Validating template file (%s).' % template_file)
+
+        template_xsd_path = config.get('templates', 'template_xsd_path')
+        xmlschema_doc = etree.parse(template_xsd_path)
+        xmlschema = etree.XMLSchema(xmlschema_doc)
+        xml_tree = etree.fromstring(xml_template)
+
+        try:
+            xmlschema.assertValid(xml_tree)
+        except etree.DocumentInvalid as e:
+            raise HydraPluginError('Template validation failed: ' + e.message)
+
         return PluginLib.set_resource_types(self.cli, xml_template,
                                             self.Network,
                                             self.nodetype_dict,
@@ -755,7 +774,7 @@ class ImportCSV(object):
 
     def create_scalar(self, value):
         scalar = self.cli.factory.create('hyd:Scalar')
-        scalar.param_value = value
+        scalar.param_value = float(value)
         return scalar
 
     def create_descriptor(self, value):

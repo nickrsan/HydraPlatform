@@ -3,6 +3,7 @@ from spyne.model.primitive import Unicode
 from spyne.model.primitive import String
 from spyne.model.primitive import Integer
 from spyne.model.primitive import Decimal
+from spyne.model.primitive import Float
 from spyne.model.primitive import DateTime
 from spyne.model.primitive import AnyDict
 from spyne.model.primitive import Double
@@ -227,7 +228,7 @@ class EqTimeSeries(HydraComplexModel):
 
 class Scalar(HydraComplexModel):
     _type_info = [
-        ('param_value', Decimal),
+        ('param_value', Float),
     ]
     def __init__(self, val=None):
         super(Scalar, self).__init__()

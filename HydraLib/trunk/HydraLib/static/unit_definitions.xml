@@ -271,7 +271,8 @@
         <unit name="USDollars per joule" abbr="$ J^-1"    lf="1" cf="0" info="Cost in US Dollars per energy unit (joule)."/>
     </dimension>
     <dimension name="Unit price (volume)">
-        <unit name="US Dollar per square metre" abbr="$ m^-3" lf="1.0" cf="0.0" info=""/>
+        <unit name="US Dollar per square metre" abbr="$ m^-3"     lf="1.0" cf="0.0" info=""/>
+        <unit name="US Dollar per acre-foot"    abbr="$ ac-ft^-1" lf="0.000810713194" cf="0.0" info=""/>
     </dimension>
     <dimension name="Unit price (mass)">
         <unit name="US Dollar per kilogram" abbr="$ kg^-1" lf="1.0" cf="0.0" info=""/>
