@@ -66,14 +66,14 @@ For nodes a valid file looks like this::
 
     Name , x, y, type, attribute_1, attribute_2, ..., attribute_n, description
     Units,  ,  ,     ,           m,    m^3 s^-1, ...,           -,
-    node1, 2, 1, irr ,         4.0,      3421.9, ...,  Crop: corn, Irrigation node 1
-    node2, 2, 3, irr ,         2.4,       988.4, ...,  Crop: rice, Irrigation node 2
+    node1, 2, 1, irr ,         4.0,      3421.9, ...,  Crop: corn, Irrigation 1
+    node2, 2, 3, irr ,         2.4,       988.4, ...,  Crop: rice, Irrigation 2
 
 For links, the following is a valid file::
 
-    Name ,       from,       to, type, attribute_1, ..., attribute_n, description
-    Units,           ,         ,     ,           m, ...,    m^2 s^-1,
-    link1,      node1,    node2, tran,         453, ...,        0.34, Water transfer
+    Name ,       from,       to, type, attre_1, ...,  attre_n, description
+    Units,           ,         ,     ,       m, ..., m^2 s^-1,
+    link1,      node1,    node2, tran,     453, ...,     0.34, Water transfer
 
 It is optional to supply a network file. If you decide to do so, it needs to
 follow this structure::
@@ -81,7 +81,7 @@ follow this structure::
     # A test network created as a set of CSV files
     ID, Name            , type, attribute_1, ..., Description
     Units,              ,     ,            ,    ,
-    1 , My first network, net , test       ,    , A network create from CSV files
+    1 , My first network, net , test       ,    , Network created from CSV files
 
 
 Lines starting with the ``#`` character are ignored.
@@ -169,6 +169,10 @@ class ImportCSV(object):
         self.link_id = PluginLib.temp_ids()
         self.attr_id = PluginLib.temp_ids()
 
+        self.warnings = []
+        self.message = ''
+        self.files = []
+
     def create_project(self, ID=None):
         if ID is not None:
             try:
@@ -182,6 +186,8 @@ class ImportCSV(object):
 
             except ValueError:
                 logging.info('Project ID not valid. Creating new project')
+                self.warnings.append(
+                    'Project ID not valid. Creating new project')
 
         self.Project = self.cli.factory.create('hyd:Project')
         self.Project.name = "CSV import at %s" % (datetime.now())
@@ -269,6 +275,7 @@ class ImportCSV(object):
                         self.cli.factory.create('hyd:ScenarioArray')
                 except WebFault:
                     logging.info('Network ID not found. Creating new network.')
+                    self.warnings.append('Network ID not found. Creating new network.')
                     ID = None
 
             if ID is None:
@@ -362,12 +369,16 @@ class ImportCSV(object):
                     node.x = 0
                     logging.info('X coordinate of node %s is not a number.'
                                  % node.name)
+                    self.warnings.append('X coordinate of node %s is not a number.'
+                                         % node.name)
                 try:
                     node.y = float(linedata[field_idx['y']])
                 except ValueError:
                     node.y = 0
                     logging.info('Y coordinate of node %s is not a number.'
                                  % node.name)
+                    self.warnings.append('Y coordinate of node %s is not a number.'
+                                         % node.name)
                 if field_idx['type'] is not None:
                     node_type = linedata[field_idx['type']].strip()
                     if node_type not in self.nodetype_dict.keys():
@@ -437,6 +448,10 @@ class ImportCSV(object):
 
                 except KeyError:
                     logging.info(('Start or end node not found (%s -- %s).' +
+                                  ' No link created.') %
+                                 (linedata[field_idx['from']].strip(),
+                                  linedata[field_idx['to']].strip()))
+                    self.warnings.append(('Start or end node not found (%s -- %s).' +
                                   ' No link created.') %
                                  (linedata[field_idx['from']].strip(),
                                   linedata[field_idx['to']].strip()))
@@ -691,25 +706,13 @@ class ImportCSV(object):
         with open(template_file) as f:
             xml_template = f.read()
 
-        # Validate XML
+        PluginLib.set_resource_types(self.cli, xml_template,
+                                     self.Network,
+                                     self.nodetype_dict,
+                                     self.linktype_dict,
+                                     self.networktype)
 
-        logging.info('Validating template file (%s).' % template_file)
-
-        template_xsd_path = config.get('templates', 'template_xsd_path')
-        xmlschema_doc = etree.parse(template_xsd_path)
-        xmlschema = etree.XMLSchema(xmlschema_doc)
-        xml_tree = etree.fromstring(xml_template)
-
-        try:
-            xmlschema.assertValid(xml_tree)
-        except etree.DocumentInvalid as e:
-            raise HydraPluginError('Template validation failed: ' + e.message)
-
-        return PluginLib.set_resource_types(self.cli, xml_template,
-                                            self.Network,
-                                            self.nodetype_dict,
-                                            self.linktype_dict,
-                                            self.networktype)
+        self.message += ' Assigned node types based on %s.' % template_file
 
     def create_dataset(self, value, resource_attr, unit, dimension, resource_name):
         resourcescenario = self.cli.factory.create('hyd:ResourceScenario')
@@ -867,21 +870,38 @@ class ImportCSV(object):
             self.Network = self.cli.service.add_network(self.Network)
 
         logging.info("Network updated. Network ID is %s", self.Network.id)
-        logging.info("Network Scenarios are: %s", \
+        logging.info("Network Scenarios are: %s",
                      [s.id for s in self.Network.scenarios.Scenario])
+
+        self.message = 'Data import was successful.'
 
     def return_xml(self):
         """This is a fist version of a possible XML output.
         """
-        scen_ids = []
-        for s in self.Network.scenarios.Scenario:
-            scen_ids.append(s.id)
+        scen_ids = [s.id for s in self.Network.scenarios.Scenario]
 
         xml_response = PluginLib.create_xml_response('ImportCSV',
                                                      self.Network.id,
                                                      scen_ids)
 
         print xml_response
+
+    def validate_template(self, template_file):
+
+        logging.info('Validating template file (%s).' % template_file)
+
+        with open(template_file) as f:
+            xml_template = f.read()
+
+        template_xsd_path = config.get('templates', 'template_xsd_path')
+        xmlschema_doc = etree.parse(template_xsd_path)
+        xmlschema = etree.XMLSchema(xmlschema_doc)
+        xml_tree = etree.fromstring(xml_template)
+
+        try:
+            xmlschema.assertValid(xml_tree)
+        except etree.DocumentInvalid as e:
+            raise HydraPluginError('Template validation failed: ' + e.message)
 
 
 def commandline_parser():
@@ -937,35 +957,61 @@ if __name__ == '__main__':
     args = parser.parse_args()
     csv = ImportCSV()
 
-    if args.expand_filenames:
-        csv.expand_filenames = True
+    network_id = None
+    scen_ids = []
 
-    if args.timezone is not None:
-        csv.timezone = pytz.timezone(args.timezone)
+    try:
 
-    if args.nodes is not None:
-        # Create project and network only when there is actual data to import.
-        csv.create_project(ID=args.project)
-        csv.create_scenario(name=args.scenario)
-        csv.create_network(file=args.network)
+        if args.expand_filenames:
+            csv.expand_filenames = True
 
-        for nodefile in args.nodes:
-            csv.read_nodes(nodefile)
+        if args.timezone is not None:
+            csv.timezone = pytz.timezone(args.timezone)
 
-        if args.links is not None:
-            for linkfile in args.links:
-                csv.read_links(linkfile)
+        if args.nodes is not None:
+            # Validation
 
-        if args.rules is not None:
-            for constraintfile in args.rules:
-                csv.read_constraints(constraintfile)
+            if args.template is not None:
+                csv.validate_template(args.template)
 
-        csv.commit()
+            # Create project and network only when there is actual data to
+            # import.
+            csv.create_project(ID=args.project)
+            csv.create_scenario(name=args.scenario)
+            csv.create_network(file=args.network)
 
-        if args.template is not None:
-            csv.set_resource_types(args.template)
+            for nodefile in args.nodes:
+                csv.read_nodes(nodefile)
 
-        csv.return_xml()
+            if args.links is not None:
+                for linkfile in args.links:
+                    csv.read_links(linkfile)
 
-    else:
-        logging.info('No nodes found. Nothing imported.')
+            if args.rules is not None:
+                for constraintfile in args.rules:
+                    csv.read_constraints(constraintfile)
+
+            csv.commit()
+
+            if args.template is not None:
+                csv.set_resource_types(args.template)
+
+            scen_ids = [s.id for s in csv.Network.scenarios.Scenario]
+            network_id = csv.Network.id
+        else:
+            logging.info('No nodes found. Nothing imported.')
+
+        errors = []
+
+    except HydraPluginError as e:
+        errors = [e.message]
+
+    xml_response = PluginLib.create_xml_response('ImportCSV',
+                                                 network_id,
+                                                 scen_ids,
+                                                 errors,
+                                                 csv.warnings,
+                                                 csv.message,
+                                                 csv.files)
+
+    print xml_response
