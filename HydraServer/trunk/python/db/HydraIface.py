@@ -5,22 +5,13 @@ from HydraLib.util import convert_ordinal_to_datetime
 
 from HydraLib.HydraException import HydraError
 
-from HydraLib import config
 import IfaceLib
 from IfaceLib import IfaceBase, execute
 
 from lxml import etree
-import os
-
-global LAYOUT_XSD_PATH
-LAYOUT_XSD_PATH = None
 
 def init(cnx):
     IfaceLib.init(cnx, db_hierarchy)
-
-    global LAYOUT_XSD_PATH
-    LAYOUT_XSD_PATH = config.get('hydra_server', 'layout_xsd_path')
-    LAYOUT_XSD_PATH = os.path.expanduser(LAYOUT_XSD_PATH)
 
 def add_dataset(data_type, val, units, dimension, name="", dataset_id=None, user_id=None):
     """
@@ -71,27 +62,6 @@ def get_data_from_hash(data_hash):
         return rs[0].dataset_id
     else:
         return None
-
-def validate_layout(layout_xml):
-    """
-        Using layout.xsd, validate a piece of layout xml
-    """
-    if layout_xml is None or layout_xml == "":
-        logging.debug("No layout information to validate")
-        return
-
-    xmlschema_doc = etree.parse(LAYOUT_XSD_PATH)
-
-    xmlschema = etree.XMLSchema(xmlschema_doc)
-
-    try:
-        xml_tree = etree.fromstring(layout_xml)
-
-        xmlschema.assertValid(xml_tree)
-    except etree.LxmlError, e:
-        raise HydraError("Layout XML did not validate!: Error was: %s"%(e))
-
-    return xml_tree
 
 class GenericResource(IfaceBase):
     """
@@ -350,9 +320,6 @@ class GenericResource(IfaceBase):
                                          }
 
         return template_dict
-
-    def validate_layout(self, layout_xml):
-        validate_layout(layout_xml)
 
     def get_as_dict(self, **kwargs):
         """

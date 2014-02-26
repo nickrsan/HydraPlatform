@@ -6,17 +6,14 @@
             <name>Reservoir</name>
             <alias>Reservoir</alias>
             <layout>
-                <![CDATA[
-                    <resource_layout>
-                        <layout>
-                            <name>color</name>
-                            <value>red</value>
-                        </layout>
-                        <layout>
-                            <name>shapefile</name>
-                            <value>blah.shp</value>
-                        </layout>
-                    </resource_layout>]]>
+                <item>
+                    <name>color</name>
+                    <value>red</value>
+                </item>
+                <item>
+                    <name>shapefile</name>
+                    <value>blah.shp</value>
+                </item>
             </layout>
             <attribute>
                 <name>Min Capacity</name>

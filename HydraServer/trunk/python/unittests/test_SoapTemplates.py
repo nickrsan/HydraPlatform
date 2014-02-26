@@ -180,18 +180,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         templatetype = self.client.factory.create('hyd:TemplateType')
         templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
         templatetype.alias = "%s alias" % templatetype.name
-        templatetype.layout = """
-            <resource_layout>
-                <layout>
-                    <name>color</name>
-                    <value>red</value>
-                </layout>
-                <layout>
-                    <name>shapefile</name>
-                    <value>blah.shp</value>
-                </layout>
-            </resource_layout>
-        """
+        layout = self.client.factory.create("xs:anyType")
+        layout.color = 'red'
+        layout.shapefile = 'blah.shp'
 
         tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
@@ -213,7 +204,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         assert new_type.name == templatetype.name, "Names are not the same!"
         assert new_type.alias == templatetype.alias, "Aliases are not the same!"
-        assert new_type.layout == templatetype.layout, "Layouts are not the same!"
+        assert repr(new_type.layout) == repr(templatetype.layout), "Layouts are not the same!"
         assert new_type.id is not None, "New type has no ID!"
         assert new_type.id > 0, "New type has incorrect ID!"
 

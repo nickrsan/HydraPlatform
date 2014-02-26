@@ -172,9 +172,8 @@ class TemplateService(HydraService):
 
                 if resource.find('layout') is not None and \
                    resource.find('layout').text is not None:
-                    layout = unescape(resource.find('layout').text)
-                    layout_tree = HydraIface.validate_layout(layout)
-                    layout_string = convert_layout_xml_to_dict(layout_tree)
+                    layout = resource.find('layout')
+                    layout_string = get_layout_as_dict(layout)
                     type_i.db.layout = str(layout_string)
 
                 type_i.save()
@@ -336,7 +335,6 @@ class TemplateService(HydraService):
                         type_i.db.type_name = templatetype.name
                         type_i.db.alias     = templatetype.alias
                         type_i.db.layout    = templatetype.layout
-                        HydraIface.validate_layout(type_i.db.layout)
                         type_i.save()
                         type_i.load_all()
                         break
@@ -437,7 +435,6 @@ class TemplateService(HydraService):
         rt_i.db.type_name  = templatetype.name
         rt_i.db.alias  = templatetype.alias
         rt_i.db.layout = templatetype.layout
-        HydraIface.validate_layout(rt_i.db.layout)
 
         if templatetype.template_id is not None:
             rt_i.db.template_id = templatetype.template_id
@@ -462,7 +459,6 @@ class TemplateService(HydraService):
         type_i.db.type_name  = templatetype.name
         type_i.db.alias  = templatetype.alias
         type_i.db.layout = templatetype.layout
-        HydraIface.validate_layout(type_i.db.layout)
         type_i.load_all()
 
         if templatetype.template_id is not None:
@@ -662,19 +658,19 @@ def _make_attr_element(parent, resource_attr_i):
 
     return attr
 
-def convert_layout_xml_to_dict(layout_tree):
+def get_layout_as_dict(layout_tree):
     """
     Convert something that looks like this:
-    <resource_layout>
-        <layout>
+    <layout>
+        <item>
             <name>color</name>
             <value>red</value>
-        </layout>
-        <layout>
+        </item>
+        <item>
             <name>shapefile</name>
             <value>blah.shp</value>
-        </layout>
-    </resource_layout>
+        </item>
+    </layout>
     Into something that looks like this:
     {
         'color' : ['red'],
@@ -683,9 +679,9 @@ def convert_layout_xml_to_dict(layout_tree):
     """
     layout_dict = dict()
 
-    for layout in layout_tree.findall('layout'):
-        name = layout.find('name').text
-        value = layout.find('value').text
+    for item in layout_tree.findall('item'):
+        name  = item.find('name').text
+        value = item.find('value').text
         layout_dict[name] = [value]
     return layout_dict
 
