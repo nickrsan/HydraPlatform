@@ -124,7 +124,7 @@ def get_timing(time):
 def add_nodes(net_i, nodes):
 
     #check_perm(ctx.in_header.user_id, 'edit_topology')
-    
+
     start_time = datetime.datetime.now()
 
     #List of HydraIface resource attributes
@@ -469,20 +469,26 @@ class NetworkService(HydraService):
         """
             Return a whole network as a complex model.
         """
-        net_i = HydraIface.Network(network_id = network_id)
+        net_i = HydraIface.Network(network_id=network_id)
 
         net_i.check_read_permission(ctx.in_header.user_id)
 
+        starttime = datetime.datetime.now()
         if net_i.load_all(scenario_ids) is False:
             raise ObjectNotFoundError("Network (network_id=%s) not found." %
                                       network_id)
+        endtime = datetime.datetime.now()
+        logging.info('#-- HydraIface.Network.load_all(): %s' % str(endtime - starttime))
 
         #try:
         #    check_perm(ctx.in_header.user_id, 'view_data')
         #except:
         #    include_data='N'
 
+        starttime = datetime.datetime.now()
         net = get_as_complexmodel(ctx, net_i, **dict(include_data=include_data))
+        endtime = datetime.datetime.now()
+        logging.info('#-- get_as_complex_model: %s' % str(endtime - starttime))
 
         return net
 

@@ -543,7 +543,7 @@ class Scenario(GenericResource):
 
     def get_as_dict(self, **kwargs):
         obj_dict = super(Scenario, self).get_as_dict(**kwargs)
- 
+
         if self.db.start_time is not None:
             obj_dict['start_time'] = self.get_timestamp(self.db.start_time)
         if self.db.end_time is not None:
@@ -618,7 +618,10 @@ class Network(GenericResource):
             del(all_children['tScenario'])
             self.children = all_children
 
+            starttime = datetime.datetime.now()
             load_ok = super(Network, self).load_all()
+            endtime = datetime.datetime.now()
+            logging.info('#-- super(Network, self).load_all(): %s' % str(endtime-starttime))
 
             if load_ok is False:
                 return False
@@ -1004,7 +1007,7 @@ class TemplateType(IfaceBase):
             tattr_i.save()
             self.typeattrs.append(tattr_i)
 
-        return tattr_i 
+        return tattr_i
 
     def remove_typeattr(self, attr_id):
         """

@@ -408,41 +408,54 @@ def guess_timefmt(datestr):
                      ['%d', '%m', 'XXXX'],
                      ['%d', '%b', 'XXXX']]
 
-    timefmt = '%H:%M:%S.%f'
+    timeformats = ['%H:%M:%S.%f', '%H:%M:%S', '%H:%M']
 
     # Check if a time is indicated or not
-    try:
-        datetime.strptime(datestr.split(' ')[-1].strip(), timefmt)
-        usetime = True
-    except ValueError:
-        usetime = False
+    for timefmt in timeformats:
+        try:
+            datetime.strptime(datestr.split(' ')[-1].strip(), timefmt)
+            usetime = True
+        except ValueError:
+            usetime = False
 
     # Check the simple ones:
     for fmt in formatstrings:
         for delim in delimiters:
             datefmt = fmt[0] + delim + fmt[1] + delim + fmt[2]
             if usetime:
-                datefmt = datefmt + ' ' + timefmt
-            try:
-                datetime.strptime(datestr, datefmt)
-                return datefmt
-            except ValueError:
-                pass
+                for timefmt in timeformats:
+                    complfmt = datefmt + ' ' + timefmt
+                    try:
+                        datetime.strptime(datestr, complfmt)
+                        return fmt
+                    except ValueError:
+                        pass
+            else:
+                try:
+                    datetime.strptime(datestr, datefmt)
+                    return datefmt
+                except ValueError:
+                    pass
 
     # Check for other formats:
     custom_formats = ['%m/%d/%Y', '%b %d %Y', '%B %d %Y', '%m/%d/XXXX']
 
     for fmt in custom_formats:
         if usetime:
-            datefmt = fmt + ' ' + timefmt
-        else:
-            datefmt = fmt
+            for timefmt in timeformats:
+                complfmt = fmt + ' ' + timefmt
+                try:
+                    datetime.strptime(datestr, complfmt)
+                    return complfmt
+                except ValueError:
+                    pass
 
-        try:
-            datetime.strptime(datestr, datefmt)
-            return datefmt
-        except ValueError:
-            pass
+        else:
+            try:
+                datetime.strptime(datestr, fmt)
+                return fmt
+            except ValueError:
+                pass
 
     return None
 

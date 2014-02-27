@@ -854,7 +854,7 @@ class ImportCSV(object):
         return arr
 
     def is_timeseries(self, data):
-        date = data.split(',', 1)[0].strip()
+        date = data.split(',')[0].strip()
         timeformat = PluginLib.guess_timefmt(date)
         if timeformat is None:
             return False
@@ -996,12 +996,12 @@ if __name__ == '__main__':
                     csv.read_constraints(constraintfile)
 
             csv.commit()
+            scen_ids = [s.id for s in csv.Network.scenarios.Scenario]
+            network_id = csv.Network.id
 
             if args.template is not None:
                 csv.set_resource_types(args.template)
 
-            scen_ids = [s.id for s in csv.Network.scenarios.Scenario]
-            network_id = csv.Network.id
         else:
             logging.info('No nodes found. Nothing imported.')
 
