@@ -275,12 +275,14 @@ class GAMSexport(object):
                     '_timeseries) \n\n       '
             for attribute in attributes:
                 for resource in resources:
-                    if islink:
-                        self.output += ' %14s' % (resource.gams_name + '.' +
-                                                  attribute.name)
-                    else:
-                        self.output += ' %14s' % (resource.name + '.' +
-                                                  attribute.name)
+                    attr = resource.get_attribute(attr_name=attribute.name)
+                    if attr.dataset_id is not None:
+                        if islink:
+                            self.output += ' %14s' % (resource.gams_name + '.'
+                                                      + attribute.name)
+                        else:
+                            self.output += ' %14s' % (resource.name + '.'
+                                                      + attribute.name)
             self.output += '\n'
 
             for t, timestamp in enumerate(self.time_index):
@@ -288,12 +290,13 @@ class GAMSexport(object):
                 for attribute in attributes:
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
-                        soap_time = self.cli.factory.create('ns0:stringArray')
-                        soap_time.string.append(PluginLib.date_to_string(timestamp))
-                        data = self.cli.service.get_val_at_time(
-                            attr.dataset_id, soap_time)
-                        data = eval(data.data)
-                        self.output += ' %14f' % data[0]
+                        if attr.dataset_id is not None:
+                            soap_time = self.cli.factory.create('ns0:stringArray')
+                            soap_time.string.append(PluginLib.date_to_string(timestamp))
+                            data = self.cli.service.get_val_at_time(
+                                attr.dataset_id, soap_time)
+                            data = eval(data.data)
+                            self.output += ' %14f' % data[0]
                 self.output += '\n'
             self.output += '\n'
 

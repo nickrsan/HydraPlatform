@@ -706,11 +706,15 @@ class ImportCSV(object):
         with open(template_file) as f:
             xml_template = f.read()
 
-        PluginLib.set_resource_types(self.cli, xml_template,
-                                     self.Network,
-                                     self.nodetype_dict,
-                                     self.linktype_dict,
-                                     self.networktype)
+        try:
+            PluginLib.set_resource_types(self.cli, xml_template,
+                                         self.Network,
+                                         self.nodetype_dict,
+                                         self.linktype_dict,
+                                         self.networktype)
+        except KeyError as e:
+            raise HydraPluginError("Type '%s' not found in template."
+                                   % e.message)
 
         self.message += ' Assigned node types based on %s.' % template_file
 

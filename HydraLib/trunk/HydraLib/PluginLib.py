@@ -306,7 +306,7 @@ def connect():
     url = config.get('hydra_client', 'url')
     user = config.get('hydra_client', 'user')
     passwd = config.get('hydra_client', 'password')
-    cli = Client(url, timeout=2400, plugins=[FixNamespace()])
+    cli = Client(url, timeout=3600, plugins=[FixNamespace()])
     login_response = cli.service.login(user, passwd)
     user_id = login_response.user_id
     session_id = login_response.session_id
