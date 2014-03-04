@@ -8,8 +8,6 @@ from HydraLib.HydraException import HydraError
 import IfaceLib
 from IfaceLib import IfaceBase, execute
 
-from lxml import etree
-
 def init(cnx):
     IfaceLib.init(cnx, db_hierarchy)
 
