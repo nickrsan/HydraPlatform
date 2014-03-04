@@ -15,7 +15,10 @@ Basic usage::
 
        ImportCSV.py [-h] [-p PROJECT] [-s SCENARIO] [-t NETWORK]
                     -n NODES [NODES ...] -l LINKS [LINKS ...]
-                    [-r RULES [RULES ...]] [-z TIMEZONE] [-x]
+                    [-r RULES [RULES ...]] [-z TIMEZONE]
+                    [-g GROUPS] [-k GROUPMEMBERS]
+                    [-t TEMPLATE]
+                    [-x]
 
 Options
 ~~~~~~~
@@ -41,6 +44,13 @@ Option                 Short  Parameter Description
                                         and attributes.
 ``--links``            ``-l`` LINKS     One or multiple files containing
                                         information on links.
+``--groups``           ``-g`` GROUPS    A file or list of files containing 
+                                        group name, description,
+                                        attributes and data.
+``--groupmembers``     ``-k`` GROUP_MEMBERS A file or list of files containing 
+                                        group members.
+``--template``         ``-m`` TEMPLATE  XML file defining the types for the
+                                        network. Required if types are set.
 ``--rules``            ``-l`` RULES     File(s) containing rules or constraints
                                         as mathematical expressions.
 ``--timezone``         ``-z`` TIMEZONE  Specify a timezone as a string
@@ -147,11 +157,12 @@ class ImportCSV(object):
     """
 
     def __init__(self):
-        self.Project = None
-        self.Network = None
+        self.Project  = None
+        self.Network  = None
         self.Scenario = None
-        self.Nodes = dict()
-        self.Links = dict()
+        self.Nodes    = dict()
+        self.Links    = dict()
+        self.Groups   = dict()
         self.Attributes = dict()
         self.update_network_flag = False
         self.timezone = pytz.utc
@@ -165,13 +176,61 @@ class ImportCSV(object):
         self.networktype = ''
 
         self.cli = PluginLib.connect()
-        self.node_id = PluginLib.temp_ids()
-        self.link_id = PluginLib.temp_ids()
-        self.attr_id = PluginLib.temp_ids()
+        self.node_id  = PluginLib.temp_ids()
+        self.link_id  = PluginLib.temp_ids()
+        self.group_id = PluginLib.temp_ids()
+        self.attr_id  = PluginLib.temp_ids()
 
         self.warnings = []
         self.message = ''
         self.files = []
+
+    def get_file_data(self, file):
+        """
+            Taking a csv file as an argument,
+            return an array where each element is a line in the csv.
+        """
+        file_data=None
+        if file == None:
+            logging.warn("No file specified")
+            return None
+        self.basepath = os.path.dirname(file)
+        with open(file, mode='r') as csv_file:
+            file_data = csv_file.read().split('\n')
+            if len(file_data) == 0:
+                logging.warn("File contains no data")
+        # Ignore comments
+        for i, line in enumerate(file_data):
+            if len(line) > 0 and line.strip()[0] == '#':
+                file_data.pop(i)
+        return file_data
+
+    def check_header(self, header):
+        """
+            Check for common mistakes in headers:
+            Duplicate columns
+            Empty columns
+        """
+        if type(header) == str:
+            header = header.split(',')
+
+        for h in header:
+            h.strip()
+            if h == '':
+                raise HydraPluginError("Malformed Header: Column(s) %s is empty", 
+                                   header.index(''))
+
+        individual_headings = []
+        dupe_headings       = []
+        for k in header:
+            if k not in individual_headings:
+                individual_headings.append(k)
+            else:
+                dupe_headings.append(k)
+        if len(dupe_headings) > 0:
+            raise HydraPluginError("Malformed Header: Duplicate columns: %s", 
+                                   dupe_headings)
+
 
     def create_project(self, ID=None):
         if ID is not None:
@@ -210,17 +269,13 @@ class ImportCSV(object):
     def create_network(self, file=None):
 
         if file is not None:
-            self.basepath = os.path.dirname(file)
-            with open(file, mode='r') as csv_file:
-                self.net_data = csv_file.read().split('\n')
-            # Ignore comments
-            for i, line in enumerate(self.net_data):
-                if len(line) > 0 and line.strip()[0] == '#':
-                    self.net_data.pop(i)
-            keys = self.net_data[0].split(',')
-            units = self.net_data[1].split(',')
+            net_data = self.get_file_data(file)
+
+            keys = net_data[0].split(',')
+            self.check_header(keys)
+            units = net_data[1].split(',')
             # A network file should only have one line of data
-            data = self.net_data[2].split(',')
+            data = net_data[2].split(',')
 
             for i, unit in enumerate(units):
                 units[i] = unit.strip()
@@ -263,12 +318,18 @@ class ImportCSV(object):
                     # load existing links
                     for link in self.Network.links.Link:
                         self.Links.update({link.name: link})
+                    # load existing groups 
+                    for group in self.Network.resourcegroups.ResourceGroup:
+                        self.Groups.update({group.name: group})
+
                     # Nodes and links are now deleted from the network, they
                     # will be added later...
                     self.Network.nodes = \
                         self.cli.factory.create('hyd:NodeArray')
                     self.Network.links = \
                         self.cli.factory.create('hyd:LinkArray')
+                    self.Network.groups = \
+                        self.cli.factory.create('hyd:ResourceGroupArray')
                     # The scenario loaded with the network will be deleted as
                     # well, we create a new one.
                     self.Network.scenarios = \
@@ -316,21 +377,14 @@ class ImportCSV(object):
                 (self.__class__.__name__, datetime.now())
 
     def read_nodes(self, file):
-        self.basepath = os.path.dirname(file)
-        with open(file, mode='r') as csv_file:
-            self.node_data = csv_file.read().split('\n')
-            # Ignore comments
-            for i, line in enumerate(self.node_data):
-                if len(line) > 0 and line.strip()[0] == '#':
-                    self.node_data.pop(i)
-        self.create_nodes()
+        node_data = self.get_file_data(file)
 
-    def create_nodes(self):
         self.add_attrs = True
 
-        keys = self.node_data[0].split(',')
-        units = self.node_data[1].split(',')
-        data = self.node_data[2:-1]
+        keys  = node_data[0].split(',')
+        self.check_header(keys)
+        units = node_data[1].split(',')
+        data  = node_data[2:-1]
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -342,14 +396,11 @@ class ImportCSV(object):
                      'type': None,
                      }
         # Guess parameter position:
+        attrs = dict()
         for i, key in enumerate(keys):
             if key.lower().strip() in field_idx.keys():
                 field_idx[key.lower().strip()] = i
-
-        attrs = dict()
-
-        for i, key in enumerate(keys):
-            if i not in field_idx.values():
+            else:
                 attrs.update({i: key.strip()})
 
         for line in data:
@@ -392,21 +443,14 @@ class ImportCSV(object):
             self.Nodes.update({node.name: node})
 
     def read_links(self, file):
-        self.basepath = os.path.dirname(file)
-        with open(file, mode='r') as csv_file:
-            self.link_data = csv_file.read().split('\n')
-            # Ignore comments
-            for i, line in enumerate(self.link_data):
-                if len(line) > 0 and line.strip()[0] == '#':
-                    self.link_data.pop(i)
-        self.create_links()
+        link_data = self.get_file_data(file)
 
-    def create_links(self):
         self.add_attrs = True
 
-        keys = self.link_data[0].split(',')
-        units = self.link_data[1].split(',')
-        data = self.link_data[2:-1]
+        keys = link_data[0].split(',')
+        self.check_header(keys)
+        units = link_data[1].split(',')
+        data = link_data[2:-1]
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -418,14 +462,11 @@ class ImportCSV(object):
                      'type': None,
                      }
         # Guess parameter position:
+        attrs = dict()
         for i, key in enumerate(keys):
             if key.lower().strip() in field_idx.keys():
                 field_idx[key.lower().strip()] = i
-
-        attrs = dict()
-
-        for i, key in enumerate(keys):
-            if i not in field_idx.values():
+            else:
                 attrs.update({i: key.strip()})
 
         for line in data:
@@ -466,12 +507,142 @@ class ImportCSV(object):
                 link = self.add_data(link, attrs, linedata, units=units)
             self.Links.update({link.name: link})
 
+    def read_groups(self, file):
+        """
+            The heading of a group file looks like:
+            name, attr1, attr2..., description
+        """
+        group_data = self.get_file_data(file)
+
+        self.add_attrs = True
+
+        keys  = group_data[0].split(',')
+        self.check_header(keys)
+        units = group_data[1].split(',')
+        data  = group_data[2:-1]
+
+        for i, unit in enumerate(units):
+            units[i] = unit.strip()
+        
+        #The 'node' and 'link' columns indicate whether the entry
+        #is a node or link. THe only stipulation is that no attributes
+        #can then be called 'node' or 'link' or 'group'
+        field_idx = {'name': 0,
+                     'description': -1,
+                     }
+
+        attrs = dict()
+        # Guess parameter position:
+        for i, key in enumerate(keys):
+            if key.lower().strip() in field_idx.keys():
+                field_idx[key.lower().strip()] = i
+            else:
+                attrs.update({i: key.strip()})
+
+        for line in data:
+
+            if line == '':
+                continue
+            
+            group_data = line.split(',')
+            group_name = group_data[field_idx['name']].strip()
+
+            if group_name in self.Groups.keys():
+                group = self.Groups[group_name]
+                logging.info('Group %s exists.' % group_name)
+            else:
+                group = self.cli.factory.create('hyd:ResourceGroup')
+                group.id = self.group_id.next()
+                group.name = group_name
+                group.description = group_data[field_idx['description']].strip()
+
+            if len(attrs) > 0:
+                group = self.add_data(group, attrs, group_data, units=units)
+
+            self.Groups.update({group.name: group})
+
+    def read_group_members(self, file):
+
+        """
+            The heading of a group file looks like:
+            name, type, member.
+            
+            name : Name of the group
+            type : Type of the member (node, link or group)
+            member: name of the node, link or group in question.
+
+        """
+        member_data = self.get_file_data(file)
+        
+        keys  = member_data[0].split(',')
+        self.check_header(keys)
+        data  = member_data[2:-1]
+
+        field_idx = {}
+        for i, k in enumerate(keys):
+            field_idx[k.lower().strip()] = i
+        
+        type_map = {
+                'NODE' : self.Nodes,
+                'LINK' : self.Links,
+                'GROUP': self.Groups,
+            }
+
+        items = self.cli.factory.create('hyd:ResourceGroupItemArray')
+        
+        for line in data:
+
+            if line == '':
+                continue
+
+            member_data = line.split(',')
+
+            group_name  = member_data[field_idx['name']].strip()
+            group = self.Groups.get(group_name)
+
+            if group is None:
+                logging.info("Group %s has not been specified."%(group_name) +
+                          ' Group item not created.')
+                self.warnings.append("Group %s has not been specified"%(group_name) +
+                          ' Group item not created.')
+                continue
+
+
+            member_type = member_data[field_idx['type']].strip().upper()
+
+            if type_map.get(member_type) is None:
+                logging.info("Type %s does not exist."%(member_type) +
+                          ' Group item not created.')
+                self.warnings.append("Type %s does not exist"%(member_type) +
+                          ' Group item not created.')
+                continue
+            member_name = member_data[field_idx['member']].strip()
+
+            member = type_map[member_type].get(member_name)
+            if member is None:
+                logging.info("%s %s does not exist."%(member_type, member_name) +
+                          ' Group item not created.')
+                self.warnings.append("%s %s does not exist."%(member_type, member_type) +
+                          ' Group item not created.')
+                continue
+
+            item = dict(
+                group_id = group.id,
+                ref_id   = member.id,
+                ref_key  = member_type,
+            )
+            items.ResourceGroupItem.append(item)
+
+        self.Scenario.resourcegroupitems = items
+
     def create_attribute(self, name, unit=None):
+        """
+            Create attribute locally. It will get added in bulk later.
+        """
         attribute = self.cli.factory.create('hyd:Attr')
-        attribute.name = name
+        attribute.name = name.strip()
         if unit is not None and len(unit.strip()) > 0:
             attribute.dimen = self.cli.service.get_dimension(unit.strip())
-        #attribute = self.cli.service.add_attribute(attribute)
 
         return attribute
 
@@ -866,6 +1037,8 @@ class ImportCSV(object):
             self.Network.nodes.Node.append(node)
         for link in self.Links.values():
             self.Network.links.Link.append(link)
+        for group in self.Groups.values():
+            self.Network.resourcegroups.ResourceGroup.append(group)
         self.Network.scenarios.Scenario.append(self.Scenario)
 
         if self.update_network_flag:
@@ -936,6 +1109,14 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-l', '--links', nargs='+',
                         help='''One or multiple files containing information
                         on links.''')
+    parser.add_argument('-g', '--groups', nargs='+',
+                        help='''One or multiple files containing information
+                        on groups and their attributes (but not members)''')
+    parser.add_argument('-k', '--groupmembers', nargs='+',
+                        help='''One or multiple files containing information
+                        on the members of groups. 
+                        The groups (-g argument) file must be specified if this
+                        argument is specified''')
     parser.add_argument('-m', '--template',
                         help='''Template XML file, needed if node and link
                         types are specified,''')
@@ -990,6 +1171,17 @@ if __name__ == '__main__':
             if args.links is not None:
                 for linkfile in args.links:
                     csv.read_links(linkfile)
+
+            if args.groups is not None:
+                for groupfile in args.groups:
+                    csv.read_groups(groupfile)
+            
+            if args.groupmembers is not None:
+                if args.groups is None:
+                    raise HydraPluginError("Cannot specify a group member "
+                                           "file without a matching group file.")
+                for groupmemberfile in args.groupmembers:
+                    csv.read_group_members(groupmemberfile)
 
             if args.rules is not None:
                 for constraintfile in args.rules:
