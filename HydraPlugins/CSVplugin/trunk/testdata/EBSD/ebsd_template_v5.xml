@@ -1,0 +1,1745 @@
+<template_definition>
+    <template_name>EBSD Template</template_name>
+    <resources>
+        <resource>
+            <type>NETWORK</type>
+            <name>EBSD</name>
+            <attribute>
+                <name>Model</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>Water resource zone</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>circle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>black</value>
+				</item>
+			</layout>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DI</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>THR</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Loss</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>ExDO VOPEX (p/m3)</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Percentage of ExDO VOPEX (calc)</name>
+                <dimension>Dimensionless</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Percentage of ExDO VOPEX (round upto 5%)</name>
+                <dimension>Dimensionless</dimension>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>Junction</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>circle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>grey</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>Leakage</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>square</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>green</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Carbon</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>Aquifer storage and recovery</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>square</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>purple</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		<resource>
+            <type>NODE</type>
+            <name>Conjunctive use</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>triangle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>teal</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		<resource>
+            <type>NODE</type>
+            <name>Desalination</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>triangle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>red</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		<resource>
+            <type>NODE</type>
+            <name>Effluent reuse</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>circle</value>
+				</item>
+				<item>
+					<name>square</name>
+					<value>yellow</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		<resource>
+            <type>NODE</type>
+            <name>Existing groundwater</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>triangle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>yellow</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		<resource>
+            <type>NODE</type>
+            <name>Existing surface water</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>squircle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>blue</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		<resource>
+            <type>NODE</type>
+            <name>Metering</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>square</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>red</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		<resource>
+            <type>NODE</type>
+            <name>New groundwater</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>triangle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>purple</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		<resource>
+            <type>NODE</type>
+            <name>New surface water</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>squircle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>teal</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		<resource>
+            <type>NODE</type>
+            <name>Reservoir</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>triangle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>green</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		<resource>
+            <type>NODE</type>
+            <name>Network improvements</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>square</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>orange</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		<resource>
+            <type>NODE</type>
+            <name>Water treatment works</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>triangle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>orange</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>Water efficiency</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>square</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>blue</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Cost</name>
+                <dimension>Monetary value</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>OneOff_Carbon</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>LINK</type>
+            <name>Existing transfer</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>solid</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>black</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Co. From</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Co. to</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone from</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone to</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>End year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Transfer type</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Full capacity</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>LINK</type>
+            <name>Inter-company transfer</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>solid</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>red</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Co. From</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Co. to</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone from</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone to</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Transfer type</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Full capacity</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Bi-directional</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>LINK</type>
+            <name>Intra-company transfer</name>			
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>solid</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>light grey</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone_generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Co. From</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Co. to</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone from</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone to</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc_Vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon_Vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Transfer type</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+    </resources>
+</template_definition>
