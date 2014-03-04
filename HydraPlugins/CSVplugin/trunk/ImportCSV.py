@@ -44,10 +44,10 @@ Option                 Short  Parameter Description
                                         and attributes.
 ``--links``            ``-l`` LINKS     One or multiple files containing
                                         information on links.
-``--groups``           ``-g`` GROUPS    A file or list of files containing 
+``--groups``           ``-g`` GROUPS    A file or list of files containing
                                         group name, description,
                                         attributes and data.
-``--groupmembers``     ``-k`` GROUP_MEMBERS A file or list of files containing 
+``--groupmembers``     ``-k`` GROUP_MEMBERS A file or list of files containing
                                         group members.
 ``--template``         ``-m`` TEMPLATE  XML file defining the types for the
                                         network. Required if types are set.
@@ -217,7 +217,7 @@ class ImportCSV(object):
         for h in header:
             h.strip()
             if h == '':
-                raise HydraPluginError("Malformed Header: Column(s) %s is empty", 
+                raise HydraPluginError("Malformed Header: Column(s) %s is empty",
                                    header.index(''))
 
         individual_headings = []
@@ -228,7 +228,7 @@ class ImportCSV(object):
             else:
                 dupe_headings.append(k)
         if len(dupe_headings) > 0:
-            raise HydraPluginError("Malformed Header: Duplicate columns: %s", 
+            raise HydraPluginError("Malformed Header: Duplicate columns: %s",
                                    dupe_headings)
 
 
@@ -318,7 +318,7 @@ class ImportCSV(object):
                     # load existing links
                     for link in self.Network.links.Link:
                         self.Links.update({link.name: link})
-                    # load existing groups 
+                    # load existing groups
                     for group in self.Network.resourcegroups.ResourceGroup:
                         self.Groups.update({group.name: group})
 
@@ -523,7 +523,7 @@ class ImportCSV(object):
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
-        
+
         #The 'node' and 'link' columns indicate whether the entry
         #is a node or link. THe only stipulation is that no attributes
         #can then be called 'node' or 'link' or 'group'
@@ -543,7 +543,7 @@ class ImportCSV(object):
 
             if line == '':
                 continue
-            
+
             group_data = line.split(',')
             group_name = group_data[field_idx['name']].strip()
 
@@ -566,14 +566,14 @@ class ImportCSV(object):
         """
             The heading of a group file looks like:
             name, type, member.
-            
+
             name : Name of the group
             type : Type of the member (node, link or group)
             member: name of the node, link or group in question.
 
         """
         member_data = self.get_file_data(file)
-        
+
         keys  = member_data[0].split(',')
         self.check_header(keys)
         data  = member_data[2:-1]
@@ -581,7 +581,7 @@ class ImportCSV(object):
         field_idx = {}
         for i, k in enumerate(keys):
             field_idx[k.lower().strip()] = i
-        
+
         type_map = {
                 'NODE' : self.Nodes,
                 'LINK' : self.Links,
@@ -589,7 +589,7 @@ class ImportCSV(object):
             }
 
         items = self.cli.factory.create('hyd:ResourceGroupItemArray')
-        
+
         for line in data:
 
             if line == '':
@@ -722,7 +722,8 @@ class ImportCSV(object):
                                                       None,
                                                       resource.name)
 
-                    self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
+                    if dataset is not None:
+                        self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
 
         #resource.attributes = res_attr_array
 
@@ -925,14 +926,21 @@ class ImportCSV(object):
                             filedata = filedata + line + '\n'
                         else:
                             continue
-                    if self.is_timeseries(filedata):
-                        dataset.type = 'timeseries'
-                        ts = self.create_timeseries(filedata)
-                        dataset.value = ts
+                    if len(filedata) == 0:
+                        logging.info('%s: No data found in file %s' %
+                                     (resource_name, full_file_path))
+                        self.warnings.append('%s: No data found in file %s' %
+                                             (resource_name, full_file_path))
+                        return None
                     else:
-                        dataset.type = 'array'
-                        arr = self.create_array(filedata)
-                        dataset.value = arr
+                        if self.is_timeseries(filedata):
+                            dataset.type = 'timeseries'
+                            ts = self.create_timeseries(filedata)
+                            dataset.value = ts
+                        else:
+                            dataset.type = 'array'
+                            arr = self.create_array(filedata)
+                            dataset.value = arr
                 else:
                     raise IOError
             except IOError:
@@ -1114,7 +1122,7 @@ Written by Philipp Meier <philipp@diemeiers.ch>
                         on groups and their attributes (but not members)''')
     parser.add_argument('-k', '--groupmembers', nargs='+',
                         help='''One or multiple files containing information
-                        on the members of groups. 
+                        on the members of groups.
                         The groups (-g argument) file must be specified if this
                         argument is specified''')
     parser.add_argument('-m', '--template',
@@ -1175,7 +1183,7 @@ if __name__ == '__main__':
             if args.groups is not None:
                 for groupfile in args.groups:
                     csv.read_groups(groupfile)
-            
+
             if args.groupmembers is not None:
                 if args.groups is None:
                     raise HydraPluginError("Cannot specify a group member "
