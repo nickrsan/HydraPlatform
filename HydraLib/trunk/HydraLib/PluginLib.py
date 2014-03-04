@@ -428,7 +428,7 @@ def guess_timefmt(datestr):
                     complfmt = datefmt + ' ' + timefmt
                     try:
                         datetime.strptime(datestr, complfmt)
-                        return fmt
+                        return complfmt
                     except ValueError:
                         pass
             else:
