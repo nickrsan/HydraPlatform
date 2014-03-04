@@ -303,6 +303,7 @@ def connect():
     hydra_logging.init(level='INFO')
     logging.getLogger('suds').setLevel(logging.ERROR)
     logging.getLogger('suds.client').setLevel(logging.CRITICAL)
+    #logging.getLogger('suds.metrics').setLevel(logging.INFO)
     url = config.get('hydra_client', 'url')
     user = config.get('hydra_client', 'user')
     passwd = config.get('hydra_client', 'password')

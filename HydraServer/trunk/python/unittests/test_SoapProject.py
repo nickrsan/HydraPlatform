@@ -52,11 +52,8 @@ class ProjectTest(test_SoapServer.SoapServerTest):
         new_project.description = \
             'An updated project created through the SOAP interface.'
  
-        logging.debug(self.client.last_sent())
- 
         updated_project = self.client.service.update_project(new_project)
  
-        logging.debug(self.client.last_sent())
         logging.debug(updated_project)
 
         assert project.id == updated_project.id, \

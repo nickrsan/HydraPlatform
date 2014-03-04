@@ -218,7 +218,6 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         network =  self.create_network_with_data()
        
-
         assert len(network.scenarios.Scenario) == 1, "The network should have only one scenario!"
 
         self.create_constraint(network)
@@ -229,6 +228,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         scenario_id = scenario.id
 
         new_scenario = self.client.service.clone_scenario(scenario_id)
+
 
         updated_network = self.client.service.get_network(new_scenario.network_id)
 

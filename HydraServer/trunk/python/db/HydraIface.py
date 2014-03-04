@@ -68,6 +68,10 @@ class GenericResource(IfaceBase):
     """
     def __init__(self, parent, class_name, ref_key, ref_id=None):
         self.parent = parent
+        
+        #This is just used for the get as dict function. It is not 
+        #a functional attribute.
+        self.types = []
 
         self.ref_key = ref_key
         self.ref_id  = ref_id
@@ -99,6 +103,19 @@ class GenericResource(IfaceBase):
             attr.delete(purge_data=purge_data)
 
         super(GenericResource, self).delete()
+ 
+    def get_timestamp(self, ordinal):
+        if ordinal is None:
+            return None
+        timestamp = convert_ordinal_to_datetime(ordinal)
+        timestamp = self.time_format.format(timestamp.year,
+                                            timestamp.month,
+                                            timestamp.day,
+                                            timestamp.hour,
+                                            timestamp.minute,
+                                            timestamp.second,
+                                            timestamp.microsecond)
+        return timestamp
 
     def get_attributes(self):
         """
@@ -112,7 +129,10 @@ class GenericResource(IfaceBase):
         sql = """
                     select
                         attr_id,
-                        resource_attr_id
+                        resource_attr_id,
+                        attr_is_var,
+                        ref_key,
+                        ref_id
                     from
                         tResourceAttr
                     where
@@ -123,8 +143,13 @@ class GenericResource(IfaceBase):
         rs = execute(sql)
 
         for r in rs:
-            ra = ResourceAttr(resource_attr_id=r.resource_attr_id)
-            ra.load()
+            ra = ResourceAttr()
+            ra.db.resource_attr_id = r.resource_attr_id
+            ra.db.attr_id          = r.attr_id
+            ra.db.attr_is_var      = r.attr_is_var
+            ra.db.ref_key          = r.ref_key
+            ra.db.ref_id           = r.ref_id
+
             attributes.append(ra)
 
         self.attributes = attributes
@@ -575,17 +600,6 @@ class Scenario(GenericResource):
 
         return self.resourcegroupitems
 
-    def get_timestamp(self, ordinal):
-        timestamp = convert_ordinal_to_datetime(ordinal)
-        timestamp = self.time_format.format(timestamp.year,
-                                            timestamp.month,
-                                            timestamp.day,
-                                            timestamp.hour,
-                                            timestamp.minute,
-                                            timestamp.second,
-                                            timestamp.microsecond)
-        return timestamp
-
 class Network(GenericResource):
     """
         A set of nodes and links
@@ -638,12 +652,42 @@ class Network(GenericResource):
             self.child_info = self.get_children()
             return super(Network, self).load_all()
 
-    def get_all_scenarios(self):
+    def get_all_scenarios(self, as_dict=False):
         """
-            Return all scenarios in a network
+            Return all scenarios in a network as a dictionary, keyed on
+            scenario_id. as_dict indicates whether the scenarios should be Scenario
+			objects or dictionaries.
+
+            Does not set the network.scenarios attribute!
         """
-        self.load_all()
-        return self.scenarios
+        sql = """
+            select
+                s.*
+            from
+                tScenario s
+            where
+                s.network_id = %s
+        """ % (self.db.network_id)
+
+        rs = execute(sql)
+        scenarios = {}
+        for r in rs:
+            if as_dict is False:
+                s = Scenario()
+                for k, v in r.get_as_dict().items():
+                    s.db.__setattr__(k, v)
+                scenarios[r.scenario_id] = s
+            else:
+                scenarios[r.scenario_id] = r.get_as_dict()
+                scenarios[r.scenario_id]['start_time'] = self.get_timestamp(scenarios[r.scenario_id]['start_time'])
+                scenarios[r.scenario_id]['end_time'] = self.get_timestamp(scenarios[r.scenario_id]['end_time'])
+
+                scenarios[r.scenario_id]['object_type'] = 'Scenario'
+                scenarios[r.scenario_id]['resourcescenarios'] = []
+                scenarios[r.scenario_id]['resourcegroupitems'] = []
+                scenarios[r.scenario_id]['constraints'] = []
+
+        return scenarios 
 
     def get_scenarios(self, scenario_ids):
         """
@@ -741,6 +785,145 @@ class Network(GenericResource):
                 break
 
         return node
+
+    def get_nodes(self, as_dict=False):
+        """
+            Get all the nodes in the network as node objects, but without
+            their children loaded. 
+
+			as_dict indicates whether the values of the
+			returned dictionary should be objects or dictionaries
+            
+			@returns A dictionary, keyed on the node_id
+        """
+        sql = """
+            select
+                *
+            from
+                tNode
+            where
+                network_id=%s
+        """%(self.db.network_id)
+
+        node_rs = execute(sql)
+        nodes = {}
+        for r in node_rs:
+            if as_dict is False:
+                n = Node()
+                for k, v in r.get_as_dict().items():
+                    n.db.__setattr__(k, v)
+                nodes[r.node_id] = n
+            else:
+                nodes[r.node_id] = r.get_as_dict()
+                nodes[r.node_id]['object_type'] = 'Node'
+                nodes[r.node_id]['attributes'] = []
+                nodes[r.node_id]['types'] = []
+
+        return nodes
+
+    def get_links(self, as_dict=False):
+        """
+            Get all the link in the network as link objects, 
+            but without their children loaded
+			
+			as_dict indicates whether the values of the
+			returned dictionary should be objects or dictionaries
+
+            @returns A dictionary, keyed on the link_id
+        """
+        sql = """
+            select
+                *
+            from
+                tLink
+            where
+                network_id=%s
+        """%(self.db.network_id)
+
+        link_rs = execute(sql)
+        links = {}
+        for r in link_rs:
+            if as_dict is False:
+                l = Link()
+                for k, v in r.get_as_dict().items():
+                    l.db.__setattr__(k, v)
+                links[r.link_id] = l
+            else:
+                links[r.link_id] = r.get_as_dict()
+                links[r.link_id]['object_type'] = 'Link'
+                links[r.link_id]['attributes'] = []
+                links[r.link_id]['types'] = []
+        return links
+
+    def get_resourcegroups(self, as_dict=False):
+        """
+            Get all the resource groups in the network as ResourceGroup, with their
+            items included.
+
+			as_dict indicates whether the values of the
+			returned dictionary should be objects or dictionaries
+
+            @returns A dictionary, keyed on resourcegroup_id 
+        """
+
+        def make_param(param_list):
+            if len(param_list) == 0:
+                return "()"
+            elif len(param_list) == 1:
+                return "(%s)"%(param_list[0])
+            else:
+                return tuple(param_list)
+
+
+        sql = """
+            select
+                *
+            from
+                tResourceGroup
+            where
+                network_id=%s
+        """%(self.db.network_id)
+
+        grp_rs = execute(sql)
+        resourcegroups = dict()
+        for r in grp_rs:
+            if as_dict is False:
+                n = ResourceGroup()
+                for k, v in r.get_as_dict().items():
+                    n.db.__setattr__(k, v)
+                resourcegroups[r.group_id] = n
+            else:
+                resourcegroups[r.group_id] = r.get_as_dict() 
+                resourcegroups[r.group_id]['resourcegroupitems'] = []
+                resourcegroups[r.group_id]['object_type'] = 'ResourceGroup'
+                resourcegroups[r.group_id]['attributes'] = []
+                resourcegroups[r.group_id]['types'] = []
+        
+      #  if len(resourcegroups) > 0:
+      #      sql = """
+      #          select
+      #              *
+      #          from
+      #              tResourceGroupItem
+      #          where
+      #              group_id in %(resourcegroup_ids)s
+      #          """%{'resourcegroup_ids':make_param(resourcegroups.keys())}
+      #      item_rs = execute(sql)
+
+      #      for r in item_rs:
+      #          if as_dict is False:
+      #              i = ResourceGroupItem()
+      #              for k, v in r.get_as_dict().items():
+      #                  i.db.__setattr__(k, v)
+      #              resourcegroups[i.db.group_id]['resourcegroupitems'].append(i)
+      #          else:
+      #              r = r.get_as_dict()
+      #              r['types'] = []
+      #              r['object_type'] = 'ResourceGroupItem'
+      #              resourcegroups[r['group_id']]['resourcegroupitems'].append(r)
+
+
+        return resourcegroups 
 
     def get_group(self, group_id):
         """
@@ -1002,7 +1185,6 @@ class TemplateType(IfaceBase):
 
         #If the item already exists, there's no need to add it again.
         if tattr_i.load() == False:
-            tattr_i.save()
             self.typeattrs.append(tattr_i)
 
         return tattr_i

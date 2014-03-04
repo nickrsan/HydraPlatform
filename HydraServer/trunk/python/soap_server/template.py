@@ -48,11 +48,7 @@ def parse_typeattr(type_id, attribute):
 
     dimension = attribute.find('dimension').text
 
-    typeattr_i = HydraIface.TypeAttr()
-    typeattr_i.db.attr_id = attr_i.db.attr_id
-    typeattr_i.db.type_id = type_id
-
-    typeattr_i.load()
+    typeattr_i = HydraIface.TypeAttr(type_id=type_id, attr_id=attr_i.db.attr_id)
 
     if attribute.find('is_var') is not None:
         typeattr_i.db.attr_is_var = attribute.find('is_var').text
@@ -73,8 +69,6 @@ def parse_typeattr(type_id, attribute):
                                dimension,
                                name="%s Default"%attr_i.db.attr_name,)
         typeattr_i.db.default_dataset_id = dataset_id
-
-    typeattr_i.save()
 
     return typeattr_i
 
@@ -140,6 +134,7 @@ class TemplateService(HydraService):
 
         #Delete any types which are in the DB but no longer in the XML file
         type_name_map = {r.type_name:r.type_id for r in rs}
+        attr_name_map = {r.attr_name:(r.attr_id,r.type_id) for r in rs}
 
         existing_types = set([r.type_name for r in rs])
 
@@ -158,10 +153,9 @@ class TemplateService(HydraService):
         for resource in types.findall('resource'):
             type_name = resource.find('name').text
             #check if the type is already in the DB. If not, create a new one.
-            for r in rs:
-                if r.type_name == type_name:
-                    type_i = HydraIface.TemplateType(type_id=r.type_id)
-                    break
+            if type_name in existing_types:
+                type_id = type_name_map[type_name]
+                type_i = HydraIface.TemplateType(type_id=type_id)
             else:
                 type_i = HydraIface.TemplateType()
                 type_i.db.template_id = tmpl_i.db.template_id
@@ -186,12 +180,9 @@ class TemplateService(HydraService):
 
             existing_attrs = set(existing_attrs)
 
-            attr_name_map = {r.attr_name:(r.attr_id,r.type_id) for r in rs}
+            template_attrs = set([r.find('name').text for r in resource.findall('attribute')])
 
-
-            new_attrs = set([r.find('name').text for r in resource.findall('attribute')])
-
-            attrs_to_delete = existing_attrs - new_attrs
+            attrs_to_delete = existing_attrs - template_attrs
 
             for attr_to_delete in attrs_to_delete:
                 attr_id, type_id = attr_name_map[attr_to_delete]
@@ -200,8 +191,14 @@ class TemplateService(HydraService):
                 attr_i.save()
 
             #Add or update type typeattrs
+            typeattrs = []
             for attribute in resource.findall('attribute'):
-                parse_typeattr(type_i.db.type_id, attribute)
+                typeattr = parse_typeattr(type_i.db.type_id, attribute)
+                if typeattr.in_db is False:
+                    typeattrs.append(typeattr)
+                else:
+                    typeattr.save()
+            IfaceLib.bulk_insert(typeattrs, 'tTypeAttr')
 
         tmpl_i.load_all()
 
@@ -265,13 +262,13 @@ class TemplateService(HydraService):
             resource_i = HydraIface.ResourceGroup(link_id=resource_id)
             res_id = resource_i.db.group_id
 
-        resource_i.load_children()
+        resource_i.get_attributes()
         existing_attr_ids = []
         for attr in resource_i.attributes:
             existing_attr_ids.append(attr.db.attr_id)
 
         type_i = HydraIface.TemplateType(type_id=type_id)
-        type_i.load_children()
+        type_i.load_all()
         type_attrs = dict()
         for typeattr in type_i.typeattrs:
             type_attrs.update({typeattr.db.attr_id:
@@ -315,7 +312,9 @@ class TemplateService(HydraService):
         for templatetype in template.types:
             rt_i = tmpl_i.add_type(templatetype.name)
             for typeattr in templatetype.typeattrs:
-                rt_i.add_typeattr(typeattr.attr_id)
+                ta = rt_i.add_typeattr(typeattr.attr_id)
+                ta.save()
+        tmpl_i.load_all()
 
         return get_as_complexmodel(ctx, tmpl_i)
 
@@ -444,7 +443,8 @@ class TemplateService(HydraService):
         rt_i.save()
 
         for typeattr in templatetype.typeattrs:
-            rt_i.add_typeattr(typeattr.attr_id)
+            typeattr_i = rt_i.add_typeattr(typeattr.attr_id)
+            typeattr_i.save()
 
         return get_as_complexmodel(ctx, rt_i)
 
@@ -465,14 +465,16 @@ class TemplateService(HydraService):
             type_i.db.template_id = templatetype.template_id
         else:
             type_i.db.template_id = 1 # 1 is always the default template
-
+        typeattrs = []
         for typeattr in templatetype.typeattrs:
             for typeattr_i in type_i.typeattrs:
                 if typeattr_i.db.attr_id == typeattr.attr_id:
                     break
             else:
-                type_i.add_typeattr(typeattr.attr_id)
+                typeattr_i = type_i.add_typeattr(typeattr.attr_id)
+                typeattrs.append(typeattr_i)
 
+        IfaceLib.bulk_insert(typeattrs, 'tTypeAttr')
         type_i.save()
 
         return get_as_complexmodel(ctx, type_i)
@@ -530,7 +532,8 @@ class TemplateService(HydraService):
         """
         rt_i = HydraIface.TemplateType(type_id = typeattr.type_id)
         rt_i.load_all()
-        rt_i.add_typeattr(typeattr.attr_id)
+        attr_i = rt_i.add_typeattr(typeattr.attr_id)
+        attr_i.save()
         rt_i.save()
         return get_as_complexmodel(ctx, rt_i)
 

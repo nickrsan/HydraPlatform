@@ -70,6 +70,10 @@ def clone_constraint_group(constraint_id, grp_i):
     return new_grp_i
 
 def bulk_insert_data(bulk_data, user_id=None):
+    get_timing = lambda x: datetime.datetime.now() - x
+
+    start_time=datetime.datetime.now()
+    logging.debug("Starting data insert %s", get_timing(start_time))
     data_hashes     = hash_incoming_data(bulk_data)
     existing_hashes = get_existing_data(data_hashes)
 
@@ -113,6 +117,7 @@ def bulk_insert_data(bulk_data, user_id=None):
     #This is what gets returned.
     dataset_ids = []
     idx = 0
+    logging.debug("Processing data %s", get_timing(start_time)) 
     for d in bulk_data:
         val = parse_value(d)
 
@@ -206,6 +211,8 @@ def bulk_insert_data(bulk_data, user_id=None):
         dataset_i.datum = data
         idx = idx + 1
 
+    logging.debug("Data Processessing data.")
+    logging.debug("Inserting descriptors %s", get_timing(start_time))
     last_descriptor_id = IfaceLib.bulk_insert(descriptors, 'tDescriptor')
     #assign the data_ids to the correct data objects.
     #We will need this later to ensure the correct dataset_id / data_id mappings
@@ -217,6 +224,7 @@ def bulk_insert_data(bulk_data, user_id=None):
             next_id          = next_id + 1
             idx              = idx     + 1
 
+    logging.debug("Inserting scalars %s", get_timing(start_time))
     last_scalar_id     = IfaceLib.bulk_insert(scalars, 'tScalar')
 
     if last_scalar_id:
@@ -227,6 +235,7 @@ def bulk_insert_data(bulk_data, user_id=None):
             next_id                 = next_id + 1
             idx                     = idx     + 1
 
+    logging.debug("Inserting arrays %s", get_timing(start_time))
     last_array_id      = IfaceLib.bulk_insert(arrays, 'tArray')
 
     if last_array_id:
@@ -237,6 +246,7 @@ def bulk_insert_data(bulk_data, user_id=None):
             next_id                = next_id + 1
             idx                    = idx     + 1
 
+    logging.debug("Inserting timeseries")
     last_ts_id         = IfaceLib.bulk_insert(timeseries, 'tTimeSeries')
 
     if last_ts_id:
@@ -259,6 +269,7 @@ def bulk_insert_data(bulk_data, user_id=None):
 
         IfaceLib.bulk_insert(timeseriesdata, 'tTimeSeriesData')
 
+    logging.debug("Inserting eqtimeseries")
     last_eq_id         = IfaceLib.bulk_insert(eqtimeseries, 'tEqTimeSeries')
 
     if last_eq_id:
@@ -269,6 +280,7 @@ def bulk_insert_data(bulk_data, user_id=None):
             next_id        = next_id + 1
             idx            = idx  + 1
 
+    logging.debug("Updating data IDs")
     #Now fill in the final piece of data before inserting the new
     #scenario data rows -- the data ids generated from the data inserts.
     for i, idx in enumerate(descriptor_idx):
@@ -287,6 +299,7 @@ def bulk_insert_data(bulk_data, user_id=None):
         datasets[idx].db.data_id = eqtimeseries[i].db.data_id
         datasets[idx].datum = eqtimeseries[i]
 
+    logging.debug("Isolating new data")
     #Isolate only the new datasets and insert them
     new_scenario_data = []
     for sd in datasets:
@@ -294,12 +307,14 @@ def bulk_insert_data(bulk_data, user_id=None):
             new_scenario_data.append(sd)
 
     if len(new_scenario_data) > 0:
+        logging.debug("Inserting new datasets")
         last_dataset_id = IfaceLib.bulk_insert(new_scenario_data, 'tDataset')
 
         #set the dataset ids on the new scenario data objects
         next_id = last_dataset_id - len(new_scenario_data) + 1
         idx = 0
 
+        logging.debug("Updating datset IDS")
         while idx < len(new_scenario_data):
             dataset_id     = next_id
             new_scenario_data[idx].db.dataset_id = dataset_id
@@ -308,11 +323,12 @@ def bulk_insert_data(bulk_data, user_id=None):
 
         #using the hash of the new scenario data, find the placeholders in dataset_ids
         #and replace it with the dataset_id.
-        for sd in new_scenario_data:
-            for idx, d in enumerate(dataset_ids):
-                if d == sd.db.data_hash:
-                    dataset_ids[idx] = sd
-
+        logging.debug("Putting new data with existing data to complete function")
+        sd_dict = dict([(sd.db.data_hash, sd) for sd in new_scenario_data])
+        for idx, d in enumerate(dataset_ids):
+            if type(d) == int:
+                dataset_ids[idx] = sd_dict[d]
+    logging.debug("Done bulk inserting data.")
     return dataset_ids
 
 class ScenarioService(HydraService):
@@ -924,21 +940,208 @@ class DataService(HydraService):
 
         sql = """
             select
-                dataset_id
+                d.dataset_id,
+                d.data_id,
+                d.data_type,
+                d.data_units,
+                d.data_dimen,
+                d.data_name,
+                d.data_hash,
+                d.locked,
+                case when a.arr_data is not null then a.arr_data
+                     when eq.arr_data is not null then eq.arr_data
+                     when ds.desc_val is not null then ds.desc_val
+                     when sc.param_value is not null then sc.param_value
+                else null
+                end as value,
+                eq.frequency,
+                eq.start_time
             from
-                tResourceScenario
+                tDataset d
+                left join tArray a on (
+                    d.data_type = 'array'
+                and a.data_id   = d.data_id
+                )
+                left join tDescriptor ds on (
+                    d.data_type = 'descriptor'
+                and ds.data_id  = d.data_id
+                )
+                left join tScalar sc on (
+                    d.data_type = 'scalar'
+                and sc.data_id  = d.data_id
+                )
+                left join tEqTimeSeries eq on (
+                    d.data_type = 'eqtimeseries'
+                and eq.data_id  = d.data_id
+                )
             where
-                scenario_id = %s
+                d.dataset_id  in (
+                    select
+                        distinct(dataset_id)
+                    from
+                        tResourceScenario
+                    where
+                        scenario_id = %s
+                    )
         """ % scenario_id
 
 
         rs = HydraIface.execute(sql)
+    
+        for dr in rs:
+            if dr.data_type in ('scalar', 'array', 'descriptor'):
+                if dr.data_type == 'scalar':
+                    val = {
+                        'object_type' : 'Scalar',
+                        'param_value' : dr.value
+                    }
+                elif dr.data_type == 'descriptor':
+                    val = {
+                        'object_type': 'Descriptor',
+                        'desc_val'   : dr.value
+                    }
+                elif dr.data_type == 'array':
+                    val = {
+                        'object_type': 'Array',
+                        'arr_data'      : dr.value
+                    }
+                d = dict(
+                    dataset_id = dr.dataset_id,
+                    data_id = dr.data_id,
+                    data_type = dr.data_type,
+                    data_units = dr.data_units,
+                    data_dimen = dr.data_dimen,
+                    data_name  = dr.data_name,
+                    data_hash  = dr.data_hash,
+                    locked     = dr.locked,
+                    value      = val 
+                )
+            else:
+                dataset = HydraIface.Dataset()
+                dataset.db.dataset_id = dr.dataset_id
+                dataset.db.data_id = dr.data_id
+                dataset.db.data_type = dr.data_type
+                dataset.db.data_units = dr.data_units
+                dataset.db.data_dimen = dr.data_dimen
+                dataset.db.data_name  = dr.data_name
+                dataset.db.data_hash  = dr.data_hash
+                dataset.db.locked     = dr.locked
+                d = dataset.get_as_dict(user_id=ctx.in_header.user_id)
 
-        for r in rs:
-            sd          = HydraIface.Dataset(dataset_id=r.dataset_id)
-            scenario_data.append(get_as_complexmodel(ctx, sd))
-
+            scenario_data.append(Dataset(d))
+        logging.info("Retrieved %s datasets", len(scenario_data))
         return scenario_data
+
+    @rpc(Integer, Integer, _returns=SpyneArray(Dataset))
+    def get_node_data(ctx, node_id, scenario_id):
+        """
+            Get all the datasets from the group with the specified name
+        """
+        node_data = []
+
+        sql = """
+            select
+                d.dataset_id,
+                d.data_id,
+                d.data_type,
+                d.data_units,
+                d.data_dimen,
+                d.data_name,
+                d.data_hash,
+                d.locked,
+                case when a.arr_data is not null then a.arr_data
+                     when eq.arr_data is not null then eq.arr_data
+                     when ds.desc_val is not null then ds.desc_val
+                     when sc.param_value is not null then sc.param_value
+                else null
+                end as value,
+                eq.frequency,
+                eq.start_time
+            from
+                tDataset d
+                left join tArray a on (
+                    d.data_type = 'array'
+                and a.data_id   = d.data_id
+                )
+                left join tDescriptor ds on (
+                    d.data_type = 'descriptor'
+                and ds.data_id  = d.data_id
+                )
+                left join tScalar sc on (
+                    d.data_type = 'scalar'
+                and sc.data_id  = d.data_id
+                )
+                left join tEqTimeSeries eq on (
+                    d.data_type = 'eqtimeseries'
+                and eq.data_id  = d.data_id
+                )
+            where
+                d.dataset_id  in (
+                    select
+                        distinct(rs.dataset_id)
+                    from
+                        tResourceScenario rs,
+                        tResourceAttr ra,
+                        tNode n
+                    where
+                        n.node_id = %(node_id)s
+                        and ra.ref_key = 'NODE'
+                        and ra.ref_id = n.node_id
+                        and rs.scenario_id = %(scenario_id)s
+                        and rs.resource_attr_id = ra.resource_attr_id
+                    )
+        """ % {
+             'scenario_id':scenario_id,
+            'node_id':node_id
+        }
+
+
+        rs = HydraIface.execute(sql)
+    
+        for dr in rs:
+            if dr.data_type in ('scalar', 'array', 'descriptor'):
+                if dr.data_type == 'scalar':
+                    val = {
+                        'object_type' : 'Scalar',
+                        'param_value' : dr.value
+                    }
+                elif dr.data_type == 'descriptor':
+                    val = {
+                        'object_type': 'Descriptor',
+                        'desc_val'   : dr.value
+                    }
+                elif dr.data_type == 'array':
+                    val = {
+                        'object_type': 'Array',
+                        'arr_data'      : dr.value
+                    }
+                d = dict(
+                    dataset_id = dr.dataset_id,
+                    data_id = dr.data_id,
+                    data_type = dr.data_type,
+                    data_units = dr.data_units,
+                    data_dimen = dr.data_dimen,
+                    data_name  = dr.data_name,
+                    data_hash  = dr.data_hash,
+                    locked     = dr.locked,
+                    value      = val 
+                )
+            else:
+                dataset = HydraIface.Dataset()
+                dataset.db.dataset_id = dr.dataset_id
+                dataset.db.data_id = dr.data_id
+                dataset.db.data_type = dr.data_type
+                dataset.db.data_units = dr.data_units
+                dataset.db.data_dimen = dr.data_dimen
+                dataset.db.data_name  = dr.data_name
+                dataset.db.data_hash  = dr.data_hash
+                dataset.db.locked     = dr.locked
+                d = dataset.get_as_dict(user_id=ctx.in_header.user_id)
+
+            node_data.append(Dataset(d))
+
+        logging.info("Retrieved %s datasets for node %s", len(node_data), node_id)
+        return node_data
 
     @rpc(Dataset, _returns=Dataset)
     def update_dataset(ctx, data):

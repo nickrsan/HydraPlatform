@@ -28,6 +28,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         logging.debug(partial_network)
 
         assert len(partial_network.scenarios.Scenario) == 1
+        assert len(full_network.scenarios.Scenario)    == 2
         for s in partial_network.scenarios.Scenario:
             assert len(s.resourcescenarios.ResourceScenario) > 0
 

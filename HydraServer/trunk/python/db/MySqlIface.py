@@ -174,7 +174,9 @@ def bulk_insert(objs, table_name=""):
         vals  = ",".join('%s' for v in objs[0].db.db_attrs),
     )
 
-    logging.info("Running bulk insert into %s", objs[0].db.table_name)
+    logging.info("Running bulk insert into %s with %s values",
+                                                objs[0].db.table_name,
+                                                len(vals))
 
     cursor.executemany(complete_insert, vals)
 
@@ -251,6 +253,8 @@ class DBIface(object):
                     %(table)s
                 where
                 %(fk_col)s = %(fk_val)s
+                order by
+                    %(fk_col)s
             """
 
             if self.__getattr__(referenced_column_name) is None:

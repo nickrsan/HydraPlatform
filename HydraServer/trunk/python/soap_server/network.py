@@ -8,6 +8,7 @@ Node,\
 Link,\
 Scenario,\
 ResourceGroup,\
+ResourceAttr,\
 get_as_complexmodel
 from db import HydraIface
 from db import hdb, IfaceLib
@@ -469,25 +470,261 @@ class NetworkService(HydraService):
         """
             Return a whole network as a complex model.
         """
-        net_i = HydraIface.Network(network_id=network_id)
-
-        if net_i.load_all(scenario_ids) is False:
+        net_i = HydraIface.Network(network_id = network_id)
+        if net_i.load() is False:
             raise ObjectNotFoundError("Network (network_id=%s) not found." %
                                       network_id)
 
-        #try:
-        #    check_perm(ctx.in_header.user_id, 'view_data')
-        #except:
-        #    include_data='N'
-
-        starttime = datetime.datetime.now()
         net_i.check_read_permission(ctx.in_header.user_id)
 
-        net = get_as_complexmodel(ctx, net_i, **dict(include_data=include_data))
-        endtime = datetime.datetime.now()
-        logging.info('#-- get_as_complex_model: %s' % str(endtime - starttime))
+        net = Network(net_i.get_as_dict())
 
+        """
+            Get The nodes & links.
+        """
+       
+        nodes = net_i.get_nodes(as_dict=True)
+        links = net_i.get_links(as_dict=True) 
+        groups = net_i.get_resourcegroups(as_dict=True)
+
+        
+        """
+            Get all resource arrtibutes
+        """
+
+        def make_param(param_list):
+            if len(param_list) == 0:
+                return "()"
+            elif len(param_list) == 1:
+                return "(%s)"%(param_list[0])
+            else:
+                return tuple(param_list)
+
+        if len(groups) == 0:
+            group_string = ""
+        else:
+            group_string = "or  ref_key = 'GROUP'   and ref_id in %s"%make_param(groups.keys())
+
+
+        sql = """
+            select
+                resource_attr_id,
+                attr_id,
+                attr_is_var,
+                ref_key,
+                ref_id
+            from
+                tResourceAttr
+            where
+                ref_key = 'NETWORK' and ref_id = %(network_id)s
+            or  ref_key = 'NODE'    and ref_id in %(node_ids)s
+            or  ref_key = 'LINK'    and ref_id in %(link_ids)s
+            %(group_ids)s
+            order by ref_key
+        """ % {
+                'network_id' :network_id,
+                'node_ids'   :make_param(nodes.keys()),
+                'link_ids'   :make_param(links.keys()),
+                'group_ids'  :group_string
+        }
+        ra_rs = HydraIface.execute(sql)
+       
+        for r in ra_rs:
+            ra = dict(
+                object_type = 'ResourceAttr',
+                resource_attr_id = r.resource_attr_id,
+                attr_id          = r.attr_id,
+                attr_is_var      = r.attr_is_var,
+                ref_key          = r.ref_key,
+                ref_id           = r.ref_id,
+            )
+            if r.ref_key == 'NETWORK':
+                net.attributes.append(ra)
+            elif r.ref_key == 'NODE':
+                nodes[r.ref_id]['attributes'].append(ra)
+            elif r.ref_key == 'LINK':
+                links[r.ref_id]['attributes'].append(ra)
+            elif r.ref_key == 'GROUP':
+                groups[r.ref_id]['attributes'].append(ra)
+
+        sql = """
+            select
+                rt.type_id,
+                rt.ref_id,
+                rt.ref_key,
+                type.type_name,
+                tmpl.template_name,
+                tmpl.template_id
+            from
+                tResourceType rt,
+                tTemplateType type,
+                tTemplate tmpl
+            where
+            rt.type_id       = type.type_id
+            and tmpl.template_id = type.template_id
+            and (rt.ref_key = 'NETWORK' and rt.ref_id = %(network_id)s
+            or  rt.ref_key = 'NODE'    and rt.ref_id in %(node_ids)s
+            or  rt.ref_key = 'LINK'    and rt.ref_id in %(link_ids)s)
+            order by ref_key
+        """% {
+                'network_id' :network_id,
+                'node_ids'   :make_param(nodes.keys()),
+                'link_ids'   :make_param(links.keys())
+            }
+
+        type_rs = HydraIface.execute(sql)
+
+        for r in type_rs:
+            type_summary = dict(
+                object_type   = "TypeSummary",
+                template_id   = r.template_id,
+                template_name = r.template_name,
+                type_id       = r.type_id,
+                type_name     = r.type_name,
+            )
+            if r.ref_key == 'NETWORK':
+                net.types.append(type_summary)
+            elif r.ref_key == 'NODE':
+                nodes[r.ref_id]['types'].append(type_summary)
+            elif r.ref_key == 'LINK':
+                links[r.ref_id]['types'].append(type_summary)
+
+        cm_nodes = [Node(obj_dict) for obj_dict in nodes.values()]
+        cm_links = [Link(obj_dict) for obj_dict in links.values()]
+        cm_groups= [ResourceGroup(obj_dict) for obj_dict in groups.values()]
+
+        net.nodes          = cm_nodes
+        net.links          = cm_links
+        net.resourcegroups = cm_groups
+
+        """
+            Get scenarios & resource scenarios.
+        """
+        scenario_dicts = net_i.get_all_scenarios(as_dict=True)
+        if scenario_ids:
+            restricted_scenarios = {}
+            for scenario_id in scenario_ids:
+                if scenario_dicts.get(scenario_id) is None:
+                    raise HydraError("Scenario ID %s not found", scenario_id)
+                else:
+                    restricted_scenarios[scenario_id] = scenario_dicts[scenario_id]
+
+            scenario_dicts = restricted_scenarios 
+        if len(scenario_dicts) > 0 and include_data.upper() == 'Y':
+            sql = """
+                select
+                    rs.dataset_id,
+                    rs.resource_attr_id,
+                    rs.scenario_id,
+                    ra.attr_id
+                from
+                    tResourceScenario rs,
+                    tResourceAttr ra
+                where
+                    rs.scenario_id in %(scenario_ids)s
+                    and ra.resource_attr_id = rs.resource_attr_id
+            """ % {'scenario_ids' : make_param(scenario_dicts.keys())}
+
+            res_scen_rs = HydraIface.execute(sql)
+            all_dataset_ids = {}
+            for res_scen_r in res_scen_rs:
+                scenario = scenario_dicts[res_scen_r.scenario_id]
+                rs = dict(
+                    object_type      = 'ResourceScenario',
+                    scenario_id      = res_scen_r.scenario_id,
+                    dataset_id       = res_scen_r.dataset_id,
+                    resource_attr_id = res_scen_r.resource_attr_id,
+                    attr_id          = res_scen_r.attr_id,
+                    value            = None,
+                )
+                scenario['resourcescenarios'].append(rs)
+                if all_dataset_ids.get(res_scen_r.dataset_id) is None:
+                   all_dataset_ids[res_scen_r.dataset_id] = [rs]
+                else:
+                    all_dataset_ids[res_scen_r.dataset_id].append(rs)
+
+        if len(scenario_dicts) > 0 and include_data.upper() == 'Y':
+            logging.info("Getting Data")
+            """
+                Get data 
+            """
+        
+            sql = """
+                select
+                    d.dataset_id,
+                    d.data_id,
+                    d.data_type,
+                    d.data_units,
+                    d.data_dimen,
+                    d.data_name,
+                    d.data_hash,
+                    d.locked
+                from
+                    tDataset d
+                where
+                    d.dataset_id in %(dataset_ids)s
+                """ % {'dataset_ids':make_param(all_dataset_ids.keys())}
+
+            data_rs = HydraIface.execute(sql)
+            for dr in data_rs:
+                dataset = HydraIface.Dataset()
+                dataset.db.dataset_id = dr.dataset_id
+                dataset.db.data_id = dr.data_id
+                dataset.db.data_type = dr.data_type
+                dataset.db.data_units = dr.data_units
+                dataset.db.data_dimen = dr.data_dimen
+                dataset.db.data_name  = dr.data_name
+                dataset.db.data_hash  = dr.data_hash
+                dataset.db.locked     = dr.locked
+                d = dataset.get_as_dict(user_id=ctx.in_header.user_id)
+                for rs in all_dataset_ids[dr.dataset_id]:
+                    rs['value'] = d 
+                            
+        """
+            Constraints
+        """
+        if len(scenario_dicts) > 0:
+            sql = """
+                select
+                    scenario_id,
+                    constraint_id
+                from
+                    tConstraint
+                where
+                    scenario_id in %(scenario_ids)s
+                """%{'scenario_ids' : make_param(scenario_dicts.keys())}
+
+            rs = HydraIface.execute(sql)
+            
+            for r in rs:
+                c = HydraIface.Constraint(constraint_id=r.constraint_id)
+                scenario_dicts[r.scenario_id]['constraints'].append(c.get_as_dict())
+
+
+        """
+            Resource Group Items
+        """
+        if len(scenario_dicts) > 0:
+            sql = """
+                select
+                   * 
+                from
+                    tResourceGroupItem
+                where
+                    scenario_id in %(scenario_ids)s
+                """%{'scenario_ids' : make_param(scenario_dicts.keys())}
+
+            item_rs = HydraIface.execute(sql)
+           
+            for r in item_rs:
+                r = r.get_as_dict()
+                r['types'] = []
+                r['object_type'] = 'ResourceGroupItem'
+                scenario_dicts[r['scenario_id']]['resourcegroupitems'].append(r)
+
+        net.scenarios = [Scenario(obj_dict) for obj_dict in scenario_dicts.values()]
         return net
+
 
     @rpc(String, Integer, _returns=Network)
     def get_network_by_name(ctx, project_id, network_name):
@@ -679,8 +916,7 @@ class NetworkService(HydraService):
                         ref_id = group_id_map.get(group_item.ref_id)
                     else:
                         raise HydraError("A ref key of %s is not valid for a "
-                                         "resource group item.",\
-                                         group_item.ref_key)
+                                         "resource group item."%group_item.ref_key)
 
                     if ref_id is None:
                         raise HydraError("Invalid ref ID for group item!")
