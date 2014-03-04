@@ -10,6 +10,7 @@ from hydra_base import HydraService, ObjectNotFoundError
 from HydraLib.HydraException import HydraError
 import scenario
 import logging
+from network import NetworkService
 
 def _add_project_attributes(resource_i, attributes):
     if attributes is None:
@@ -163,17 +164,28 @@ class ProjectService(HydraService):
             Returns an array of network objects.
         """
         user_id = ctx.in_header.user_id
-        networks = []
-
         x = HydraIface.Project(project_id = project_id)
         x.check_read_permission(user_id)
-        x.load_all()
 
-        for n_i in x.networks:
+        networks = []
+
+        sql = """
+            select
+                network_id
+            from
+                tNetwork
+            where
+                project_id=%s
+        """%project_id
+
+        rs = HydraIface.execute(sql)
+
+        for r in rs:
+            net = NetworkService.get_network(ctx, r.network_id, 'Y', None)
+            n_i = HydraIface.Network(network_id=net.id)
             try:
                 n_i.check_read_permission(user_id)
-                n_i.load()
-                networks.append(get_as_complexmodel(ctx, n_i))
+                networks.append(net)
             except:
                 logging.info("Not returning network %s as user %s does not have "
                              "permission to read it."%(n_i.db.network_id, user_id))
