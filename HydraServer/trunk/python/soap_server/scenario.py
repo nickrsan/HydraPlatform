@@ -24,6 +24,7 @@ from hydra_complexmodels import Scenario,\
 from db import HydraIface
 from HydraLib import units
 from db import IfaceLib
+from db.hdb import make_param
 from HydraLib.util import timestamp_to_ordinal, get_datetime
 
 from hydra_base import HydraService
@@ -1054,12 +1055,65 @@ class DataService(HydraService):
         logging.info("Retrieved %s datasets", len(scenario_data))
         return scenario_data
 
-    @rpc(Integer, Integer, _returns=SpyneArray(Dataset))
-    def get_node_data(ctx, node_id, scenario_id):
+    @rpc(Integer, Integer, Integer(default=None), _returns=SpyneArray(ResourceScenario))
+    def get_node_data(ctx, node_id, scenario_id, type_id):
         """
-            Get all the datasets from the group with the specified name
+            Get all the resource scenarios for a given node 
+            in a given scenario. If type_id is specified, only
+            return the resource scenarios for the attributes
+            within the type.
         """
-        node_data = []
+
+        attr_string = ""
+        
+        if type_id is not None:
+            sql = """
+                select
+                    attr_id
+                from
+                    tTypeAttr
+                where
+                    type_id=%(type_id)s
+                    """%{'type_id':type_id}
+            rs = HydraIface.execute(sql)
+            type_attrs = [r.attr_id for r in rs]
+            attr_string = "and ra.attr_id in %s"%(make_param(type_attrs),)
+
+        sql = """
+            select
+                rs.dataset_id,
+                rs.resource_attr_id,
+                rs.scenario_id,
+                ra.attr_id
+            from
+                tResourceAttr ra,
+                tResourceScenario rs
+            where
+                ra.ref_key = 'NODE'
+                and ra.ref_id  = %(node_id)s
+                and rs.resource_attr_id = ra.resource_attr_id
+                and rs.scenario_id = %(scenario_id)s
+                %(attr_filter)s
+            """ % {'scenario_id' : scenario_id,
+                   'node_id'     : node_id,
+                   'attr_filter' :attr_string
+                  }
+
+        res_scen_rs = HydraIface.execute(sql)
+        all_dataset_ids = {}
+        for res_scen_r in res_scen_rs:
+            rs = dict(
+                object_type      = 'ResourceScenario',
+                scenario_id      = res_scen_r.scenario_id,
+                dataset_id       = res_scen_r.dataset_id,
+                resource_attr_id = res_scen_r.resource_attr_id,
+                attr_id          = res_scen_r.attr_id,
+                value            = None,
+            )
+            if all_dataset_ids.get(res_scen_r.dataset_id) is None:
+               all_dataset_ids[res_scen_r.dataset_id] = [rs]
+            else:
+                all_dataset_ids[res_scen_r.dataset_id].append(rs)
 
         sql = """
             select
@@ -1103,23 +1157,23 @@ class DataService(HydraService):
                         distinct(rs.dataset_id)
                     from
                         tResourceScenario rs,
-                        tResourceAttr ra,
-                        tNode n
+                        tResourceAttr ra
                     where
-                        n.node_id = %(node_id)s
-                        and ra.ref_key = 'NODE'
-                        and ra.ref_id = n.node_id
+                        ra.ref_key = 'NODE'
+                        and ra.ref_id = %(node_id)s 
                         and rs.scenario_id = %(scenario_id)s
                         and rs.resource_attr_id = ra.resource_attr_id
+                        %(attr_filter)s
                     )
         """ % {
-             'scenario_id':scenario_id,
-            'node_id':node_id
-        }
+                'scenario_id' : scenario_id,
+                'node_id'     : node_id,
+                'attr_filter' : attr_string,
+            }
 
 
         rs = HydraIface.execute(sql)
-    
+        resource_scenarios = [] 
         for dr in rs:
             if dr.data_type in ('scalar', 'array', 'descriptor'):
                 if dr.data_type == 'scalar':
@@ -1159,11 +1213,12 @@ class DataService(HydraService):
                 dataset.db.data_hash  = dr.data_hash
                 dataset.db.locked     = dr.locked
                 d = dataset.get_as_dict(user_id=ctx.in_header.user_id)
+            for rs in all_dataset_ids[dr.dataset_id]:
+                rs['value'] = d 
+                resource_scenarios.append(ResourceScenario(rs))
 
-            node_data.append(Dataset(d))
-
-        logging.info("Retrieved %s datasets for node %s", len(node_data), node_id)
-        return node_data
+        logging.info("Retrieved %s resource scenarios for node %s", len(resource_scenarios), node_id)
+        return resource_scenarios 
 
     @rpc(Dataset, _returns=Dataset)
     def update_dataset(ctx, data):
