@@ -1055,7 +1055,7 @@ class DataService(HydraService):
         logging.info("Retrieved %s datasets", len(scenario_data))
         return scenario_data
 
-    @rpc(Integer, Integer, Integer(default=None), _returns=SpyneArray(ResourceScenario))
+    @rpc(Integer, Integer, Integer, _returns=SpyneArray(ResourceScenario))
     def get_node_data(ctx, node_id, scenario_id, type_id):
         """
             Get all the resource scenarios for a given node 
