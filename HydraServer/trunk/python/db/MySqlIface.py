@@ -133,6 +133,7 @@ def init(cnx, db_hierarchy):
         child_dict['column_name'] = r[1]
         child_dict['referenced_column_name'] = r[3]
         DB_STRUCT[r[2].lower()]['child_info'][r[0]] = child_dict
+        #DB_STRUCT[r[2].lower()]['child_info'][r[0].lower()] = child_dict
 
 def bulk_insert(objs, table_name=""):
     """

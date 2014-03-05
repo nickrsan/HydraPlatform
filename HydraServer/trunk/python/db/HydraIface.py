@@ -67,8 +67,8 @@ class GenericResource(IfaceBase):
     """
     def __init__(self, parent, class_name, ref_key, ref_id=None):
         self.parent = parent
-        
-        #This is just used for the get as dict function. It is not 
+
+        #This is just used for the get as dict function. It is not
         #a functional attribute.
         self.types = []
 
@@ -102,7 +102,7 @@ class GenericResource(IfaceBase):
             attr.delete(purge_data=purge_data)
 
         super(GenericResource, self).delete()
- 
+
     def get_timestamp(self, ordinal):
         if ordinal is None:
             return None
@@ -395,6 +395,8 @@ class GenericResource(IfaceBase):
         """
         time = kwargs.get('time', False)
 
+        include_attrs = kwargs.get('include_attrs', True)
+
         if time is True:
             start = datetime.datetime.now()
 
@@ -407,7 +409,7 @@ class GenericResource(IfaceBase):
             )
         )
 
-        if self.attributes == []:
+        if self.attributes == [] and include_attrs:
             self.get_attributes()
 
         for attr in self.attributes:
@@ -731,7 +733,7 @@ class Network(GenericResource):
                 scenarios[r.scenario_id]['resourcegroupitems'] = []
                 scenarios[r.scenario_id]['constraints'] = []
 
-        return scenarios 
+        return scenarios
 
     def get_scenarios(self, scenario_ids):
         """
@@ -833,11 +835,11 @@ class Network(GenericResource):
     def get_nodes(self, as_dict=False):
         """
             Get all the nodes in the network as node objects, but without
-            their children loaded. 
+            their children loaded.
 
 			as_dict indicates whether the values of the
 			returned dictionary should be objects or dictionaries
-            
+
 			@returns A dictionary, keyed on the node_id
         """
         sql = """
@@ -867,9 +869,9 @@ class Network(GenericResource):
 
     def get_links(self, as_dict=False):
         """
-            Get all the link in the network as link objects, 
+            Get all the link in the network as link objects,
             but without their children loaded
-			
+
 			as_dict indicates whether the values of the
 			returned dictionary should be objects or dictionaries
 
@@ -907,7 +909,7 @@ class Network(GenericResource):
 			as_dict indicates whether the values of the
 			returned dictionary should be objects or dictionaries
 
-            @returns A dictionary, keyed on resourcegroup_id 
+            @returns A dictionary, keyed on resourcegroup_id
         """
 
         sql = """
@@ -928,13 +930,13 @@ class Network(GenericResource):
                     n.db.__setattr__(k, v)
                 resourcegroups[r.group_id] = n
             else:
-                resourcegroups[r.group_id] = r.get_as_dict() 
+                resourcegroups[r.group_id] = r.get_as_dict()
                 resourcegroups[r.group_id]['resourcegroupitems'] = []
                 resourcegroups[r.group_id]['object_type'] = 'ResourceGroup'
                 resourcegroups[r.group_id]['attributes'] = []
                 resourcegroups[r.group_id]['types'] = []
 
-        return resourcegroups 
+        return resourcegroups
 
     def get_group(self, group_id):
         """

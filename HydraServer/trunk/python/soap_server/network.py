@@ -4,11 +4,12 @@ from spyne.model.primitive import String, Integer, Boolean
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Network,\
-Node,\
-Link,\
-Scenario,\
-ResourceGroup,\
-get_as_complexmodel
+    Node,\
+    Link,\
+    Scenario,\
+    ResourceGroup,\
+    ResourceAttr,\
+    get_as_complexmodel
 from db import HydraIface
 from db import hdb, IfaceLib
 from db.hdb import make_param
@@ -19,6 +20,7 @@ import datetime
 from util.permissions import check_perm
 
 from HydraLib.util import timestamp_to_ordinal
+
 
 def _add_attributes(resource_i, attributes):
     if attributes is None:
@@ -477,17 +479,16 @@ class NetworkService(HydraService):
 
         net_i.check_read_permission(ctx.in_header.user_id)
 
-        net = Network(net_i.get_as_dict())
+        net = Network(net_i.get_as_dict(include_attrs=False))
 
         """
             Get The nodes & links.
         """
-       
+
         nodes = net_i.get_nodes(as_dict=True)
-        links = net_i.get_links(as_dict=True) 
+        links = net_i.get_links(as_dict=True)
         groups = net_i.get_resourcegroups(as_dict=True)
 
-        
         """
             Get all resource arrtibutes
         """
@@ -495,8 +496,8 @@ class NetworkService(HydraService):
         if len(groups) == 0:
             group_string = ""
         else:
-            group_string = "or  ref_key = 'GROUP'   and ref_id in %s"%(make_param(groups.keys()),)
-
+            group_string = "or  ref_key = 'GROUP'   and ref_id in %s" \
+                % make_param(groups.keys())
 
         sql = """
             select
@@ -520,7 +521,7 @@ class NetworkService(HydraService):
                 'group_ids'  :group_string
         }
         ra_rs = HydraIface.execute(sql)
-       
+
         for r in ra_rs:
             ra = dict(
                 object_type = 'ResourceAttr',
@@ -531,7 +532,7 @@ class NetworkService(HydraService):
                 ref_id           = r.ref_id,
             )
             if r.ref_key == 'NETWORK':
-                net.attributes.append(ra)
+                net.attributes.append(ResourceAttr(ra))
             elif r.ref_key == 'NODE':
                 nodes[r.ref_id]['attributes'].append(ra)
             elif r.ref_key == 'LINK':
@@ -601,7 +602,7 @@ class NetworkService(HydraService):
                 else:
                     restricted_scenarios[scenario_id] = scenario_dicts[scenario_id]
 
-            scenario_dicts = restricted_scenarios 
+            scenario_dicts = restricted_scenarios
         if len(scenario_dicts) > 0 and include_data.upper() == 'Y':
             sql = """
                 select
@@ -638,9 +639,9 @@ class NetworkService(HydraService):
         if len(scenario_dicts) > 0 and include_data.upper() == 'Y':
             logging.info("Getting Data")
             """
-                Get data 
+                Get data
             """
-        
+
             sql = """
                 select
                     d.dataset_id,
@@ -670,8 +671,8 @@ class NetworkService(HydraService):
                 dataset.db.locked     = dr.locked
                 d = dataset.get_as_dict(user_id=ctx.in_header.user_id)
                 for rs in all_dataset_ids[dr.dataset_id]:
-                    rs['value'] = d 
-                            
+                    rs['value'] = d
+
         """
             Constraints
         """
@@ -687,7 +688,7 @@ class NetworkService(HydraService):
                 """%{'scenario_ids' : make_param(scenario_dicts.keys())}
 
             rs = HydraIface.execute(sql)
-            
+
             for r in rs:
                 c = HydraIface.Constraint(constraint_id=r.constraint_id)
                 scenario_dicts[r.scenario_id]['constraints'].append(c.get_as_dict())
@@ -699,7 +700,7 @@ class NetworkService(HydraService):
         if len(scenario_dicts) > 0:
             sql = """
                 select
-                   * 
+                   *
                 from
                     tResourceGroupItem
                 where
@@ -707,7 +708,7 @@ class NetworkService(HydraService):
                 """%{'scenario_ids' : make_param(scenario_dicts.keys())}
 
             item_rs = HydraIface.execute(sql)
-           
+
             for r in item_rs:
                 r = r.get_as_dict()
                 r['types'] = []
