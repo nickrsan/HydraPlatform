@@ -1,12 +1,13 @@
 import logging
 from HydraLib.HydraException import HydraError
-from spyne.model.primitive import String, Integer, Boolean
+from spyne.model.primitive import String, Unicode, Integer, Boolean
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Network,\
     Node,\
     Link,\
     Scenario,\
+    TypeSummary,\
     ResourceGroup,\
     ResourceAttr,\
     get_as_complexmodel
@@ -576,7 +577,8 @@ class NetworkService(HydraService):
                 type_name     = r.type_name,
             )
             if r.ref_key == 'NETWORK':
-                net.types.append(type_summary)
+                pass
+                #net.types.append(TypeSummary(type_summary))
             elif r.ref_key == 'NODE':
                 nodes[r.ref_id]['types'].append(type_summary)
             elif r.ref_key == 'LINK':
