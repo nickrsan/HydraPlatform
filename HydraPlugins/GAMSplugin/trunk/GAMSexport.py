@@ -269,7 +269,9 @@ class GAMSexport(object):
         self.time_index = []
 
         self.cli = PluginLib.connect()
-        net = self.cli.service.get_network(network_id, 'Y', scenario_id)
+        net = self.cli.service.get_network(network_id,
+                                           'Y',
+                                           scenario_ids=[scenario_id])
         attrs = self.cli.service.get_attributes()
 
         self.network = GAMSnetwork()
@@ -279,7 +281,7 @@ class GAMSexport(object):
 
         self.output = """* Data exported from Hydra using GAMSplugin.
 * (c) Copyright 2013, University College London
-* (c) Copyright 2013, University of Manchester
+* (c) Copyright 2013, 2014, University of Manchester
 *
 * %s: %s
 * Network-ID:  %s

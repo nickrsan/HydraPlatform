@@ -1,4 +1,3 @@
-
 from spyne.model.complex import Array as SpyneArray
 from spyne.model.primitive import String, Integer, Unicode
 from spyne.decorator import rpc
@@ -252,6 +251,7 @@ class TemplateService(HydraService):
         changed.
         """
         types = {}
+        types_resources = {}
         all_new_attrs = []
         all_new_resource_types = []
         resources = []
@@ -262,7 +262,7 @@ class TemplateService(HydraService):
             if types.get(resource_type.type_id) is None:
                 t = HydraIface.TemplateType(type_id=type_id)
                 t.load_all()
-                types[resource_type.type_id]=t
+                types[resource_type.type_id] = t
         logging.info("Types loaded in %s",(datetime.datetime.now()-x))
         node_ids = []
         link_ids = []
@@ -289,6 +289,7 @@ class TemplateService(HydraService):
             resource.ref_key = ref_key
             resource.ref_id  = ref_id
             resources.append(resource)
+            types_resources.update({(ref_key, ref_id): type_id})
 
         logging.info("Types loaded in %s",(datetime.datetime.now()-x))
         sql = """
@@ -309,9 +310,12 @@ class TemplateService(HydraService):
                 'link_ids'   :make_param(link_ids)
             }
         type_rs = HydraIface.execute(sql)
-        current_resource_types = [(r.ref_key, r.ref_id, r.type_id) for r in type_rs] 
+        current_resource_types = [(r.ref_key, r.ref_id, r.type_id) for r in type_rs]
         for resource in resources:
-            new_attrs, new_resource_type = resource.set_type(type_id, types)
+            new_attrs, new_resource_type = \
+                resource.set_type(types_resources[(resource.ref_key,
+                                                   resource.ref_id)],
+                                  types)
             if (new_resource_type.db.ref_key, new_resource_type.db.ref_id,\
                 new_resource_type.db.type_id) not in current_resource_types:
                 all_new_resource_types.append(new_resource_type)

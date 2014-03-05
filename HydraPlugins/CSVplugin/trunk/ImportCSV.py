@@ -313,14 +313,17 @@ class ImportCSV(object):
                     self.update_network_flag = True
                     logging.info('Loading existing network (ID=%s)' % ID)
                     # load existing nodes
-                    for node in self.Network.nodes.Node:
-                        self.Nodes.update({node.name: node})
+                    if self.Network.nodes is not None:
+                        for node in self.Network.nodes.Node:
+                            self.Nodes.update({node.name: node})
                     # load existing links
-                    for link in self.Network.links.Link:
-                        self.Links.update({link.name: link})
+                    if self.Network.links is not None:
+                        for link in self.Network.links.Link:
+                            self.Links.update({link.name: link})
                     # load existing groups
-                    for group in self.Network.resourcegroups.ResourceGroup:
-                        self.Groups.update({group.name: group})
+                    if self.Network.resourcegroups is not None:
+                        for group in self.Network.resourcegroups.ResourceGroup:
+                            self.Groups.update({group.name: group})
 
                     # Nodes and links are now deleted from the network, they
                     # will be added later...
@@ -328,12 +331,13 @@ class ImportCSV(object):
                         self.cli.factory.create('hyd:NodeArray')
                     self.Network.links = \
                         self.cli.factory.create('hyd:LinkArray')
-                    self.Network.groups = \
+                    self.Network.resourcegroups = \
                         self.cli.factory.create('hyd:ResourceGroupArray')
                     # The scenario loaded with the network will be deleted as
                     # well, we create a new one.
                     self.Network.scenarios = \
                         self.cli.factory.create('hyd:ScenarioArray')
+                    self.Network = dict(self.Network)
                 except WebFault:
                     logging.info('Network ID not found. Creating new network.')
                     self.warnings.append('Network ID not found. Creating new network.')
@@ -341,7 +345,7 @@ class ImportCSV(object):
 
             if ID is None:
                 # Create a new network
-                self.Network = dict( 
+                self.Network = dict(
                     project_id = self.Project.id,
                     name = data[field_idx['name']].strip(),
                     description = \
@@ -480,7 +484,7 @@ class ImportCSV(object):
                 link = self.Links[linkname]
                 logging.info('Link %s exists.' % linkname)
             else:
-                link = dict( 
+                link = dict(
                     id = self.link_id.next(),
                     name = linkname,
                     description = linedata[field_idx['description']].strip(),
@@ -557,7 +561,7 @@ class ImportCSV(object):
                 group = self.Groups[group_name]
                 logging.info('Group %s exists.' % group_name)
             else:
-                group = dict( 
+                group = dict(
                     id = self.group_id.next(),
                     name = group_name,
                     description = group_data[field_idx['description']].strip(),
@@ -663,10 +667,8 @@ class ImportCSV(object):
         # Collect existing resource attributes:
         resource_attrs = dict()
 
-        if resource.get('attributes') is None:
+        if resource['attributes'] is None:
             return resource
-        else:
-            resource['attributes'] = self.cli.factory.create('hyd:ResourceAttrArray')
 
         for res_attr in resource['attributes'].ResourceAttr:
             resource_attrs.update({res_attr.attr_id: res_attr})
@@ -697,9 +699,9 @@ class ImportCSV(object):
             attr = self.Attributes[attrs[i]]
             # Attribute might already exist for resource, use it if it does
             if attr.id in resource_attrs.keys():
-                res_attr = resource_attrs[attr.id]
+                res_attr = dict(resource_attrs[attr.id])
             else:
-                res_attr = dict( 
+                res_attr = dict(
                     id = self.attr_id.next(),
                     attr_id = attr.id,
                     attr_is_var = 'N',
@@ -707,8 +709,6 @@ class ImportCSV(object):
 
             # create dataset and assign to attribute (if not empty)
             if len(data[i].strip()) > 0:
-
-                resource['attributes'].ResourceAttr.append(res_attr)
 
                 if data[i].strip() in ('NULL',
                                        'I AM NOT A NUMBER! I AM A FREE MAN!'):
@@ -736,7 +736,9 @@ class ImportCSV(object):
                     if dataset is not None:
                         self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
 
-        #resource.attributes = res_attr_array
+                resource_attrs.update({res_attr['attr_id']: res_attr})
+
+        resource['attributes'].ResourceAttr = resource_attrs.values()
 
         return resource
 
@@ -886,6 +888,7 @@ class ImportCSV(object):
 
     def set_resource_types(self, template_file):
 
+        logging.info("Setting resource types based on %s." % template_file)
         with open(template_file) as f:
             xml_template = f.read()
 
@@ -902,7 +905,7 @@ class ImportCSV(object):
         self.message += ' Assigned node types based on %s.' % template_file
 
     def create_dataset(self, value, resource_attr, unit, dimension, resource_name):
-        resourcescenario = dict() 
+        resourcescenario = dict()
         dataset          = dict(
             id=None,
             type=None,
@@ -911,7 +914,7 @@ class ImportCSV(object):
             name=None,
             value=None,
             locked='N'
-        ) 
+        )
 
         resourcescenario['attr_id'] = resource_attr['attr_id']
         resourcescenario['resource_attr_id'] = resource_attr['id']
@@ -983,13 +986,13 @@ class ImportCSV(object):
         return resourcescenario
 
     def create_scalar(self, value):
-        scalar = dict( 
+        scalar = dict(
             param_value = float(value)
         )
         return scalar
 
     def create_descriptor(self, value):
-        descriptor = dict( 
+        descriptor = dict(
             desc_val = value
         )
         return descriptor
@@ -1053,7 +1056,7 @@ class ImportCSV(object):
         array = numpy.array(dataset)
         array = numpy.reshape(array, array_shape)
 
-        arr = dict( 
+        arr = dict(
             arr_data = str(array.tolist())
         )
 
@@ -1079,6 +1082,7 @@ class ImportCSV(object):
         logging.info("Network created for sending")
 
         if self.update_network_flag:
+            logging.info('Updating network (ID=%s)' % self.Network['id'])
             self.Network = self.cli.service.update_network(self.Network)
         else:
             logging.info("Adding Network")

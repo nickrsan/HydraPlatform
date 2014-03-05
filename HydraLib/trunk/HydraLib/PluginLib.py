@@ -540,7 +540,6 @@ def set_resource_types(client, xml_template, network,
             type_ids.update({tmpltype.name: tmpltype.id})
             break
 
-
     args = client.factory.create('hyd:ResourceTypeDefArray')
     if type_ids[networktype]:
         args.ResourceTypeDef.append(dict(
