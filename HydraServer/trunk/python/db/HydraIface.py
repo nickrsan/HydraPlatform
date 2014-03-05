@@ -4,7 +4,6 @@ from decimal import Decimal
 from HydraLib.util import convert_ordinal_to_datetime
 
 from HydraLib.HydraException import HydraError
-
 import IfaceLib
 from IfaceLib import IfaceBase, execute
 
@@ -78,7 +77,7 @@ class GenericResource(IfaceBase):
 
         IfaceBase.__init__(self, parent, class_name)
 
-        self.attributes = self.get_attributes()
+        self.attributes = []
 
     def save(self):
         super(GenericResource, self).save()
@@ -343,6 +342,51 @@ class GenericResource(IfaceBase):
                                          }
 
         return template_dict
+
+    def set_type(self, type_id, types={}):
+        """
+            Set this resource to be a certain type.
+            Type objects (a dictionary keyed on type_id) may be
+            passed in to save on loading.
+            This function does not call save. It must be done afterwards.
+            New resource attributes are added to the resource if the template
+            requires them. Resource attributes on the resource but not used by
+            the template are not removed.
+            @returns list of new resource attributes
+            ,new resource type object
+        """
+        self.get_attributes()
+        existing_attr_ids = []
+        for attr in self.attributes:
+            existing_attr_ids.append(attr.db.attr_id)
+
+        if type_id in types.keys():
+            type_i = types[type_id]
+        else:
+            type_i = TemplateType(type_id=type_id)
+            type_i.load_all()
+        type_attrs = dict()
+        for typeattr in type_i.typeattrs:
+            type_attrs.update({typeattr.db.attr_id:
+                               typeattr.db.attr_is_var})
+
+        # check if attributes exist
+        missing_attr_ids = set(type_attrs.keys()) - set(existing_attr_ids)
+
+        # add attributes if necessary
+        new_res_attrs = []
+        for attr_id in missing_attr_ids:
+            ra_i = self.add_attribute(attr_id,
+                                            attr_is_var=type_attrs[attr_id])
+            new_res_attrs.append(ra_i)
+
+        # add type to tResourceType if it doesn't exist already
+        resource_type = ResourceType()
+        resource_type.db.ref_key=self.ref_key
+        resource_type.db.ref_id=self.ref_id
+        resource_type.db.type_id=type_id
+
+        return new_res_attrs, resource_type
 
     def get_as_dict(self, **kwargs):
         """
@@ -866,15 +910,6 @@ class Network(GenericResource):
             @returns A dictionary, keyed on resourcegroup_id 
         """
 
-        def make_param(param_list):
-            if len(param_list) == 0:
-                return "()"
-            elif len(param_list) == 1:
-                return "(%s)"%(param_list[0])
-            else:
-                return tuple(param_list)
-
-
         sql = """
             select
                 *
@@ -898,30 +933,6 @@ class Network(GenericResource):
                 resourcegroups[r.group_id]['object_type'] = 'ResourceGroup'
                 resourcegroups[r.group_id]['attributes'] = []
                 resourcegroups[r.group_id]['types'] = []
-        
-      #  if len(resourcegroups) > 0:
-      #      sql = """
-      #          select
-      #              *
-      #          from
-      #              tResourceGroupItem
-      #          where
-      #              group_id in %(resourcegroup_ids)s
-      #          """%{'resourcegroup_ids':make_param(resourcegroups.keys())}
-      #      item_rs = execute(sql)
-
-      #      for r in item_rs:
-      #          if as_dict is False:
-      #              i = ResourceGroupItem()
-      #              for k, v in r.get_as_dict().items():
-      #                  i.db.__setattr__(k, v)
-      #              resourcegroups[i.db.group_id]['resourcegroupitems'].append(i)
-      #          else:
-      #              r = r.get_as_dict()
-      #              r['types'] = []
-      #              r['object_type'] = 'ResourceGroupItem'
-      #              resourcegroups[r['group_id']]['resourcegroupitems'].append(r)
-
 
         return resourcegroups 
 

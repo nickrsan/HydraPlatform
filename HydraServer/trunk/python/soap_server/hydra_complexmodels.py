@@ -282,6 +282,13 @@ class ResourceAttr(HydraComplexModel):
 
         self.id = obj_dict['resource_attr_id']
 
+class ResourceTypeDef(HydraComplexModel):
+    _type_info = [
+        ('ref_key', String(default=None)),
+        ('ref_id',  Integer(default=None)),
+        ('type_id', Integer(default=None)),
+    ]
+
 class TypeAttr(HydraComplexModel):
     _type_info = [
         ('attr_id',     Integer),

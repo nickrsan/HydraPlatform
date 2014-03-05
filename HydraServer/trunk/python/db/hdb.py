@@ -6,6 +6,15 @@ import sqlite3
 global CNX
 CNX = None
 
+
+def make_param(param_list):
+    if len(param_list) == 0:
+        return "(0)"#Needs to be 0 because 0 is never an ID and sql will not accept an empty list.
+    elif len(param_list) == 1:
+        return "(%s)"%(param_list[0])
+    else:
+        return str(tuple(param_list))
+
 class HydraMySqlCursor(mysql.connector.cursor.MySQLCursor):
 
     def execute_sql(self, qry):

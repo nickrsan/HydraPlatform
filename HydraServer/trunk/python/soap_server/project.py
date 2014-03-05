@@ -181,14 +181,12 @@ class ProjectService(HydraService):
         rs = HydraIface.execute(sql)
 
         for r in rs:
-            net = NetworkService.get_network(ctx, r.network_id, 'Y', None)
-            n_i = HydraIface.Network(network_id=net.id)
             try:
-                n_i.check_read_permission(user_id)
+                net = NetworkService.get_network(ctx, r.network_id, 'Y', None)
                 networks.append(net)
             except:
                 logging.info("Not returning network %s as user %s does not have "
-                             "permission to read it."%(n_i.db.network_id, user_id))
+                             "permission to read it."%(r.network_id, user_id))
 
         return networks
 

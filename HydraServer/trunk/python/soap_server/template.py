@@ -6,6 +6,7 @@ from hydra_complexmodels import Template,\
 TemplateType,\
 TypeAttr,\
 TypeSummary,\
+ResourceTypeDef,\
 get_as_complexmodel
 
 from db import HydraIface
@@ -17,7 +18,8 @@ from HydraLib import config
 from lxml import etree
 import attributes
 from decimal import Decimal
-from xml.sax.saxutils import unescape
+from db.hdb import make_param
+import datetime
 
 def parse_attribute(attribute):
 
@@ -238,6 +240,90 @@ class TemplateService(HydraService):
                 type_list.append(type_summary)
 
         return type_list
+
+    @rpc(SpyneArray(ResourceTypeDef),
+         _returns=SpyneArray(TemplateType))
+    def assign_types_to_resources(ctx, resource_types):
+        """Assign new types to list of resources.
+        This function checks if the necessary
+        attributes are present and adds them if needed. Non existing attributes
+        are also added when the type is already assigned. This means that this
+        function can also be used to update resources, when a resource type has
+        changed.
+        """
+        types = {}
+        all_new_attrs = []
+        all_new_resource_types = []
+        resources = []
+        x = datetime.datetime.now()
+        for resource_type in resource_types:
+            ref_id = resource_type.ref_id
+            type_id = resource_type.type_id
+            if types.get(resource_type.type_id) is None:
+                t = HydraIface.TemplateType(type_id=type_id)
+                t.load_all()
+                types[resource_type.type_id]=t
+        logging.info("Types loaded in %s",(datetime.datetime.now()-x))
+        node_ids = []
+        link_ids = []
+        network_id = None
+        for resource_type in resource_types:
+            ref_id  = resource_type.ref_id
+            ref_key = resource_type.ref_key
+            type_id = resource_type.type_id
+            if resource_type.ref_key == 'NETWORK':
+                resource = HydraIface.Network()
+                resource.db.network_id=ref_id
+                network_id=ref_id
+            elif resource_type.ref_key == 'NODE':
+                resource = HydraIface.Node()
+                resource.db.node_id=ref_id
+                node_ids.append(ref_id)
+            elif resource_type.ref_key == 'LINK':
+                resource = HydraIface.Link()
+                resource.db.link_id=ref_id
+                link_ids.append(ref_id)
+            elif resource_type.ref_key == 'GROUP':
+                resource = HydraIface.Group()
+                resouce.db.resourcegroup_id=ref_id
+            resource.ref_key = ref_key
+            resource.ref_id  = ref_id
+            resources.append(resource)
+
+        logging.info("Types loaded in %s",(datetime.datetime.now()-x))
+        sql = """
+            select
+                rt.type_id,
+                rt.ref_id,
+                rt.ref_key
+            from
+                tResourceType rt
+            where
+                (rt.ref_key = 'NETWORK' and rt.ref_id = %(network_id)s
+            or  rt.ref_key = 'NODE'    and rt.ref_id in %(node_ids)s
+            or  rt.ref_key = 'LINK'    and rt.ref_id in %(link_ids)s)
+            order by ref_key
+        """% {
+                'network_id' :network_id,
+                'node_ids'   :make_param(node_ids),
+                'link_ids'   :make_param(link_ids)
+            }
+        type_rs = HydraIface.execute(sql)
+        current_resource_types = [(r.ref_key, r.ref_id, r.type_id) for r in type_rs] 
+        for resource in resources:
+            new_attrs, new_resource_type = resource.set_type(type_id, types)
+            if (new_resource_type.db.ref_key, new_resource_type.db.ref_id,\
+                new_resource_type.db.type_id) not in current_resource_types:
+                all_new_resource_types.append(new_resource_type)
+
+            all_new_attrs.extend(new_attrs)
+
+        IfaceLib.bulk_insert(all_new_attrs, 'tResourceAttr')
+        IfaceLib.bulk_insert(all_new_resource_types, 'tResourceType')
+
+        ret_val = [get_as_complexmodel(ctx, t) for t in types.values()]
+        return ret_val
+
 
     @rpc(Integer, String, Integer, _returns=TemplateType)
     def assign_type_to_resource(ctx, type_id, resource_type, resource_id):

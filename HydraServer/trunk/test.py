@@ -58,10 +58,11 @@ class SoapTest(unittest.TestCase):
 
     def test_SUDS(self):
         client = PluginLib.connect()
-        #net = client.service.get_network_quickly(network_id=2)
-        sd = client.service.get_scenario_data(2)
-        node_data = client.service.get_node_data(597, 2)
-        print(node_data)
+        net = client.service.get_network(network_id=2)
+        #sd = client.service.get_scenario_data(2)
+       # node_data = client.service.get_node_data(597, 2)
+        networks = client.service.get_networks(2)
+        print(len(networks))
 def run():
 
     unittest.main()

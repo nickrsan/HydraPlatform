@@ -167,7 +167,7 @@ class ImportCSV(object):
         self.update_network_flag = False
         self.timezone = pytz.utc
         self.expand_filenames = False
-
+        self.file_dict = {}
         self.basepath = ''
 
         self.add_attrs = True
@@ -341,17 +341,17 @@ class ImportCSV(object):
 
             if ID is None:
                 # Create a new network
-                self.Network = self.cli.factory.create('hyd:Network')
-                self.Network.project_id = self.Project.id
-                #self.Network.nodes = \
-                #    self.cli.factory.create('hyd:NodeArray')
-                #self.Network.links = \
-                #    self.cli.factory.create('hyd:LinkArray')
-                #self.Network.scenarios = \
-                #    self.cli.factory.create('hyd:ScenarioArray')
-                self.Network.name = data[field_idx['name']].strip()
-                self.Network.description = \
-                    data[field_idx['description']].strip()
+                self.Network = dict( 
+                    project_id = self.Project.id,
+                    name = data[field_idx['name']].strip(),
+                    description = \
+                    data[field_idx['description']].strip(),
+                    nodes = self.cli.factory.create('hyd:NodeArray'),
+                    links = self.cli.factory.create('hyd:LinkArray'),
+                    scenarios = self.cli.factory.create('hyd:ScenarioArray'),
+                    resourcegroups = self.cli.factory.create('hyd:ResourceGroupArray'),
+                    attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
+                )
 
             # Everything that is not name or description is an attribute
             attrs = dict()
@@ -365,16 +365,18 @@ class ImportCSV(object):
 
         else:
             # Create a new network
-            self.Network = self.cli.factory.create('hyd:Network')
-            self.Network.project_id = self.Project.id
-            #self.Network.nodes = self.cli.factory.create('hyd:NodeArray')
-            #self.Network.links = self.cli.factory.create('hyd:LinkArray')
-            #self.Network.scenarios = \
-            #    self.cli.factory.create('hyd:ScenarioArray')
-            self.Network.name = "CSV import"
-            self.Network.description = \
+            self.Network = dict(
+                project_id = self.Project.id,
+                name = "CSV import",
+                description = \
                 "Network created by the %s plug-in, %s." % \
-                (self.__class__.__name__, datetime.now())
+                (self.__class__.__name__, datetime.now()),
+                nodes = self.cli.factory.create('hyd:NodeArray'),
+                links = self.cli.factory.create('hyd:LinkArray'),
+                scenarios = self.cli.factory.create('hyd:ScenarioArray'),
+                resourcegroups = self.cli.factory.create('hyd:ResourceGroupArray'),
+                attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
+            )
 
     def read_nodes(self, file):
         node_data = self.get_file_data(file)
@@ -410,26 +412,28 @@ class ImportCSV(object):
                 node = self.Nodes[nodename]
                 logging.info('Node %s exists.' % nodename)
             else:
-                node = self.cli.factory.create('hyd:Node')
-                node.id = self.node_id.next()
-                node.name = nodename
-                node.description = linedata[field_idx['description']].strip()
+                node = dict(
+                    id = self.node_id.next(),
+                    name = nodename,
+                    description = linedata[field_idx['description']].strip(),
+                    attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
+                )
                 try:
-                    node.x = float(linedata[field_idx['x']])
+                    node['x'] = float(linedata[field_idx['x']])
                 except ValueError:
-                    node.x = 0
+                    node['x'] = 0
                     logging.info('X coordinate of node %s is not a number.'
-                                 % node.name)
+                                 % node['name'])
                     self.warnings.append('X coordinate of node %s is not a number.'
-                                         % node.name)
+                                         % node['name'])
                 try:
-                    node.y = float(linedata[field_idx['y']])
+                    node['y'] = float(linedata[field_idx['y']])
                 except ValueError:
-                    node.y = 0
+                    node['y'] = 0
                     logging.info('Y coordinate of node %s is not a number.'
-                                 % node.name)
+                                 % node['name'])
                     self.warnings.append('Y coordinate of node %s is not a number.'
-                                         % node.name)
+                                         % node['name'])
                 if field_idx['type'] is not None:
                     node_type = linedata[field_idx['type']].strip()
                     if node_type not in self.nodetype_dict.keys():
@@ -440,7 +444,7 @@ class ImportCSV(object):
             if len(attrs) > 0:
                 node = self.add_data(node, attrs, linedata, units=units)
 
-            self.Nodes.update({node.name: node})
+            self.Nodes.update({node['name']: node})
 
     def read_links(self, file):
         link_data = self.get_file_data(file)
@@ -476,16 +480,18 @@ class ImportCSV(object):
                 link = self.Links[linkname]
                 logging.info('Link %s exists.' % linkname)
             else:
-                link = self.cli.factory.create('hyd:Link')
-                link.id = self.link_id.next()
-                link.name = linkname
-                link.description = linedata[field_idx['description']].strip()
+                link = dict( 
+                    id = self.link_id.next(),
+                    name = linkname,
+                    description = linedata[field_idx['description']].strip(),
+                    attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
+                )
 
                 try:
                     fromnode = self.Nodes[linedata[field_idx['from']].strip()]
                     tonode = self.Nodes[linedata[field_idx['to']].strip()]
-                    link.node_1_id = fromnode.id
-                    link.node_2_id = tonode.id
+                    link['node_1_id'] = fromnode['id']
+                    link['node_2_id'] = tonode['id']
 
                 except KeyError:
                     logging.info(('Start or end node not found (%s -- %s).' +
@@ -505,7 +511,7 @@ class ImportCSV(object):
                         self.linktype_dict[link_type] += (linkname,)
             if len(attrs) > 0:
                 link = self.add_data(link, attrs, linedata, units=units)
-            self.Links.update({link.name: link})
+            self.Links.update({link['name']: link})
 
     def read_groups(self, file):
         """
@@ -551,15 +557,16 @@ class ImportCSV(object):
                 group = self.Groups[group_name]
                 logging.info('Group %s exists.' % group_name)
             else:
-                group = self.cli.factory.create('hyd:ResourceGroup')
-                group.id = self.group_id.next()
-                group.name = group_name
-                group.description = group_data[field_idx['description']].strip()
-
+                group = dict( 
+                    id = self.group_id.next(),
+                    name = group_name,
+                    description = group_data[field_idx['description']].strip(),
+                    attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
+                )
             if len(attrs) > 0:
                 group = self.add_data(group, attrs, group_data, units=units)
 
-            self.Groups.update({group.name: group})
+            self.Groups.update({group['name']: group})
 
     def read_group_members(self, file):
 
@@ -627,8 +634,8 @@ class ImportCSV(object):
                 continue
 
             item = dict(
-                group_id = group.id,
-                ref_id   = member.id,
+                group_id = group['id'],
+                ref_id   = member['id'],
                 ref_key  = member_type,
             )
             items.ResourceGroupItem.append(item)
@@ -656,10 +663,12 @@ class ImportCSV(object):
         # Collect existing resource attributes:
         resource_attrs = dict()
 
-        if resource.attributes is None:
+        if resource.get('attributes') is None:
             return resource
+        else:
+            resource['attributes'] = self.cli.factory.create('hyd:ResourceAttrArray')
 
-        for res_attr in resource.attributes.ResourceAttr:
+        for res_attr in resource['attributes'].ResourceAttr:
             resource_attrs.update({res_attr.attr_id: res_attr})
 
         for i in attrs.keys():
@@ -690,19 +699,21 @@ class ImportCSV(object):
             if attr.id in resource_attrs.keys():
                 res_attr = resource_attrs[attr.id]
             else:
-                res_attr = self.cli.factory.create('hyd:ResourceAttr')
-                res_attr.id = self.attr_id.next()
-                res_attr.attr_id = attr.id
+                res_attr = dict( 
+                    id = self.attr_id.next(),
+                    attr_id = attr.id,
+                    attr_is_var = 'N',
+                )
 
             # create dataset and assign to attribute (if not empty)
             if len(data[i].strip()) > 0:
 
-                resource.attributes.ResourceAttr.append(res_attr)
+                resource['attributes'].ResourceAttr.append(res_attr)
 
                 if data[i].strip() in ('NULL',
                                        'I AM NOT A NUMBER! I AM A FREE MAN!'):
 
-                    res_attr.attr_is_var = 'Y'
+                    res_attr['attr_is_var'] = 'Y'
 
                 else:
                     if units is not None:
@@ -714,13 +725,13 @@ class ImportCSV(object):
                                                       res_attr,
                                                       units[i],
                                                       dimension,
-                                                      resource.name)
+                                                      resource['name'])
                     else:
                         dataset = self.create_dataset(data[i],
                                                       res_attr,
                                                       None,
                                                       None,
-                                                      resource.name)
+                                                      resource['name'])
 
                     if dataset is not None:
                         self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
@@ -891,11 +902,19 @@ class ImportCSV(object):
         self.message += ' Assigned node types based on %s.' % template_file
 
     def create_dataset(self, value, resource_attr, unit, dimension, resource_name):
-        resourcescenario = self.cli.factory.create('hyd:ResourceScenario')
-        dataset          = self.cli.factory.create('hyd:Dataset')
+        resourcescenario = dict() 
+        dataset          = dict(
+            id=None,
+            type=None,
+            unit=None,
+            dimension=None,
+            name=None,
+            value=None,
+            locked='N'
+        ) 
 
-        resourcescenario.attr_id = resource_attr.attr_id
-        resourcescenario.resource_attr_id = resource_attr.id
+        resourcescenario['attr_id'] = resource_attr['attr_id']
+        resourcescenario['resource_attr_id'] = resource_attr['id']
 
         value = value.strip()
         if unit is not None:
@@ -905,16 +924,21 @@ class ImportCSV(object):
 
         try:
             float(value)
-            dataset.type = 'scalar'
+            dataset['type'] = 'scalar'
             scal = self.create_scalar(value)
-            dataset.value = scal
+            dataset['value'] = scal
         except ValueError:
             try:
                 if self.expand_filenames:
                     full_file_path = os.path.join(self.basepath, value)
-                    with open(full_file_path) as f:
-                        logging.info('Reading data from %s ...' % full_file_path)
-                        filedata = f.read()
+                    if self.file_dict.get(full_file_path) is None:
+                        with open(full_file_path) as f:
+                            logging.info('Reading data from %s ...' % full_file_path)
+                            filedata = f.read()
+                            self.file_dict[full_file_path] = filedata
+                    else:
+                        filedata = self.file_dict[full_file_path]
+
                     tmp_filedata = filedata.split('\n')
                     filedata = ''
                     for i, line in enumerate(tmp_filedata):
@@ -934,38 +958,40 @@ class ImportCSV(object):
                         return None
                     else:
                         if self.is_timeseries(filedata):
-                            dataset.type = 'timeseries'
+                            dataset['type'] = 'timeseries'
                             ts = self.create_timeseries(filedata)
-                            dataset.value = ts
+                            dataset['value'] = ts
                         else:
-                            dataset.type = 'array'
+                            dataset['type'] = 'array'
                             arr = self.create_array(filedata)
-                            dataset.value = arr
+                            dataset['value'] = arr
                 else:
                     raise IOError
             except IOError:
-                dataset.type = 'descriptor'
+                dataset['type'] = 'descriptor'
                 desc = self.create_descriptor(value)
-                dataset.value = desc
+                dataset['value'] = desc
 
-        dataset.unit = unit
+        dataset['unit'] = unit
         if unit is not None:
-            dataset.dimension = dimension
+            dataset['dimension'] = dimension
 
-        dataset.name = "Import CSV data"
+        dataset['name'] = "Import CSV data"
 
-        resourcescenario.value = dataset
+        resourcescenario['value'] = dataset
 
         return resourcescenario
 
     def create_scalar(self, value):
-        scalar = self.cli.factory.create('hyd:Scalar')
-        scalar.param_value = float(value)
+        scalar = dict( 
+            param_value = float(value)
+        )
         return scalar
 
     def create_descriptor(self, value):
-        descriptor = self.cli.factory.create('hyd:Descriptor')
-        descriptor.desc_val = value
+        descriptor = dict( 
+            desc_val = value
+        )
         return descriptor
 
     def create_timeseries(self, data):
@@ -1027,8 +1053,9 @@ class ImportCSV(object):
         array = numpy.array(dataset)
         array = numpy.reshape(array, array_shape)
 
-        arr = self.cli.factory.create('hyd:Array')
-        arr.arr_data = str(array.tolist())
+        arr = dict( 
+            arr_data = str(array.tolist())
+        )
 
         return arr
 
@@ -1041,22 +1068,25 @@ class ImportCSV(object):
             return True
 
     def commit(self):
+        logging.info("Committing Network")
         for node in self.Nodes.values():
-            self.Network.nodes.Node.append(node)
+            self.Network['nodes'].Node.append(node)
         for link in self.Links.values():
-            self.Network.links.Link.append(link)
+            self.Network['links'].Link.append(link)
         for group in self.Groups.values():
-            self.Network.resourcegroups.ResourceGroup.append(group)
-        self.Network.scenarios.Scenario.append(self.Scenario)
+            self.Network['resourcegroups'].ResourceGroup.append(group)
+        self.Network['scenarios'].Scenario.append(self.Scenario)
+        logging.info("Network created for sending")
 
         if self.update_network_flag:
             self.Network = self.cli.service.update_network(self.Network)
         else:
+            logging.info("Adding Network")
             self.Network = self.cli.service.add_network(self.Network)
 
         logging.info("Network updated. Network ID is %s", self.Network.id)
-        logging.info("Network Scenarios are: %s",
-                     [s.id for s in self.Network.scenarios.Scenario])
+      #  logging.info("Network Scenarios are: %s",
+      #               [s.id for s in self.Network.scenarios.Scenario] + [self.Sceanrio.id])
 
         self.message = 'Data import was successful.'
 
@@ -1174,9 +1204,11 @@ if __name__ == '__main__':
             csv.create_network(file=args.network)
 
             for nodefile in args.nodes:
+                logging.info("Reading Nodes")
                 csv.read_nodes(nodefile)
 
             if args.links is not None:
+                logging.info("Reading Links")
                 for linkfile in args.links:
                     csv.read_links(linkfile)
 
@@ -1196,7 +1228,8 @@ if __name__ == '__main__':
                     csv.read_constraints(constraintfile)
 
             csv.commit()
-            scen_ids = [s.id for s in csv.Network.scenarios.Scenario]
+            if csv.Network.scenarios:
+                scen_ids = [s.id for s in csv.Network.scenarios.Scenario]
             network_id = csv.Network.id
 
             if args.template is not None:

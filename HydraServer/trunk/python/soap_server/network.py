@@ -8,10 +8,10 @@ Node,\
 Link,\
 Scenario,\
 ResourceGroup,\
-ResourceAttr,\
 get_as_complexmodel
 from db import HydraIface
 from db import hdb, IfaceLib
+from db.hdb import make_param
 from hydra_base import HydraService, ObjectNotFoundError
 import scenario
 from constraints import ConstraintService
@@ -492,18 +492,10 @@ class NetworkService(HydraService):
             Get all resource arrtibutes
         """
 
-        def make_param(param_list):
-            if len(param_list) == 0:
-                return "()"
-            elif len(param_list) == 1:
-                return "(%s)"%(param_list[0])
-            else:
-                return tuple(param_list)
-
         if len(groups) == 0:
             group_string = ""
         else:
-            group_string = "or  ref_key = 'GROUP'   and ref_id in %s"%make_param(groups.keys())
+            group_string = "or  ref_key = 'GROUP'   and ref_id in %s"%(make_param(groups.keys()),)
 
 
         sql = """

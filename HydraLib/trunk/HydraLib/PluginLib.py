@@ -517,6 +517,7 @@ def write_xml_result(plugin_name, xml_string, file_path=None):
 
 def set_resource_types(client, xml_template, network,
                        nodetype_dict, linktype_dict, networktype):
+    logging.info("Setting resource types")
 
     template = client.service.upload_template_xml(xml_template)
 
@@ -539,19 +540,31 @@ def set_resource_types(client, xml_template, network,
             type_ids.update({tmpltype.name: tmpltype.id})
             break
 
-    client.service.assign_type_to_resource(type_ids[networktype],
-                                           'NETWORK', network.id)
+
+    args = client.factory.create('hyd:ResourceTypeDefArray')
+    if type_ids[networktype]:
+        args.ResourceTypeDef.append(dict(
+            ref_key = 'NETWORK',
+            ref_id  = network.id,
+            type_id = type_ids[networktype],
+        ))
 
     for node in network.nodes.Node:
         for typename, node_name_list in nodetype_dict.items():
-            if node.name in node_name_list:
-                type_id = type_ids[typename]
-                client.service.assign_type_to_resource(type_id, 'NODE',
-                                                       node.id)
+            if type_ids[typename] and node.name in node_name_list:
+                args.ResourceTypeDef.append(dict(
+                    ref_key = 'NODE',
+                    ref_id  = node.id,
+                    type_id = type_ids[typename],
+                ))
 
     for link in network.links.Link:
         for typename, link_name_list in linktype_dict.items():
-            if link.name in link_name_list:
-                type_id = type_ids[typename]
-                client.service.assign_type_to_resource(type_id, 'LINK',
-                                                       link.id)
+            if type_ids[typename] and link.name in link_name_list:
+                args.ResourceTypeDef.append(dict(
+                    ref_key = 'LINK',
+                    ref_id  = link.id,
+                    type_id = type_ids[typename],
+                ))
+
+    client.service.assign_types_to_resources(args)
