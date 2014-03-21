@@ -205,7 +205,7 @@ class ImportCSV(object):
                 file_data.pop(i)
         return file_data
 
-    def check_header(self, header):
+    def check_header(self, file, header):
         """
             Check for common mistakes in headers:
             Duplicate columns
@@ -214,11 +214,9 @@ class ImportCSV(object):
         if type(header) == str:
             header = header.split(',')
 
-        for h in header:
-            h.strip()
-            if h == '':
-                raise HydraPluginError("Malformed Header: Column(s) %s is empty",
-                                   header.index(''))
+        for i, h in enumerate(header):
+            if h.strip() == '':
+                raise HydraPluginError("Malformed Header in %s: Column(s) %s is empty"%(file, i))
 
         individual_headings = []
         dupe_headings       = []
@@ -272,7 +270,7 @@ class ImportCSV(object):
             net_data = self.get_file_data(file)
 
             keys = net_data[0].split(',')
-            self.check_header(keys)
+            self.check_header(file, keys)
             units = net_data[1].split(',')
             # A network file should only have one line of data
             data = net_data[2].split(',')
@@ -290,6 +288,7 @@ class ImportCSV(object):
             # If the file does not follow the standard, we can at least try to
             # guess what is stored where.
             for i, key in enumerate(keys):
+
                 if key.lower().strip() in field_idx.keys():
                     field_idx[key.lower().strip()] = i
 
@@ -388,7 +387,7 @@ class ImportCSV(object):
         self.add_attrs = True
 
         keys  = node_data[0].split(',')
-        self.check_header(keys)
+        self.check_header(file, keys)
         units = node_data[1].split(',')
         data  = node_data[2:-1]
 
@@ -404,6 +403,7 @@ class ImportCSV(object):
         # Guess parameter position:
         attrs = dict()
         for i, key in enumerate(keys):
+
             if key.lower().strip() in field_idx.keys():
                 field_idx[key.lower().strip()] = i
             else:
@@ -456,7 +456,7 @@ class ImportCSV(object):
         self.add_attrs = True
 
         keys = link_data[0].split(',')
-        self.check_header(keys)
+        self.check_header(file, keys)
         units = link_data[1].split(',')
         data = link_data[2:-1]
 
@@ -527,7 +527,7 @@ class ImportCSV(object):
         self.add_attrs = True
 
         keys  = group_data[0].split(',')
-        self.check_header(keys)
+        self.check_header(file, keys)
         units = group_data[1].split(',')
         data  = group_data[2:-1]
 
@@ -586,7 +586,7 @@ class ImportCSV(object):
         member_data = self.get_file_data(file)
 
         keys  = member_data[0].split(',')
-        self.check_header(keys)
+        self.check_header(file, keys)
         data  = member_data[2:-1]
 
         field_idx = {}
