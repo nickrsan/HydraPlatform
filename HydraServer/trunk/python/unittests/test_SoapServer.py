@@ -221,14 +221,15 @@ class SoapServerTest(unittest.TestCase):
 
         if attributes is None:
             attributes = self.client.factory.create('hyd:ResourceAttrArray')
-
+        #turn 0 into 1, -1 into 2, -2 into 3 etc..
+        coord = (node_id * -1) + 1
         node = {
             'id' : node_id,
             'name' : node_name,
             'description' : "A node representing a water resource",
             'layout'      : None,
-            'x' : 0,
-            'y' : 0,
+            'x' : 10 * coord,
+            'y' : 10 * coord -1,
             'attributes' : attributes,
         }
 

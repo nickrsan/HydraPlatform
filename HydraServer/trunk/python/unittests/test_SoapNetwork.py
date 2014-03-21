@@ -47,6 +47,20 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         for s in partial_network.scenarios.Scenario:
             assert len(s.resourcescenarios.ResourceScenario) > 0
 
+    def test_get_extents(self):
+        """
+        Extents test: Test that the min X, max X, min Y and max Y of a
+        network are retrieved correctly.
+        """
+        net = self.create_network_with_data()
+
+        extents = self.client.service.get_network_extents(net.id)
+
+        assert extents.min_x == 10
+        assert extents.max_x == 100
+        assert extents.min_y == 9
+        assert extents.max_y == 99
+
     def test_update(self):
         project = self.create_project('test')
         network = self.client.factory.create('hyd:Network')

@@ -25,6 +25,7 @@ from hydra_complexmodels import Network,\
     TypeSummary,\
     ResourceGroup,\
     ResourceAttr,\
+    NetworkExtents,\
     get_as_complexmodel
 from db import HydraIface
 from db import hdb, IfaceLib
@@ -967,6 +968,46 @@ class NetworkService(HydraService):
 
         """
         pass
+
+    @rpc(Integer, _returns=NetworkExtents)
+    def get_network_extents(ctx, network_id):
+        """
+        Given a network, return its maximum extents.
+        This would be the minimum x value of all nodes,
+        the minimum y value of all nodes,
+        the maximum x value of all nodes and
+        maximum y value of all nodes.
+
+        @returns NetworkExtents object
+        """
+        sql = """
+            select
+                node_x,
+                node_y
+            from
+                tNode
+            where
+                network_id=%s
+        """%network_id
+
+        rs = HydraIface.execute(sql)
+        x_values = []
+        y_values = []
+        for r in rs:
+            x_values.append(r.node_x)
+            y_values.append(r.node_y)
+
+        x_values.sort()
+        y_values.sort()
+
+        ne = NetworkExtents()
+        ne.network_id = network_id
+        ne.min_x = x_values[0]
+        ne.max_x = x_values[-1]
+        ne.min_y = y_values[0]
+        ne.max_y = y_values[-1]
+
+        return ne
 
     @rpc(Integer, Node, _returns=Node)
     def add_node(ctx, network_id, node):

@@ -644,6 +644,15 @@ class NetworkSummary(Resource):
         ('name',                String(default=None)),
     ]
 
+class NetworkExtents(Resource):
+    _type_info = [
+        ('network_id', Integer(default=None)),
+        ('min_x',      Decimal(default=0)),
+        ('min_y',      Decimal(default=0)),
+        ('max_x',      Decimal(default=0)),
+        ('max_y',      Decimal(default=0)),
+    ]
+
 class Project(Resource):
     _type_info = [
         ('id',          Integer(default=None)),
