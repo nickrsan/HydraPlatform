@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -188,8 +188,11 @@ class UnitsTest(test_SoapServer.SoapServerTest):
 
     def test_convert_units(self):
         result = self.client.service.convert_units(20, 'm', 'km')
-        assert result == 0.02, \
+        assert result == [0.02], \
             "Converting metres to kilometres didn't work."
+        result = self.client.service.convert_units([20., 30., 40.], 'm', 'km')
+        assert result == [0.02, 0.03, 0.04],  \
+            "Unit conversion of array didn't work."
 
     def test_check_consistency(self):
         result1 = self.client.service.check_consistency('m^3', 'Volume')

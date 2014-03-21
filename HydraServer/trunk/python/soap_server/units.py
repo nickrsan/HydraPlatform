@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -106,8 +106,10 @@ class UnitService(HydraService):
         hydra_units.save_user_file()
         return result
 
-    @rpc(Decimal, String, String, _returns=Decimal)
-    def convert_units(ctx, value, unit1, unit2):
+    @rpc(Decimal(min_occurs="1", max_occurs="unbounded"),
+         String, String,
+         _returns=Decimal(min_occurs="1", max_occurs="unbounded"))
+    def convert_units(ctx, values, unit1, unit2):
         """Convert a value from one unit to another one.
 
         Example::
@@ -116,8 +118,8 @@ class UnitService(HydraService):
             >>> cli.service.convert_units(20.0, 'm', 'km')
             0.02
         """
-        value = float(value)
-        return hydra_units.convert(value, unit1, unit2)
+        float_values = [float(value) for value in values]
+        return hydra_units.convert(float_values, unit1, unit2)
 
     @rpc(String, _returns=String)
     def get_dimension(ctx, unit1):

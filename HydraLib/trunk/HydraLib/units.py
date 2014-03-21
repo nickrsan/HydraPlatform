@@ -9,8 +9,8 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
+#
+# You should have received a copy of the GNU Lesser General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
 #!/usr/bin/env python
@@ -118,7 +118,7 @@ class Units(object):
                 return dim
         raise HydraError('Unit %s not found.'%(unit))
 
-    def convert(self, value, unit1, unit2):
+    def convert(self, values, unit1, unit2):
         """Convert a value from one unit to another one. The two units must
         represent the same physical dimension.
         """
@@ -128,9 +128,14 @@ class Units(object):
             conv_factor1 = self.units[unit1]
             conv_factor2 = self.units[unit2]
 
-            return (conv_factor1[0] / conv_factor2[0] * (factor1 * value)
-                    + (conv_factor1[1] - conv_factor2[1]) / conv_factor2[0]) /\
-                factor2
+            if isinstance(values, float):
+                return (conv_factor1[0] / conv_factor2[0] * (factor1 * values)
+                        + (conv_factor1[1] - conv_factor2[1])
+                        / conv_factor2[0]) / factor2
+            elif isinstance(values, list):
+                return [(conv_factor1[0] / conv_factor2[0] * (factor1 * value)
+                        + (conv_factor1[1] - conv_factor2[1])
+                        / conv_factor2[0]) / factor2 for value in values]
         else:
             logging.info("Unit conversion: dimensions are not consistent.")
 

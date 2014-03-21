@@ -1113,6 +1113,7 @@ class ImportCSV(object):
             xml_template = f.read()
 
         template_xsd_path = config.get('templates', 'template_xsd_path')
+        print template_xsd_path
         xmlschema_doc = etree.parse(template_xsd_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
         xml_tree = etree.fromstring(xml_template)

@@ -582,7 +582,7 @@ class GAMSexport(object):
             value = float(value)
             units = time_step[valuelen:].strip()
 
-        return self.cli.service.convert_units(value, units, 'day')
+        return self.cli.service.convert_units(value, units, 'day')[0]
 
     def parse_date(self, date):
         """Parse date string supplied from the user. All formats supported by
@@ -631,8 +631,8 @@ def commandline_parser():
 can be imported into a GAMS model.
 
 Written by Philipp Meier <philipp@diemeiers.ch>
-(c) Copyright 2013, University College London.
-        """, epilog="For more information visit www.hydra-network.com",
+(c) Copyright 2014, Univeristy of Manchester.
+        """, epilog="For more information visit www.hydraplatform.com",
         formatter_class=ap.RawDescriptionHelpFormatter)
     # Mandatory arguments
     #parser.add_argument('-p', '--project',
