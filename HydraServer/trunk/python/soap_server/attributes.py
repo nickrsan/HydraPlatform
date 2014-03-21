@@ -66,10 +66,12 @@ def get_attribute_by_id(ID):
         x.id    = rs[0].attr_id
         return x
 
-def get_attribute_by_name(name):
+def get_attribute_by_name_and_dimension(name, dimension):
     """
         Get a specific attribute by its name.
     """
+
+    dimension_str = "and attr_dimen='%s'"%dimension if dimension is not None else '' 
 
     sql = """
         select
@@ -79,8 +81,9 @@ def get_attribute_by_name(name):
         from
             tAttr
         where
-            attr_name = '%s'
-    """ % name
+            attr_name      = '%s'
+            %s
+    """ % (name, dimension_str)
 
     rs = HydraIface.execute(sql)
 
@@ -234,12 +237,12 @@ class AttributeService(HydraService):
         """
         return get_attribute_by_id(ID)
 
-    @rpc(String, _returns=Attr)
-    def get_attribute(ctx, name):
+    @rpc(String, String, _returns=Attr)
+    def get_attribute(ctx, name, dimension):
         """
             Get a specific attribute by its name.
         """
-        return get_attribute_by_name(name)
+        return get_attribute_by_name_and_dimension(name, dimension)
 
     @rpc(Integer, _returns=Boolean)
     def delete_attribute(ctx, attr_id):

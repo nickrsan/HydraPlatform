@@ -235,11 +235,11 @@ class SoapServerTest(unittest.TestCase):
         return node
 
     def create_attr(self, name="Test attribute", dimension="dimensionless"):
-        attr = self.client.service.get_attribute(name)
+        attr = self.client.service.get_attribute(name, dimension)
         if attr is None:
-            attr       = self.client.factory.create('hyd:Attr')
-            attr.name  = name
-            attr.dimen = dimension
+            attr = {'name'  : name,
+                    'dimen' : dimension
+                   }
             attr = self.client.service.add_attribute(attr)
         return attr
 

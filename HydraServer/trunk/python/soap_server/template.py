@@ -40,7 +40,7 @@ def parse_attribute(attribute):
     dimension = attribute.find('dimension').text
     name      = attribute.find('name').text
 
-    attr_cm = attributes.get_attribute_by_name(name)
+    attr_cm = attributes.get_attribute_by_name_and_dimension(name, dimension)
 
     if attr_cm is None:
         attr_i         = HydraIface.Attr()
