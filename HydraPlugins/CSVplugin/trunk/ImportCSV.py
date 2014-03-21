@@ -164,6 +164,13 @@ class ImportCSV(object):
         self.Links    = dict()
         self.Groups   = dict()
         self.Attributes = dict()
+        
+        #These are used to keep track of whether
+        #duplicate names have been specified in the files.
+        self.link_names = []
+        self.node_names = []
+        self.group_names = []
+
         self.update_network_flag = False
         self.timezone = pytz.utc
         self.expand_filenames = False
@@ -412,6 +419,12 @@ class ImportCSV(object):
         for line in data:
             linedata = line.split(',')
             nodename = linedata[field_idx['name']].strip()
+
+            if nodename in self.node_names:
+                raise HydraPluginError("Duplicate Node name: %s"%(nodename))
+            else:
+                self.node_names.append(nodename)
+
             if nodename in self.Nodes.keys():
                 node = self.Nodes[nodename]
                 logging.info('Node %s exists.' % nodename)
@@ -476,10 +489,16 @@ class ImportCSV(object):
                 field_idx[key.lower().strip()] = i
             else:
                 attrs.update({i: key.strip()})
-
+       
         for line in data:
             linedata = line.split(',')
             linkname = linedata[field_idx['name']].strip()
+            
+            if linkname in self.link_names:
+                raise HydraPluginError("Duplicate Link name: %s"%(linkname))
+            else:
+                self.link_names.append(linkname)
+
             if linkname in self.Links.keys():
                 link = self.Links[linkname]
                 logging.info('Link %s exists.' % linkname)
@@ -556,6 +575,12 @@ class ImportCSV(object):
 
             group_data = line.split(',')
             group_name = group_data[field_idx['name']].strip()
+
+
+            if group_name in self.group_names:
+                raise HydraPluginError("Duplicate Group name: %s"%(group_name))
+            else:
+                self.group_names.append(group_name)
 
             if group_name in self.Groups.keys():
                 group = self.Groups[group_name]
