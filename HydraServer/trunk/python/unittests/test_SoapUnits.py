@@ -19,6 +19,8 @@
 
 import test_SoapServer
 
+from HydraLib.util import arr_to_vector
+
 
 class UnitsTest(test_SoapServer.SoapServerTest):
 
@@ -193,6 +195,37 @@ class UnitsTest(test_SoapServer.SoapServerTest):
         result = self.client.service.convert_units([20., 30., 40.], 'm', 'km')
         assert result == [0.02, 0.03, 0.04],  \
             "Unit conversion of array didn't work."
+
+    def test_convert_dataset(self):
+        network = self.create_network_with_data(num_nodes=2)
+        scenario = \
+            network.scenarios.Scenario[0].resourcescenarios.ResourceScenario
+        # Select the first array (should have untis 'bar') and convert it
+        for res_scen in scenario:
+            if res_scen.value.type == 'array':
+                dataset_id = res_scen.value.id
+                old_val = res_scen.value.value
+                break
+        newid = self.client.service.convert_dataset(dataset_id, 'mmHg')
+
+        assert newid == dataset_id, "Converting dataset not completed."
+
+        new_scenid = network.scenarios.Scenario[0].id
+        new_scen_data = self.client.service.get_scenario_data(new_scenid)
+        for dataset in new_scen_data.Dataset:
+            if dataset.id == dataset_id:
+                new_val = dataset.value
+                break
+
+        new_val = arr_to_vector(eval(new_val.arr_data))
+        old_val = arr_to_vector(eval(old_val.arr_data))
+
+        old_val_conv = [i * 100000 / 133.322 for i in old_val]
+
+        # Rounding is not exactly the same on the server, that's why we
+        # calculate the sum.
+        assert sum(new_val) - sum(old_val_conv) < 0.00001, \
+            "Unit conversion did not work"
 
     def test_check_consistency(self):
         result1 = self.client.service.check_consistency('m^3', 'Volume')

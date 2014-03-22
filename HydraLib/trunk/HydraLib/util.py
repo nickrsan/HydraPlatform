@@ -17,6 +17,9 @@ import datetime
 import logging
 from decimal import Decimal, ROUND_HALF_UP
 
+from operator import mul
+
+
 def get_datetime(timestamp):
 
     if isinstance(timestamp, datetime.datetime):
@@ -24,7 +27,6 @@ def get_datetime(timestamp):
 
     FORMAT = "%Y-%m-%d %H:%M:%S.%f"
     #"2013-08-13T15:55:43.468886Z"
-
 
     if timestamp[0:4] == 'XXXX':
         # Do seasonal time series stuff...
@@ -39,12 +41,13 @@ def get_datetime(timestamp):
             ts_time = datetime.datetime.strptime(timestamp, FORMAT)
             # Apply offset
             tzoffset = datetime.timedelta(hours=int(utcoffset[0:3]),
-                                            minutes=int(utcoffset[3:5]))
+                                          minutes=int(utcoffset[3:5]))
             ts_time -= tzoffset
         else:
             raise e
 
     return ts_time
+
 
 def timestamp_to_ordinal(timestamp):
     """Convert a timestamp as defined in the soap interface to the time format
@@ -58,10 +61,10 @@ def timestamp_to_ordinal(timestamp):
     # Convert time to Gregorian ordinal (1 = January 1st, year 1)
     ordinal_ts_time = Decimal(ts_time.toordinal())
     total_seconds = (ts_time -
-                datetime.datetime(ts_time.year,
-                                  ts_time.month,
-                                  ts_time.day,
-                                  0, 0, 0)).total_seconds()
+                     datetime.datetime(ts_time.year,
+                                       ts_time.month,
+                                       ts_time.day,
+                                       0, 0, 0)).total_seconds()
 
     fraction = Decimal(repr(total_seconds)) / Decimal(86400)
     ordinal_ts_time += fraction
@@ -76,7 +79,8 @@ def convert_ordinal_to_datetime(date):
 
     day = int(date)
     time = date - day
-    time_in_secs_ms = (time * Decimal(86400)).quantize(Decimal('.000001'), rounding=ROUND_HALF_UP)
+    time_in_secs_ms = (time * Decimal(86400)).quantize(Decimal('.000001'),
+                                                       rounding=ROUND_HALF_UP)
 
     time_in_secs = int(time_in_secs_ms)
     time_in_ms = int((time_in_secs_ms - time_in_secs) * 1000000)
@@ -86,6 +90,53 @@ def convert_ordinal_to_datetime(date):
     logging.debug("%s converted to %s", date, d)
 
     return d
+
+
+def array_dim(arr):
+    """Return the size of a multidimansional array.
+    """
+    dim = []
+    while True:
+        try:
+            dim.append(len(arr))
+            arr = arr[0]
+        except TypeError:
+            return dim
+
+
+def arr_to_vector(arr):
+    """Reshape a multidimensional array to a vector.
+    """
+    dim = array_dim(arr)
+    tmp_arr = []
+    for n in range(len(dim) - 1):
+        for inner in arr:
+            for i in inner:
+                tmp_arr.append(i)
+        arr = tmp_arr
+        tmp_arr = []
+    return arr
+
+
+def vector_to_arr(vec, dim):
+    """Reshape a vector to a multidimensional array with dimensions 'dim'.
+    """
+    if len(dim) <= 1:
+        return vec
+    array = vec
+    while len(dim) > 1:
+        i = 0
+        outer_array = []
+        for m in range(reduce(mul, dim[0:-1])):
+            inner_array = []
+            for n in range(dim[-1]):
+                inner_array.append(array[i])
+                i += 1
+            outer_array.append(inner_array)
+        array = outer_array
+        dim = dim[0:-1]
+
+        return array
 
 
 if __name__ == '__main__':

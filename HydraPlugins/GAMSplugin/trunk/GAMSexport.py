@@ -253,10 +253,10 @@ from string import ascii_lowercase
 
 from HydraLib import PluginLib
 from HydraLib.HydraException import HydraPluginError
+from HydraLib.util import array_dim
 
 from GAMSplugin import GAMSnetwork
 from GAMSplugin import GAMSlink
-from GAMSplugin import array_dim
 from GAMSplugin import create_arr_index
 from GAMSplugin import arr_to_matrix
 from GAMSplugin import convert_date_to_timeindex

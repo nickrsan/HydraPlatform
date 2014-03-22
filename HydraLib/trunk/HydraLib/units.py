@@ -137,7 +137,7 @@ class Units(object):
                         + (conv_factor1[1] - conv_factor2[1])
                         / conv_factor2[0]) / factor2 for value in values]
         else:
-            logging.info("Unit conversion: dimensions are not consistent.")
+            raise HydraError("Unit conversion: dimensions are not consistent.")
 
     def parse_unit(self, unit):
         """Helper function that extracts constant factors from unit

@@ -107,31 +107,6 @@ def convert_date_to_timeindex(date):
     return date.toordinal() + float(totalseconds) / 86400
 
 
-def array_dim(arr):
-    """Return the size of a multidimansional array.
-    """
-    dim = []
-    while True:
-        try:
-            dim.append(len(arr))
-            arr = arr[0]
-        except TypeError:
-            return dim
-
-
-def arr_to_vector(arr, dim):
-    """Reshape a multidimensional array to a vector.
-    """
-    tmp_arr = []
-    for n in range(len(dim) - 1):
-        for inner in arr:
-            for i in inner:
-                tmp_arr.append(i)
-        arr = tmp_arr
-        tmp_arr = []
-    return arr
-
-
 def arr_to_matrix(arr, dim):
     """Reshape a multidimensional array to a 2 dimensional matrix.
     """
@@ -169,7 +144,7 @@ def create_arr_index(dim):
 
 
 def import_gms_data(filename):
-    """Read whole .gms file and expand all $ input statements found.
+    """Read whole .gms file and expand all $ include statements found.
     """
     basepath = os.path.dirname(filename)
     gms_data = ''

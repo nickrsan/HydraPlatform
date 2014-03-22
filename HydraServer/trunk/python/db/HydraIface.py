@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -1461,23 +1461,46 @@ class Dataset(IfaceBase):
         return datum
 
     def set_val(self, data_type, val):
-        data = None
+        if self.db.data_id is not None:
+            return self.update_val(data_type, val)
+        else:
+            data = None
+            if data_type == 'descriptor':
+                data = Descriptor()
+                data.db.desc_val = val
+            elif data_type == 'timeseries':
+                data = TimeSeries()
+                data.set_ts_values(val)
+            elif data_type == 'eqtimeseries':
+                data = EqTimeSeries()
+                data.db.start_time = val[0]
+                data.db.frequency  = val[1]
+                data.db.arr_data = val[2]
+            elif data_type == 'scalar':
+                data = Scalar()
+                data.db.param_value = val
+            elif data_type == 'array':
+                data = Array()
+                data.db.arr_data = val
+            data.save()
+            data.commit()
+            data.load()
+            self.db.data_id = data.db.data_id
+            return data
+
+    def update_val(self, data_type, val):
+        data = self.get_datum()
         if data_type == 'descriptor':
-            data = Descriptor()
             data.db.desc_val = val
         elif data_type == 'timeseries':
-            data = TimeSeries()
             data.set_ts_values(val)
         elif data_type == 'eqtimeseries':
-            data = EqTimeSeries()
             data.db.start_time = val[0]
             data.db.frequency  = val[1]
             data.db.arr_data = val[2]
         elif data_type == 'scalar':
-            data = Scalar()
             data.db.param_value = val
         elif data_type == 'array':
-            data = Array()
             data.db.arr_data = val
         data.save()
         data.commit()
