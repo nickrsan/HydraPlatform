@@ -110,8 +110,6 @@ class ExportCSV(object):
         else:
             raise Exception("A network ID must be specified!")
 
-        logging.debug(self.client.last_received())
-
         network_dir = "network_%s"%(network.id)
 
         if not os.path.exists(network_dir):

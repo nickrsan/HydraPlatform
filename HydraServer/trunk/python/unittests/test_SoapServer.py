@@ -517,7 +517,7 @@ class SoapServerTest(unittest.TestCase):
             value = {'ts_values' : 
             [
                 {'ts_time' : datetime.datetime.now(),
-                'ts_value' : str([1, 2, 3, 4, 5])},
+                'ts_value' : str([1, 2, 3, 4, "hello"])},
                 {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=1),
                 'ts_value' : str([10, 20, 30, 40, 50])},
             ]

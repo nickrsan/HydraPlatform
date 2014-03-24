@@ -18,7 +18,7 @@
 
 import test_SoapServer
 from lxml import etree
-import os
+from subprocess import Popen, PIPE
 
 class PluginsTest(test_SoapServer.SoapServerTest):
 
@@ -69,13 +69,41 @@ class PluginsTest(test_SoapServer.SoapServerTest):
         else:
             self.fail("Test plugin not found!")
 
-    def test_ImportCSV(self):
-        stream = os.popen('cd ../../../..//HydraPlugins/GAMSplugin/trunk/testdata/hydro-econ/; ./import_data.sh')
-        result_text = stream.readlines()
+    def test_CSV_Import_Export(self):
+        #Import a network
+        #Popen chosen instead of os.popen because it has greater control over waiting for
+        #subprocesses to finish. (Important when waiting for files to be written before starting the next
+        #piece of work
+        stream = Popen('cd ../../../../HydraPlugins/GAMSplugin/trunk/testdata/hydro-econ/; ./import_data.sh', shell=True, stdout=PIPE)
+        stream.wait()
+        result_text = stream.stdout.readlines()
         result = ''.join(result_text[1:])
         tree = etree.XML(result)
+        print result
         assert tree.find('errors').getchildren() == []
         assert tree.find('warnings').getchildren() == []
+
+        network_id = int(tree.find('network_id').text)
+        #Export the network
+        stream = Popen('python ../../../../HydraPlugins/CSVplugin/trunk/ExportCSV.py -t %s'%network_id, shell=True); 
+        stream.wait()
+       
+        #Re-import the network (this ensures that export csv worked correctly).
+        network_file = "network_%s/CSV_import/network.csv"%network_id
+        nodes_file = "network_%s/CSV_import/nodes.csv"%network_id
+        links_file = "network_%s/CSV_import/links.csv"%network_id
+        stream = Popen('python ../../../../HydraPlugins/CSVplugin/trunk/ImportCSV.py -t %s -n %s -l %s'%(network_file, nodes_file, links_file), shell=True, stdout=PIPE)
+        stream.wait()
+        updated_result_text = stream.stdout.readlines()
+        updated_result = ''.join(updated_result_text)
+        print updated_result
+        updated_tree = etree.XML(updated_result)
+        assert updated_tree.find('errors').getchildren() == []
+        assert updated_tree.find('warnings').getchildren() == []
+
+        Popen("rm -r network_*", shell=True)
+
+        
 
 if __name__ == '__main__':
     test_SoapServer.run()
