@@ -74,6 +74,7 @@ import logging
 import pytz
 
 from HydraLib import PluginLib
+from HydraLib.HydraException import HydraPluginError
 
 import numpy
 import os
@@ -187,10 +188,16 @@ class ExportCSV(object):
         else:
             logging.warning("Network has no nodes!")
 
+        link_map = dict()
         if network.links:
-            self.export_links(scenario, network.links.Link, node_map)
+            link_map = self.export_links(scenario, network.links.Link, node_map)
         else:
             logging.warning("Network has no links!")
+
+        if network.resourcegroups:
+            self.export_resourcegroups(scenario, network.resourcegroups.ResourceGroup, node_map, link_map)
+        else:
+            logging.warning("Network has no resourcegroups.")
 
         logging.info("Network export complete")
 
@@ -251,6 +258,10 @@ class ExportCSV(object):
     def export_links(self, scenario, links, node_map):
         logging.info("\n************LINKS****************")
 
+        #return this so that the group export can easily access 
+        #the names of the links.
+        id_name_map = dict()
+
         #For simplicity, export to a single link file.
         #We assume here that fewer files is simpler.
         link_file = open(os.path.join(scenario.target_dir, "links.csv"), 'w')
@@ -272,6 +283,9 @@ class ExportCSV(object):
 
         link_entries = []
         for link in links:
+            
+            id_name_map[link.id] = link.name
+
             values = ["" for attr_id in link_attributes.keys()]
             if link.attributes is not None:
                 for r_attr in link.attributes.ResourceAttr:
@@ -292,6 +306,87 @@ class ExportCSV(object):
         link_file.write(link_units_heading)
         link_file.writelines(link_entries)
         logging.info("Links written to file: %s", link_file.name)
+        return id_name_map
+
+    def export_resourcegroups(self, scenario, resourcegroups, node_map, link_map):
+        """
+            Export resource groups into two files. 
+            1:groups.csv defining the group name, description and any attributes.
+            2:group_members.csv defining the contents of each group for this scenario
+        """
+        logging.info("\n************RESOURCE GROUPS****************")
+
+        group_file = open(os.path.join(scenario.target_dir, "groups.csv"), 'w')
+        group_attributes = self.get_resource_attributes(resourcegroups)
+
+        group_attributes_string = ""
+        if len(group_attributes) > 0:
+            group_attributes_string = '%s'%(','.join(group_attributes.values()))
+
+        group_attr_units = []
+        for attr_id in group_attributes.keys():
+            group_attr_units.append(self.get_attr_unit(scenario, attr_id))
+
+        group_heading   = "Name, %s, description\n" % (group_attributes_string)
+        group_units_heading  = "Units,%s\n"%(','.join(group_attr_units) if group_attr_units else ',')
+
+        group_entries = []
+        id_name_map = dict()
+        for group in resourcegroups:
+            id_name_map[group.id] = group.name
+
+            values = ["" for attr_id in group_attributes.keys()]
+            if group.attributes is not None:
+                for r_attr in group.attributes.ResourceAttr:
+                    attr_name = group_attributes[r_attr.attr_id]
+                    value = self.get_attr_value(scenario, r_attr, attr_name, group.name)
+                    values[group_attributes.keys().index(r_attr.attr_id)] = value
+
+            group_entry = "%(name)s,%(values)s,%(description)s\n"%{
+                "name"        : group.name,
+                "values"      : "%s"%(",".join(values)) if len(values) > 0 else "",
+                "description" : group.description,
+            }
+            group_entries.append(group_entry)
+
+        group_file.write(group_heading)
+        group_file.write(group_units_heading)
+        group_file.writelines(group_entries)
+        logging.info("groups written to file: %s", group_file.name)
+
+        self.export_resourcegroupitems(scenario, id_name_map, node_map, link_map)
+
+
+    def export_resourcegroupitems(self, scenario, group_map, node_map, link_map):
+        """
+            Export the members of a group in a given scenario.
+        """
+        group_member_file = open(os.path.join(scenario.target_dir, "group_members.csv"), 'w')
+
+        group_member_heading   = "Name, Type, Member\n"
+        group_member_entries   = []
+        for group_member in scenario.resourcegroupitems.ResourceGroupItem:
+            group_name = group_map[group_member.group_id]
+            member_type = group_member.ref_key
+            if member_type == 'LINK':
+                member_name = link_map[group_member.ref_id]
+            elif member_type == 'NODE':
+                member_name = node_map[group_member.ref_id]
+            elif member_type == 'GROUP':
+                member_name = group_map[group_member.ref_id]
+            else:
+                raise HydraPluginError('Unrecognised group member type: %s'%(member_type))
+
+            group_member_str = "%(group)s, %(type)s, %(member_name)s\n" % {
+                'group': group_name,
+                'type' : member_type,
+                'member_name' : member_name,
+            }
+            group_member_entries.append(group_member_str)
+
+        group_member_file.write(group_member_heading)
+        group_member_file.writelines(group_member_entries)
+
 
     def export_constraints(self, scenario):
         """
