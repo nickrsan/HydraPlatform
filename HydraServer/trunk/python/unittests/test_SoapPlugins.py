@@ -18,6 +18,7 @@
 
 import test_SoapServer
 from lxml import etree
+import os
 
 class PluginsTest(test_SoapServer.SoapServerTest):
 
@@ -67,6 +68,14 @@ class PluginsTest(test_SoapServer.SoapServerTest):
                 break
         else:
             self.fail("Test plugin not found!")
+
+    def test_ImportCSV(self):
+        stream = os.popen('cd ../../../..//HydraPlugins/GAMSplugin/trunk/testdata/hydro-econ/; ./import_data.sh')
+        result_text = stream.readlines()
+        result = ''.join(result_text[1:])
+        tree = etree.XML(result)
+        assert tree.find('errors').getchildren() == []
+        assert tree.find('warnings').getchildren() == []
 
 if __name__ == '__main__':
     test_SoapServer.run()
