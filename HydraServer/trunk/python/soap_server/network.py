@@ -484,8 +484,9 @@ class NetworkService(HydraService):
     @rpc(Integer,
          String(pattern="[YN]", default='Y'),
          Integer(min_occurs="0", max_occurs="unbounded"),
+         Integer(min_occurs="0", max_occurs="1", default=None),
          _returns=Network)
-    def get_network(ctx, network_id, include_data, scenario_ids):
+    def get_network(ctx, network_id, include_data, scenario_ids, template_id):
         """
             Return a whole network as a complex model.
         """
@@ -622,6 +623,7 @@ class NetworkService(HydraService):
 
             scenario_dicts = restricted_scenarios
         if len(scenario_dicts) > 0 and include_data.upper() == 'Y':
+
             sql = """
                 select
                     rs.dataset_id,

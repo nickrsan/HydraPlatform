@@ -306,8 +306,9 @@ class ResourceTypeDef(HydraComplexModel):
 
 class TypeAttr(HydraComplexModel):
     _type_info = [
-        ('attr_id',     Integer),
-        ('type_id', Integer),
+        ('attr_id',   Integer(default=None)),
+        ('attr_name', String(default=None)),
+        ('type_id',   Integer(default=None)),
     ]
 
 class TemplateType(HydraComplexModel):

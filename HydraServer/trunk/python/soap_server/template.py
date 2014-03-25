@@ -462,24 +462,78 @@ class TemplateService(HydraService):
             Get all resource template templates.
         """
 
-        templates = []
+        sql = """
+            select
+                tattr.attr_id,
+                tattr.type_id,
+                attr.attr_name
+            from
+                tTypeAttr tattr,
+                tAttr attr
+            where
+                attr.attr_id = tattr.attr_id
+        """
+        rs = HydraIface.execute(sql)
+        tattrs = {}
+        for r in rs:
+            tattr = {
+                'object_type' : 'TypeAttr',
+                'attr_id'     : r.attr_id,
+                'attr_name'   : r.attr_name,
+                'type_id'     : r.type_id,
+            }
+            tattr_list = tattrs.get(r.type_id, [])
+            tattr_list.append(tattr)
+            tattrs[r.type_id] = tattr_list
 
         sql = """
             select
-                template_id
+                type_id,
+                type_name,
+                template_id,
+                alias,
+                layout
+            from
+                tTemplateType
+        """
+        rs = HydraIface.execute(sql)
+        types = {}
+        for r in rs:
+            tmpl_type = {
+                'object_type' : 'TemplateType',
+                'type_id'     : r.type_id,
+                'type_name'   : r.type_name,
+                'template_id' : r.template_id,
+                'alias'       : r.alias,
+                'layout'      : r.layout,
+                'typeattrs'   : tattrs.get(r.type_id, [])
+            }
+            type_list = types.get(r.template_id, [])
+            type_list.append(tmpl_type)
+            types[r.template_id] = type_list
+
+        sql = """
+            select
+                template_id,
+                template_name
             from
                 tTemplate
         """
 
         rs = HydraIface.execute(sql)
+        
+        template_ret_objs = []
 
         for r in rs:
-            tmpl_i = HydraIface.Template(template_id=r.template_id)
-            tmpl_i.load_all()
-            tmpl = get_as_complexmodel(ctx, tmpl_i)
-            templates.append(tmpl)
+            template = {
+                'object_type'   : 'Template',
+                'template_id'   : r.template_id,
+                'template_name' : r.template_name,
+                'templatetypes' : types.get(r.template_id, []),
+            }
+            template_ret_objs.append(Template(template))
 
-        return templates
+        return template_ret_objs 
 
     @rpc(Integer, Integer, _returns=TemplateType)
     def remove_attr_from_type(ctx, type_id, attr_id):
