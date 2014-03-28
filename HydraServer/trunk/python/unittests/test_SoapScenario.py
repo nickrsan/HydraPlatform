@@ -20,6 +20,7 @@ import test_SoapServer
 import datetime
 import logging
 import copy
+from HydraLib import PluginLib
 
 class ScenarioTest(test_SoapServer.SoapServerTest):
 
@@ -201,12 +202,16 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
             'minutes',
             )
 
-        data = eval(vals.data)
+        data = vals.data
         assert len(data) == 76
-        for val in data[0:59]:
-            assert val == eval(val_a)
         for val in data[60:75]:
-            assert val == eval(val_b)
+            x = PluginLib.parse_suds_array(val_b)
+            y = PluginLib.parse_suds_array(val)
+            assert x == y
+        for val in data[0:59]:
+            x = PluginLib.parse_suds_array(val_a)
+            y = PluginLib.parse_suds_array(val)
+            assert x == y
 
     def test_descriptor_get_data_between_times(self):
         net = self.create_network_with_data()

@@ -34,6 +34,7 @@ from hydra_complexmodels import Scenario,\
         ConstraintDiff,\
         ResourceGroupDiff,\
         parse_value,\
+        create_dict,\
         get_as_complexmodel
 
 from db import HydraIface
@@ -106,7 +107,7 @@ def bulk_insert_data(bulk_data, user_id=None):
         dataset_id = 0
 
     #A list of all the dataset objects
-    all_datset_objects = []
+    all_dataset_objects = []
 
     #Lists of all the data objects
     descriptors  = []
@@ -130,7 +131,7 @@ def bulk_insert_data(bulk_data, user_id=None):
     dataset_hashes = []
     idx = 0
     logging.debug("Processing data %s", get_timing(start_time)) 
-    for d in bulk_data:
+    for d in data:
         dataset_i = iface_data[d.data_hash]
         val = dataset_i.val
         current_hash = d.data_hash
@@ -140,10 +141,11 @@ def bulk_insert_data(bulk_data, user_id=None):
         if  existing_data.get(current_hash):
             dataset_hashes.append(existing_data[current_hash])
 
-            all_datset_objects.append(existing_data[current_hash])
+            all_dataset_objects.append(existing_data[current_hash])
             idx = idx + 1
             continue
         elif current_hash in dataset_hashes:
+            #Already seen this dataset. No need to process it again.
             dataset_hashes.append(current_hash)
             continue
         else:
@@ -151,7 +153,7 @@ def bulk_insert_data(bulk_data, user_id=None):
             #The placeholder is the hash, which is unique to this object and
             #therefore easily identifiable.
             dataset_hashes.append(current_hash)
-            all_datset_objects.append(dataset_i)
+            all_dataset_objects.append(dataset_i)
 
         data_type = dataset_i.db.data_type
         if data_type == 'descriptor':
@@ -267,25 +269,25 @@ def bulk_insert_data(bulk_data, user_id=None):
     #Now fill in the final piece of data before inserting the new
     #scenario data rows -- the data ids generated from the data inserts.
     for i, idx in enumerate(descriptor_idx):
-        all_datset_objects[idx].db.data_id = descriptors[i].db.data_id
-        all_datset_objects[idx].datum = descriptors[i]
+        all_dataset_objects[idx].db.data_id = descriptors[i].db.data_id
+        all_dataset_objects[idx].datum = descriptors[i]
     for i, idx in enumerate(scalar_idx):
-        all_datset_objects[idx].db.data_id = scalars[i].db.data_id
-        all_datset_objects[idx].datum = scalars[i]
+        all_dataset_objects[idx].db.data_id = scalars[i].db.data_id
+        all_dataset_objects[idx].datum = scalars[i]
     for i, idx in enumerate(array_idx):
-        all_datset_objects[idx].db.data_id = arrays[i].db.data_id
-        all_datset_objects[idx].datum = arrays[i]
+        all_dataset_objects[idx].db.data_id = arrays[i].db.data_id
+        all_dataset_objects[idx].datum = arrays[i]
     for i, idx in enumerate(timeseries_idx):
-        all_datset_objects[idx].db.data_id = timeseries[i].db.data_id
-        all_datset_objects[idx].datum = timeseries[i]
+        all_dataset_objects[idx].db.data_id = timeseries[i].db.data_id
+        all_dataset_objects[idx].datum = timeseries[i]
     for i, idx in enumerate(eqtimeseries_idx):
-        all_datset_objects[idx].db.data_id = eqtimeseries[i].db.data_id
-        all_datset_objects[idx].datum = eqtimeseries[i]
+        all_dataset_objects[idx].db.data_id = eqtimeseries[i].db.data_id
+        all_dataset_objects[idx].datum = eqtimeseries[i]
 
     logging.debug("Isolating new data")
     #Isolate only the new datasets and insert them
     new_scenario_data = []
-    for sd in all_datset_objects:
+    for sd in all_dataset_objects:
         if sd.db.dataset_id is None:
             new_scenario_data.append(sd)
 
@@ -746,7 +748,6 @@ def process_incoming_data(data, user_id=None):
             scenario_datum.db.data_dimen = unit.get_dimension(d.unit)
         else:
             scenario_datum.db.data_dimen = d.dimension
-
         data_hash = scenario_datum.set_hash(val)
         scenario_datum.db.data_hash = data_hash
         scenario_datum.val = val
@@ -1041,7 +1042,7 @@ class DataService(HydraService):
                 elif dr.data_type == 'array':
                     val = {
                         'object_type': 'Array',
-                        'arr_data'      : dr.value
+                        'arr_data'      : eval(dr.value)
                     }
                 d = dict(
                     dataset_id = dr.dataset_id,
@@ -1306,7 +1307,13 @@ class DataService(HydraService):
         td = HydraIface.Dataset(dataset_id=dataset_id)
         logging.debug("Number of times to fetch: %s", len(times))
         data = td.get_val(timestamp=times)
+        data_to_return = []
+        if type(data) is list:
+            for d in data:
+                data_to_return.append(create_dict(d))
+        else:
+            data_to_return.append(data)
 
-        dataset = {'data' : [data]}
+        dataset = {'data' : data_to_return}
 
         return dataset

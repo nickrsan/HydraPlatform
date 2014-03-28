@@ -62,12 +62,20 @@ def parse_typeattr(type_id, attribute):
 
     attr_i = parse_attribute(attribute)
 
-    dimension = attribute.find('dimension').text
-
     typeattr_i = HydraIface.TypeAttr(type_id=type_id, attr_id=attr_i.db.attr_id)
+   
+    if attribute.find('dimension') is not None:
+        dimension = attribute.find('dimension').text
+    else:
+        dimension = 'dimensionless'
+    typeattr_i.db.dimension = dimension
 
     if attribute.find('is_var') is not None:
         typeattr_i.db.attr_is_var = attribute.find('is_var').text
+
+    default_data_type = None
+    if attribute.find('data_type') is not None:
+        default_data_type = attribute.find('data_type').text
 
     if attribute.find('default') is not None:
         default = attribute.find('default')
@@ -79,12 +87,20 @@ def parse_typeattr(type_id, attribute):
         except:
             data_type = 'descriptor'
 
+        if default_data_type is None:
+            default_data_type = data_type
+        elif data_type != default_data_type:
+            raise HydraError("Inconsistent datatypes! Cannot be both a"
+                            " %s and a %s"%(default_data_type, data_type))
+
         dataset_id = HydraIface.add_dataset(data_type,
                                val,
                                unit,
                                dimension,
                                name="%s Default"%attr_i.db.attr_name,)
         typeattr_i.db.default_dataset_id = dataset_id
+
+    typeattr_i.db.data_type = default_data_type
 
     return typeattr_i
 
@@ -300,7 +316,7 @@ class TemplateService(HydraService):
                 link_ids.append(ref_id)
             elif resource_type.ref_key == 'GROUP':
                 resource = HydraIface.Group()
-                resouce.db.resourcegroup_id=ref_id
+                resource.db.resourcegroup_id=ref_id
             resource.ref_key = ref_key
             resource.ref_id  = ref_id
             resources.append(resource)
@@ -466,6 +482,10 @@ class TemplateService(HydraService):
             select
                 tattr.attr_id,
                 tattr.type_id,
+                tattr.attr_is_var,
+                tattr.data_type,
+                tattr.default_dataset_id,
+                tattr.dimension,
                 attr.attr_name
             from
                 tTypeAttr tattr,
@@ -481,6 +501,10 @@ class TemplateService(HydraService):
                 'attr_id'     : r.attr_id,
                 'attr_name'   : r.attr_name,
                 'type_id'     : r.type_id,
+                'data_type'   : r.data_type,
+                'is_var'      : r.attr_is_var,
+                'dimension'   : r.dimension,
+                'default_dataset_id' : r.default_dataset_id
             }
             tattr_list = tattrs.get(r.type_id, [])
             tattr_list.append(tattr)

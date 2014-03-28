@@ -66,14 +66,14 @@ def timestamp_to_ordinal(timestamp):
                                        ts_time.day,
                                        0, 0, 0)).total_seconds()
 
-    fraction = Decimal(repr(total_seconds)) / Decimal(86400)
+    fraction = (Decimal(repr(total_seconds)) / Decimal(86400)).quantize(Decimal('.00000000000000000001'),rounding=ROUND_HALF_UP)
     ordinal_ts_time += fraction
     logging.debug("%s converted to %s", timestamp, ordinal_ts_time)
 
     return ordinal_ts_time
 
 
-def convert_ordinal_to_datetime(date):
+def ordinal_to_timestamp(date):
     if date is None:
         return None
 

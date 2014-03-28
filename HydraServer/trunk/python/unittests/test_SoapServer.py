@@ -21,6 +21,7 @@ import shutil
 import os
 
 from HydraLib import config
+from HydraLib.util import get_datetime
 
 from suds.client import Client
 from suds.plugin import MessagePlugin
@@ -469,21 +470,43 @@ class SoapServerTest(unittest.TestCase):
         #logging.debug(network)
         start = datetime.datetime.now()
         logging.info("Creating network...")
-        new_net = self.client.service.add_network(network)
+        response_network = self.client.service.add_network(network)
 
-        assert repr(new_net.layout) == repr(layout)
-
+        self.check_network(network, response_network)
+     
         logging.info("Network Creation took: %s"%(datetime.datetime.now()-start))
 
-        return new_net
+        return response_network
+
+    def check_network(self, request_net, response_net):
+
+        assert repr(response_net.layout) == repr(request_net['layout'])
+
+
+        before_times = [] 
+
+        s = request_net['scenarios'].Scenario[0]
+        for rs0 in s['resourcescenarios'].ResourceScenario:
+            if rs0['value']['type'] == 'timeseries':
+                val = rs0['value']['value']
+                for v in val['ts_values']:
+                    before_times.append(v['ts_time'])
+
+        after_times = []
+        s = response_net.scenarios.Scenario[0]
+        for rs0 in s.resourcescenarios.ResourceScenario:
+            if rs0.value.type == 'timeseries':
+                val = rs0.value.value
+                for v in val['ts_values']:
+                    after_times.append(v['ts_time'])
+        for d in after_times:
+            assert get_datetime(d) in before_times, "%s is incorrect"%(d)
+
 
     def create_descriptor(self, ResourceAttr, val="test"):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
 
-        descriptor = self.client.factory.create('hyd:Descriptor')
-        descriptor.desc_val = val
-        
         dataset = dict(
             id=None,
             type = 'descriptor',
@@ -491,7 +514,7 @@ class SoapServerTest(unittest.TestCase):
             unit = 'm s^-1',
             dimension = 'Speed',
             locked = 'N',
-            value = descriptor,
+            value = {'desc_val':val},
         )
 
         scenario_attr = dict(
@@ -506,6 +529,31 @@ class SoapServerTest(unittest.TestCase):
     def create_timeseries(self, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
+        #[[[1, 2, 3], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]]]
+
+        test_val_1 = {'array':[
+                        {'array':[
+                            {'array':[
+                                {'item':[1.0, 2.0, "hello"]},
+                            ]},
+                            {'array' : [
+                                {'item':[5.0, 4.0, 6.0]},
+                            ]},
+                        ]},
+                        {'array':[
+                            {'array' : [
+                                {'item':[10.0, 20.0, 30.0]},
+                            ]},
+                            {'array' : [
+                                {'item':[40.0, 50.0, 60.0]},
+                            ]},
+                        ]}
+                    ]}
+
+        test_val_2 = {'array' : [
+                        {'item':[1.0, 2.0, 3.0]},
+                    ]}
+
 
         dataset = dict(
             id=None,
@@ -517,9 +565,12 @@ class SoapServerTest(unittest.TestCase):
             value = {'ts_values' : 
             [
                 {'ts_time' : datetime.datetime.now(),
-                'ts_value' : str([1, 2, 3, 4, "hello"])},
+                'ts_value' : test_val_1},
                 {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=1),
-                'ts_value' : str([10, 20, 30, 40, 50])},
+                'ts_value' : test_val_2},
+                {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=2),
+                'ts_value' : 3.0},
+
             ]
         },
         )
@@ -535,9 +586,20 @@ class SoapServerTest(unittest.TestCase):
     def create_array(self, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-
-        arr = self.client.factory.create('hyd:Array')
-        arr.arr_data = str([[[1, 2, 3], [5, 4, 6]],[[10, 20, 30], [40, 50, 60]]])
+        #[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        arr= {'arr_data' :
+            {'array':[
+                {'array':[
+                        {'item':[1.0, 2.0, 3.0]},
+                ]},
+                {'array':[
+                        {'item':[4.0, 5.0, 6.0]},
+                ]},
+                {'array' : [
+                        {'item':[7.0, 8.0, 9.0]},
+                ]},
+            ]} 
+        }
 
         dataset = dict(
             id=None,

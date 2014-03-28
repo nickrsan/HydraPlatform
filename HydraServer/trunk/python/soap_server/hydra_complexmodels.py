@@ -27,10 +27,11 @@ from spyne.util.odict import odict
 import sys
 from HydraLib.util import timestamp_to_ordinal
 import logging
+from numpy import array
 global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 #"2013-08-13T15:55:43.468886Z"
-
+NS = "soap_server.hydra_complexmodels"
 current_module = sys.modules[__name__]
 
 
@@ -68,17 +69,20 @@ def parse_value(data):
         # The brand new way to parse time series data:
         ts = []
         for ts_val in value[0]:
-            for key in ts_val.keys():
-                if key.find('ts_time') > 0:
-                    #The value is a list, so must get index 0
-                    timestamp = ts_val[key][0]
-                    # Check if we have received a seasonal time series first
-                    ordinal_ts_time = timestamp_to_ordinal(timestamp)
-                elif key.find('ts_value') > 0:
-                    series = []
-                    for val in ts_val[key]:
-                        series.append(eval(val))
-                        ts.append((ordinal_ts_time, eval(val)))
+            #The value is a list, so must get index 0
+            timestamp = ts_val['{%s}ts_time'%NS][0]
+            # Check if we have received a seasonal time series first
+            ordinal_ts_time = timestamp_to_ordinal(timestamp)
+            arr_data = ts_val['{%s}ts_value'%NS][0]
+            if type(arr_data) is odict:
+                ts_value = parse_array(arr_data)
+            else:
+                try:
+                    ts_value = float(arr_data)
+                except:
+                    ts_value = arr_data
+
+            ts.append((ordinal_ts_time, ts_value))
 
         return ts
     elif data_type == 'eqtimeseries':
@@ -89,28 +93,45 @@ def parse_value(data):
     elif data_type == 'scalar':
         return value[0][0]
     elif data_type == 'array':
-        val = eval(value[0][0])
+        val = parse_array(value[0][0])
         return val
 
+def parse_array(arr):
+    """
+        Take a list of nested dictionaries and return a python list containing
+        a single value, a string or sub lists.
+    """
+    ret_arr = []
+    sub_arr = arr.get('{%s}array'%NS, None)
+    for val in sub_arr:
+        sub_arr = val.get('{%s}array'%NS, None)
+        if sub_arr is not None:
+            ret_arr.append(parse_array(val))
+            continue
 
-def get_array(arr):
+        actual_vals = val.get('{%s}item'%NS)
+        for v in actual_vals:
+            try:
+                ret_arr.append(float(v))
+            except:
+                ret_arr.append(v)
+    return ret_arr
 
-    if len(arr) == 0:
-        return []
+def create_dict(arr_data):
+    arr_data = array(arr_data)
 
-    #am I a dictionary? If so, i'm only iterested in the values
-    if type(arr) is odict:
-        arr = arr[0]
+    arr = {'array': []}
+    if arr_data.ndim == 0:
+        return {'array': []}
+    elif arr_data.ndim == 1:
+        return {'array': [{'item': list(arr_data)}]}
+    else:
+        for a in arr_data:
+            val = create_dict(a)
+            arr['array'].append(val)
 
-    if type(arr[0]) is str:
-        return [float(val) for val in arr]
+        return arr
 
-    #arr must therefore be a list.
-    current_level = []
-    for level in arr:
-        current_level.append(get_array(level))
-
-    return current_level
 
 class LoginResponse(ComplexModel):
     __namespace__ = 'soap_server.hydra_complexmodels'
@@ -209,7 +230,12 @@ class TimeSeriesData(HydraComplexModel):
         if val is None:
             return
         self.ts_time  = [val['ts_time']]
-        self.ts_value = [val['ts_value']]
+
+        ts_value = val['ts_value']
+        if type(ts_value) is list:
+            self.ts_value = [create_dict(ts_value)]
+        else:
+            self.ts_value = [ts_value]
 
 class TimeSeries(HydraComplexModel):
     _type_info = [
@@ -259,7 +285,11 @@ class Array(HydraComplexModel):
         super(Array, self).__init__()
         if val is None:
             return
-        self.arr_data = [val['arr_data']]
+        arr_data = val['arr_data']
+        if type(arr_data) is list:
+            self.arr_data = [create_dict(arr_data)]
+        else:
+            self.arr_data = [arr_data]
 
 class DatasetGroupItem(HydraComplexModel):
     _type_info = [
@@ -309,16 +339,20 @@ class TypeAttr(HydraComplexModel):
         ('attr_id',   Integer(default=None)),
         ('attr_name', String(default=None)),
         ('type_id',   Integer(default=None)),
+        ('data_type', String(default=None)),
+        ('dimension', String(default=None)),
+        ('default_dataset_id', Integer(default=None)),
+        ('is_var',    String(default=None)),
     ]
 
 class TemplateType(HydraComplexModel):
     _type_info = [
-        ('id',                    Integer(default=None)),
-        ('name',                  String(default=None)),
-        ('alias',                 String(default=None)),
-        ('layout',                AnyDict(min_occurs=0, max_occurs=1, default=None)),
-        ('template_id',           Integer(min_occurs=1, default=None)),
-        ('typeattrs',             SpyneArray(TypeAttr, default=[])),
+        ('id',          Integer(default=None)),
+        ('name',        String(default=None)),
+        ('alias',       String(default=None)),
+        ('layout',      AnyDict(min_occurs=0, max_occurs=1, default=None)),
+        ('template_id', Integer(min_occurs=1, default=None)),
+        ('typeattrs',   SpyneArray(TypeAttr, default=[])),
     ]
 
     def __init__(self, obj_dict=None):
@@ -363,10 +397,10 @@ class Template(HydraComplexModel):
 
 class TypeSummary(HydraComplexModel):
     _type_info = [
-        ('name',    String),
+        ('name',    String(default=None)),
         ('id',      Integer),
-        ('template_name', String),
-        ('template_id', Integer),
+        ('template_name', String(default=None)),
+        ('template_id', Integer(default=None)),
     ]
 
     def __init__(self, obj_dict=None):

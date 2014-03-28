@@ -511,9 +511,11 @@ class DBIface(object):
         if val is None:
             return 'null'
         elif db_type.find('varchar') != -1 or db_type in ('blob', 'datetime', 'timestamp') :
-            return "'%s'"%val
+            return "'%s'"%str(val).replace("'", "\\'")
         elif db_type == 'text':
             return repr(val)
+        elif db_type.lower().find('decimal') != -1:
+            return str(val)
         else:
             return str(val)
 

@@ -339,7 +339,8 @@ class GAMSimport(object):
             timeseries['ts_values'].append({'ts_time':
                                             self.time_axis[int(idx)],
                                             'ts_value':
-                                            str([float(data[i])])})
+                                            float(data[i])
+                                           })
 
         return timeseries
 
@@ -377,7 +378,7 @@ class GAMSimport(object):
             array = outer_array
             extent = extent[0:-1]
 
-        hydra_array.arr_data = str(array)
+        hydra_array.arr_data = PluginLib.create_dict(array) 
 
         return hydra_array
 

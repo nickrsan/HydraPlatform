@@ -38,11 +38,13 @@
                 <name>stor_group</name>
                 <dimension/>
                 <is_var>N</is_var>
+                <data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>maxStor</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+                <data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>minStor</name>

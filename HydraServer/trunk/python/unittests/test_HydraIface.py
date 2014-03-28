@@ -128,19 +128,6 @@ class HydraIfaceTest(unittest.TestCase):
         return x
 
 
-    def get_ordinal_timestamp(self, ts_time):
-        # Convert time to Gregorian ordinal (1 = January 1st, year 1)
-        ordinal_ts_time = ts_time.toordinal()
-        fraction = (ts_time -
-                    datetime.datetime(ts_time.year,
-                                      ts_time.month,
-                                      ts_time.day,
-                                      0, 0, 0)).total_seconds()
-        fraction = fraction / (86400)
-        ordinal_ts_time += fraction
-
-        return ordinal_ts_time
-
 def run():
    # hydra_logging.init(level='DEBUG')
    # HydraIface.init(hdb.connect())

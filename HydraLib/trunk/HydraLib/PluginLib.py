@@ -582,3 +582,75 @@ def set_resource_types(client, xml_template, network,
                 ))
 
     client.service.assign_types_to_resources(args)
+
+def parse_suds_array(arr):
+    """
+        Take a list of nested suds any types and return a python list containing
+        a single value, a string or sub lists.
+    """
+    ret_arr = []
+    if hasattr(arr, 'array'):
+        ret_arr = []
+        sub_arr = arr.array
+        if type(sub_arr) is list:
+            for s in sub_arr:
+                ret_arr.append(parse_suds_array(s))
+        else:
+            return parse_suds_array(sub_arr)
+    elif hasattr(arr, 'item'):
+        for x in arr.item:
+            try:
+                val = float(x)
+            except:
+                val = str(x)
+            ret_arr.append(val)
+        return ret_arr
+    else:
+        raise ValueError("Something has gone wrong parsing an array.")
+    return ret_arr
+
+def parse_array(arr):
+    """
+        Take a dictionary and turn it into an array as follows:
+        {'array': ['item' : [1, 2, 3]}]} -> [1, 2, 3]
+        {'array' :
+            {'array': [
+                'item' : [1, 2, 3]}
+            ]} 
+            {'array': [
+                'item' : [1, 2, 3]}
+            ]}
+         ]} -> [[1, 2, 3], [4, 5, 6]]
+    """
+    if arr.get('array'):
+        ret_arr = []
+        sub_arr = arr['array']
+        if type(sub_arr) is list:
+            for s in sub_arr:
+                ret_arr.append(parse_array(s))
+        else:
+            return parse_array(sub_arr)
+    elif arr.get('item'):
+        return list(arr['item'])
+    else:
+        raise ValueError("Something has gone wrong parsing an array.")
+    return ret_arr
+
+def create_dict(arr_data):
+    """
+        Take a numpy array and turn it into the correct xml structure
+        of array tags and item tags.
+    """
+    arr = {'array': []}
+    if arr_data.ndim == 1:
+        arr['array'].append({'item': list(arr_data)})
+    
+    if arr_data.ndim > 1:
+        for a in arr_data:
+            if a.ndim == 1:
+                arr['array'].append(create_dict(a))
+            else:
+                val = create_dict(a)
+                arr['array'].append(val)
+    return arr
+

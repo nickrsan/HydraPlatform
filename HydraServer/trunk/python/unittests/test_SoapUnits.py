@@ -20,6 +20,7 @@
 import test_SoapServer
 
 from HydraLib.util import arr_to_vector
+from HydraLib import PluginLib
 
 
 class UnitsTest(test_SoapServer.SoapServerTest):
@@ -217,8 +218,8 @@ class UnitsTest(test_SoapServer.SoapServerTest):
                 new_val = dataset.value
                 break
 
-        new_val = arr_to_vector(eval(new_val.arr_data))
-        old_val = arr_to_vector(eval(old_val.arr_data))
+        new_val = arr_to_vector(PluginLib.parse_suds_array(new_val.arr_data))
+        old_val = arr_to_vector(PluginLib.parse_suds_array(old_val.arr_data))
 
         old_val_conv = [i * 100000 / 133.322 for i in old_val]
 

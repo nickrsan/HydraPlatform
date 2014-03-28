@@ -44,10 +44,10 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_add_template(self):
 
-        link_attr_1 = self.create_attr("link_attr_1")
-        link_attr_2 = self.create_attr("link_attr_2")
-        node_attr_1 = self.create_attr("node_attr_1")
-        node_attr_2 = self.create_attr("node_attr_2")
+        link_attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
+        link_attr_2 = self.create_attr("link_attr_2", dimension='Speed')
+        node_attr_1 = self.create_attr("node_attr_1", dimension='Volume')
+        node_attr_2 = self.create_attr("node_attr_2", dimension='Speed')
 
         template = self.client.factory.create('hyd:Template')
         template.name = 'Test template @ %s'%datetime.datetime.now()
@@ -117,9 +117,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
     def test_update_template(self):
 
 
-        attr_1 = self.create_attr("testattr_1")
-        attr_2 = self.create_attr("testattr_2")
-        attr_3 = self.create_attr("testattr_3")
+        attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
+        attr_2 = self.create_attr("link_attr_2", dimension='Speed')
+        attr_3 = self.create_attr("node_attr_1", dimension='Volume')
 
         template = self.client.factory.create('hyd:Template')
 
@@ -188,9 +188,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_add_type(self):
 
-        attr_1 = self.create_attr("testattr_1")
-        attr_2 = self.create_attr("testattr_2")
-        attr_3 = self.create_attr("testattr_3")
+        attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
+        attr_2 = self.create_attr("link_attr_2", dimension='Speed')
+        attr_3 = self.create_attr("node_attr_1", dimension='Volume')
 
         templatetype = self.client.factory.create('hyd:TemplateType')
         templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
@@ -229,9 +229,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_update_type(self):
 
-        attr_1 = self.create_attr("testattr_1")
-        attr_2 = self.create_attr("testattr_2")
-        attr_3 = self.create_attr("testattr_3")
+        attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
+        attr_2 = self.create_attr("link_attr_2", dimension='Speed')
+        attr_3 = self.create_attr("node_attr_1", dimension='Volume')
 
         templatetype = self.client.factory.create('hyd:TemplateType')
         templatetype.name = "Test type name @ %s" % (datetime.datetime.now())
@@ -293,9 +293,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
     def test_add_typeattr(self):
 
 
-        attr_1 = self.create_attr("testattr_1")
-        attr_2 = self.create_attr("testattr_2")
-        attr_3 = self.create_attr("testattr_3")
+        attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
+        attr_2 = self.create_attr("link_attr_2", dimension='Speed')
+        attr_3 = self.create_attr("node_attr_1", dimension='Volume')
 
         templatetype = self.client.factory.create('hyd:TemplateType')
         templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
@@ -329,8 +329,8 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
     def test_delete_typeattr(self):
 
 
-        attr_1 = self.create_attr("testattr_1")
-        attr_2 = self.create_attr("testattr_2")
+        attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
+        attr_2 = self.create_attr("link_attr_2", dimension='Speed')
 
         templatetype = self.client.factory.create('hyd:TemplateType')
         templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
@@ -441,9 +441,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_find_matching_resource_types(self):
 
-        template       = self.get_template()
-        types   = template.types.TemplateType
-        type_id = types[0].id
+        template = self.get_template()
+        types    = template.types.TemplateType
+        type_id  = types[0].id
 
         network = self.create_network_with_data()
 

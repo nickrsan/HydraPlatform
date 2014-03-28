@@ -37,24 +37,35 @@
                                         <xs:element name="attribute" minOccurs="0" maxOccurs="unbounded">
                                             <xs:complexType>
                                                 <xs:sequence>
-                                                        <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1"/>
-                                                        <xs:element name="dimension" type="xs:string" minOccurs="1" maxOccurs="1"/>
-                                                        <xs:element name="is_var" minOccurs="0" maxOccurs="1">
-                                                            <xs:simpleType>
-                                                                <xs:restriction base="xs:string">
-                                                                    <xs:enumeration value="Y"/>
-                                                                    <xs:enumeration value="N"/>
-                                                                </xs:restriction>
-                                                            </xs:simpleType>
-                                                        </xs:element>
-                                                        <xs:element name="default" minOccurs="0" maxOccurs="1">
-                                                            <xs:complexType>
-                                                                <xs:sequence>
-                                                                    <xs:element name="value" type="xs:string"/>
-                                                                    <xs:element name="unit" type="xs:string"/>
-                                                                </xs:sequence>
-                                                            </xs:complexType>
-                                                        </xs:element>
+                                                    <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                                                    <xs:element name="dimension" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                                                    <xs:element name="is_var" minOccurs="0" maxOccurs="1">
+                                                        <xs:simpleType>
+                                                            <xs:restriction base="xs:string">
+                                                                <xs:enumeration value="Y"/>
+                                                                <xs:enumeration value="N"/>
+                                                            </xs:restriction>
+                                                        </xs:simpleType>
+                                                    </xs:element>
+                                                    <xs:element name="default" minOccurs="0" maxOccurs="1">
+                                                        <xs:complexType>
+                                                            <xs:sequence>
+                                                                <xs:element name="value" type="xs:string"/>
+                                                                <xs:element name="unit" type="xs:string"/>
+                                                            </xs:sequence>
+                                                        </xs:complexType>
+                                                    </xs:element>
+                                                    <xs:element name="data_type" minOccurs="0" maxOccurs="1">
+                                                        <xs:simpleType>
+                                                            <xs:restriction base="xs:string">
+                                                                <xs:enumeration value="descriptor"/>
+                                                                <xs:enumeration value="scalar"/>
+                                                                <xs:enumeration value="array"/>
+                                                                <xs:enumeration value="timeseries"/>
+                                                                <xs:enumeration value="eqtimeseries"/>
+                                                            </xs:restriction>
+                                                        </xs:simpleType>
+                                                    </xs:element>
                                                 </xs:sequence>
                                             </xs:complexType>
                                         </xs:element>

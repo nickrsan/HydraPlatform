@@ -486,7 +486,7 @@ class NetworkService(HydraService):
          Integer(min_occurs="0", max_occurs="unbounded"),
          Integer(min_occurs="0", max_occurs="1", default=None),
          _returns=Network)
-    def get_network(ctx, network_id, include_data, scenario_ids, template_id):
+    def get_network(ctx, network_id, include_data, scenario_ids):
         """
             Return a whole network as a complex model.
         """

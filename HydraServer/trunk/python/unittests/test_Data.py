@@ -17,6 +17,7 @@ import test_HydraIface
 from db import HydraIface
 from decimal import Decimal
 import datetime
+from HydraLib.util import timestamp_to_ordinal, ordinal_to_timestamp
 
 class DatasetTest(test_HydraIface.HydraIfaceTest):
 
@@ -157,9 +158,9 @@ class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
     def test_update(self):
         x = HydraIface.TimeSeries()
 
-        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
-        t2 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 01, 00))
-        t3 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 02, 00))
+        t1 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        t2 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 01, 00))
+        t3 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 02, 00))
 
         ts_values = [
             (t1, 1),
@@ -181,9 +182,9 @@ class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
     def test_delete(self):
         x = HydraIface.TimeSeries()
 
-        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
-        t2 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 01, 00))
-        t3 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 02, 00))
+        t1 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        t2 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 01, 00))
+        t3 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 02, 00))
 
         ts_values = [
             (t1, 1),
@@ -201,9 +202,9 @@ class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
     def test_load(self):
         x = HydraIface.TimeSeries()
 
-        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
-        t2 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 01, 00))
-        t3 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 02, 00))
+        t1 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        t2 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 01, 00))
+        t3 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 02, 00))
 
         ts_values = [
             (t1, 1),
@@ -220,6 +221,24 @@ class TimeSeriesTest(test_HydraIface.HydraIfaceTest):
         y = HydraIface.TimeSeries(data_id=x.db.data_id)
         assert y.load() == True, "Load did not work correctly"
 
+    def test_conversion(self):
+        x = datetime.datetime.now()
+        ordinal_x = timestamp_to_ordinal(x)
+        ts = HydraIface.TimeSeries()
+        ts.set_ts_value(ordinal_x, 1)
+        ts.save()
+    
+    
+        ts_time = ts.get_val()[0][0]
+        #print "%s == %s"%(ordinal_x, ts_time)
+        #print "%s == %s"%(len(str(ordinal_x)[str(ordinal_x).find('.'):]),len(str(ts_time)[str(ts_time).find('.'):]))
+        assert ts_time == ordinal_x
+
+        y = ordinal_to_timestamp(ts_time)
+        ordinal_y = timestamp_to_ordinal(y)
+        assert x == y
+        assert ordinal_x == ordinal_y
+        assert ts_time == ordinal_y
 
 class EqTimeSeriesTest(test_HydraIface.HydraIfaceTest):
 
@@ -228,7 +247,7 @@ class EqTimeSeriesTest(test_HydraIface.HydraIfaceTest):
 
         x.db.arr_data = [1, 2, 3, 4, 5]
 
-        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        t1 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 00, 00))
         x.db.start_time = t1
         x.db.frequency = 1
         x.save()
@@ -246,7 +265,7 @@ class EqTimeSeriesTest(test_HydraIface.HydraIfaceTest):
 
         x.db.arr_data = [1, 2, 3, 4, 5]
 
-        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        t1 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 00, 00))
         x.db.start_time = t1
         x.db.frequency = 1
         x.save()
@@ -262,7 +281,7 @@ class EqTimeSeriesTest(test_HydraIface.HydraIfaceTest):
 
         x.db.arr_data = [1, 2, 3, 4, 5]
 
-        t1 = self.get_ordinal_timestamp(datetime.datetime(2013, 07, 31, 9, 00, 00))
+        t1 = timestamp_to_ordinal(datetime.datetime(2013, 07, 31, 9, 00, 00))
         x.db.start_time = t1
         x.db.frequency = 1
         x.save()

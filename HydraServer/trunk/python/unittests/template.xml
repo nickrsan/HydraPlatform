@@ -19,6 +19,7 @@
                 <name>Min Capacity</name>
                 <dimension>Volume</dimension>
                 <is_var>Y</is_var>
+                <data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Max Capacity</name>

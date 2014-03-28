@@ -463,7 +463,10 @@ class ExportCSV(object):
                         arr_file      = open(file_loc, 'a')
                     else:
                         arr_file      = open(file_loc, 'w')
-                    np_val = numpy.array(eval(repr(value)))
+
+                    arr_val = PluginLib.parse_suds_array(value)
+
+                    np_val = numpy.array(eval(repr(arr_val)))
                     shape = np_val.shape
                     n = 1
                     shape_str = []
@@ -494,19 +497,30 @@ class ExportCSV(object):
                     for ts in value:
                         ts_time = ts['ts_time']
                         ts_val  = ts['ts_value']
-                        np_val = numpy.array(eval(ts_val))
-                        shape = np_val.shape
-                        n = 1
-                        shape_str = []
-                        for x in shape:
-                            n = n * x
-                            shape_str.append(str(x))
-                        one_dimensional_val = np_val.reshape(1, n)
-                        ts_file.write("%s,%s,%s,%s\n"%
-                                     ( resource_name,
-                                       ts_time, 
-                                       ' '.join(shape_str), 
-                                       ','.join([str(x) for x in one_dimensional_val.tolist()[0]])))
+
+                        try:
+                            ts_val = float(ts_val)
+                            ts_file.write("%s,%s,%s,%s\n"%
+                                        ( resource_name,
+                                        ts_time,
+                                        '1',
+                                        ts_val))
+
+                        except:
+                            ts_val = PluginLib.parse_suds_array(ts_val)
+                            np_val = numpy.array(ts_val)
+                            shape = np_val.shape
+                            n = 1
+                            shape_str = []
+                            for x in shape:
+                                n = n * x
+                                shape_str.append(str(x))
+                            one_dimensional_val = np_val.reshape(1, n)
+                            ts_file.write("%s,%s,%s,%s\n"%
+                                        ( resource_name,
+                                        ts_time,
+                                        ' '.join(shape_str),
+                                        ','.join([str(x) for x in one_dimensional_val.tolist()[0]])))
                         
                     ts_file.close()
                     value = file_name

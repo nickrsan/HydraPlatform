@@ -89,9 +89,9 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
         rc.save()
 
         base_time = datetime.datetime.now()
-        t1 = self.get_ordinal_timestamp(base_time)
-        t2 = self.get_ordinal_timestamp(base_time + datetime.timedelta(days=10)) 
-        t3 = self.get_ordinal_timestamp(base_time + datetime.timedelta(days=20)) 
+        t1 = timestamp_to_ordinal(base_time)
+        t2 = timestamp_to_ordinal(base_time + datetime.timedelta(days=10)) 
+        t3 = timestamp_to_ordinal(base_time + datetime.timedelta(days=20)) 
 
         ts_values = [(t1, [1, 2, 3]), (t2, [[1,2],[3,4]]), (t3, [1])]
 
@@ -132,9 +132,9 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
         rc.save()
 
         base_time = datetime.datetime.now()
-        t1 = self.get_ordinal_timestamp(base_time)
-        t2 = self.get_ordinal_timestamp(base_time + datetime.timedelta(days=10)) 
-        t3 = self.get_ordinal_timestamp(base_time + datetime.timedelta(days=20)) 
+        t1 = timestamp_to_ordinal(base_time)
+        t2 = timestamp_to_ordinal(base_time + datetime.timedelta(days=10)) 
+        t3 = timestamp_to_ordinal(base_time + datetime.timedelta(days=20)) 
 
         ts_values = [(t1, [1, 2, 3]), (t2, [[1,2],[3,4]]), (t3, [1])]
 
@@ -144,28 +144,28 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
 
         base_time = datetime.datetime.now()
 
-        val123 = rsa.dataset.get_val(self.get_ordinal_timestamp(base_time + datetime.timedelta(seconds=1)))
+        val123 = rsa.dataset.get_val(timestamp_to_ordinal(base_time + datetime.timedelta(seconds=1)))
         assert val123 == [1, 2, 3], "First Value is incorrect!"
 
         val1234 = rsa.dataset.get_val(
-            self.get_ordinal_timestamp(base_time + datetime.timedelta(days=11)))
+            timestamp_to_ordinal(base_time + datetime.timedelta(days=11)))
         assert val1234 == [[1,2],[3,4]], "Second value is incorrect!"
         
         val1 = rsa.dataset.get_val(
-            self.get_ordinal_timestamp(base_time + datetime.timedelta(days=21)))
+            timestamp_to_ordinal(base_time + datetime.timedelta(days=21)))
         assert val1 == [1], "Third value is incorrect!"
 
         after_ts_val = rsa.dataset.get_val(
-            self.get_ordinal_timestamp(base_time + datetime.timedelta(days=31)))
+            timestamp_to_ordinal(base_time + datetime.timedelta(days=31)))
         assert after_ts_val == [1], "Value for after range is incorrect!"
 
         before_ts_val = rsa.dataset.get_val(
-            self.get_ordinal_timestamp(base_time - datetime.timedelta(days=30)))
+            timestamp_to_ordinal(base_time - datetime.timedelta(days=30)))
         assert before_ts_val is None, "Value for after range is incorrect!"
 
         multi_ts_val = rsa.dataset.get_val(
-            [self.get_ordinal_timestamp(base_time + datetime.timedelta(seconds=1)), 
-             self.get_ordinal_timestamp(base_time - datetime.timedelta(days=30))])
+            [timestamp_to_ordinal(base_time + datetime.timedelta(seconds=1)), 
+             timestamp_to_ordinal(base_time - datetime.timedelta(days=30))])
         assert multi_ts_val == [[1, 2, 3], None], "Value for multiple timeseries is incorrect!"
 
 

@@ -1041,22 +1041,26 @@ class ImportCSV(object):
                 ts_time = PluginLib.date_to_string(tstime, seasonal=seasonal)
 
                 value_length = len(dataset[2:])
-
-                if dataset[1] != '':
+                shape = dataset[1].strip()
+                if shape != '':
                     array_shape = tuple([int(a) for a in
-                                         dataset[1].strip().split(" ")])
+                                         shape.split(" ")])
                 else:
-                    array_shape = value_length
+                    array_shape = (value_length,)
 
-                ts_value = []
-                for i in range(value_length):
-                    ts_value.append(float(dataset[i + 2].strip()))
+                if array_shape == (1,):
+                    ts_value = dataset[2].strip()
+                else:
+                    ts_val_1d = []
+                    for i in range(value_length):
+                        ts_val_1d.append(float(dataset[i + 2].strip()))
 
-                ts_arr = numpy.array(ts_value)
-                ts_arr = numpy.reshape(ts_arr, array_shape)
+                    ts_arr = numpy.array(ts_val_1d)
+                    ts_arr = numpy.reshape(ts_arr, array_shape)
+                    ts_value = PluginLib.create_dict(ts_arr)
 
                 ts_values.append({'ts_time': ts_time,
-                                  'ts_value': str(ts_arr.tolist()),
+                                  'ts_value': ts_value,
                                   })
 
         timeseries = {'ts_values': ts_values}
@@ -1075,14 +1079,14 @@ class ImportCSV(object):
         if arr_shape != '':
             array_shape = tuple([int(a) for a in arr_shape.strip().split(" ")])
         else:
-            array_shape = len(dataset)
+            array_shape = (len(dataset),)
 
         #Reshape the array back to its correct dimensions
         array = numpy.array(dataset)
         array = numpy.reshape(array, array_shape)
 
         arr = dict(
-            arr_data = str(array.tolist())
+            arr_data = PluginLib.create_dict(array)
         )
 
         return arr
