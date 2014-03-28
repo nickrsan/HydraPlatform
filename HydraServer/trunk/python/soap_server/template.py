@@ -360,7 +360,7 @@ class TemplateService(HydraService):
         return ret_val
 
 
-    @rpc(Integer, String, Integer, _returns=TemplateType)
+    @rpc(Integer, String, Integer, _returns=TypeSummary)
     def assign_type_to_resource(ctx, type_id, resource_type, resource_id):
         """Assign new type to a resource. This function checks if the necessary
         attributes are present and adds them if needed. Non existing attributes
@@ -418,7 +418,24 @@ class TemplateService(HydraService):
 
         templatetype = resource_type.get_type()
 
-        return get_as_complexmodel(ctx, templatetype)
+        ret_type = TypeSummary()
+        ret_type.name = templatetype.db.type_name
+        ret_type.id   = templatetype.db.type_id
+        ret_type.template_name = templatetype.template.db.template_name 
+        ret_type.template_id = templatetype.template.db.template_id 
+
+        return ret_type 
+
+    @rpc(Integer, String, Integer, _returns=String)
+    def remove_type_from_resource(ctx,  type_id, resource_type, resource_id):
+        """
+
+            Remove a resource type trom a resource
+        """
+        resourcetype_i = HydraIface.ResourceType(type_id=type_id, ref_key=resource_type, ref_id = resource_id)
+        resourcetype_i.delete()
+        
+        return 'OK'
 
     @rpc(Template, _returns=Template)
     def add_template(ctx, template):

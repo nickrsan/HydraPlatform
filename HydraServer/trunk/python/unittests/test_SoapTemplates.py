@@ -469,32 +469,43 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
                                                              'NODE',
                                                              node_to_assign.id)
 
-        assert result.id == templatetype.id and result.name == templatetype.name, \
-            'Function did not return correct type.'
+        node = self.client.service.get_node(node_to_assign.id)
 
-        new_network = self.client.service.get_network(network.id)
-        for node in new_network.nodes.Node:
-            if node.id == node_to_assign.id:
-                new_node = node
-                break
 
-        assert new_node.types is not None, \
+        assert node.types is not None, \
             'Assigning type did not work properly.'
 
-        type_template_names = []
-        type_names = []
-        type_ids = []
-        for tmpltype in new_node.types.TypeSummary:
-            type_template_names.append(tmpltype.template_name)
-            type_names.append(tmpltype.name)
-            type_ids.append(tmpltype.id)
+        assert str(result) in [str(x) for x in node.types.TypeSummary]
 
-        assert template.name in type_template_names, \
+    def test_remove_type_from_resource(self):
+        network = self.create_network_with_data()
+        template = self.get_template()
+        templatetype = template.types.TemplateType[0]
+
+        node_to_assign = network.nodes.Node[0]
+
+        result = self.client.service.assign_type_to_resource(templatetype.id,
+                                                             'NODE',
+                                                             node_to_assign.id)
+
+        
+        node = self.client.service.get_node(node_to_assign.id)
+
+
+        assert node.types is not None, \
             'Assigning type did not work properly.'
-        assert templatetype.name in type_names, \
-            'Assigning type did not work properly.'
-        assert templatetype.id in type_ids, \
-            'Assigning type did not work properly.'
+
+        assert str(result) in [str(x) for x in node.types.TypeSummary]
+
+       
+        result = self.client.service.remove_type_from_resource(templatetype.id,
+                                                            'NODE',
+                                                            node_to_assign.id) 
+        assert result == 'OK'
+        
+        node = self.client.service.get_node(node_to_assign.id)
+ 
+        assert node.types.TypeSummary is None or str(result) not in [str(x) for x in node.types.TypeSummary] 
 
     def test_create_template_from_network(self):
         network = self.create_network_with_data()

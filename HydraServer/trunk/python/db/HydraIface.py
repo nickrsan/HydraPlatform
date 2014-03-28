@@ -121,7 +121,7 @@ class GenericResource(IfaceBase):
     def get_timestamp(self, ordinal):
         if ordinal is None:
             return None
-        timestamp = ordinal_to_timestamp(ordinal)
+        timestamp = str(ordinal_to_timestamp(ordinal))
         #timestamp = self.time_format.format(timestamp.year,
         #                                    timestamp.month,
         #                                    timestamp.day,
@@ -1776,14 +1776,7 @@ class TimeSeriesData(IfaceBase):
         return obj_dict
 
     def get_timestamp(self):
-        timestamp = ordinal_to_timestamp(self.db.ts_time)
-        #timestamp = self.time_format.format(timestamp.year,
-        #                                    timestamp.month,
-        #                                    timestamp.day,
-        #                                    timestamp.hour,
-        #                                    timestamp.minute,
-        #                                    timestamp.second,
-        #                                    timestamp.microsecond)
+        timestamp = str(ordinal_to_timestamp(self.db.ts_time))
         return timestamp
 
 class EqTimeSeries(IfaceBase):
@@ -1824,14 +1817,7 @@ class EqTimeSeries(IfaceBase):
                 Get the value of an equally spaced TimeSeries
                 returns a dictionary containing start time, frequency and value.
             """
-            starttime = ordinal_to_timestamp(self.db.start_time)
-            #starttime = self.time_format.format(starttime.year,
-            #                                starttime.month,
-            #                                starttime.day,
-            #                                starttime.hour,
-            #                                starttime.minute,
-            #                                starttime.second,
-            #                                starttime.microsecond)
+            starttime = str(ordinal_to_timestamp(self.db.start_time))
             val = {
                 'start_time' : starttime,
                 'frequency'  : self.db.frequency,

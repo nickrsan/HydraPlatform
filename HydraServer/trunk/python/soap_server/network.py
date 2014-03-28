@@ -944,6 +944,18 @@ class NetworkService(HydraService):
 
         return net
 
+    @rpc(Integer, _returns=Node)
+    def get_node(ctx, node_id):
+        n = HydraIface.Node(node_id=node_id)
+        n.load_all()
+        return get_as_complexmodel(ctx, n)
+
+    @rpc(Integer, _returns=Link)
+    def get_link(ctx, link_id):
+        l = HydraIface.Link(link_id=link_id)
+        l.load_all()
+        return get_as_complexmodel(ctx, l)
+
     @rpc(Integer, Boolean, _returns=Boolean)
     def delete_network(ctx, network_id, purge_data):
         """

@@ -178,7 +178,9 @@ class UnitService(HydraService):
             >>> cli.service.get_dimension('m')
             Length
         """
-        return hydra_units.get_dimension(unit1)
+        dim = hydra_units.get_dimension(unit1)
+
+        return dim
 
     @rpc(_returns=SpyneArray(String))
     def get_dimensions(ctx):
