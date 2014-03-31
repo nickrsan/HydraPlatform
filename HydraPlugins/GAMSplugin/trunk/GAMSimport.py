@@ -50,7 +50,7 @@ import argparse
 from operator import mul
 
 from HydraLib.HydraException import HydraPluginError
-from HydraLib.util import convert_ordinal_to_datetime
+from HydraLib.util import ordinal_to_timestamp
 from HydraLib import hydra_logging
 from HydraLib import PluginLib
 
@@ -153,7 +153,7 @@ class GAMSimport(object):
         line = self.gms_data[i]
         while line.split('(', 1)[0].strip() == 'timestamp':
             idx = int(line.split('"')[1])
-            timestamp = convert_ordinal_to_datetime(float(line.split()[2]))
+            timestamp = ordinal_to_timestamp(float(line.split()[2]))
             timestamp = PluginLib.date_to_string(timestamp)
             self.time_axis.update({idx: timestamp})
             i += 1

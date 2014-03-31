@@ -102,9 +102,9 @@ The first file defines the name, description and attributes of a file and looks 
     stor  , totalCap   , maxSize       , Storage nodes
     ...   , ...        , ...           , ...
 
-The second file defines the members of the groups and looks like::
-    #The group name, the type of the member (node, link or another group) and the name
-    #of that other member
+The second file defines the members of the groups.
+The group name, the type of the member (node, link or another group) and the name
+of that other member are needed::
     
     Name  , Type  , Member
     stor  , NODE  , node1
