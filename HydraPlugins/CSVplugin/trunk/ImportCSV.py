@@ -224,9 +224,23 @@ class ImportCSV(object):
             if len(file_data) == 0:
                 logging.warn("File contains no data")
         # Ignore comments
+        bad_lines = []
         for i, line in enumerate(file_data):
+            try:
+                line.decode('ascii')
+            except UnicodeDecodeError, e:
+                #If there are unknown characters in this line, save the line
+                #and the column in the line where the bad character has occurred.
+                bad_lines.append((i+1, e.start))
+
             if len(line) > 0 and line.strip()[0] == '#':
                 file_data.pop(i)
+
+        #Complain about the lines that the bad characters are on.
+        if len(bad_lines) > 0:
+            lines = [a[0] for a in bad_lines]
+            raise HydraPluginError("Lines %s, contain non ascii characters"%(lines))
+
         return file_data
 
     def check_header(self, file, header):
