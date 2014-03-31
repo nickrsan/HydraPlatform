@@ -94,6 +94,23 @@ follow this structure::
     1 , My first network, net , test       ,    , Network created from CSV files
 
 
+Constraint groups come in 2 files.
+The first file defines the name, description and attributes of a file and looks like this::
+    
+    Name  , attribute_1, attribute_2..., Description 
+    Units , hm^3       , m             ,
+    stor  , totalCap   , maxSize       , Storage nodes
+    ...   , ...        , ...           , ...
+
+The second file defines the members of the groups and looks like::
+    #The group name, the type of the member (node, link or another group) and the name
+    #of that other member
+    
+    Name  , Type  , Member
+    stor  , NODE  , node1
+    stor  , NODE  , node2
+    stor  , LINK  , link1
+
 Lines starting with the ``#`` character are ignored.
 
 .. note::
