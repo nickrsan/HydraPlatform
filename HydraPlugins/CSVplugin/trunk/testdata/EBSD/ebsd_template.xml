@@ -24,7 +24,7 @@
 				</item>
 			</layout>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -42,6 +42,16 @@
                 <name>DO</name>
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
                 <name>DI</name>
@@ -62,6 +72,11 @@
                 <name>ExDO VOPEX (p/m3)</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial vopex spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
                 <name>Percentage of ExDO VOPEX (calc)</name>
@@ -88,7 +103,7 @@
 				</item>
 			</layout>			
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -122,7 +137,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -141,6 +156,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -151,49 +171,79 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
-                <is_var>N</is_var>
-            </attribute>
-            <attribute>
-                <name>OneOff_Carbon</name>
-                <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
         </resource>
@@ -216,7 +266,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -235,6 +285,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -245,43 +300,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -310,7 +400,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -329,6 +419,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -339,43 +434,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -404,7 +534,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -423,6 +553,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>			
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -433,43 +568,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -498,7 +668,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -517,6 +687,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -527,43 +702,48 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
-            </attribute>
-            <attribute>
-                <name>Carbon_Const</name>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -592,7 +772,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -611,6 +791,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -621,43 +806,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -686,7 +906,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -715,43 +935,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -780,7 +1035,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -799,6 +1054,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -809,43 +1069,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -874,7 +1169,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -893,6 +1188,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -903,43 +1203,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -968,7 +1303,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -987,6 +1322,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -997,43 +1337,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -1062,7 +1437,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -1081,6 +1456,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -1091,43 +1471,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -1156,7 +1571,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -1175,6 +1590,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -1185,43 +1605,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -1250,7 +1705,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -1269,6 +1724,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -1279,43 +1739,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
-            <attribute>
-                <name>OneOff_Cost</name>
-                <dimension>Monetary value</dimension>
-                <is_var>N</is_var>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -1344,7 +1839,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -1363,6 +1858,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -1373,50 +1873,100 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>OneOff_Cost</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>OneOff cost</name>
                 <dimension>Monetary value</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>OneOff cost spent</name>
+                <dimension>Monetary value</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>OneOff_Carbon</name>
+                <name>OneOff carbon</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>OneOff carbon spent</name>
+                <dimension>Mass</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
                 <name>Ratchet</name>
@@ -1443,7 +1993,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -1477,6 +2027,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>End year</name>
                 <dimension/>
@@ -1491,6 +2046,16 @@
                 <name>DO</name>
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
             </attribute>
             <attribute>
                 <name>Transfer type</name>
@@ -1522,7 +2087,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -1561,6 +2126,11 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -1571,38 +2141,78 @@
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
@@ -1646,7 +2256,7 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Zone_generic</name>
+                <name>Zone generic</name>
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
@@ -1685,6 +2295,170 @@
                 <dimension/>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Transfer type</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+		 <resource>
+            <type>LINK</type>
+            <name>Option link</name>			
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>solid</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>teal</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Co. From</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Co. to</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone from</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone to</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
                 <name>Asset life</name>
                 <dimension/>
@@ -1696,37 +2470,67 @@
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Cost</name>
+                <name>Financial cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Financial_Vopex</name>
+                <name>Financial vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Cost</name>
+                <name>EnvSoc cost</name>
                 <dimension>Specific cost (time)</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>EnvSoc_Vopex</name>
+                <name>EnvSoc vopex</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
             </attribute>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
             <attribute>
-                <name>Carbon_Const</name>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
                 <dimension>Mass</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Fopex</name>
+                <name>Carbon fopex</name>
                 <dimension>Mass flow rate</dimension>
                 <is_var>N</is_var>
             </attribute>
             <attribute>
-                <name>Carbon_Vopex</name>
+                <name>Carbon vopex</name>
                 <dimension>Density</dimension>
                 <is_var>N</is_var>
             </attribute>
