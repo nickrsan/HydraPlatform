@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    This document is modified after the xml file provided by the unit converter for windows smartphones: https://code.google.com/p/unit-converter-for-smartphones/
+    (c) Copyright 2013, 2014, University of Manchester
+
+    HydraPlatform is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    HydraPlatform is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 -->
 <UNITS>
     <dimension name="Length">
