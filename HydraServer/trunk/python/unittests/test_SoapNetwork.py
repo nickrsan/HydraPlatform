@@ -121,112 +121,6 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             "Update did not work correctly."
 
 
-    def test_add_node(self):
-        project = self.create_project('test')
-        network = self.client.factory.create('hyd:Network')
-        nodes = self.client.factory.create('hyd:NodeArray')
-        links = self.client.factory.create('hyd:LinkArray')
-
-        nnodes = 3
-        nlinks = 2
-        x = [0, 0, 1]
-        y = [0, 1, 0]
-
-        for i in range(nnodes):
-            node = self.client.factory.create('hyd:Node')
-            node.id = i * -1
-            node.name = 'Node ' + str(i)
-            node.description = 'Test node ' + str(i)
-            node.x = x[i]
-            node.y = y[i]
-
-            nodes.Node.append(node)
-
-        for i in range(nlinks):
-            link = self.client.factory.create('hyd:Link')
-            link.id = i * -1
-            link.name = 'Link ' + str(i)
-            link.description = 'Test link ' + str(i)
-            link.node_1_id = nodes.Node[i].id
-            link.node_2_id = nodes.Node[i + 1].id
-
-            links.Link.append(link)
-
-        network.project_id = project.id
-        network.name = 'Test'
-        network.description = 'A network for SOAP unit tests.'
-        network.nodes = nodes
-        network.links = links
-
-        network = self.client.service.add_network(network)
-
-        node = self.client.factory.create('hyd:Node')
-        new_node_num = nnodes + 1
-        node.id = new_node_num * -1
-        node.name = 'New Node'
-        node.description = 'Test node ' + str(new_node_num)
-        node.x = 159
-        node.y = 169
-
-        new_node = self.client.service.add_node(network.id, node)
-
-        new_network = self.client.service.get_network(network.id)
-
-        assert len(new_network.nodes.Node) == len(network.nodes.Node)+1; "New node was not added correctly"
-
-    def test_update_node(self):
-        project = self.create_project('test')
-        network = self.client.factory.create('hyd:Network')
-        nodes = self.client.factory.create('hyd:NodeArray')
-        links = self.client.factory.create('hyd:LinkArray')
-
-        nnodes = 3
-        nlinks = 2
-        x = [0, 0, 1]
-        y = [0, 1, 0]
-
-        for i in range(nnodes):
-            node = self.client.factory.create('hyd:Node')
-            node.id = i * -1
-            node.name = 'Node ' + str(i)
-            node.description = 'Test node ' + str(i)
-            node.x = x[i]
-            node.y = y[i]
-
-            nodes.Node.append(node)
-
-        for i in range(nlinks):
-            link = self.client.factory.create('hyd:Link')
-            link.id = i * -1
-            link.name = 'Link ' + str(i)
-            link.description = 'Test link ' + str(i)
-            link.node_1_id = nodes.Node[i].id
-            link.node_2_id = nodes.Node[i + 1].id
-
-            links.Link.append(link)
-
-        network.project_id = project.id
-        network.name = 'Test'
-        network.description = 'A network for SOAP unit tests.'
-        network.nodes = nodes
-        network.links = links
-
-        network = self.client.service.add_network(network)
-
-        node_to_update = network.nodes.Node[0]
-        node_to_update.name = "Updated Node Name"
-
-        new_node = self.client.service.update_node(node_to_update)
-
-        new_network = self.client.service.get_network(network.id)
-
-        updated_node = None
-        for n in new_network.nodes.Node:
-            if n.id == node_to_update.id:
-                updated_node = n
-        assert updated_node.name == "Updated Node Name"
-
-
     def test_add_link(self):
         project = self.create_project('test')
         network = self.client.factory.create('hyd:Network')
@@ -273,13 +167,34 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         link.node_1_id = network.nodes.Node[0].id
         link.node_2_id = network.nodes.Node[2].id
 
+        tmpl = self.create_template()
+
+        type_summary_arr = self.client.factory.create('hyd:TypeSummaryArray')
+
+        type_summary      = self.client.factory.create('hyd:TypeSummary')
+        type_summary.id   = tmpl.id
+        type_summary.name = tmpl.name
+        type_summary.id   = tmpl.types.TemplateType[0].id
+        type_summary.name = tmpl.types.TemplateType[0].name
+
+        type_summary_arr.TypeSummary.append(type_summary)
+
+        link.types = type_summary_arr
+
         new_link = self.client.service.add_link(network.id, link)
+
+        link_attr_ids = []
+        for resource_attr in new_link.attributes.ResourceAttr:
+            link_attr_ids.append(resource_attr.attr_id)
+
+        for typeattr in tmpl.types.TemplateType[0].typeattrs.TypeAttr:
+            assert typeattr.attr_id in link_attr_ids
 
         new_network = self.client.service.get_network(network.id)
 
-        assert len(new_network.links.Link) == len(network.links.Link)+1; "New link was not added correctly"
+        assert len(new_network.links.Link) == len(network.links.Link)+1; "New node was not added correctly"
 
-    def test_update_link(self):
+    def test_add_node(self):
         project = self.create_project('test')
         network = self.client.factory.create('hyd:Network')
         nodes = self.client.factory.create('hyd:NodeArray')
@@ -318,20 +233,41 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
         network = self.client.service.add_network(network)
 
-        link_to_update = network.links.Link[0]
-        link_to_update.name = "Updated Link Name"
+        node = self.client.factory.create('hyd:Node')
+        new_node_num = nnodes + 1
+        node.id = new_node_num * -1
+        node.name = 'Node ' + str(new_node_num)
+        node.description = 'Test node ' + str(new_node_num)
+        node.x = 100
+        node.y = 101
 
-        self.client.service.update_link(link_to_update)
+        
+        tmpl = self.create_template()
+
+        type_summary_arr = self.client.factory.create('hyd:TypeSummaryArray')
+
+        type_summary      = self.client.factory.create('hyd:TypeSummary')
+        type_summary.id   = tmpl.id
+        type_summary.name = tmpl.name
+        type_summary.id   = tmpl.types.TemplateType[0].id
+        type_summary.name = tmpl.types.TemplateType[0].name
+
+        type_summary_arr.TypeSummary.append(type_summary)
+
+        node.types = type_summary_arr
+
+        new_node = self.client.service.add_node(network.id, node)
+
+        node_attr_ids = []
+        for resource_attr in new_node.attributes.ResourceAttr:
+            node_attr_ids.append(resource_attr.attr_id)
+
+        for typeattr in tmpl.types.TemplateType[0].typeattrs.TypeAttr:
+            assert typeattr.attr_id in node_attr_ids
 
         new_network = self.client.service.get_network(network.id)
 
-        updated_link = None
-        for n in new_network.links.Link:
-            if n.id == link_to_update.id:
-                updated_link = n
-        assert updated_link.name == "Updated Link Name"
-
-
+        assert len(new_network.nodes.Node) == len(network.nodes.Node)+1; "New node was not added correctly"
 
     def test_load(self):
         project = self.create_project('test')

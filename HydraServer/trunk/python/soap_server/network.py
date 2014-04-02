@@ -33,6 +33,7 @@ from db.hdb import make_param
 from hydra_base import HydraService, ObjectNotFoundError
 import scenario
 from constraints import ConstraintService
+from template import TemplateService
 import datetime
 from util.permissions import check_perm
 
@@ -1061,9 +1062,12 @@ class NetworkService(HydraService):
         node_i.save()
 
         _add_attributes(node_i, node.attributes)
-        _add_resource_types(node_i, node.types)
 
-        hdb.commit()
+        for resource_type in node.types:
+            TemplateService.assign_type_to_resource(ctx.in_header.user_id,
+                                         resource_type.id,
+                                         'NODE',
+                                         node_i.db.node_id)
         node_cm = get_as_complexmodel(ctx, node_i)
 
 
@@ -1117,11 +1121,13 @@ class NetworkService(HydraService):
         x.db.node_description = node.description
 
         _add_attributes(x, node.attributes)
-        _add_resource_types(x, node.types)
+        for resource_type in node.types:
+            TemplateService.assign_type_to_resource(ctx.in_header.user_id,
+                                         resource_type.id,
+                                         'NODE',
+                                         x.db.node_id)
 
         x.save()
-        x.commit()
-        hdb.commit()
         node = get_as_complexmodel(ctx, x)
 
         return node
@@ -1155,7 +1161,6 @@ class NetworkService(HydraService):
         x.save()
         x.commit()
 
-        hdb.commit()
         return success
 
     @rpc(Integer, Boolean, _returns=Boolean)
@@ -1174,7 +1179,6 @@ class NetworkService(HydraService):
 
         x.delete(purge_data=purge_data)
         x.save()
-        x.commit()
         return x.load()
 
     @rpc(Integer, Link, _returns=Link)
@@ -1195,10 +1199,14 @@ class NetworkService(HydraService):
         x.db.node_2_id = link.node_2_id
         x.db.link_description = link.description
         x.save()
+        x.load()
 
         _add_attributes(x, link.attributes)
-        _add_resource_types(x, link.types)
-        x.commit()
+        for resource_type in link.types:
+            TemplateService.assign_type_to_resource(ctx.in_header.user_id,
+                                         resource_type.id,
+                                         'LINK',
+                                         x.db.link_id)
 
         link = get_as_complexmodel(ctx, x)
 
@@ -1221,10 +1229,13 @@ class NetworkService(HydraService):
         x.db.link_description = link.description
 
         _add_attributes(x, link.attributes)
-        _add_resource_types(x, link.types)
+        for resource_type in link.types:
+            TemplateService.assign_type_to_resource(ctx.in_header.user_id,
+                                         resource_type.id,
+                                         'LINK',
+                                         x.db.link_id)
 
         x.save()
-        x.commit()
 
         link = get_as_complexmodel(ctx, x)
 
