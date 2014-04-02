@@ -1049,8 +1049,6 @@ class NetworkService(HydraService):
                   }
              }
         """
-        node = None
-
         net_i = HydraIface.Network(network_id = network_id)
         net_i.check_write_permission(ctx.in_header.user_id)
 
@@ -1066,10 +1064,10 @@ class NetworkService(HydraService):
         _add_resource_types(node_i, node.types)
 
         hdb.commit()
-        net = get_as_complexmodel(ctx, node_i)
+        node_cm = get_as_complexmodel(ctx, node_i)
 
 
-        return node
+        return node_cm
 
     @rpc(Node, _returns=Node)
     def update_node(ctx, node):
@@ -1108,9 +1106,6 @@ class NetworkService(HydraService):
              }
 
         """
-        node = None
-
-
         x = HydraIface.Node(node_id = node.id)
 
         net_i = HydraIface.Network(network_id = x.db.network_id)
