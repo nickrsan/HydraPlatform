@@ -75,7 +75,10 @@ def parse_value(data):
             ordinal_ts_time = timestamp_to_ordinal(timestamp)
             arr_data = ts_val['{%s}ts_value'%NS][0]
             if type(arr_data) is odict:
-                ts_value = parse_array(arr_data)
+                try:
+                    ts_value = eval(arr_data)
+                except:
+                    ts_value = parse_array(arr_data)
             else:
                 try:
                     ts_value = float(arr_data)
@@ -93,7 +96,10 @@ def parse_value(data):
     elif data_type == 'scalar':
         return value[0][0]
     elif data_type == 'array':
-        val = parse_array(value[0][0])
+        try:
+            val = eval(value[0][0])
+        except:
+            val = parse_array(value[0][0])
         return val
 
 def parse_array(arr):
