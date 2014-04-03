@@ -614,13 +614,8 @@ def parse_array(arr):
         Take a dictionary and turn it into an array as follows:
         {'array': ['item' : [1, 2, 3]}]} -> [1, 2, 3]
         {'array' :
-            {'array': [
-                'item' : [1, 2, 3]}
-            ]} 
-            {'array': [
-                'item' : [1, 2, 3]}
-            ]}
-         ]} -> [[1, 2, 3], [4, 5, 6]]
+        {'array': [ 'item' : [1, 2, 3]} ]}
+        {'array': [ 'item' : [1, 2, 3]} ]} ]} -> [[1, 2, 3], [4, 5, 6]]
     """
     if arr.get('array'):
         ret_arr = []

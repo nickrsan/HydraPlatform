@@ -47,7 +47,7 @@ Option                 Short  Parameter Description
 ``--groups``           ``-g`` GROUPS    A file or list of files containing
                                         group name, description,
                                         attributes and data.
-``--groupmembers``     ``-k`` GROUP_MEMBERS A file or list of files containing
+``--groupmembers``     ``-k`` MEMBERS   A file or list of files containing
                                         group members.
 ``--template``         ``-m`` TEMPLATE  XML file defining the types for the
                                         network. Required if types are set.
@@ -138,13 +138,20 @@ Please also consider the following:
   with the same name) will be considered the same. This results in a unique
   attribute set for nodes. The same applies for links.
 
-
 TODO
 ----
 
 - Implement updating of existing scenario.
 
 - Implement rules and constraints
+
+Building a windows executable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ - Use pyinstaller (pip install pyisntaller) to build a windows executable.
+ - cd to the $PATH_TO_HYDRA/HydraPlugins/CSVPlugin/trunk
+ - pyinstaller -F ImportCSV.py
+ - An executable file will appear in the dist folder
+
 
 API docs
 ~~~~~~~~
