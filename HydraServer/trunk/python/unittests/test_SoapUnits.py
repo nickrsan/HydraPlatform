@@ -196,6 +196,8 @@ class UnitsTest(test_SoapServer.SoapServerTest):
         result = self.client.service.convert_units([20., 30., 40.], 'm', 'km')
         assert result == [0.02, 0.03, 0.04],  \
             "Unit conversion of array didn't work."
+        result = self.client.service.convert_units(20, '2e6 m^3', 'hm^3')
+        assert result == [40], "Conversion with factor didn't work correctly."
 
     def test_convert_dataset(self):
         network = self.create_network_with_data(num_nodes=2)
