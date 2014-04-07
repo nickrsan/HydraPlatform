@@ -79,7 +79,7 @@ class GDXvariable(object):
 
 class GAMSimport(object):
 
-    def __init__(self):
+    def __init__(self, url=None):
         hydra_logging.init(level='INFO')
         self.gdx_handle = gdxcc.new_gdxHandle_tp()
         rc = gdxcc.gdxCreate(self.gdx_handle, gdxcc.GMS_SSSIZE)
@@ -95,7 +95,7 @@ class GAMSimport(object):
         self.time_axis = dict()
         self.gms_data = []
 
-        self.cli = PluginLib.connect()
+        self.cli = PluginLib.connect(url=url)
 
     def load_network(self, network_id, scenario_id):
         """Load network and scenario from the server.
@@ -378,7 +378,7 @@ class GAMSimport(object):
             array = outer_array
             extent = extent[0:-1]
 
-        hydra_array.arr_data = PluginLib.create_dict(array) 
+        hydra_array.arr_data = PluginLib.create_dict(array)
 
         return hydra_array
 
@@ -418,6 +418,9 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-m', '--gms-file',
                         help='''Full path to the GAMS model (*.gms) used for
                         the simulation.''')
+    parser.add_argument('-u', '--server-url',
+                        help='''Specify the URL of the server to which this
+                        plug-in connects.''')
 
     return parser
 
@@ -426,7 +429,7 @@ if __name__ == '__main__':
     parser = commandline_parser()
     args = parser.parse_args()
 
-    gdximport = GAMSimport()
+    gdximport = GAMSimport(url=args.server_url)
     gdximport.load_network(args.network, args.scenario)
     gdximport.load_gams_file(args.gms_file)
     gdximport.parse_time_index()

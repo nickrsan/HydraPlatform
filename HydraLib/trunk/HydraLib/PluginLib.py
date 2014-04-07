@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import config
@@ -314,12 +313,23 @@ class HydraAttribute(object):
             self.value = res_scen.value.value
 
 
-def connect():
+def connect(**kwargs):
+    """Establish a connection to the specified server. If the URL of the server
+    is not specified as an argument of this function, the URL defined in the
+    configuration file is used."""
+
+    # Parse keyword arguments
+    url = kwargs.get('url')
+    if url is None:
+        url = config.get('hydra_client', 'url')
+
+    # Set up logging
     hydra_logging.init(level='INFO')
     logging.getLogger('suds').setLevel(logging.ERROR)
     logging.getLogger('suds.client').setLevel(logging.CRITICAL)
     #logging.getLogger('suds.metrics').setLevel(logging.INFO)
-    url = config.get('hydra_client', 'url')
+
+    # Connect
     user = config.get('hydra_client', 'user')
     passwd = config.get('hydra_client', 'password')
     cli = Client(url, timeout=3600, plugins=[FixNamespace()])
@@ -639,7 +649,7 @@ def create_dict(arr_data):
     arr = {'array': []}
     if arr_data.ndim == 1:
         arr['array'].append({'item': list(arr_data)})
-    
+
     if arr_data.ndim > 1:
         for a in arr_data:
             if a.ndim == 1:

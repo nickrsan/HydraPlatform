@@ -96,8 +96,8 @@ follow this structure::
 
 Constraint groups come in 2 files.
 The first file defines the name, description and attributes of a file and looks like this::
-    
-    Name  , attribute_1, attribute_2..., Description 
+
+    Name  , attribute_1, attribute_2..., Description
     Units , hm^3       , m             ,
     stor  , totalCap   , maxSize       , Storage nodes
     ...   , ...        , ...           , ...
@@ -105,7 +105,7 @@ The first file defines the name, description and attributes of a file and looks 
 The second file defines the members of the groups.
 The group name, the type of the member (node, link or another group) and the name
 of that other member are needed::
-    
+
     Name  , Type  , Member
     stor  , NODE  , node1
     stor  , NODE  , node2
@@ -180,7 +180,7 @@ class ImportCSV(object):
     """
     """
 
-    def __init__(self):
+    def __init__(self, url=None):
         self.Project  = None
         self.Network  = None
         self.Scenario = None
@@ -188,7 +188,7 @@ class ImportCSV(object):
         self.Links    = dict()
         self.Groups   = dict()
         self.Attributes = dict()
-        
+
         #These are used to keep track of whether
         #duplicate names have been specified in the files.
         self.link_names = []
@@ -206,7 +206,7 @@ class ImportCSV(object):
         self.linktype_dict = dict()
         self.networktype = ''
 
-        self.cli = PluginLib.connect()
+        self.cli = PluginLib.connect(url=url)
         self.node_id  = PluginLib.temp_ids()
         self.link_id  = PluginLib.temp_ids()
         self.group_id = PluginLib.temp_ids()
@@ -527,11 +527,11 @@ class ImportCSV(object):
                 field_idx[key.lower().strip()] = i
             else:
                 attrs.update({i: key.strip()})
-       
+
         for line in data:
             linedata = line.split(',')
             linkname = linedata[field_idx['name']].strip()
-            
+
             if linkname in self.link_names:
                 raise HydraPluginError("Duplicate Link name: %s"%(linkname))
             else:
@@ -1244,13 +1244,16 @@ Written by Philipp Meier <philipp@diemeiers.ch>
                         that looks like a filename, it tries to read the file.
                         It also tries to guess if it contains a number, a
                         descriptor, an array or a time series.''')
+    parser.add_argument('-u', '--server-url',
+                        help='''Specify the URL of the server to which this
+                        plug-in connects.''')
     return parser
 
 
 if __name__ == '__main__':
     parser = commandline_parser()
     args = parser.parse_args()
-    csv = ImportCSV()
+    csv = ImportCSV(url=args.server_url)
 
     network_id = None
     scen_ids = []

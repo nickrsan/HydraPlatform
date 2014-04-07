@@ -264,11 +264,11 @@ from GAMSplugin import convert_date_to_timeindex
 
 class GAMSexport(object):
 
-    def __init__(self, network_id, scenario_id, filename):
+    def __init__(self, network_id, scenario_id, filename, url=None):
         self.filename = filename
         self.time_index = []
 
-        self.cli = PluginLib.connect()
+        self.cli = PluginLib.connect(url=url)
         net = self.cli.service.get_network(network_id,
                                            'Y',
                                            scenario_ids=[scenario_id])
@@ -661,7 +661,9 @@ Written by Philipp Meier <philipp@diemeiers.ch>
                         help='''Group nodes by this attribute(s).''')
     parser.add_argument('-gl', '--group-links-by', nargs='+',
                         help='''Group links by this attribute(s).''')
-
+    parser.add_argument('-u', '--server-url',
+                        help='''Specify the URL of the server to which this
+                        plug-in connects.''')
     return parser
 
 
@@ -669,7 +671,10 @@ if __name__ == '__main__':
     parser = commandline_parser()
     args = parser.parse_args()
 
-    exporter = GAMSexport(int(args.network), int(args.scenario), args.output)
+    exporter = GAMSexport(int(args.network),
+                          int(args.scenario),
+                          args.output,
+                          url=args.server_url)
 
     if args.template_id is not None:
         exporter.template_id = int(args.template_id)

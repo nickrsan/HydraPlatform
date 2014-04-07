@@ -88,8 +88,8 @@ class ExportCSV(object):
     Scenario = None
     timezone = pytz.utc
 
-    def __init__(self):
-        self.client = PluginLib.connect()
+    def __init__(self, url=None):
+        self.client = PluginLib.connect(url=url)
 
         all_attributes = self.client.service.get_attributes()
         self.attributes = {}
@@ -97,7 +97,7 @@ class ExportCSV(object):
             self.attributes[attr.id] = attr.name
 
     def export(self, project, network, scenario):
-       
+
         if network is not None:
             #The network ID can be specified to get the network...
             try:
@@ -139,7 +139,7 @@ class ExportCSV(object):
 
     def export_network(self, network, scenario):
         logging.info("\n************NETWORK****************")
-       
+
         scenario.target_dir = os.path.join(network.network_dir, scenario.name.replace(' ', '_'))
 
         if not os.path.exists(scenario.target_dir):
@@ -148,7 +148,7 @@ class ExportCSV(object):
         network_file = open(os.path.join(scenario.target_dir, "network.csv"), 'w')
 
         network_attributes = self.get_resource_attributes([network])
-       
+
         network_attributes_string = ""
         if len(network_attributes) > 0:
             network_attributes_string = ',%s'%(','.join(network_attributes.values()))
@@ -168,7 +168,7 @@ class ExportCSV(object):
                 attr_name = network_attributes[r_attr.attr_id]
                 value = self.get_attr_value(scenario, r_attr, attr_name, network.name)
                 values[network_attributes.keys().index(r_attr.attr_id)] = value
-        
+
         network_entry = "%(id)s,%(description)s,%(name)s,%(values)s\n"%{
             "id"          : network.id,
             "description" : network.description,
@@ -204,7 +204,7 @@ class ExportCSV(object):
     def export_nodes(self, scenario, nodes):
         logging.info("\n************NODES****************")
 
-        #return this so that the link export can easily access 
+        #return this so that the link export can easily access
         #the names of the links.
         id_name_map = dict()
 
@@ -213,7 +213,7 @@ class ExportCSV(object):
         node_file = open(os.path.join(scenario.target_dir, "nodes.csv"), 'w')
 
         node_attributes = self.get_resource_attributes(nodes)
-       
+
         node_attributes_string = ""
         if len(node_attributes) > 0:
             node_attributes_string = ',%s'%(','.join(node_attributes.values()))
@@ -232,13 +232,13 @@ class ExportCSV(object):
             id_name_map[node.id] = node.name
 
             values = ["" for attr_id in node_attributes.keys()]
-            
+
             if node.attributes is not None:
                 for r_attr in node.attributes.ResourceAttr:
                     attr_name = node_attributes[r_attr.attr_id]
                     value = self.get_attr_value(scenario, r_attr, attr_name, node.name)
                     values[node_attributes.keys().index(r_attr.attr_id)] = value
-            
+
             node_entry = "%(name)s,%(x)s,%(y)s%(values)s,%(description)s\n"%{
                 "name"        : node.name,
                 "x"           : node.x,
@@ -252,13 +252,13 @@ class ExportCSV(object):
         node_file.write(node_units_heading)
         node_file.writelines(node_entries)
         logging.info("Nodes written to file: %s", node_file.name)
-        
+
         return id_name_map
 
     def export_links(self, scenario, links, node_map):
         logging.info("\n************LINKS****************")
 
-        #return this so that the group export can easily access 
+        #return this so that the group export can easily access
         #the names of the links.
         id_name_map = dict()
 
@@ -267,7 +267,7 @@ class ExportCSV(object):
         link_file = open(os.path.join(scenario.target_dir, "links.csv"), 'w')
 
         link_attributes = self.get_resource_attributes(links)
-       
+
         link_attributes_string = ""
         if len(link_attributes) > 0:
             link_attributes_string = ',%s'%(','.join(link_attributes.values()))
@@ -283,7 +283,7 @@ class ExportCSV(object):
 
         link_entries = []
         for link in links:
-            
+
             id_name_map[link.id] = link.name
 
             values = ["" for attr_id in link_attributes.keys()]
@@ -310,7 +310,7 @@ class ExportCSV(object):
 
     def export_resourcegroups(self, scenario, resourcegroups, node_map, link_map):
         """
-            Export resource groups into two files. 
+            Export resource groups into two files.
             1:groups.csv defining the group name, description and any attributes.
             2:group_members.csv defining the contents of each group for this scenario
         """
@@ -394,14 +394,14 @@ class ExportCSV(object):
             Each constraint looks like a mathematical equation, with some stuff
             on the left, an operation in the middle and a constant on the right.
             The 'stuff' on the left looks something like:
-            
+
             (TYPE[NAME][ATTRIBUTE] op TYPE[NAME][ATTRIBUTE]...) for example:
-            
-            The following equation states that the sum of the flow of 
+
+            The following equation states that the sum of the flow of
             nodes a and B must be equal to that of node c.
 
             ((NODE[Node A][Flow] + NODE[Node B][Flow]) - NODE[Node C][Flow]) == 0.0
-        
+
         """
         logging.info("\n************CONSTRAINTS****************")
 
@@ -425,7 +425,7 @@ class ExportCSV(object):
                     if r_attr.attr_id not in attributes.keys():
                         attr_name = self.attributes[r_attr.attr_id]
                         attributes[r_attr.attr_id] = attr_name
-        return attributes 
+        return attributes
 
     def get_attr_unit(self, scenario, attr_id):
         """
@@ -457,7 +457,7 @@ class ExportCSV(object):
                     value = rs.value.value.desc_val
                 elif rs.value.type == 'array':
                     value = rs.value.value.arr_data
-                    file_name = "array_%s_%s.csv"%(resource_attr.ref_key, attr_name) 
+                    file_name = "array_%s_%s.csv"%(resource_attr.ref_key, attr_name)
                     file_loc = os.path.join(scenario.target_dir, file_name)
                     if os.path.exists(file_loc):
                         arr_file      = open(file_loc, 'a')
@@ -475,25 +475,25 @@ class ExportCSV(object):
                         shape_str.append(str(x))
                     one_dimensional_val = np_val.reshape(1, n)
                     arr_file.write("%s,%s,%s\n"%
-                                ( 
+                                (
                                     resource_name,
-                                    ' '.join(shape_str), 
+                                    ' '.join(shape_str),
                                     ','.join([str(x) for x in one_dimensional_val.tolist()[0]]))
                                  )
-                    
+
                     arr_file.close()
                     value = file_name
                 elif rs.value.type == 'scalar':
                     value = rs.value.value.param_value
                 elif rs.value.type == 'timeseries':
                     value = rs.value.value.ts_values
-                    file_name = "timeseries_%s_%s.csv"%(resource_attr.ref_key, attr_name) 
+                    file_name = "timeseries_%s_%s.csv"%(resource_attr.ref_key, attr_name)
                     file_loc = os.path.join(scenario.target_dir, file_name)
                     if os.path.exists(file_loc):
                         ts_file      = open(file_loc, 'a')
                     else:
                         ts_file      = open(file_loc, 'w')
-                    
+
                     for ts in value:
                         ts_time = ts['ts_time']
                         ts_val  = ts['ts_value']
@@ -521,13 +521,13 @@ class ExportCSV(object):
                                         ts_time,
                                         ' '.join(shape_str),
                                         ','.join([str(x) for x in one_dimensional_val.tolist()[0]])))
-                        
+
                     ts_file.close()
                     value = file_name
 
                 elif rs.value.type == 'eqtimeseries':
                     value = rs.value.value.arr_data
-                    file_name = "eq_timeseries_%s_%s.csv"%(resource_attr.ref_key, attr_name) 
+                    file_name = "eq_timeseries_%s_%s.csv"%(resource_attr.ref_key, attr_name)
                     file_loc = os.path.join(scenario.target_dir, file_name)
                     if os.path.exists(file_loc):
                         arr_file      = open(file_loc, 'a')
@@ -542,14 +542,14 @@ class ExportCSV(object):
                         shape_str.append(str(x))
                     one_dimensional_val = np_val.reshape(1, n)
                     arr_file.write("%s,%s,%s\n"%
-                                ( 
+                                (
                                     resource_name,
                                     rs.value.start_time,
                                     rs.value.frequency,
-                                    ' '.join(shape_str), 
+                                    ' '.join(shape_str),
                                     ','.join([str(x) for x in one_dimensional_val.tolist()[0]]))
                                  )
-                    
+
                     arr_file.close()
                     value = file_name
                 return str(value)
@@ -562,7 +562,8 @@ def commandline_parser():
 
 Written by Stephen Knox <s.knox@ucl.ac.uk>
 (c) Copyright 2013, University College London.
-        """, epilog="For more information visit www.hydra-network.com",
+(c) Copyright 2014, University of Manchester.
+        """, epilog="For more information visit www.hydraplatform.org",
         formatter_class=ap.RawDescriptionHelpFormatter)
     parser.add_argument('-p', '--project',
                         help='''Specify the ID of the project. Only necessary
@@ -583,13 +584,16 @@ Written by Stephen Knox <s.knox@ucl.ac.uk>
                         timezone will be used for all timeseries data that is
                         imported. If you don't specify a timezone, it defaults
                         to UTC.''')
+    parser.add_argument('-u', '--server-url',
+                        help='''Specify the URL of the server to which this
+                        plug-in connects.''')
     return parser
 
 
 if __name__ == '__main__':
     parser = commandline_parser()
     args = parser.parse_args()
-    csv = ExportCSV()
+    csv = ExportCSV(url=args.server_url)
 
     if args.timezone is not None:
         csv.timezone = pytz.timezone(args.timezone)
