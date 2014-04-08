@@ -487,7 +487,7 @@ class GAMSexport(object):
                 for attribute in attributes:
                     attr = resource.get_attribute(attr_name=attribute.name)
                     if attr.value is not None:
-                        array = eval(attr.value.__getitem__(0))
+                        array = PluginLib.parse_suds_array(attr.value.__getitem__(0))
                         dim = array_dim(array)
                         self.output += '* Array %s for node %s, ' % \
                             (attr.name, resource.name)
