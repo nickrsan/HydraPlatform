@@ -268,6 +268,7 @@ class SoapServerTest(unittest.TestCase):
         link_attr2 = self.create_attr("link_attr_2", dimension='Speed')
         node_attr1 = self.create_attr("node_attr_1", dimension='Volume')
         node_attr2 = self.create_attr("node_attr_2", dimension='Speed')
+        node_attr3 = self.create_attr("node_attr_3", dimension='Current')
         group_attr = self.create_attr("group_attr", dimension='Volume')
 
         template = self.create_template()
@@ -295,7 +296,7 @@ class SoapServerTest(unittest.TestCase):
         for n in range(num_nodes):
             node = self.create_node(n*-1, node_name="Node %s"%(n))
 
-            #Froddm our attributes, create a resource attr for our node
+            #From our attributes, create a resource attr for our node
             #We don't assign data directly to these resource attributes. This
             #is done when creating the scenario -- a scenario is just a set of
             #data for a given list of resource attributes.
@@ -313,6 +314,14 @@ class SoapServerTest(unittest.TestCase):
                 attr_id = node_attr2.id,
                 id      = ra_index * -1,
                 attr_is_var = 'Y',
+            )
+            ra_index = ra_index + 1
+            node_ra2         = dict(
+                ref_key = 'NODE',
+                ref_id  = None,
+                attr_id = node_attr3.id,
+                id      = ra_index * -1,
+                attr_is_var = 'N',
             )
             ra_index = ra_index + 1
 
@@ -419,8 +428,12 @@ class SoapServerTest(unittest.TestCase):
         for n in nodes:
             for na in n['attributes'].ResourceAttr:
                 if na.get('attr_is_var', 'N') == 'N':
-                    timeseries = self.create_timeseries(na)
-                    scenario_data.ResourceScenario.append(timeseries)
+                    if na['attr_id'] == node_attr1['id']:
+                        timeseries = self.create_timeseries(na)
+                        scenario_data.ResourceScenario.append(timeseries)
+                    elif na['attr_id'] == node_attr3['id']:
+                        eqtimeseries = self.create_eqtimeseries(na)
+                        scenario_data.ResourceScenario.append(eqtimeseries)
 
         for l in links:
             for na in l['attributes'].ResourceAttr:
@@ -619,6 +632,41 @@ class SoapServerTest(unittest.TestCase):
 
 
         return scenario_attr
+
+    def create_eqtimeseries(self, ResourceAttr):
+        #A scenario attribute is a piece of data associated
+        #with a resource attribute.
+        #[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        ts_val = {
+            'start_time' : datetime.datetime.now(),
+            'frequency'  : 3600,
+            'arr_data': {'arr_data' :
+                    {'array':[
+                            {'item':[9, 210, 11]},
+                    ]},
+            }
+        }
+
+        dataset = dict(
+            id=None,
+            type = 'eqtimeseries',
+            name = 'my equally spaced timeseries',
+            unit = 'amps',
+            dimension = 'Current',
+            locked = 'N',
+            value = ts_val,
+        )
+
+        scenario_attr = dict(
+            attr_id = ResourceAttr['attr_id'],
+            resource_attr_id = ResourceAttr['id'],
+            value = dataset,
+        )
+
+
+        return scenario_attr
+
+
 
 
     def create_constraint(self, net, constant=5):

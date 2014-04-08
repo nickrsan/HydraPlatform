@@ -89,9 +89,16 @@ def parse_value(data):
 
         return ts
     elif data_type == 'eqtimeseries':
-        start_time = datetime.strptime(value[0][0], FORMAT)
+        start_time = timestamp_to_ordinal(value[0][0]) 
         frequency  = value[1][0]
-        arr_data   = eval(value[2][0])
+        try:
+            val = eval(value[2][0])
+        except:
+            arr_data = value[2][0]['{%s}arr_data'%NS][0]
+            val = parse_array(arr_data)
+
+        arr_data   = val
+
         return (start_time, frequency, arr_data)
     elif data_type == 'scalar':
         return value[0][0]
@@ -258,6 +265,11 @@ class TimeSeries(HydraComplexModel):
         self.ts_values = ts_vals
 
 class EqTimeSeries(HydraComplexModel):
+    """
+        An equally spaced timeseries value.
+        Frequency is stored in seconds
+        Value must be an array.
+    """
     _type_info = [
         ('start_time', DateTime),
         ('frequency', Decimal),
@@ -269,8 +281,8 @@ class EqTimeSeries(HydraComplexModel):
         if val is None:
             return
 
-        self.start_time = val['start_time']
-        self.frequency  = val['frequency']
+        self.start_time = [val['start_time']]
+        self.frequency  = [val['frequency']]
         self.arr_data   = [val['arr_data']]
 
 class Scalar(HydraComplexModel):

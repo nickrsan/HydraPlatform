@@ -1783,6 +1783,7 @@ class EqTimeSeries(IfaceBase):
     """
         Equally spaced time series data
         -- a start time, frequency and an associated array.
+        -- frequency is an integer, measured in seconds.
     """
     def __init__(self, data_id = None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
