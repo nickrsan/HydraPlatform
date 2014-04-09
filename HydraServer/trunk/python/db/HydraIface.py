@@ -18,7 +18,12 @@ import datetime
 from decimal import Decimal
 from HydraLib.util import ordinal_to_timestamp
 
-from HydraLib.HydraException import HydraError
+from HydraLib.HydraException import HydraError,\
+        ResourceNotFoundError,\
+        HydraAttributeError,\
+        OwnershipError,\
+        PermissionError,\
+        DataError
 import IfaceLib
 from IfaceLib import IfaceBase, execute
 
@@ -215,7 +220,7 @@ class GenericResource(IfaceBase):
             scenario_id = 1
 
         if scenario_id == 1 and self.name != 'Project':
-            raise HydraError("An error has occurred while setting"
+            raise HydraAttributeError("An error has occurred while setting"
                              "resource attribute %s this data."
                              "Scenario 1 is reserved for project attributes."
                              %(resource_attr_id))
@@ -463,7 +468,7 @@ class GenericResource(IfaceBase):
         owner.db.ref_key = self.ref_key
 
         if self.ref_key not in ('PROJECT', 'NETWORK'):
-            raise HydraError("Only resources of type NETWORK and PROJECT may have an owner.")
+            raise OwnershipError("Only resources of type NETWORK and PROJECT may have an owner.")
 
         owner.db.ref_id = self.ref_id
         owner.db.user_id = int(user_id)
@@ -517,7 +522,7 @@ class GenericResource(IfaceBase):
         rs = execute(sql)
 
         if len(rs) == 0:
-            raise HydraError("Permission denied. User %s does not have read"
+            raise PermissionError("Permission denied. User %s does not have read"
                              " access on %s %s" %
                              (user_id, self.ref_key, self.ref_id))
 
@@ -545,7 +550,7 @@ class GenericResource(IfaceBase):
         rs = execute(sql)
 
         if len(rs) == 0:
-            raise HydraError("Permission denied. User %s does not have write"
+            raise PermissionError("Permission denied. User %s does not have write"
                              " access on %s %s" %
                              (user_id, self.ref_key, self.ref_id))
 
@@ -573,7 +578,7 @@ class GenericResource(IfaceBase):
         rs = execute(sql)
 
         if len(rs) == 0:
-            raise HydraError("Permission denied. User %s does not have share"
+            raise PermissionError("Permission denied. User %s does not have share"
                              " access on %s %s" %
                              (user_id, self.ref_key, self.ref_id))
 
@@ -703,7 +708,7 @@ class Network(GenericResource):
             for s_id in scenario_ids:
                 s_i = Scenario(self, scenario_id=s_id)
                 if s_i.db.network_id != self.db.network_id:
-                    raise HydraError("Scenario %s is not in network %s"%
+                    raise ResourceNotFoundError("Scenario %s is not in network %s"%
                                     (s_id, self.db.network_id))
                 s_i.load_all()
                 scenarios.append(s_i)
@@ -758,7 +763,7 @@ class Network(GenericResource):
         for scenario_id in scenario_ids:
             s_i = Scenario(scenario_id=scenario_id)
             if s_i.db.network_id != self.db.network_id:
-                raise HydraError("Scenario %s is not in network %s"%
+                raise ResourceNotFoundError("Scenario %s is not in network %s"%
                                  (scenario_id, self.db.network_id))
             scenarios.append(s_i)
 
@@ -1092,7 +1097,7 @@ class ResourceAttr(IfaceBase):
         }
 
         if ref_key_map.get(self.db.ref_key) is None:
-            raise HydraError("%s can not have attributes!"%(self.db.ref_key))
+            raise HydraAttributeError("%s can not have attributes!"%(self.db.ref_key))
 
         obj = ref_key_map[self.db.ref_key]()
         obj.db.__setattr__(obj.db.pk_attrs[0], self.db.ref_id)
@@ -1151,7 +1156,7 @@ class ResourceAttr(IfaceBase):
         #If there are any constraints associated with this resource attribute, it cannot be deleted
         if len(self.constraintitems) > 0:
             constraints = [ci.db.constraint_id for ci in self.constraintitems]
-            raise HydraError("Resource attribute cannot be deleted. "
+            raise HydraAttributeError("Resource attribute cannot be deleted. "
                              "It is referened by constraints: %s "\
                              %constraints)
 
@@ -1335,7 +1340,7 @@ class ResourceScenario(IfaceBase):
 
         rs = execute(sql)
         if len(rs) != 1:
-            raise HydraError("Error retrieving attr_id for resource attr %s"
+            raise ResourceNotFoundError("Error retrieving attr_id for resource attr %s"
                              %(self.db.resource_attr_id))
         return rs[0].attr_id
 
@@ -1393,7 +1398,7 @@ class Dataset(IfaceBase):
         """
 
         if self.db.locked == 'N':
-            raise HydraError("Cannot set ownership. Dataset not locked")
+            raise OwnershipError("Cannot set ownership. Dataset not locked")
 
         owner = Owner()
         owner.db.ref_key = 'DATASET'
@@ -1429,7 +1434,7 @@ class Dataset(IfaceBase):
         rs = execute(sql)
 
         if len(rs) == 0:
-            raise HydraError("Permission denied. User %s does not have read"
+            raise PermissionError("Permission denied. User %s does not have read"
                              " access on dataset %s" %
                              (user_id, self.db.dataset_id))
 
@@ -1455,7 +1460,7 @@ class Dataset(IfaceBase):
         elif self.db.data_type == 'array':
             datum = Array(data_id = self.db.data_id)
         else:
-            raise HydraError("Unrecognised data type: %s"%self.db.data_type)
+            raise DataError("Unrecognised data type: %s"%self.db.data_type)
 
         self.datum = datum
         return datum
@@ -2078,7 +2083,7 @@ class ConstraintItem(IfaceBase):
         rs = execute(sql)
 
         if len(rs) == 0:
-            raise HydraError("Could not find resource for"
+            raise ResourceNotFoundError("Could not find resource for"
                 " resource attribute(%s) in the contraint item!",
                 self.db.resource_attr_id)
 

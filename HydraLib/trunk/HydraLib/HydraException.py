@@ -13,34 +13,72 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-class DBException(Exception):
-    def __init__(self, message):
-        # Call the base class constructor with the parameters it needs
-        Exception.__init__(self, message)
 
 
 class HydraError(Exception):
+    def __init__(self, code=0000, message="A hydra error has occurred"):
+        # Call the base class constructor with the parameters it needs
+        Exception.__init__(self, "%s : %s"%(code,message))
+
+class HydraDBError(HydraError):
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
-        Exception.__init__(self, message)
+        code = error_codes.get('HYDRADB', '0000')
+        HydraError.__init__(self, code, message)
 
-
-class HydraPluginError(Exception):
+class HydraPluginError(HydraError):
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
-        Exception.__init__(self, message)
+        code = error_codes.get('HYDRAPLUGIN', '0000')
+        HydraError.__init__(self, code, message)
+
+class ResourceNotFoundError(HydraError):
+    def __init__(self, message):
+        # Call the base class constructor with the parameters it needs
+        code = error_codes.get('HYDRARESOURCE', '0000')
+        HydraError.__init__(self, code, message)
+
+class HydraAttributeError(HydraError):
+    def __init__(self, message):
+        # Call the base class constructor with the parameters it needs
+        code = error_codes.get('HYDRAATTR', '0000')
+        HydraError.__init__(self, code, message)
+
+class PermissionError(HydraError):
+    def __init__(self, message):
+        # Call the base class constructor with the parameters it needs
+        code = error_codes.get('HYDRAPERM', '0000')
+        HydraError.__init__(self, code, message)
+
+class OwnershipError(HydraError):
+    def __init__(self, message):
+        # Call the base class constructor with the parameters it needs
+        code = error_codes.get('HYDRAOWNER', '0000')
+        HydraError.__init__(self, code, message)
+
+class DataError(HydraError):
+    def __init__(self, message):
+        # Call the base class constructor with the parameters it needs
+        code = error_codes.get('HYDRADATA', '0000')
+        HydraError.__init__(self, code, message)
 
 #
 #ERROR CODES FOR HYDRA
 #Categories are:
-#Permissions Errors: 000 - 099
-#Formatting Errors:  100 - 199
-#File Errors:        200 - 299
-#Template Errors:    300 - 399
-#Plugin Errors       400 - 499
+#DB Errors:         100 - 199
+#Plugin Errors:     200 - 299
+#ResourceErrors:    300 - 399
+#Attribute Errors:  400 - 499
+#Permission Errors: 500 - 599
+#Data Errors        600 - 699
+#Ownership Errors   700 - 799
 #
-errors = {
-	'HYD_NET_001'  : "Invalid network",
-	'HYD_PERM_001' : "Permission Denied.",
-
+error_codes = {
+    'HYDRADB'      : "100",
+    'HYDRAPLUGIN'  : "200",
+    'HYDRARESOURCE': "300",
+    'HYDRAATTR'    : "400",
+    'HYDRAPERM'    : "500",
+    'HYDRADATA'    : "600",
+    'HYDRAOWNER'   : "700",
 }

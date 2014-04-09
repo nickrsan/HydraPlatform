@@ -17,7 +17,7 @@ import logging
 from decimal import Decimal
 from HydraLib import config
 from hdb import HydraMySqlCursor
-from HydraLib.HydraException import HydraError
+from HydraLib.HydraException import HydraDBError
 from mysql.connector import DatabaseError
 import pytz
 
@@ -198,7 +198,7 @@ def bulk_insert(objs, table_name=""):
 
     warnings = cursor._fetch_warnings()
     if warnings is not None:
-        raise HydraError("Bulk insert created Warnings: %s"%warnings)
+        raise HydraDBError("Bulk insert created Warnings: %s"%warnings)
 
     #the executemany seems to return the bottom index, rather than the top,
     #so we have to work out the top index.
@@ -421,7 +421,7 @@ class DBIface(object):
         try:
             cursor.execute(complete_insert)
         except DatabaseError, e:
-            raise HydraError("Error inserting into %s: %s"%(self.table_name, e.msg))
+            raise HydraDBError("Error inserting into %s: %s"%(self.table_name, e.msg))
 
         if self.seq is not None:
             if old_seq is None or old_seq != cursor.lastrowid:

@@ -15,8 +15,8 @@
 #
 import logging
 from decimal import Decimal
-from soap_server import hydra_complexmodels
 from HydraLib import config
+from HydraLib.HydraException import HydraError
 import datetime
 import MySqlIface
 
@@ -100,7 +100,7 @@ class IfaceBase(object):
             if attr_funcs.get(name) is not None:
                 return attr_funcs.get(name)(self)
             else:
-                raise
+                raise HydraError("Attribute %s not found"%name)
 
     def save(self):
         """
