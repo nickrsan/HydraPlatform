@@ -51,7 +51,11 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         template = self.client.factory.create('hyd:Template')
         template.name = 'Test template @ %s'%datetime.datetime.now()
+        
+        layout = self.client.factory.create("xs:anyType")
+        layout.groups = '<groups>...</groups>'
 
+        template.layout = layout 
 
         types = self.client.factory.create('hyd:TemplateTypeArray')
         #**********************
@@ -100,6 +104,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         new_template = self.client.service.add_template(template)
 
         assert new_template.name == template.name, "Names are not the same!"
+        assert str(new_template.layout) == str(template.layout), "Layouts are not the same!"
         assert new_template.id is not None, "New Template has no ID!"
         assert new_template.id > 0, "New Template has incorrect ID!"
 
@@ -448,9 +453,11 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         network = self.create_network_with_data()
 
         node_to_check = network.nodes.Node[0]
-        matching_types = self.client.service.get_matching_resource_types('NODE', node_to_check.id)
+        matching_types = self.client.service.get_matching_resource_types('NODE', 
+                                                                         node_to_check.id)
 
         assert len(matching_types) > 0, "No types returned!"
+
 
         matching_type_ids = []
         for tmpltype in matching_types.TypeSummary:

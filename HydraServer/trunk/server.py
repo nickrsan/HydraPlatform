@@ -114,7 +114,8 @@ class HydraSoapApplication(Application):
             hdb.rollback()
             logging.critical(e)
             traceback.print_exc(file=sys.stdout)
-            raise HydraServiceError(e.message)
+            code = "HydraError %s"%e.code
+            raise HydraServiceError(e.message, code)
         except ObjectNotFoundError, e:
             hdb.rollback()
             logging.critical(e)

@@ -16,51 +16,52 @@
 
 
 class HydraError(Exception):
-    def __init__(self, code=0000, message="A hydra error has occurred"):
+    def __init__(self, message="A hydra error has occurred", code=0000):
         # Call the base class constructor with the parameters it needs
-        Exception.__init__(self, "%s : %s"%(code,message))
+        self.code = code
+        Exception.__init__(self, message)
 
 class HydraDBError(HydraError):
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
         code = error_codes.get('HYDRADB', '0000')
-        HydraError.__init__(self, code, message)
+        HydraError.__init__(self, message, code)
 
 class HydraPluginError(HydraError):
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
         code = error_codes.get('HYDRAPLUGIN', '0000')
-        HydraError.__init__(self, code, message)
+        HydraError.__init__(self, message, code)
 
 class ResourceNotFoundError(HydraError):
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
         code = error_codes.get('HYDRARESOURCE', '0000')
-        HydraError.__init__(self, code, message)
+        HydraError.__init__(self, message, code)
 
 class HydraAttributeError(HydraError):
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
         code = error_codes.get('HYDRAATTR', '0000')
-        HydraError.__init__(self, code, message)
+        HydraError.__init__(self, message, code)
 
 class PermissionError(HydraError):
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
         code = error_codes.get('HYDRAPERM', '0000')
-        HydraError.__init__(self, code, message)
+        HydraError.__init__(self, message, code)
 
 class OwnershipError(HydraError):
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
         code = error_codes.get('HYDRAOWNER', '0000')
-        HydraError.__init__(self, code, message)
+        HydraError.__init__(self, message, code)
 
 class DataError(HydraError):
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
         code = error_codes.get('HYDRADATA', '0000')
-        HydraError.__init__(self, code, message)
+        HydraError.__init__(self, message, code)
 
 #
 #ERROR CODES FOR HYDRA

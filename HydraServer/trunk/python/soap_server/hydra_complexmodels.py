@@ -397,6 +397,7 @@ class Template(HydraComplexModel):
     _type_info = [
         ('id',        Integer(default=None)),
         ('name',      String(default=None)),
+        ('layout',    AnyDict(min_occurs=0, max_occurs=1, default=None)),
         ('types',     SpyneArray(TemplateType, default=[])),
     ]
 
@@ -405,8 +406,12 @@ class Template(HydraComplexModel):
         if obj_dict is None:
             return
 
-        self.name = obj_dict['template_name']
-        self.id   = obj_dict['template_id']
+        self.name   = obj_dict['template_name']
+        self.id     = obj_dict['template_id']
+        if obj_dict['layout'] is not None:
+            self.layout    = eval(obj_dict['layout'])
+        else:
+            self.layout = {}
 
         types = []
         for templatetype in obj_dict['templatetypes']:

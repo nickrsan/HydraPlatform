@@ -316,7 +316,7 @@ class SoapServerTest(unittest.TestCase):
                 attr_is_var = 'Y',
             )
             ra_index = ra_index + 1
-            node_ra2         = dict(
+            node_ra3         = dict(
                 ref_key = 'NODE',
                 ref_id  = None,
                 attr_id = node_attr3.id,
@@ -325,7 +325,7 @@ class SoapServerTest(unittest.TestCase):
             )
             ra_index = ra_index + 1
 
-            node['attributes'].ResourceAttr = [node_ra1, node_ra2] 
+            node['attributes'].ResourceAttr = [node_ra1, node_ra2, node_ra3] 
 
             type_summary_arr = self.client.factory.create('hyd:TypeSummaryArray')
 
@@ -639,7 +639,7 @@ class SoapServerTest(unittest.TestCase):
         #[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         ts_val = {
             'start_time' : datetime.datetime.now(),
-            'frequency'  : 3600,
+            'frequency'  : 3600.0,
             'arr_data': {'arr_data' :
                     {'array':[
                             {'item':[9, 210, 11]},

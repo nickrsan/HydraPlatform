@@ -1804,7 +1804,7 @@ class EqTimeSeries(IfaceBase):
         if timestamp is not None:
             #easiest thing to do is build up a dictionary of timestamp / values
             val = eval(val) #this should be a multi-dimensional list
-            start_date = self.db.start_time
+            start_date = str(ordinal_to_timestamp(self.db.start_time)) 
             val_dict = dict()
             time_interval = start_date
             time_delta    = datetime.timedelta(seconds=self.db.frequency)
@@ -1830,6 +1830,17 @@ class EqTimeSeries(IfaceBase):
                 'arr_data'   : self.db.arr_data,
             }
         return val
+
+    def get_as_dict(self, **kwargs):
+        val = self.get_val()
+        obj_dict = dict(
+            object_type = "EqTimeSeries",
+            start_time  = val['start_time'],
+            frequency   = val['frequency'],
+            arr_data    = val['arr_data'],
+            data_id     = self.db.data_id,
+        )
+        return obj_dict
 
 class Scalar(IfaceBase):
     """

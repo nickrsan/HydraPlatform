@@ -1,5 +1,44 @@
 <template_definition>
     <template_name>Test XML Template</template_name>
+        <layout>
+        <item>
+            <name>groups</name>
+            <value>
+                <groups>
+                    <group>
+                        <name>Hydrological Boundaries</name>
+                        <description>Hydrological Boundary Units</description>
+                        <displayname>Hydrological</displayname>
+                        <subgroups>
+                            <subgroup>
+                                <name>Flow Boundaries</name>
+                                <description>Hydrological Boundary Units</description>
+                            </subgroup>
+                        </subgroups>
+                    </group>
+                    <group>
+                        <name>Weirs</name>
+                        <description>All types of weir</description>
+                        <displayname>Weir</displayname>
+                        <subgroups>
+                            <subgroup>
+                                <name>SC Weir</name>
+                                <description>Sharp crested weir</description>
+                            </subgroup>
+                            <subgroup>
+                                <name>RN Weir</name>           
+                                <description>Round nosed weir</description>
+                            </subgroup>
+                            <subgroup>
+                                <name>Gen Weir</name>
+                                <description>General weir</description>
+                            </subgroup>
+                        </subgroups>
+                    </group>
+                </groups>
+            </value>
+        </item>
+    </layout>
     <resources>
         <resource>
             <type>NODE</type>

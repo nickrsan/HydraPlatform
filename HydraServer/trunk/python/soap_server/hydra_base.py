@@ -101,10 +101,10 @@ class AuthorizationError(Fault):
 class HydraServiceError(Fault):
     __namespace__ = 'hydra.error'
 
-    def __init__(self, message):
+    def __init__(self, message, code="HydraError"):
 
         Fault.__init__(self,
-                faultcode='HydraError',
+                faultcode=code,
                 faultstring=message
         )
 

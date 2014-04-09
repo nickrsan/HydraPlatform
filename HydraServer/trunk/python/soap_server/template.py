@@ -130,6 +130,13 @@ class TemplateService(HydraService):
 
         template_name = xml_tree.find('template_name').text
 
+        template_layout = None
+        if xml_tree.find('layout') is not None and \
+                   xml_tree.find('layout').text is not None:
+            layout = xml_tree.find('layout')
+            layout_string = get_layout_as_dict(layout)
+            template_layout = str(layout_string)
+
         sql = """
             select
                 tmpl.template_id,
@@ -157,10 +164,12 @@ class TemplateService(HydraService):
         if len(rs) > 0:
             tmpl_i = HydraIface.Template(template_id = rs[0].template_id)
             tmpl_i.load_all()
+            tmpl_i.db.layout = template_layout
         else:
             tmpl_i = HydraIface.Template()
             tmpl_i.db.template_name = template_name
-            tmpl_i.save()
+            tmpl_i.db.layout        = template_layout
+        tmpl_i.save()
 
         types = xml_tree.find('resources')
 
@@ -444,6 +453,7 @@ class TemplateService(HydraService):
         """
         tmpl_i = HydraIface.Template()
         tmpl_i.db.template_name = template.name
+        tmpl_i.db.layout        = str(template.layout)
 
         tmpl_i.save()
 
@@ -462,8 +472,9 @@ class TemplateService(HydraService):
             Update template and a type and typeattrs.
         """
         tmpl_i = HydraIface.Template(template_id=template.id)
-        tmpl_i.db.template_name = template.name
         tmpl_i.load_all()
+        tmpl_i.db.template_name = template.name
+        tmpl_i.db.layout        = str(template.layout)
 
         for templatetype in template.types:
             if templatetype.id is not None:
@@ -486,7 +497,6 @@ class TemplateService(HydraService):
                     type_i.add_typeattr(typeattr.attr_id)
                     type_i.save()
 
-        tmpl_i.commit()
         return get_as_complexmodel(ctx, tmpl_i)
 
     @rpc(_returns=SpyneArray(Template))
@@ -556,7 +566,8 @@ class TemplateService(HydraService):
         sql = """
             select
                 template_id,
-                template_name
+                template_name,
+                layout
             from
                 tTemplate
         """
@@ -570,6 +581,7 @@ class TemplateService(HydraService):
                 'object_type'   : 'Template',
                 'template_id'   : r.template_id,
                 'template_name' : r.template_name,
+                'layout'        : r.layout,
                 'templatetypes' : types.get(r.template_id, []),
             }
             template_ret_objs.append(Template(template))
@@ -764,8 +776,12 @@ class TemplateService(HydraService):
         net_i = HydraIface.Network(network_id=network_id)
         net_i.load_all()
 
-        type_name = etree.SubElement(template_xml, "template_name")
-        type_name.text = "TemplateType from Network %s"%(net_i.db.network_name)
+        template_name = etree.SubElement(template_xml, "template_name")
+        template_name.text = "TemplateType from Network %s"%(net_i.db.network_name)
+        layout = _get_layout_as_etree(net_i.db.network_layout)
+
+        if layout is not None:
+            template_xml.append(layout)
 
         resources = etree.SubElement(template_xml, "resources")
         if net_i.get_attributes():
@@ -798,12 +814,10 @@ class TemplateService(HydraService):
                 resource_name   = etree.SubElement(node_resource, "name")
                 resource_name.text   = node_i.db.node_name
 
-                if node_i.db.node_layout not in ('', None):
-                    resource_layout = etree.SubElement(node_resource, "layout")
-                    resource_layout.text = node_i.db.node_layout
+                layout = _get_layout_as_etree(node_i.db.node_layout)
 
-                for node_attr in node_attributes:
-                    _make_attr_element(node_resource, node_attr)
+                if layout is not None:
+                    node_resource.append(layout)
 
                 existing_types['NODE'].append(attr_ids)
                 resources.append(node_resource)
@@ -820,9 +834,10 @@ class TemplateService(HydraService):
                 resource_name   = etree.SubElement(link_resource, "name")
                 resource_name.text   = link_i.db.link_name
 
-                if link_i.db.link_layout not in ('', None):
-                    resource_layout = etree.SubElement(link_resource, "layout")
-                    resource_layout.text = link_i.db.link_layout
+                layout = _get_layout_as_etree(link_i.db.link_layout)
+
+                if layout is not None:
+                    link_resource.append(layout)
 
                 for link_attr in link_attributes:
                     _make_attr_element(link_resource, link_attr)
@@ -884,7 +899,46 @@ def get_layout_as_dict(layout_tree):
 
     for item in layout_tree.findall('item'):
         name  = item.find('name').text
-        value = item.find('value').text
+        val_element = item.find('value')
+        value = val_element.text.strip()
+        if value == '':
+            children = val_element.getchildren()
+            value = etree.tostring(children[0], pretty_print=True)
         layout_dict[name] = [value]
     return layout_dict
+
+def _get_layout_as_etree(layout_dict):
+    """
+    Convert something that looks like this:
+    {
+        'color' : ['red'],
+        'shapefile' : ['blah.shp']
+    }
+
+    Into something that looks like this:
+    <layout>
+        <item>
+            <name>color</name>
+            <value>red</value>
+        </item>
+        <item>
+            <name>shapefile</name>
+            <value>blah.shp</value>
+        </item>
+    </layout>
+    """
+    if layout_dict is None:
+        return None
+
+    layout = etree.Element("layout")
+    layout_dict = eval(layout_dict)
+    for k, v in layout_dict.items():
+        item = etree.SubElement(layout, "item")
+        name = etree.SubElement(item, "name")
+        name.text = k
+        value = etree.SubElement(item, "value")
+        value.text = str(v)
+
+    return layout
+
 

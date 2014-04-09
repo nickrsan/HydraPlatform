@@ -162,7 +162,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
             self.client.service.get_network(network_1.id)
         except Exception, e:
             assert e.fault.faultcode.find("HydraError") > 0
-            assert e.fault.faultstring.find("Permission denied.") == 0
+            assert e.fault.faultstring.find("Permission denied.") >= 0
         self.client.service.logout("UserB")
 
         self.client = old_client
@@ -204,7 +204,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
             self.client.service.update_network(userb_networks.Network[0])
         except Exception, e:
             assert e.fault.faultcode.find("HydraError") > 0
-            assert e.fault.faultstring.find("Permission denied.") == 0
+            assert e.fault.faultstring.find("Permission denied.") >= 0
 
         self.client.service.logout("UserB")
 
@@ -268,7 +268,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
             userb_networks = self.client.service.get_networks(network_1.project_id)
         except Exception, e:
             assert e.fault.faultcode.find("HydraError") > 0
-            assert e.fault.faultstring.find("Permission denied.") == 0
+            assert e.fault.faultstring.find("Permission denied.") >= 0
         self.client.service.logout("UserB")
 
         #reset the client to the 'root' client for a consistent tearDown
