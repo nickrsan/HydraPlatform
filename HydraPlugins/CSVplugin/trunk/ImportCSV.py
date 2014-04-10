@@ -138,6 +138,13 @@ Please also consider the following:
   with the same name) will be considered the same. This results in a unique
   attribute set for nodes. The same applies for links.
 
+- An attribute to a node or link is only added if there is a value for that
+  specific attribute in the line specifying a node (or link). If an attribute
+  should be added as a variable, you need to enter ``NULL``.
+
+- If you use a tmplate during import, missing attributes will be added to each
+  node or link according to its type.
+
 TODO
 ----
 

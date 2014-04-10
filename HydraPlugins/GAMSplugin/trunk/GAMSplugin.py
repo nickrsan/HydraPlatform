@@ -22,77 +22,18 @@ from HydraLib.PluginLib import HydraNetwork
 
 class GAMSnetwork(HydraNetwork):
 
-    def load(self, soap_net, soap_attrs):
+    def gams_names_for_links(self):
+        """Add a string to each link that can be used directly in GAMS code in
+        order to define a link."""
+        for i, link in enumerate(self.links):
+            self.links[i].gams_name = link.from_node + ' . ' + link.to_node
 
-        # load network
-        resource_scenarios = dict()
-        for res_scen in \
-                soap_net.scenarios.Scenario[0].resourcescenarios.ResourceScenario:
-            resource_scenarios.update({res_scen.resource_attr_id: res_scen})
-        attributes = dict()
-        for attr in soap_attrs.Attr:
-            attributes.update({attr.id: attr})
-
-        self.name = soap_net.name
-        self.ID = soap_net.id
-        self.description = soap_net.description
-        self.scenario_id = soap_net.scenarios.Scenario[0].id
-
-        if soap_net.attributes is not None:
-            for res_attr in soap_net.attributes.ResourceAttr:
-                if res_attr.id in resource_scenarios.keys():
-                    self.add_attribute(attributes[res_attr.attr_id],
-                                       res_attr,
-                                       resource_scenarios[res_attr.id])
-                else:
-                    self.add_attribute(attributes[res_attr.attr_id],
-                                       res_attr,
-                                       None)
-
-        self.set_type(soap_net.types)
-
-        # load nodes
-        for node in soap_net.nodes.Node:
-            new_node = HydraResource()
-            new_node.ID = node.id
-            new_node.name = node.name
-            new_node.gams_name = node.name
-            if node.attributes is not None:
-                for res_attr in node.attributes.ResourceAttr:
-                    if res_attr.id in resource_scenarios.keys():
-                        new_node.add_attribute(attributes[res_attr.attr_id],
-                                               res_attr,
-                                               resource_scenarios[res_attr.id])
-                    else:
-                        new_node.add_attribute(attributes[res_attr.attr_id],
-                                               res_attr,
-                                               None)
-
-            new_node.set_type(node.types)
-            self.add_node(new_node)
-            del new_node
-
-        # load links
-        for link in soap_net.links.Link:
-            new_link = GAMSlink()
-            new_link.ID = link.id
-            new_link.name = link.name
-            new_link.from_node = self.get_node(node_id=link.node_1_id).name
-            new_link.to_node = self.get_node(node_id=link.node_2_id).name
-            new_link.gams_name = new_link.from_node + ' . ' + new_link.to_node
-            if link.attributes is not None:
-                for res_attr in link.attributes.ResourceAttr:
-                    if res_attr.id in resource_scenarios.keys():
-                        new_link.add_attribute(attributes[res_attr.attr_id],
-                                               res_attr,
-                                               resource_scenarios[res_attr.id])
-                    else:
-                        new_link.add_attribute(attributes[res_attr.attr_id],
-                                               res_attr,
-                                               None)
-
-            new_link.set_type(link.types)
-            self.add_link(new_link)
+    def ebsd_names_for_links(self):
+        """Add a string to each link that can be used directly in EBSD models
+        in order to define a link."""
+        for i, link in enumerate(self.links):
+            self.links[i].ebsd_name = link.from_node + ' . ' + \
+                link.name + ' . ' + link.to_node
 
 
 class GAMSlink(HydraResource):

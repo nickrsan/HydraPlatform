@@ -276,6 +276,7 @@ class GAMSexport(object):
 
         self.network = GAMSnetwork()
         self.network.load(net, attrs)
+        self.network.gams_names_for_links()
 
         self.template_id = None
 
@@ -317,11 +318,13 @@ class GAMSexport(object):
             self.output += '/\n\n'
         # Define other groups
         self.output += '* Node groups\n\n'
-        for group in self.network.node_groups:
-            self.output += group + '(i) /\n'
-            for node in self.network.get_node(group=group):
-                self.output += node.name + '\n'
-            self.output += '/\n\n'
+        for group in self.network.groups:
+            group_nodes = self.network.get_node(group=group.ID)
+            if len(group_nodes) > 0:
+                self.output += group.name + '(i) /\n'
+                for node in group_nodes:
+                    self.output += node.name + '\n'
+                self.output += '/\n\n'
 
     def export_links(self):
         self.output += 'SETS\n\n'
@@ -338,11 +341,13 @@ class GAMSexport(object):
                 self.output += link.gams_name + '\n'
             self.output += '/\n\n'
         # Define other groups
-        for group in self.network.link_groups:
-            self.output += group + '(i,j) /\n'
-            for link in self.network.get_link(group=group):
-                self.output += link.gams_name + '\n'
-            self.output += '/\n\n'
+        for group in self.network.groups:
+            group_links = self.network.get_link(group=group.ID)
+            if len(group_links) > 0:
+                self.output += group.name + '(i,j) /\n'
+                for link in group_links:
+                    self.output += link.gams_name + '\n'
+                self.output += '/\n\n'
 
     def connectivity_matrix(self):
         self.output += '* Connectivity matrix.\n'
@@ -487,7 +492,8 @@ class GAMSexport(object):
                 for attribute in attributes:
                     attr = resource.get_attribute(attr_name=attribute.name)
                     if attr.value is not None:
-                        array = PluginLib.parse_suds_array(attr.value.__getitem__(0))
+                        array = PluginLib.parse_suds_array(
+                            attr.value.__getitem__(0))
                         dim = array_dim(array)
                         self.output += '* Array %s for node %s, ' % \
                             (attr.name, resource.name)
@@ -678,14 +684,6 @@ if __name__ == '__main__':
 
     if args.template_id is not None:
         exporter.template_id = int(args.template_id)
-
-    if args.group_nodes_by is not None:
-        for ngroup in args.group_nodes_by:
-            exporter.network.create_node_groups(ngroup)
-
-    if args.group_links_by is not None:
-        for lgroup in args.group_links_by:
-            exporter.network.create_link_groups(lgroup)
 
     exporter.export_network()
 

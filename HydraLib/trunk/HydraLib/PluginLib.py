@@ -69,23 +69,24 @@ class HydraResource(object):
             return self._get_attr_by_id(attr_id)
 
     def set_type(self, types):
-        for obj_type in types.TypeSummary:
-            # Add resource type to template dictionary
-            if obj_type.template_id not in self.template.keys():
-                self.template[obj_type.template_id] = []
-            self.template[obj_type.template_id].append(obj_type.name)
-            # Add resource type to default entry holding all resource types
-            if obj_type.name not in self.template[None]:
-                self.template[None].append(obj_type.name)
+        if types is not None:
+            for obj_type in types.TypeSummary:
+                # Add resource type to template dictionary
+                if obj_type.template_id not in self.template.keys():
+                    self.template[obj_type.template_id] = []
+                self.template[obj_type.template_id].append(obj_type.name)
+                # Add resource type to default entry holding all resource types
+                if obj_type.name not in self.template[None]:
+                    self.template[None].append(obj_type.name)
 
-    def group(self, group_attr):
-        attr = self._get_attr_by_name(group_attr)
-        if attr is not None:
-            group = attr.value.__getitem__(0)
-            self.groups.append(group)
-            # The attribute is used for grouping and will not be exported
-            self.delete_attribute(attr)
-            return group
+    def group(self, group_id):
+        self.groups.append(group_id)
+        #attr = self._get_attr_by_name(group_attr)
+        #if attr is not None:
+        #    group = attr.value.__getitem__(0)
+        #    self.groups.append(group)
+        #    # The attribute is used for grouping and will not be exported
+        #    self.delete_attribute(attr)
 
     def _get_attr_by_name(self, attr_name):
         for attr in self.attributes:
@@ -106,6 +107,7 @@ class HydraNetwork(HydraResource):
     scenario_id = None
     nodes = []
     links = []
+    groups = []
     node_groups = []
     link_groups = []
 
@@ -127,7 +129,7 @@ class HydraNetwork(HydraResource):
         self.set_type(soap_net.types)
 
         if soap_net.attributes is not None:
-            for res_attr in soap_net.attributes.Attr:
+            for res_attr in soap_net.attributes.ResourceAttr:
                 if res_attr.id in resource_scenarios.keys():
                     self.add_attribute(attributes[res_attr.attr_id],
                                     res_attr,
@@ -136,6 +138,51 @@ class HydraNetwork(HydraResource):
                     self.add_attribute(attributes[res_attr.attr_id],
                                     res_attr,
                                     None)
+
+        # build dictionary of group members:
+        groupitems = \
+            soap_net.scenarios.Scenario[0].resourcegroupitems.ResourceGroupItem
+
+        nodegroups = dict()
+        linkgroups = dict()
+        groupgroups = dict()
+        for groupitem in groupitems:
+            if groupitem.ref_key == 'NODE':
+                if groupitem.ref_id not in nodegroups.keys():
+                    nodegroups.update({groupitem.ref_id: [groupitem.group_id]})
+                else:
+                    nodegroups[groupitem.ref_id].append(groupitem.group_id)
+            elif groupitem.ref_key == 'LINK':
+                if groupitem.ref_id not in linkgroups.keys():
+                    linkgroups.update({groupitem.ref_id: [groupitem.group_id]})
+                else:
+                    linkgroups[groupitem.ref_id].append(groupitem.group_id)
+            elif groupitem.ref_key == 'GROUP':
+                if groupitem.ref_id not in groupgroups.keys():
+                    groupgroups.update({groupitem.ref_id: [groupitem.group_id]})
+                else:
+                    groupgroups[groupitem.ref_id].append(groupitem.group_id)
+
+        # load groups
+        for resgroup in soap_net.resourcegroups.ResourceGroup:
+            new_group = HydraResource()
+            new_group.ID = resgroup.id
+            new_group.name = resgroup.name
+            if resgroup.attributes is not None:
+                for res_attr in resgroup.attributes.ResourceAttr:
+                    if res_attr.id in resource_scenarios.keys():
+                        new_group.add_attribute(attributes[res_attr.attr_id],
+                                                res_attr,
+                                                resource_scenarios[res_attr.id])
+                    else:
+                        new_group.add_attribute(attributes[res_attr.attr_id],
+                                                res_attr,
+                                                None)
+            new_group.set_type(resgroup.types)
+            if new_group.ID in groupgroups.keys():
+                new_group.group(groupgroups[new_group.ID])
+            self.add_group(new_group)
+            del new_group
 
         # load nodes
         for node in soap_net.nodes.Node:
@@ -154,6 +201,9 @@ class HydraNetwork(HydraResource):
                                                None)
 
             new_node.set_type(node.types)
+            if new_node.ID in nodegroups.keys():
+                for gid in nodegroups[new_node.ID]:
+                    new_node.group(gid)
             self.add_node(new_node)
             del new_node
 
@@ -168,14 +218,15 @@ class HydraNetwork(HydraResource):
                 for res_attr in link.attributes.ResourceAttr:
                     if res_attr.id in resource_scenarios.keys():
                         new_link.add_attribute(attributes[res_attr.attr_id],
-                                            res_attr,
-                                            resource_scenarios[res_attr.id])
+                                               res_attr,
+                                               resource_scenarios[res_attr.id])
                     else:
                         new_link.add_attribute(attributes[res_attr.attr_id],
                                                res_attr,
                                                None)
             new_link.set_type(link.types)
-
+            if new_link.ID in linkgroups.keys():
+                new_link.group(linkgroups[new_link.ID])
             self.add_link(new_link)
             del new_link
 
@@ -211,6 +262,22 @@ class HydraNetwork(HydraResource):
         elif group is not None:
             return self._get_links_by_group(group)
 
+    def add_group(self, group):
+        self.groups.append(group)
+
+    def delete_group(self, group):
+        pass
+
+    def get_group(self, **kwargs):
+        if kwargs.get('group_name') is not None:
+            return self._get_group_by_name(kwargs.get('group_name'))
+        elif kwargs.get('group_id') is not None:
+            return self._get_group_by_id(kwargs.get('group_id'))
+        elif kwargs.get('group_type') is not None:
+            return self._get_groups_by_type(kwargs.get('group_type'))
+        elif kwargs.get('group') is not None:
+            return self._get_groups_by_group(kwargs.get('group'))
+
     def get_node_types(self, template_id=None):
         node_types = []
         for node in self.nodes:
@@ -226,18 +293,6 @@ class HydraNetwork(HydraResource):
                 if l_type not in link_types:
                     link_types.append(l_type)
         return link_types
-
-    def create_node_groups(self, group_attr):
-        for i, node in enumerate(self.nodes):
-            group = self.nodes[i].group(group_attr)
-            if group is not None and group not in self.node_groups:
-                self.node_groups.append(group)
-
-    def create_link_groups(self, group_attr):
-        for i, link in enumerate(self.links):
-            group = self.links[i].group(group_attr)
-            if group is not None and group not in self.link_groups:
-                self.link_groups.append(group)
 
     def _get_node_by_name(self, name):
         for node in self.nodes:
@@ -259,7 +314,7 @@ class HydraNetwork(HydraResource):
     def _get_nodes_by_group(self, node_group):
         nodes = []
         for node in self.nodes:
-            if node_group not in node.groups:
+            if node_group in node.groups:
                 nodes.append(node)
         return nodes
 
@@ -283,9 +338,33 @@ class HydraNetwork(HydraResource):
     def _get_links_by_group(self, link_group):
         links = []
         for link in self.links:
-            if link_group not in link.groups:
+            if link_group in link.groups:
                 links.append(link)
         return links
+
+    def _get_group_by_name(self, name):
+        for group in self.groups:
+            if group.name == name:
+                return group
+
+    def _get_group_by_id(self, ID):
+        for group in self.groups:
+            if group.ID == ID:
+                return group
+
+    def _get_groups_by_type(self, group_type):
+        groups = []
+        for group in self.groups:
+            if group_type in group.template[None]:
+                groups.append(group)
+        return groups
+
+    def _get_groups_by_group(self, group_group):
+        groups = []
+        for group in self.groups:
+            if group_group in group.groups:
+                groups.append(group)
+        return groups
 
 
 class HydraAttribute(object):

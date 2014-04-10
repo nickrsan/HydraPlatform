@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -91,7 +91,7 @@ class ResourceGroupService(HydraService):
                 )
                 left join tNode n on (
                     n.network_id =net.network_id
-                and n.node_id    = %(ref_id)s 
+                and n.node_id    = %(ref_id)s
                 )
             where
                 scen.scenario_id = %(scenario_id)s
@@ -116,7 +116,7 @@ class ResourceGroupService(HydraService):
         group_item_i.db.ref_key = group_item.ref_key
         group_item_i.db.ref_id = group_item.ref_id
         group_item_i.save()
-       
+
         return get_as_complexmodel(ctx, group_item_i)
 
     @rpc(Integer, _returns=String)
@@ -124,5 +124,5 @@ class ResourceGroupService(HydraService):
         group_item_i = HydraIface.ResourceGroupItem(item_id=item_id)
         group_item_i.delete()
         group_item_i.save()
-       
+
         return 'OK'
