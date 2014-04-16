@@ -524,7 +524,8 @@ class ExportCSV(object):
                         if rs.value.metadata:
                             for m in rs.value.metadata.Metadata:
                                 if m.name == 'data_struct':
-                                    arr_file.write("array description, %s\n"%m.value)
+                                    arr_desc = ",".join(m.value.split('|'))
+                                    arr_file.write("array description, ,%s\n"%arr_desc)
 
                     arr_val = PluginLib.parse_suds_array(value)
 
@@ -558,7 +559,8 @@ class ExportCSV(object):
                         if rs.value.metadata:
                             for m in rs.value.metadata.Metadata:
                                 if m.name == 'data_struct':
-                                    arr_file.write("array description, %s\n"%m.value)
+                                    arr_desc = ",".join(m.value.split('|'))
+                                    arr_file.write("array description,,,%s\n"%arr_desc)
 
                     for ts in value:
                         ts_time = ts['ts_time'].replace('0001', 'XXXX')

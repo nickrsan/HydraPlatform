@@ -1115,11 +1115,18 @@ class ImportCSV(object):
 
                     tmp_filedata = filedata.split('\n')
                     filedata = ''
+
                     if tmp_filedata[0].lower().replace(' ', '').startswith('arraydescription'):
                         arr_struct = tmp_filedata[0]
                         arr_struct = arr_struct.split(',')
-                        arr_struct = arr_struct[1].strip()
+                        arr_struct = "|".join(arr_struct[2:])
                         tmp_filedata = tmp_filedata[1:]
+                    elif tmp_filedata[0].lower().replace(' ', '').startswith('timeseriesdescription'):
+                        arr_struct = tmp_filedata[0].strip()
+                        arr_struct = arr_struct.split(',')
+                        arr_struct = "|".join(arr_struct[3:])
+                        tmp_filedata = tmp_filedata[1:]
+                    
                     for i, line in enumerate(tmp_filedata):
                         #The name of the resource is how to identify the data for it.
                         #Once this the correct line(s) has been identified, remove the
