@@ -260,7 +260,7 @@ class DBIface(object):
             column_name = ref_cols['column_name']
             referenced_column_name = ref_cols['referenced_column_name']
 
-            logging.debug("Loading child %s", table_name)
+            #logging.debug("Loading child %s", table_name)
 
             base_child_sql = """
                 select
@@ -312,7 +312,7 @@ class DBIface(object):
                 logging.debug("Cannot load parent. %s is None", k)
                 return
 
-        logging.debug("%s Loading parent %s", self.table_name, parent_key)
+        #logging.debug("%s Loading parent %s", self.table_name, parent_key)
 
         base_parent_sql = """
             select
@@ -335,7 +335,6 @@ class DBIface(object):
             return None
 
         parent_obj = parent_class()
-        logging.debug(rs[0].get_as_dict())
         for k, v in rs[0].get_as_dict().items():
             parent_obj.db.__setattr__(k, v)
 
@@ -470,7 +469,7 @@ class DBIface(object):
             pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
         )
 
-        logging.debug("Running load: %s", complete_load)
+        #logging.debug("Running load: %s", complete_load)
 
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         rs = cursor.execute_sql(complete_load)

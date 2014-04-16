@@ -89,12 +89,13 @@ def parse_value(data):
 
         return ts
     elif data_type == 'eqtimeseries':
-        start_time = timestamp_to_ordinal(value[0][0]) 
-        frequency  = value[1][0]
+        start_time = data.value['{%s}start_time'%NS][0]
+        start_time = timestamp_to_ordinal(start_time) 
+        frequency  = data.value['{%s}frequency'%NS][0]
+        arr_data   = data.value['{%s}arr_data'%NS][0]
         try:
-            val = eval(value[2][0])
+            val = eval(arr_data)
         except:
-            arr_data = value[2][0]['{%s}arr_data'%NS][0]
             val = parse_array(arr_data)
 
         arr_data   = val
@@ -103,10 +104,12 @@ def parse_value(data):
     elif data_type == 'scalar':
         return value[0][0]
     elif data_type == 'array':
+        arr_data   = data.value['{%s}arr_data'%NS][0]
+
         try:
-            val = eval(value[0][0])
+            val = eval(arr_data)
         except:
-            val = parse_array(value[0][0])
+            val = parse_array(arr_data)
         return val
 
 def parse_array(arr):
@@ -190,6 +193,20 @@ class HydraComplexModel(ComplexModel):
                     attr_name = attr_name.replace(attr_prefix, "")
                 setattr(self, attr_name, attr)
 
+class Metadata(ComplexModel):
+    _type_info = [
+        ('name'  , String(min_occurs=1, default=None)),
+        ('value' , String(min_occurs=1, default=None)),
+    ]
+
+    def __init__(self, obj_dict=None):
+        if obj_dict is None:
+            return
+        self.name    = obj_dict['metadata_name']
+        self.value   = obj_dict['metadata_val']
+
+
+
 class Dataset(HydraComplexModel):
     _type_info = [
         ('id',               Integer(min_occurs=1, default=None)),
@@ -199,6 +216,7 @@ class Dataset(HydraComplexModel):
         ('name',             String(min_occurs=1, default=None)),
         ('value',            AnyDict(min_occurs=1, default=None)),
         ('locked',           String(min_occurs=1, default='N', pattern="[YN]")),
+        ('metadata',         SpyneArray(Metadata, default=[])),
     ]
 
     def __init__(self, obj_dict=None):
@@ -219,6 +237,12 @@ class Dataset(HydraComplexModel):
 
             self.value     = getattr(current_module, val['object_type'])(val)
             self.value     = self.value.__dict__
+        
+        metadata = []
+        for m in obj_dict['metadatas']:
+            complex_m = Metadata(m).__dict__
+            metadata.append(complex_m)
+        self.metadata = metadata
 
 class Descriptor(HydraComplexModel):
     _type_info = [
@@ -283,7 +307,7 @@ class EqTimeSeries(HydraComplexModel):
 
         self.start_time = [val['start_time']]
         self.frequency  = [val['frequency']]
-        self.arr_data   = [val['arr_data']]
+        self.arr_data   = [create_dict(val['arr_data'])]
 
 class Scalar(HydraComplexModel):
     _type_info = [

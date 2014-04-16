@@ -30,7 +30,7 @@ from IfaceLib import IfaceBase, execute
 def init(cnx):
     IfaceLib.init(cnx, db_hierarchy)
 
-def add_dataset(data_type, val, units, dimension, name="", dataset_id=None, user_id=None):
+def add_dataset(data_type, val, units, dimension, metadata={}, name="", dataset_id=None, user_id=None):
     """
         Data can exist without scenarios. This is the mechanism whereby
         single pieces of data can be added without doing it through a scenario.
@@ -41,26 +41,27 @@ def add_dataset(data_type, val, units, dimension, name="", dataset_id=None, user
     if data_type == 'scalar':
         val = Decimal(val)
 
-    hash_string = "%s %s %s %s %s"
-    data_hash  = hash(hash_string%(name, units, dimension, data_type, str(val)))
+    d = Dataset(dataset_id=dataset_id)
 
-    existing_dataset_id = get_data_from_hash(data_hash)
+    d.set_val(data_type, val)
+    d.set_metadata(metadata)
 
+    d.db.data_type  = data_type
+    d.db.data_units = units
+    d.db.data_name  = name
+    d.db.data_dimen = dimension
+    d.db.created_by = user_id
+    d.db.data_hash  = d.set_hash(val)
+
+    existing_dataset_id = get_data_from_hash(d.db.data_hash)
+        
     if existing_dataset_id is not None:
         return existing_dataset_id
     else:
-        d = Dataset(dataset_id=dataset_id)
-
-        d.set_val(data_type, val)
-
-        d.db.data_type  = data_type
-        d.db.data_units = units
-        d.db.data_name  = name
-        d.db.data_dimen = dimension
-        d.db.data_hash  = data_hash
-        d.db.created_by = user_id
         d.save()
-
+        for m in d.metadatas:
+            m.db.dataset_id = d.db.dataset_id
+            m.save()
         return d.db.dataset_id
 
 def get_data_from_hash(data_hash):
@@ -207,7 +208,7 @@ class GenericResource(IfaceBase):
             return None
 
     def assign_value(self, scenario_id, resource_attr_id, data_type, val,
-                     units, name, dimension, new=False, user_id=None):
+                     units, name, dimension, metadata={}, new=False, user_id=None):
         """
             Insert or update a piece of data in a scenario. the 'new' flag
             indicates that the data is new, thus allowing us to avoid unnecessary
@@ -229,33 +230,24 @@ class GenericResource(IfaceBase):
         rs = ResourceScenario()
         rs.db.scenario_id=scenario_id
         rs.db.resource_attr_id=resource_attr_id
-        rs.load()
+        data_in_db = rs.load()
+        
+        dataset_id=None
+        if new is not True:
+            #Was the 'new' flag correct?
+            if data_in_db is True:
+                dataset_id = rs.db.dataset_id
 
-        hash_string = "%s %s %s %s %s"%(name, units, dimension, data_type, str(val))
-        data_hash  = hash(hash_string)
-        existing_dataset_id = get_data_from_hash(data_hash)
+        dataset_id = add_dataset(data_type,
+                                    val,
+                                    units,
+                                    dimension,
+                                    metadata,
+                                    name=name,
+                                    dataset_id=dataset_id,
+                                    user_id=user_id)
 
-        if existing_dataset_id is not None:
-            rs.db.dataset_id = existing_dataset_id
-        else:
-            dataset_id = None
-            #if this is definitely not new data, fetch the
-            #dataset id from the DB.
-            if new is not True:
-                data_in_db = rs.load()
-                #Was the 'new' flag correct?
-                if data_in_db is True:
-                    dataset_id = rs.db.dataset_id
-
-            dataset_id = add_dataset(data_type,
-                                     val,
-                                     units,
-                                     dimension,
-                                     name=name,
-                                     dataset_id=dataset_id,
-                                     user_id=user_id)
-
-            rs.db.dataset_id = dataset_id
+        rs.db.dataset_id = dataset_id
 
         rs.save()
 
@@ -1385,6 +1377,7 @@ class Dataset(IfaceBase):
         IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.dataset_id = dataset_id
+        self.metadatas = []
         self.datum = None
 
         if dataset_id is not None:
@@ -1480,7 +1473,7 @@ class Dataset(IfaceBase):
                 data = EqTimeSeries()
                 data.db.start_time = val[0]
                 data.db.frequency  = val[1]
-                data.db.arr_data = val[2]
+                data.db.arr_data   = val[2]
             elif data_type == 'scalar':
                 data = Scalar()
                 data.db.param_value = val
@@ -1553,6 +1546,11 @@ class Dataset(IfaceBase):
 
         datum = self.get_datum()
         obj_dict['value'] = datum.get_as_dict(**kwargs)
+        
+        if self.metadatas is None or len(self.metadatas) == 0:
+            self.get_metadata()
+
+        obj_dict['metadatas'] = [m.get_as_dict() for m in self.metadatas]
 
         return obj_dict
 
@@ -1580,16 +1578,70 @@ class Dataset(IfaceBase):
         return groups
 
     def set_hash(self, val):
-        hash_string = "%s %s %s %s %s"%(self.db.data_name,
+
+        metadata = self.get_metadata_as_dict()
+
+        hash_string = "%s %s %s %s %s, %s"%(self.db.data_name,
                                        self.db.data_units,
                                        self.db.data_dimen,
                                        self.db.data_type,
-                                       str(val))
+                                       str(val),
+                                       metadata)
 
         data_hash  = hash(hash_string)
 
         self.db.data_hash = data_hash
         return data_hash
+
+    def get_metadata_as_dict(self):
+        metadata = {}
+        for r in self.metadatas:
+            val = r.db.metadata_val
+            try:
+                val = eval(r.db.metadata_val)
+            except:
+                val = str(r.db.metadata_val)
+
+            metadata[r.db.metadata_name] = val
+
+        return metadata
+ 
+    def get_metadata(self):
+
+        if self.db.dataset_id is None:
+            return self.metadatas
+
+        sql = """
+            select
+                metadata_name,
+                metadata_val
+            from
+                tMetadata
+            where
+                dataset_id=%s
+        """ % self.db.dataset_id
+
+        rs = execute(sql)
+        metadatas = []
+        for r in rs:
+            m_i = Metadata()
+            m_i.db.dataset_id       = self.db.dataset_id
+            m_i.db.metadata_name = r.metadata_name
+            m_i.db.metadata_val  = r.metadata_val
+            metadatas.append(m_i)
+        self.metadatas = metadatas    
+        return metadatas
+
+    def set_metadata(self, metadata_dict):
+        self.metadatas = []
+        if metadata_dict is None:
+            return
+    
+        for k, v in metadata_dict.items():
+            m_i = Metadata(self.db.dataset_id,k)
+            m_i.db.metadata_val = v
+            self.metadatas.append(m_i)
+
 
 
 class DatasetGroup(IfaceBase):
@@ -1617,16 +1669,17 @@ class DatasetGroupItem(IfaceBase):
         if None not in (group_id, dataset_id):
             self.load()
 
-class DataAttr(IfaceBase):
+class Metadata(IfaceBase):
     """
         Holds additional information on data.
     """
-    def __init__(self, d_attr_id = None):
+    def __init__(self, dataset_id = None, metadata_name=None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
 
-        self.db.d_attr_id = d_attr_id
+        self.db.dataset_id = dataset_id
+        self.db.metadata_name = metadata_name
 
-        if d_attr_id is not None:
+        if dataset_id is not None and metadata_name is not None:
             self.load()
 
 class Descriptor(IfaceBase):
@@ -2349,11 +2402,11 @@ db_hierarchy = dict(
         table_name = 'tDatasetGroupItem',
         pk         = ['group_id', 'dataset_id'],
     ),
-    dataattr  = dict(
-        obj   = DataAttr,
-        parent = None,
-        table_name = 'tDataAttr',
-        pk     = ['d_attr_id'],
+    metadata  = dict(
+        obj   = Metadata,
+        parent = 'dataset',
+        table_name = 'tMetadata',
+        pk     = ['dataset_id', 'metadata_name'],
     ),
     descriptor  = dict(
         obj   = Descriptor,

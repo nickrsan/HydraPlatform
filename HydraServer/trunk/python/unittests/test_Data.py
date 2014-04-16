@@ -347,7 +347,7 @@ class ArrayTest(test_HydraIface.HydraIfaceTest):
         x = HydraIface.Array(data_id=x.db.data_id)
         assert x.load() == True, "Load did not work correctly"
 
-class DataAttrTest(test_HydraIface.HydraIfaceTest):
+class MetadataTest(test_HydraIface.HydraIfaceTest):
 
     def create_dataset(self, data_id):
         d = HydraIface.Dataset()
@@ -371,22 +371,22 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
 
         d = self.create_dataset(data.db.data_id)
 
-        dattr = HydraIface.DataAttr()
-        dattr.db.dataset_id = d.db.dataset_id
-        dattr.db.data_id = data.db.data_id
-        dattr.db.data_type = "Scalar"
-        dattr.db.d_attr_name = "test attribute"
-        dattr.db.d_attr_val  = 100.1
-        dattr.save()
-        dattr.commit()
-        dattr.load()
+        metadata = HydraIface.Metadata()
+        metadata.db.dataset_id = d.db.dataset_id
+        metadata.db.data_id = data.db.data_id
+        metadata.db.data_type = "Scalar"
+        metadata.db.metadata_name = "test attribute"
+        metadata.db.metadata_val  = 100.1
+        metadata.save()
+        metadata.commit()
+        metadata.load()
 
-        dattr.db.d_attr_val = 100.2
-        dattr.save()
-        dattr.commit()
-        dattr.load()
+        metadata.db.metadata_val = 100.2
+        metadata.save()
+        metadata.commit()
+        metadata.load()
 
-        assert dattr.db.d_attr_val == Decimal("100.2"), "Data attr did not update correctly"
+        assert metadata.db.metadata_val == 100.2, "Data attr did not update correctly"
 
     def test_delete(self):
         data = HydraIface.Scalar()
@@ -397,18 +397,18 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
 
         d = self.create_dataset(data.db.data_id)
 
-        dattr = HydraIface.DataAttr()
-        dattr.db.dataset_id = d.db.dataset_id
-        dattr.db.data_id = data.db.data_id
-        dattr.db.data_type = "Scalar"
-        dattr.db.d_attr_name = "test attribute"
-        dattr.db.d_attr_val  = 100.1
-        dattr.save()
-        dattr.commit()
-        dattr.load()
+        metadata = HydraIface.Metadata()
+        metadata.db.dataset_id = d.db.dataset_id
+        metadata.db.data_id = data.db.data_id
+        metadata.db.data_type = "Scalar"
+        metadata.db.metadata_name = "test attribute"
+        metadata.db.metadata_val  = 100.1
+        metadata.save()
+        metadata.commit()
+        metadata.load()
 
-        dattr.delete()
-        assert dattr.load() == False, "Delete did not work correctly."
+        metadata.delete()
+        assert metadata.load() == False, "Delete did not work correctly."
 
     def test_load(self):
         data = HydraIface.Scalar()
@@ -419,18 +419,18 @@ class DataAttrTest(test_HydraIface.HydraIfaceTest):
 
         d = self.create_dataset(data.db.data_id)
 
-        dattr = HydraIface.DataAttr()
-        dattr.db.dataset_id = d.db.dataset_id
-        dattr.db.data_id = data.db.data_id
-        dattr.db.data_type = "Scalar"
-        dattr.db.d_attr_name = "test attribute"
-        dattr.db.d_attr_val  = 100.1
-        dattr.save()
-        dattr.commit()
-        dattr.load()
+        metadata = HydraIface.Metadata()
+        metadata.db.dataset_id = d.db.dataset_id
+        metadata.db.data_id = data.db.data_id
+        metadata.db.data_type = "Scalar"
+        metadata.db.metadata_name = "test attribute"
+        metadata.db.metadata_val  = 100.1
+        metadata.save()
+        metadata.commit()
+        metadata.load()
 
-        dattr1 = HydraIface.DataAttr(d_attr_id=dattr.db.d_attr_id)
-        assert dattr1.load() == True, "Load did not work correctly"
+        metadata1 = HydraIface.Metadata(dataset_id=d.db.dataset_id,metadata_name=metadata.db.metadata_name)
+        assert metadata1.load() == True, "Load did not work correctly"
 
 if __name__ == "__main__":
     test_HydraIface.run() # run all tests

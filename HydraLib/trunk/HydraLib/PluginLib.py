@@ -23,7 +23,9 @@ from suds.plugin import MessagePlugin
 
 from datetime import datetime
 import os
-
+from lxml import objectify
+from lxml import etree
+from lxml.etree import XMLParser
 
 class FixNamespace(MessagePlugin):
     """Hopefully a temporary fix for an unresolved namespace issue.
@@ -402,6 +404,8 @@ def connect(**kwargs):
     if url is None:
         url = config.get('hydra_client', 'url')
 
+    retxml = kwargs.get('retxml', False)
+
     # Set up logging
     hydra_logging.init(level='INFO')
     logging.getLogger('suds').setLevel(logging.ERROR)
@@ -411,7 +415,7 @@ def connect(**kwargs):
     # Connect
     user = config.get('hydra_client', 'user')
     passwd = config.get('hydra_client', 'password')
-    cli = Client(url, timeout=3600, plugins=[FixNamespace()])
+    cli = Client(url, timeout=3600, plugins=[FixNamespace()], retxml=retxml)
     login_response = cli.service.login(user, passwd)
     user_id = login_response.user_id
     session_id = login_response.session_id
@@ -424,6 +428,24 @@ def connect(**kwargs):
 
     return cli
 
+def build_response(xml_string):
+    parser = XMLParser(remove_blank_text=True, huge_tree=True)
+    parser.set_element_class_lookup(objectify.ObjectifyElementClassLookup())
+    objectify.set_default_parser(parser)
+    etree_obj = etree.fromstring(xml_string)
+    resp = etree_obj.getchildren()[0].getchildren()[0]
+    res  = resp.getchildren()[0]
+    dict_resp = get_as_dict(res)[1]
+    import pudb; pudb.set_trace()
+    obj = objectify.fromstring(xml_string)
+    resp = obj.Body.getchildren()[0]
+    res  = resp.getchildren()[0]
+    
+    return res
+
+def get_as_dict(element):
+    return element.tag[element.tag.find('}')+1:], \
+            dict(map(get_as_dict, element)) or element.text
 
 def temp_ids(n=-1):
     """
@@ -513,13 +535,14 @@ def guess_timefmt(datestr):
                      ['%d', '%m', 'XXXX'],
                      ['%d', '%b', 'XXXX']]
 
-    timeformats = ['%H:%M:%S.%f', '%H:%M:%S', '%H:%M']
+    timeformats = ['%H:%M:%s.%f', '%H:%M:%S', '%H:%M']
 
     # Check if a time is indicated or not
     for timefmt in timeformats:
         try:
             datetime.strptime(datestr.split(' ')[-1].strip(), timefmt)
             usetime = True
+            break
         except ValueError:
             usetime = False
 

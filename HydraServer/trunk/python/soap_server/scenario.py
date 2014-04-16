@@ -127,6 +127,8 @@ def bulk_insert_data(bulk_data, user_id=None):
     scalar_idx       = []
     array_idx        = []
 
+    metadata         = {}
+
     #This is what gets returned.
     dataset_hashes = []
     idx = 0
@@ -154,6 +156,7 @@ def bulk_insert_data(bulk_data, user_id=None):
             #therefore easily identifiable.
             dataset_hashes.append(current_hash)
             all_dataset_objects.append(dataset_i)
+            metadata[current_hash] = dataset_i.metadatas
 
         data_type = dataset_i.db.data_type
         if data_type == 'descriptor':
@@ -305,7 +308,17 @@ def bulk_insert_data(bulk_data, user_id=None):
             new_scenario_data[idx].db.dataset_id = dataset_id
             next_id        = next_id + 1
             idx            = idx     + 1
-
+        
+        #Update all the metadata with their dataset_ids and insert them.
+        all_metadata = []
+        for sd in new_scenario_data:
+            sd_meta = metadata[sd.db.data_hash]
+            for m in sd_meta:
+                m.db.dataset_id = sd.db.dataset_id
+                all_metadata.append(m)
+                sd.metadata = m
+        IfaceLib.bulk_insert(all_metadata, 'tMetadata')
+        
         #using the hash of the new scenario data, find the placeholders in dataset_ids
         #and replace it with the dataset_id.
         logging.debug("Putting new data with existing data to complete function")
@@ -700,6 +713,11 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False, user_id=
     if value is None:
         logging.info("Cannot set data on resource attribute %s",ra_id)
         return None
+    
+    metadata  = {}
+    for m in resource_scenario.value.metadata:
+        metadata[m.name]  = m.value
+    name      = resource_scenario.value.name
 
     dimension = resource_scenario.value.dimension
     data_unit = resource_scenario.value.unit
@@ -716,10 +734,8 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False, user_id=
         if dimension is None or len(dimension) == 0:
             dimension = None
 
-    name      = resource_scenario.value.name
-
     rs_i = res.assign_value(scenario_id, ra_id, data_type, value,
-                    data_unit, name, dimension, new=new, user_id=user_id)
+                    data_unit, name, dimension, metadata, new=new, user_id=user_id)
 
     return rs_i
 
@@ -748,7 +764,15 @@ def process_incoming_data(data, user_id=None):
             scenario_datum.db.data_dimen = unit.get_dimension(d.unit)
         else:
             scenario_datum.db.data_dimen = d.dimension
-        data_hash = scenario_datum.set_hash(val)
+        
+        dataset_metadata = {}
+        if d.metadata is not None:
+            for m in d.metadata:
+                dataset_metadata[m.name] = m.value
+
+        scenario_datum.set_metadata(dataset_metadata)
+
+        data_hash = scenario_datum.set_hash(val)        
         scenario_datum.db.data_hash = data_hash
         scenario_datum.val = val
         scenario_data[data_hash] = scenario_datum
@@ -834,6 +858,9 @@ def get_existing_data(hashes):
                 dataset.datum = datum
             else:
                 dataset.get_val()
+        
+        dataset.get_metadata()
+
         hash_dict[dr.data_hash] = dataset
     logging.info("Retrieved %s datasets", len(hash_dict))
 
@@ -867,6 +894,10 @@ class DataService(HydraService):
         data_type = dataset.type.lower()
 
         value = parse_value(dataset)
+        dataset_metadata = {}
+        if dataset.metadata is not None:
+            for m in dataset.metadata:
+                dataset_metadata[m.name] = m.value
 
         if value is None:
             raise HydraError("Cannot set value to attribute. "
@@ -875,7 +906,7 @@ class DataService(HydraService):
         user_id = ctx.in_header.user_id
 
         rs_i = res.assign_value(scenario_id, resource_attr_id, data_type, value,
-                        dataset.unit, dataset.name, dataset.dimension, new=False, user_id=user_id)
+                        dataset.unit, dataset.name, dataset.dimension, dataset_metadata, new=False, user_id=user_id)
 
         rs_i.load_all()
 
@@ -1025,9 +1056,41 @@ class DataService(HydraService):
         """ % scenario_id
 
 
-        rs = HydraIface.execute(sql)
+        data_rs = HydraIface.execute(sql)
     
-        for dr in rs:
+        sql = """
+            select
+                metadata_name,
+                metadata_val,
+                dataset_id
+            from
+                tMetadata
+            where
+                dataset_id  in (
+                    select
+                        distinct(dataset_id)
+                    from
+                        tResourceScenario
+                    where
+                        scenario_id = %s
+                    )
+        """ % scenario_id
+
+        metadata_rs = HydraIface.execute(sql)
+        metadata = {}
+        for m in metadata_rs:
+            metadata_dict = dict(
+                object_type   = 'Metadata',
+                metadata_name = m.metadata_name,
+                metadata_val  = m.metadata_val,
+                dataset_id    = m.dataset_id
+            )
+            if metadata.get(m.dataset_id):
+                metadata[m.dataset_id].append(metadata_dict)
+            else:
+                metadata[m.dataset_id] = [metadata_dict]
+
+        for dr in data_rs:
             if dr.data_type in ('scalar', 'array', 'descriptor'):
                 if dr.data_type == 'scalar':
                     val = {
@@ -1053,7 +1116,8 @@ class DataService(HydraService):
                     data_name  = dr.data_name,
                     data_hash  = dr.data_hash,
                     locked     = dr.locked,
-                    value      = val 
+                    value      = val,
+                    metadatas  = metadata.get(dr.dataset_id, {})
                 )
             else:
                 dataset = HydraIface.Dataset()
@@ -1066,6 +1130,7 @@ class DataService(HydraService):
                 dataset.db.data_hash  = dr.data_hash
                 dataset.db.locked     = dr.locked
                 d = dataset.get_as_dict(user_id=ctx.in_header.user_id)
+                d['metadatas']     = metadata.get(dr.dataset_id, [])
 
             scenario_data.append(Dataset(d))
         logging.info("Retrieved %s datasets", len(scenario_data))

@@ -42,7 +42,7 @@ class FixNamespace(MessagePlugin):
         for e in element.getChildren():
             self.fix_ns(e)
 
-def connect(login=True):
+def connect():
     port = config.getint('hydra_server', 'port')
     url = 'http://localhost:%s?wsdl' % port
     client = Client(url, plugins=[FixNamespace()])
@@ -244,6 +244,9 @@ class SoapServerTest(unittest.TestCase):
                    }
             attr = self.client.service.add_attribute(attr)
         return attr
+
+    def test_create_network(self):
+        self.create_network_with_data()
 
     def create_network_with_data(self, project_id=None, num_nodes=10):
         """
@@ -567,6 +570,11 @@ class SoapServerTest(unittest.TestCase):
                         {'item':[1.0, 2.0, 3.0]},
                     ]}
 
+        metadata_array = self.client.factory.create("hyd:MetadataArray")
+        metadata = self.client.factory.create("hyd:Metadata")
+        metadata.name = 'created_by'
+        metadata.value = 'Test user'
+        metadata_array.Metadata.append(metadata)
 
         dataset = dict(
             id=None,
@@ -586,6 +594,7 @@ class SoapServerTest(unittest.TestCase):
 
             ]
         },
+            metadata = metadata_array, 
         )
 
         scenario_attr = dict(
@@ -613,6 +622,12 @@ class SoapServerTest(unittest.TestCase):
                 ]},
             ]} 
         }
+        
+        metadata_array = self.client.factory.create("hyd:MetadataArray")
+        metadata = self.client.factory.create("hyd:Metadata")
+        metadata.name = 'created_by'
+        metadata.value = 'Test user'
+        metadata_array.Metadata.append(metadata)
 
         dataset = dict(
             id=None,
@@ -622,6 +637,7 @@ class SoapServerTest(unittest.TestCase):
             dimension = 'Pressure',
             locked = 'N',
             value = arr,
+            metadata = metadata_array, 
         )
 
         scenario_attr = dict(
@@ -640,11 +656,10 @@ class SoapServerTest(unittest.TestCase):
         ts_val = {
             'start_time' : datetime.datetime.now(),
             'frequency'  : 3600.0,
-            'arr_data': {'arr_data' :
+            'arr_data': 
                     {'array':[
                             {'item':[9, 210, 11]},
                     ]},
-            }
         }
 
         dataset = dict(

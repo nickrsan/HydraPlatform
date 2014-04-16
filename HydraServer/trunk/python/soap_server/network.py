@@ -665,6 +665,31 @@ class NetworkService(HydraService):
 
             sql = """
                 select
+                    dataset_id,
+                    metadata_name,
+                    metadata_val
+                from
+                    tMetadata
+                where
+                    dataset_id in %(dataset_ids)s
+            """ %  {'dataset_ids':make_param(all_dataset_ids.keys())}
+
+            metadata_rs = HydraIface.execute(sql)
+            metadata_dict = {}
+            for mr in metadata_rs:
+                m_dict = dict(
+                    object_type   = 'Metadata',
+                    metadata_name = mr.metadata_name,
+                    metadata_val  = mr.metadata_val,
+                    dataset_id    = mr.dataset_id
+                )
+                if mr.dataset_id in metadata_dict.keys():
+                    metadata_dict[mr.dataset_id].append(m_dict)
+                else:
+                    metadata_dict[mr.dataset_id] = [m_dict]
+
+            sql = """
+                select
                     d.dataset_id,
                     d.data_id,
                     d.data_type,
@@ -691,6 +716,7 @@ class NetworkService(HydraService):
                 dataset.db.data_hash  = dr.data_hash
                 dataset.db.locked     = dr.locked
                 d = dataset.get_as_dict(user_id=ctx.in_header.user_id)
+                d['metadatas']       = metadata_dict.get(dr.dataset_id, [])
                 for rs in all_dataset_ids[dr.dataset_id]:
                     rs['value'] = d
 

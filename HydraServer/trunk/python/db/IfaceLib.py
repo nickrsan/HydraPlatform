@@ -190,8 +190,8 @@ class IfaceBase(object):
             if parent is None:
                 return None
             parent_name = parent.__class__.__name__.lower()
-            logging.debug("Parent Name: %s", parent_name)
-            logging.debug("Parent: %s", parent)
+            #logging.debug("Parent Name: %s", parent_name)
+            #logging.debug("Parent: %s", parent)
             self.parent = parent
             self.__setattr__(parent_name, parent)
 

@@ -321,6 +321,16 @@ class ImportCSV(object):
         if file is not None:
             net_data = self.get_file_data(file)
 
+            try:
+                file_parts = file.split(".")
+                file_base = file_parts[0]
+                file_ext = file_parts[1]
+                new_filename = "%s_metadata.%s"%(file_base, file_ext)
+                metadata = self.read_metadata(new_filename)
+            except IOError:
+                logging.info("No metadata found for node file %s",file)
+                metadata = {}
+
             keys = net_data[0].split(',')
             self.check_header(file, keys)
             units = net_data[1].split(',')
@@ -416,7 +426,7 @@ class ImportCSV(object):
                     attrs.update({i: key.strip()})
 
             if len(attrs.keys()) > 0:
-                self.Network = self.add_data(self.Network, attrs, data)
+                self.Network = self.add_data(self.Network, attrs, data, metadata)
 
         else:
             # Create a new network
@@ -433,9 +443,62 @@ class ImportCSV(object):
                 attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
             )
 
+    def read_metadata(self, filename):
+        metadata = self.get_file_data(filename)
+        keys = metadata[0].split(',')
+        self.check_header(filename, keys)
+        data = metadata[1:-1]
+
+        metadata_dict = {}
+        for data_line in data:
+            split_data = data_line.split(',')
+            metadata_dict[split_data[0].strip()] = self.get_metadata_as_dict(keys[1:], split_data[1:])
+        return metadata_dict
+
+    def get_metadata_as_dict(self, keys, metadata):
+        """
+            Turn a list of metadata values into a dictionary structure.
+            @parameter keys to describe the attribte to which this metadata refers
+            @parameter list of metadata. in the structure:
+                ["(key;val) (key;val)", "(key;val) (key;val)",...]
+            @returns dictionary in the format:
+                {attr1 : {key:val, key:val}, attr2: {key:val, key:val}...}
+        """
+        metadata_dict = {}
+        for i, attr in enumerate(keys):
+            metadata_dict[attr.strip()] = {}
+            if metadata[i].strip() != '':
+                attr_metadata = metadata[i].split(")")
+                for attr_meta in attr_metadata:
+                    if attr_meta == '':
+                        continue
+                    attr_meta = attr_meta.replace('(', '')
+                    keyval = attr_meta.split(';')
+                    key = keyval[0].strip()
+                    if key.lower() in ('name', 'dataset_name', 'dataset name'):
+                        key = 'name'
+                    val = keyval[1].strip()
+                    metadata_dict[attr.strip()][key] = val
+       
+        return metadata_dict
+            
+
+        
+
     def read_nodes(self, file):
         node_data = self.get_file_data(file)
+        
+        try:
+            file_parts = file.split(".")
+            file_base = file_parts[0]
+            file_ext = file_parts[1]
+            new_filename = "%s_metadata.%s"%(file_base, file_ext)
+            metadata = self.read_metadata(new_filename)
+        except IOError:
+            logging.info("No metadata found for node file %s",file)
+            metadata = {}
 
+        
         self.add_attrs = True
 
         keys  = node_data[0].split(',')
@@ -504,12 +567,22 @@ class ImportCSV(object):
                         self.nodetype_dict[node_type] += (nodename,)
 
             if len(attrs) > 0:
-                node = self.add_data(node, attrs, linedata, units=units)
+                node = self.add_data(node, attrs, linedata, metadata, units=units)
 
             self.Nodes.update({node['name']: node})
 
     def read_links(self, file):
         link_data = self.get_file_data(file)
+
+        try:
+            file_parts = file.split(".")
+            file_base = file_parts[0]
+            file_ext = file_parts[1]
+            new_filename = "%s_metadata.%s"%(file_base, file_ext)
+            metadata = self.read_metadata(new_filename)
+        except IOError:
+            logging.info("No metadata found for node file %s",file)
+            metadata = {}
 
         self.add_attrs = True
 
@@ -578,7 +651,7 @@ class ImportCSV(object):
                     else:
                         self.linktype_dict[link_type] += (linkname,)
             if len(attrs) > 0:
-                link = self.add_data(link, attrs, linedata, units=units)
+                link = self.add_data(link, attrs, linedata, metadata, units=units)
             self.Links.update({link['name']: link})
 
     def read_groups(self, file):
@@ -587,6 +660,16 @@ class ImportCSV(object):
             name, attr1, attr2..., description
         """
         group_data = self.get_file_data(file)
+
+        try:
+            file_parts = file.split(".")
+            file_base = file_parts[0]
+            file_ext = file_parts[1]
+            new_filename = "%s_metadata.%s"%(file_base, file_ext)
+            metadata = self.read_metadata(new_filename)
+        except IOError:
+            logging.info("No metadata found for node file %s",file)
+            metadata = {}
 
         self.add_attrs = True
 
@@ -638,7 +721,7 @@ class ImportCSV(object):
                     attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
                 )
             if len(attrs) > 0:
-                group = self.add_data(group, attrs, group_data, units=units)
+                group = self.add_data(group, attrs, group_data, metadata, units=units)
 
             self.Groups.update({group['name']: group})
 
@@ -727,7 +810,7 @@ class ImportCSV(object):
 
         return attribute
 
-    def add_data(self, resource, attrs, data, units=None):
+    def add_data(self, resource, attrs, data, metadata, units=None):
         '''Add the data read for each resource to the resource. This requires
         creating the attributes, resource attributes and a scenario which holds
         the data.'''
@@ -786,22 +869,33 @@ class ImportCSV(object):
                     res_attr['attr_is_var'] = 'Y'
 
                 else:
+                    if metadata:
+                        resource_metadata = metadata.get(resource['name'], {})
+                        dataset_metadata = resource_metadata.get(attrs[i], {})
+                    else:
+                        dataset_metadata = {} 
+
                     if units is not None:
                         if units[i] is not None and len(units[i].strip()) > 0:
                             dimension = attr.dimen
                         else:
                             dimension = None
+
                         dataset = self.create_dataset(data[i],
                                                       res_attr,
                                                       units[i],
                                                       dimension,
-                                                      resource['name'])
+                                                      resource['name'],
+                                                      dataset_metadata,
+                                                     )
                     else:
                         dataset = self.create_dataset(data[i],
                                                       res_attr,
                                                       None,
                                                       None,
-                                                      resource['name'])
+                                                      resource['name'],
+                                                      dataset_metadata,
+                                                     )
 
                     if dataset is not None:
                         self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
@@ -974,16 +1068,23 @@ class ImportCSV(object):
 
         self.message += ' Assigned node types based on %s.' % template_file
 
-    def create_dataset(self, value, resource_attr, unit, dimension, resource_name):
+    def create_dataset(self, value, resource_attr, unit, dimension, resource_name, metadata):
         resourcescenario = dict()
+        
+        if metadata.get('name'):
+            dataset_name = metadata['name']
+            del(metadata['name'])
+        else:
+            dataset_name = 'Import CSV data'
         dataset          = dict(
             id=None,
             type=None,
             unit=None,
             dimension=None,
-            name=None,
+            name=dataset_name,
             value=None,
-            locked='N'
+            locked='N',
+            metadata=None,
         )
 
         resourcescenario['attr_id'] = resource_attr['attr_id']
@@ -994,7 +1095,7 @@ class ImportCSV(object):
             unit = unit.strip()
             if len(unit) == 0:
                 unit = None
-
+        arr_struct = None
         try:
             float(value)
             dataset['type'] = 'scalar'
@@ -1014,6 +1115,11 @@ class ImportCSV(object):
 
                     tmp_filedata = filedata.split('\n')
                     filedata = ''
+                    if tmp_filedata[0].lower().replace(' ', '').startswith('arraydescription'):
+                        arr_struct = tmp_filedata[0]
+                        arr_struct = arr_struct.split(',')
+                        arr_struct = arr_struct[1].strip()
+                        tmp_filedata = tmp_filedata[1:]
                     for i, line in enumerate(tmp_filedata):
                         #The name of the resource is how to identify the data for it.
                         #Once this the correct line(s) has been identified, remove the
@@ -1049,9 +1155,16 @@ class ImportCSV(object):
         if unit is not None:
             dataset['dimension'] = dimension
 
-        dataset['name'] = "Import CSV data"
-
         resourcescenario['value'] = dataset
+        
+        m = self.cli.factory.create("hyd:MetadataArray")
+        if metadata:
+            for k, v in metadata.items():
+                m.Metadata.append(dict(name=k,value=v))
+        if arr_struct:
+            m.Metadata.append(dict(name='data_struct',value=arr_struct))
+
+        dataset['metadata'] = m
 
         return resourcescenario
 

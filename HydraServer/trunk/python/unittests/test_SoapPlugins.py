@@ -74,7 +74,7 @@ class PluginsTest(test_SoapServer.SoapServerTest):
         #Popen chosen instead of os.popen because it has greater control over waiting for
         #subprocesses to finish. (Important when waiting for files to be written before starting the next
         #piece of work
-        stream = Popen('cd ../../../../HydraPlugins/GAMSplugin/trunk/testdata/hydro-econ/; ./import_data.sh', shell=True, stdout=PIPE)
+        stream = Popen('cd ../../../../HydraPlugins/CSVplugin/trunk/testdata/hydro-econ/; ./import_data.sh', shell=True, stdout=PIPE)
         stream.wait()
         result_text = stream.stdout.readlines()
         result = ''.join(result_text[1:])
@@ -92,7 +92,7 @@ class PluginsTest(test_SoapServer.SoapServerTest):
         network_file = "network_%s/CSV_import/network.csv"%network_id
         nodes_file = "network_%s/CSV_import/nodes.csv"%network_id
         links_file = "network_%s/CSV_import/links.csv"%network_id
-        stream = Popen('python ../../../../HydraPlugins/CSVplugin/trunk/ImportCSV.py -t %s -n %s -l %s'%(network_file, nodes_file, links_file), shell=True, stdout=PIPE)
+        stream = Popen('python ../../../../HydraPlugins/CSVplugin/trunk/ImportCSV.py -t %s -n %s -l %s -x'%(network_file, nodes_file, links_file), shell=True, stdout=PIPE)
         stream.wait()
         updated_result_text = stream.stdout.readlines()
         updated_result = ''.join(updated_result_text)
@@ -101,7 +101,7 @@ class PluginsTest(test_SoapServer.SoapServerTest):
         assert updated_tree.find('errors').getchildren() == []
         assert updated_tree.find('warnings').getchildren() == []
 
-        Popen("rm -r network_*", shell=True)
+        #Popen("rm -r network_*", shell=True)
 
         
 
