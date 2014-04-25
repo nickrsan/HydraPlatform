@@ -28,7 +28,7 @@ class ImageTest(test_SoapServer.SoapServerTest):
 
         add_result = self.client.service.add_image("hydra.jpg", encodedData)
 
-        assert add_result is True, "Image was not added correctly!"
+        assert add_result == 'OK', "Image was not added correctly!"
 
         img = self.client.service.get_image("hydra.jpg")
 
@@ -36,7 +36,7 @@ class ImageTest(test_SoapServer.SoapServerTest):
 
         result = self.client.service.remove_image("hydra.jpg")
 
-        assert result is True, "Image was not deletd correctly!"
+        assert result == 'OK', "Image was not deletd correctly!"
 
     def test_download(self):
         imageFile = open('hydra.jpg','rb')
@@ -51,7 +51,7 @@ class ImageTest(test_SoapServer.SoapServerTest):
 
         result = self.client.service.remove_image("hydra.jpg")
 
-        assert result is True, "Image was not deletd correctly!"
+        assert result == 'OK', "Image was not deletd correctly!"
 
 class FileTest(test_SoapServer.SoapServerTest):
 
@@ -62,7 +62,7 @@ class FileTest(test_SoapServer.SoapServerTest):
 
         add_result = self.client.service.add_file("NETWORK", 1, "test.xlsx", encodedData)
 
-        assert add_result is True, "File was not added correctly!"
+        assert add_result == 'OK', "File was not added correctly!"
 
         img = self.client.service.get_file("NETWORK", 1, "test.xlsx")
 
@@ -70,7 +70,7 @@ class FileTest(test_SoapServer.SoapServerTest):
 
         result = self.client.service.remove_file("NETWORK", 1, "test.xlsx")
 
-        assert result is True, "File was not deletd correctly!"
+        assert result == 'OK', "File was not deletd correctly!"
 
     def test_download(self):
         file_to_upload = open('test.xlsx','rb')
@@ -85,7 +85,7 @@ class FileTest(test_SoapServer.SoapServerTest):
 
         result = self.client.service.remove_file("NETWORK", 1, "test.xlsx")
 
-        assert result is True, "File was not deletd correctly!"
+        assert result == 'OK', "File was not deletd correctly!"
 
 
 

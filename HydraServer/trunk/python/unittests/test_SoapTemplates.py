@@ -357,11 +357,11 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         tattr_2.type_id = new_type.id
 
-        updated_type = self.client.service.delete_typeattr(tattr_2)
+        self.client.service.delete_typeattr(tattr_2)
+        
+        updated_type = self.client.service.get_templatetype(new_type.id)
 
         assert len(updated_type.typeattrs[0]) == 1, "Resource type attr did not add correctly"
-
-
 
     def test_get_templates(self):
         templates = self.client.service.get_templates()

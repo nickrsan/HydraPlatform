@@ -19,7 +19,7 @@ from HydraLib import config
 from hdb import HydraMySqlCursor
 from HydraLib.HydraException import HydraDBError
 from mysql.connector import DatabaseError
-import pytz
+log = logging.getLogger(__name__)
 
 global DB_STRUCT
 DB_STRUCT = {}
@@ -170,7 +170,7 @@ def bulk_insert(objs, table_name=""):
             return val
 
     if len(objs) == 0:
-        logging.info("Cannot bulk insert to %s. Nothing to insert!", table_name)
+        log.info("Cannot bulk insert to %s. Nothing to insert!", table_name)
         return
 
     cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
@@ -190,7 +190,7 @@ def bulk_insert(objs, table_name=""):
         vals  = ",".join('%s' for v in objs[0].db.db_attrs),
     )
 
-    logging.info("Running bulk insert into %s with %s values",
+    log.info("Running bulk insert into %s with %s values",
                                                 objs[0].db.table_name,
                                                 len(vals))
 
@@ -260,7 +260,7 @@ class DBIface(object):
             column_name = ref_cols['column_name']
             referenced_column_name = ref_cols['referenced_column_name']
 
-            #logging.debug("Loading child %s", table_name)
+            log.debug("Loading child %s", table_name)
 
             base_child_sql = """
                 select
@@ -301,7 +301,7 @@ class DBIface(object):
         if parent_key is None:
             return None
 
-        #logging.debug("PARENT: %s", parent_key)
+        #log.debug("PARENT: %s", parent_key)
 
         parent_class = DB_HIERARCHY[parent_key]['obj']
         parent_table = DB_HIERARCHY[parent_key]['table_name']
@@ -309,10 +309,10 @@ class DBIface(object):
 
         for k in parent_pk:
             if self.__getattr__(k) is None:
-                logging.debug("Cannot load parent. %s is None", k)
+                log.debug("Cannot load parent. %s is None", k)
                 return
 
-        #logging.debug("%s Loading parent %s", self.table_name, parent_key)
+        log.debug("%s Loading parent %s", self.table_name, parent_key)
 
         base_parent_sql = """
             select
@@ -331,10 +331,13 @@ class DBIface(object):
         rs = execute(complete_parent_sql)
 
         if len(rs) == 0:
-            logging.info("Object %s has no parent with pk: %s", self.table_name, parent_pk)
+            log.info("Object %s has no parent with pk: %s", self.table_name, parent_pk)
             return None
 
         parent_obj = parent_class()
+
+        log.debug("Result: %s",rs[0].get_as_dict())
+        
         for k, v in rs[0].get_as_dict().items():
             parent_obj.db.__setattr__(k, v)
 
@@ -414,7 +417,7 @@ class DBIface(object):
             vals  = ",".join([self.get_val(n) for n in self.db_attrs]),
         )
 
-        logging.info("Running insert: %s", complete_insert)
+        log.info("Running insert: %s", complete_insert)
         old_seq = cursor.lastrowid
 
         try:
@@ -441,7 +444,7 @@ class DBIface(object):
             sets  = ",".join(["%s = %s"%(n, self.get_val(n)) for n in self.db_attrs]),
             pk    = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
         )
-        logging.info("Running update: %s", complete_update)
+        log.info("Running update: %s", complete_update)
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         cursor.execute(complete_update)
         cursor.close()
@@ -457,7 +460,7 @@ class DBIface(object):
         #Idenitfy the primary key, which is used to get a single row in the db.
         for pk in self.pk_attrs:
             if self.__getattr__(pk) is None:
-                logging.warning("%s: Primary key is not set. Cannot load row from DB.", self.table_name)
+                log.warning("%s: Primary key is not set. Cannot load row from DB.", self.table_name)
                 return False
 
         #Create a skeleton query
@@ -469,20 +472,20 @@ class DBIface(object):
             pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
         )
 
-        #logging.debug("Running load: %s", complete_load)
+        log.debug("Running load: %s", complete_load)
 
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         rs = cursor.execute_sql(complete_load)
         cursor.close()
 
         if len(rs) == 0:
-            logging.warning("No entry found for table %s", self.table_name)
+            log.warning("No entry found for table %s", self.table_name)
 
             return False
 
         for r in rs:
             for k, v in r.get_as_dict().items():
-                #logging.debug("Setting column %s to %s", k, v)
+                #log.debug("Setting column %s to %s", k, v)
                 self.db_data[k] = v
 
         self.has_changed = False
@@ -498,7 +501,7 @@ class DBIface(object):
             table_name = self.table_name,
             pk         = " and ".join(["%s = %s"%(n, self.get_val(n)) for n in self.pk_attrs]),
         )
-        logging.info("Running delete: %s", complete_delete)
+        log.info("Running delete: %s", complete_delete)
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         cursor.execute(complete_delete)
         cursor.close()

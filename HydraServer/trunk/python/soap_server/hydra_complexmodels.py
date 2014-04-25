@@ -22,7 +22,6 @@ from spyne.model.primitive import Float
 from spyne.model.primitive import DateTime
 from spyne.model.primitive import AnyDict
 from spyne.model.primitive import Double
-import datetime
 from spyne.util.odict import odict
 import sys
 from HydraLib.util import timestamp_to_ordinal
@@ -33,6 +32,7 @@ FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 #"2013-08-13T15:55:43.468886Z"
 NS = "soap_server.hydra_complexmodels"
 current_module = sys.modules[__name__]
+log = logging.getLogger(__name__)
 
 
 def get_as_complexmodel(ctx, iface_obj, **kwargs):
@@ -53,7 +53,7 @@ def parse_value(data):
     data_type = data.type
 
     if data.value is None:
-        logging.warn("Cannot parse dataset. No value specified.")
+        log.warn("Cannot parse dataset. No value specified.")
         return None
 
     #attr_data.value is a dictionary,
@@ -185,6 +185,10 @@ class HydraComplexModel(ComplexModel):
                         cm = getattr(current_module, child_obj_dict['object_type'])(child_obj_dict)
                         children.append(cm)
                 setattr(self, attr_name, children)
+            elif type(attr) is dict and attr.get('object_type') is not None:
+                cm = getattr(current_module, attr['object_type'])(attr)
+
+                setattr(self, attr_name, cm)
             else:
                 #turn someething like 'project_name' into just 'name'
                 #So that it's project.name instead of project.project_name.

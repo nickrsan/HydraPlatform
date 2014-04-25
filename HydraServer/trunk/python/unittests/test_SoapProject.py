@@ -20,6 +20,7 @@ import test_SoapServer
 import datetime
 import copy
 import logging
+log = logging.getLogger(__name__)
 
 class ProjectTest(test_SoapServer.SoapServerTest):
 
@@ -29,9 +30,9 @@ class ProjectTest(test_SoapServer.SoapServerTest):
 
     def add_data(self, proj):
         #Create some attributes, which we can then use to put data on our nodes
-        attr1 = self.create_attr("testattr_1")
-        attr2 = self.create_attr("testattr_2")
-        attr3 = self.create_attr("testattr_3")
+        attr1 = self.create_attr("proj_attr_1")
+        attr2 = self.create_attr("proj_attr_2")
+        attr3 = self.create_attr("proj_attr_3")
 
         proj_attr_1  = self.client.factory.create('hyd:ResourceAttr')
         proj_attr_1.id = -1
@@ -69,7 +70,7 @@ class ProjectTest(test_SoapServer.SoapServerTest):
  
         updated_project = self.client.service.update_project(new_project)
  
-        logging.debug(updated_project)
+        log.debug(updated_project)
 
         assert project.id == updated_project.id, \
             "project_id changed on update."

@@ -20,6 +20,8 @@ from HydraLib.HydraException import HydraError
 import datetime
 import MySqlIface
 
+log = logging.getLogger(__name__)
+
 global DB
 
 def init(cnx, db_hierarchy):
@@ -114,7 +116,7 @@ class IfaceBase(object):
             if self.db.has_changed is True:
                 self.db.update()
             else:
-                logging.debug("No changes to %s, not continuing", self.db.table_name)
+                log.debug("No changes to %s, not continuing", self.db.table_name)
         else:
             self.db.insert()
             self.in_db = True
@@ -190,8 +192,10 @@ class IfaceBase(object):
             if parent is None:
                 return None
             parent_name = parent.__class__.__name__.lower()
-            #logging.debug("Parent Name: %s", parent_name)
-            #logging.debug("Parent: %s", parent)
+
+            log.debug("Parent Name: %s", parent_name)
+            log.debug("Parent: %s", parent)
+            
             self.parent = parent
             self.__setattr__(parent_name, parent)
 
@@ -228,5 +232,5 @@ class IfaceBase(object):
             obj_dict[child_name] = child_objs
         time_taken = datetime.datetime.now() - t
         if time_taken > datetime.timedelta(seconds=1):
-            logging.warn("%s: %s", self.name, time_taken)
+            log.warn("%s: %s", self.name, time_taken)
         return obj_dict

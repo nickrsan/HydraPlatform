@@ -13,18 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from spyne.model.primitive import Integer, String
+from spyne.model.primitive import Integer
 from spyne.decorator import rpc
 from db import HydraIface
 from hydra_complexmodels import Constraint,\
-        ConstraintItem,\
         ConstraintGroup,\
         get_as_complexmodel
 
 from hydra_base import HydraService
 from hydra_base import RequestHeader 
-from HydraLib.HydraException import HydraError
-import logging
 
 def create_constraint_struct(constraint_id, group):
     group_i = HydraIface.ConstraintGroup()

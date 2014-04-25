@@ -38,7 +38,8 @@ from spyne.error import Fault, ArgumentError
 from soap_server.network import NetworkService
 from soap_server.project import ProjectService
 from soap_server.attributes import AttributeService
-from soap_server.scenario import ScenarioService, DataService
+from soap_server.scenario import ScenarioService
+from soap_server.data import DataService
 from soap_server.plugins import PluginService
 from soap_server.users import UserService
 from soap_server.template import TemplateService
@@ -53,7 +54,7 @@ from soap_server.hydra_base import AuthenticationService,\
     AuthenticationError,\
     ObjectNotFoundError,\
     HydraServiceError
-from soap_server.sharing import SharingService, DataSharingService
+from soap_server.sharing import SharingService
 
 from HydraLib.HydraException import HydraError
 
@@ -63,6 +64,8 @@ from db import HydraIface
 
 import datetime
 import traceback
+
+log = logging.getLogger(__name__)
 
 
 def _on_method_call(ctx):
@@ -103,29 +106,29 @@ class HydraSoapApplication(Application):
     def call_wrapper(self, ctx):
         try:
 
-            logging.info("Received request: %s", ctx.function)
+            log.info("Received request: %s", ctx.function)
 
             start = datetime.datetime.now()
             res =  ctx.service_class.call_wrapper(ctx)
 
-            logging.info("Call took: %s"%(datetime.datetime.now()-start))
+            log.info("Call took: %s"%(datetime.datetime.now()-start))
             return res
         except HydraError, e:
             hdb.rollback()
-            logging.critical(e)
+            log.critical(e)
             traceback.print_exc(file=sys.stdout)
             code = "HydraError %s"%e.code
             raise HydraServiceError(e.message, code)
         except ObjectNotFoundError, e:
             hdb.rollback()
-            logging.critical(e)
+            log.critical(e)
             raise
         except Fault, e:
             hdb.rollback()
-            logging.critical(e)
+            log.critical(e)
             raise
         except Exception, e:
-            logging.critical(e)
+            log.critical(e)
             traceback.print_exc(file=sys.stdout)
             hdb.rollback()
             raise Fault('Server', e.message)
@@ -159,7 +162,6 @@ class HydraServer():
             FileService,
             SharingService,
             UnitService,
-            DataSharingService,
         ]
 
         application = HydraSoapApplication(applications, 'hydra.base',
@@ -180,8 +182,8 @@ class HydraServer():
         port = config.getint('hydra_server', 'port')
         spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
 
-        logging.info("listening to http://127.0.0.1:%s", port)
-        logging.info("wsdl is at: http://localhost:%s/?wsdl", port)
+        log.info("listening to http://127.0.0.1:%s", port)
+        log.info("wsdl is at: http://localhost:%s/?wsdl", port)
 
         server = make_server('127.0.0.1', port, wsgi_application)
         server.serve_forever()

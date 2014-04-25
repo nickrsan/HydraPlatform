@@ -18,9 +18,10 @@
 
 import test_SoapServer
 import datetime
-import logging
 import copy
 from HydraLib import PluginLib
+import logging
+log = logging.getLogger(__name__)
 
 class ScenarioTest(test_SoapServer.SoapServerTest):
 
@@ -230,7 +231,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
             now + datetime.timedelta(minutes=75),
             'minutes',
             )
-        logging.debug(value)
+        log.info(value)
         assert value.data == 'test'
 
 
@@ -263,10 +264,10 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         assert scen_2_val == scen_1_val, "Data was not cloned correctly"
 
 
-        scen_1_constraint  = network.scenarios.Scenario[0].constraints.Constraint[0].value
-        scen_2_constraint  = updated_network.scenarios.Scenario[1].constraints.Constraint[0].value
-
-        assert scen_1_constraint == scen_2_constraint, "Constraints did not clone correctly!"
+  #      scen_1_constraint  = network.scenarios.Scenario[0].constraints.Constraint[0].value
+        #scen_2_constraint  = updated_network.scenarios.Scenario[1].constraints.Constraint[0].value
+#
+ #       assert scen_1_constraint == scen_2_constraint, "Constraints did not clone correctly!"
         
         scen_1_resourcegroupitems = network.scenarios.Scenario[0].resourcegroupitems.ResourceGroupItem
         scen_2_resourcegroupitems = updated_network.scenarios.Scenario[1].resourcegroupitems.ResourceGroupItem
@@ -280,7 +281,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         assert len(network.scenarios.Scenario) == 1, "The network should have only one scenario!"
 
-        self.create_constraint(network)
+    #    self.create_constraint(network)
         
         network = self.client.service.get_network(network.id)
 
@@ -289,7 +290,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         new_scenario = self.client.service.clone_scenario(scenario_id)
 
-        self.create_constraint(network, constant=4)
+    #    self.create_constraint(network, constant=4)
 
         resource_scenario = new_scenario.resourcescenarios.ResourceScenario[0]
         resource_attr_id = resource_scenario.resource_attr_id
@@ -330,9 +331,9 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         assert len(scenario_diff.resourcescenarios.ResourceScenarioDiff) == 1, "Data comparison was not successful!"
 
-        assert len(scenario_diff.constraints.common_constraints) == 1, "Constraint comparison was not successful!"
+     #   assert len(scenario_diff.constraints.common_constraints) == 1, "Constraint comparison was not successful!"
         
-        assert len(scenario_diff.constraints.scenario_2_constraints) == 1, "Constraint comparison was not successful!"
+     #   assert len(scenario_diff.constraints.scenario_2_constraints) == 1, "Constraint comparison was not successful!"
 
         assert len(scenario_diff.groups.scenario_2_items) == 1, "Group comparison was not successful!"
         assert scenario_diff.groups.scenario_1_items is None, "Group comparison was not successful!"

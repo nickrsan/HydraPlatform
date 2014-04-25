@@ -23,15 +23,11 @@ from spyne.util.dictdoc import get_object_as_dict
 from hydra_base import HydraService
 from hydra_complexmodels import Unit
 
-from db import HydraIface
-from HydraLib import units
-from HydraLib.HydraException import HydraError
-from HydraLib.util import array_dim
-from HydraLib.util import arr_to_vector
-from HydraLib.util import vector_to_arr
+from HydraLib import units as unitlib
+from lib import units
 
 global hydra_units
-hydra_units = units.Units()
+hydra_units = unitlib.Units()
 
 
 class UnitService(HydraService):
@@ -44,8 +40,7 @@ class UnitService(HydraService):
         servers list of dimensions. If the dimension already exists, nothing is
         done.
         """
-        result = hydra_units.add_dimension(dimension)
-        hydra_units.save_user_file()
+        result = units.add_dimension(dimension, **ctx.in_header.__dict__)
         return result
 
     @rpc(String, _returns=Boolean)
@@ -53,8 +48,7 @@ class UnitService(HydraService):
         """Delete a physical dimension from the list of dimensions. Please note
         that deleting works only for dimensions listed in the custom file.
         """
-        result = hydra_units.delete_dimension(dimension)
-        hydra_units.save_user_file()
+        result = units.delete_dimension(dimension, **ctx.in_header.__dict__)
         return result
 
     @rpc(Unit, _returns=Boolean)
@@ -82,10 +76,7 @@ class UnitService(HydraService):
         """
         # Convert the complex model into a dict
         unitdict = get_object_as_dict(unit, Unit)
-        if unit.dimension is None:
-            unitdict['dimension'] = hydra_units.get_dimension(unit.abbr)
-        hydra_units.add_unit(unitdict['dimension'], unitdict)
-        hydra_units.save_user_file()
+        units.add_unit(unitdict, **ctx.in_header.__dict__)
         return True
 
     @rpc(Unit, _returns=Boolean)
@@ -94,10 +85,7 @@ class UnitService(HydraService):
         not that units built in to the library can not be updated.
         """
         unitdict = get_object_as_dict(unit, Unit)
-        if unit.dimension is None:
-            unitdict['dimension'] = hydra_units.get_dimension(unit.abbr)
-        result = hydra_units.update_unit(unitdict['dimension'], unitdict)
-        hydra_units.save_user_file()
+        result = units.update_unit(unitdict, **ctx.in_header.__dict__)
         return result
 
     @rpc(Unit, _returns=Boolean)
@@ -105,10 +93,7 @@ class UnitService(HydraService):
         """Delete a unit from the custom unit collection.
         """
         unitdict = get_object_as_dict(unit, Unit)
-        if unit.dimension is None:
-            unitdict['dimension'] = hydra_units.get_dimension(unit.abbr)
-        result = hydra_units.delete_unit(unitdict)
-        hydra_units.save_user_file()
+        result = units.delete_unit(unitdict, **ctx.in_header.__dict__)
         return result
 
     @rpc(Decimal(min_occurs="1", max_occurs="unbounded"),
@@ -123,50 +108,14 @@ class UnitService(HydraService):
             >>> cli.service.convert_units(20.0, 'm', 'km')
             0.02
         """
-        float_values = [float(value) for value in values]
-        return hydra_units.convert(float_values, unit1, unit2)
+        return units.convert_units(values, unit1, unit2, **ctx.in_header.__dict__)
 
     @rpc(Integer, String, _returns=Integer)
     def convert_dataset(ctx, dataset_id, to_unit):
         """Convert a whole dataset (specified by 'dataset_id' to new unit
         ('to_unit').
         """
-        ds_i = HydraIface.Dataset(dataset_id=dataset_id)
-        dataset_type = ds_i.db.data_type
-
-        dsval = ds_i.get_val()
-        old_unit = ds_i.db.data_units
-
-        if old_unit is not None:
-            if dataset_type == 'scalar':
-                new_val = hydra_units.convert(float(dsval), old_unit, to_unit)
-            elif dataset_type == 'array':
-                dim = array_dim(dsval)
-                vecdata = arr_to_vector(dsval)
-                newvec = hydra_units.convert(vecdata, old_unit, to_unit)
-                new_val = vector_to_arr(newvec, dim)
-            elif dataset_type == 'timeseries':
-                new_val = []
-                for ts_data in dsval:
-                    dim = array_dim(ts_data[1])
-                    vecdata = arr_to_vector(ts_data[1])
-                    newvec = hydra_units.convert(vecdata, old_unit, to_unit)
-                    newarr = vector_to_arr(newvec, dim)
-                    new_val.append(ts_data[0], newarr)
-            elif dataset_type == 'eqtimeseries':
-                pass
-            elif dataset_type == 'descriptor':
-                raise HydraError('Cannot convert descriptor.')
-
-            ds_i.db.data_units = to_unit
-            ds_i.set_val(dataset_type, new_val)
-            ds_i.set_hash(new_val)
-            ds_i.save()
-
-            return ds_i.db.dataset_id
-
-        else:
-            raise HydraError('Dataset has no units.')
+        return units.convert_dataset(dataset_id, to_unit, **ctx.in_header.__dict__)
 
     @rpc(String, _returns=String)
     def get_dimension(ctx, unit1):
@@ -178,7 +127,7 @@ class UnitService(HydraService):
             >>> cli.service.get_dimension('m')
             Length
         """
-        dim = hydra_units.get_dimension(unit1)
+        dim = units.get_dimension(unit1, **ctx.in_header.__dict__)
 
         return dim
 
@@ -186,28 +135,18 @@ class UnitService(HydraService):
     def get_dimensions(ctx):
         """Get a list of all physical dimensions available on the server.
         """
-        dim_list = hydra_units.get_dimensions()
+        dim_list = units.get_dimensions(**ctx.in_header.__dict__)
         return dim_list
 
     @rpc(String, _returns=SpyneArray(Unit))
     def get_units(ctx, dimension):
         """Get a list of all units corresponding to a physical dimension.
         """
-        unit_list = hydra_units.get_units(dimension)
-        complex_model_list = []
-        for unit in unit_list:
-            cm_unit = Unit()
-            cm_unit.name = unit['name']
-            cm_unit.abbr = unit['abbr']
-            cm_unit.lf = unit['lf']
-            cm_unit.cf = unit['cf']
-            cm_unit.dimension = unit['dimension']
-            cm_unit.info = unit['info']
-            complex_model_list.append(cm_unit)
-        return complex_model_list
+        unit_list = units.get_units(dimension, **ctx.in_header.__dict__)
+        return unit_list
 
     @rpc(String, String, _returns=Boolean)
     def check_consistency(ctx, unit, dimension):
         """Check if a given units corresponds to a physical dimension.
         """
-        return hydra_units.check_consistency(unit, dimension)
+        return units.check_consistency(unit, dimension, **ctx.in_header.__dict__)

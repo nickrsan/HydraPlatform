@@ -16,13 +16,14 @@
 # -*- coding: utf-8 -*-
 
 import config
-import hydra_logging
-import logging
 from suds.client import Client
 from suds.plugin import MessagePlugin
 
 from datetime import datetime
 import os
+import logging
+
+log = logging.getLogger(__name__)
 from lxml import objectify
 from lxml import etree
 from lxml.etree import XMLParser
@@ -406,8 +407,6 @@ def connect(**kwargs):
 
     retxml = kwargs.get('retxml', False)
 
-    # Set up logging
-    hydra_logging.init(level='INFO')
     logging.getLogger('suds').setLevel(logging.ERROR)
     logging.getLogger('suds.client').setLevel(logging.CRITICAL)
     #logging.getLogger('suds.metrics').setLevel(logging.INFO)
@@ -644,7 +643,7 @@ def write_xml_result(plugin_name, xml_string, file_path=None):
 
 def set_resource_types(client, xml_template, network,
                        nodetype_dict, linktype_dict, networktype):
-    logging.info("Setting resource types")
+    log.info("Setting resource types")
 
     template = client.service.upload_template_xml(xml_template)
 

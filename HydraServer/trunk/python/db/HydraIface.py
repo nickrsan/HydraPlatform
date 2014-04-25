@@ -27,6 +27,8 @@ from HydraLib.HydraException import HydraError,\
 import IfaceLib
 from IfaceLib import IfaceBase, execute
 
+log = logging.getLogger(__name__)
+
 def init(cnx):
     IfaceLib.init(cnx, db_hierarchy)
 
@@ -451,7 +453,7 @@ class GenericResource(IfaceBase):
         obj_dict['types'] = type_list
 
         if time:
-            logging.info("get_as_dict of %s took: %s ", self.name, datetime.datetime.now()-start)
+            log.info("get_as_dict of %s took: %s ", self.name, datetime.datetime.now()-start)
 
         return obj_dict
 
@@ -496,8 +498,10 @@ class GenericResource(IfaceBase):
             Check whether this user can read this network
         """
 
-        if self.ref_key not in ('PROJECT', 'NETWORK'):
-            return
+        if user_id is None:
+            raise PermissionError('Permission ErrorUser ID not found')
+            if self.ref_key not in ('PROJECT', 'NETWORK'):
+                return
 
         sql = """
             select
@@ -691,7 +695,7 @@ class Network(GenericResource):
             starttime = datetime.datetime.now()
             load_ok = super(Network, self).load_all()
             endtime = datetime.datetime.now()
-            logging.info('#-- super(Network, self).load_all(): %s' % str(endtime-starttime))
+            log.info('#-- super(Network, self).load_all(): %s' % str(endtime-starttime))
 
             if load_ok is False:
                 return False
@@ -1222,6 +1226,7 @@ class TemplateType(IfaceBase):
         for tattr_i in self.typeattrs:
             if attr_id == tattr_i.db.attr_id:
                 self.typeattrs.remove(tattr_i)
+                tattr_i.delete()
                 tattr_i.save()
 
         return tattr_i
@@ -1518,7 +1523,7 @@ class Dataset(IfaceBase):
         elif self.db.data_type == 'array':
             d = Array(data_id = self.db.data_id)
 
-        logging.info("Deleting %s with data id %s", self.db.data_type, self.db.data_id)
+        log.info("Deleting %s with data id %s", self.db.data_type, self.db.data_id)
         d.delete()
 
     def get_as_dict(self, **kwargs):
@@ -1790,10 +1795,10 @@ class TimeSeries(IfaceBase):
             returns the value at a given time for a timeseries
         """
         for ts_data in self.timeseriesdatas:
-            logging.debug("%s vs %s", ts_data.db.ts_time, time)
+            log.debug("%s vs %s", ts_data.db.ts_time, time)
             if ts_data.db.ts_time == time:
                 return ts_data.db.ts_value
-        logging.info("No value found at %s for data_id %s", time, self.db.data_id)
+        log.info("No value found at %s for data_id %s", time, self.db.data_id)
         return None
 
     def delete(self):
@@ -2219,7 +2224,7 @@ class User(IfaceBase):
             self.db.password = user_rs[0].password
             return self.db.user_id
         else:
-            logging.info("User %s does not exist."%self.db.username)
+            log.info("User %s does not exist."%self.db.username)
             return None
 
     def update_alter_time(self):

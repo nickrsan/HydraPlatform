@@ -28,6 +28,7 @@ import config
 from lxml import etree
 import logging
 
+log = logging.getLogger(__name__)
 
 class Units(object):
     """
@@ -76,7 +77,7 @@ class Units(object):
             with open(user_unitfile) as f:
                 self.usertree = etree.parse(f).getroot()
         except IOError:
-            logging.info(("Custom unit conversion file '%s' does not "
+            log.info(("Custom unit conversion file '%s' does not "
                           + "exist, falling back to default file (%s).")
                          % (user_unitfile, default_user_file))
             with open(default_user_file) as f:

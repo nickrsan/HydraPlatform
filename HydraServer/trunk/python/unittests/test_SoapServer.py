@@ -31,6 +31,8 @@ import datetime
 global CLIENT
 CLIENT = None
 
+log = logging.getLogger(__name__)
+
 class FixNamespace(MessagePlugin):
     def marshalled(self, context):
         self.fix_ns(context.envelope)
@@ -69,7 +71,7 @@ class SoapServerTest(unittest.TestCase):
 
 
     def tearDown(self):
-        logging.debug("Tearing down")
+        log.debug("Tearing down")
         self.logout('root')
 
     def login(self, username, password):
@@ -115,10 +117,10 @@ class SoapServerTest(unittest.TestCase):
         if template is not None:
             return template
 
-        link_attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
-        link_attr_2 = self.create_attr("link_attr_2", dimension='Speed')
-        node_attr_1 = self.create_attr("node_attr_1", dimension='Volume')
-        node_attr_2 = self.create_attr("node_attr_2", dimension='Speed')
+        link_attr_1 = self.create_attr("tmpl_attr_1", dimension='Pressure')
+        link_attr_2 = self.create_attr("tmpl_attr_2", dimension='Speed')
+        node_attr_1 = self.create_attr("tmpl_attr_1", dimension='Volume')
+        node_attr_2 = self.create_attr("tmpl_attr_2", dimension='Speed')
 
         template = self.client.factory.create('hyd:Template')
         template.name = 'Test Template'
@@ -264,7 +266,7 @@ class SoapServerTest(unittest.TestCase):
             p =  self.client.service.add_project(project)
             project_id = p.id
 
-        logging.debug("Project creation took: %s"%(datetime.datetime.now()-start))
+        log.debug("Project creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
 
         link_attr1 = self.create_attr("link_attr_1", dimension='Pressure')
@@ -276,7 +278,7 @@ class SoapServerTest(unittest.TestCase):
 
         template = self.create_template()
 
-        logging.debug("Attribute creation took: %s"%(datetime.datetime.now()-start))
+        log.debug("Attribute creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
 
        
@@ -378,7 +380,7 @@ class SoapServerTest(unittest.TestCase):
 
         #A network must contain an array of links. In this case, the array
 
-        logging.debug("Making nodes & links took: %s"%(datetime.datetime.now()-start))
+        log.debug("Making nodes & links took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
 
         #Create the scenario
@@ -460,7 +462,7 @@ class SoapServerTest(unittest.TestCase):
         scenario_array = self.client.factory.create('hyd:ScenarioArray')
         scenario_array.Scenario.append(scenario)
 
-        logging.debug("Scenario definition took: %s"%(datetime.datetime.now()-start))
+        log.debug("Scenario definition took: %s"%(datetime.datetime.now()-start))
         #This can also be defined as a simple dictionary, but I do it this
         #way so I can check the value is correct after the network is created.
         layout = self.client.factory.create("xs:anyType")
@@ -483,14 +485,14 @@ class SoapServerTest(unittest.TestCase):
             'resourcegroups' : group_array,
         }
 
-        #logging.debug(network)
+        #log.debug(network)
         start = datetime.datetime.now()
-        logging.info("Creating network...")
+        log.info("Creating network...")
         response_network = self.client.service.add_network(network)
 
         self.check_network(network, response_network)
      
-        logging.info("Network Creation took: %s"%(datetime.datetime.now()-start))
+        log.info("Network Creation took: %s"%(datetime.datetime.now()-start))
 
         return response_network
 

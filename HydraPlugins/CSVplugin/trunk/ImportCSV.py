@@ -181,6 +181,7 @@ import numpy
 from lxml import etree
 
 import re
+log = logging.getLogger(__name__)
 
 
 class ImportCSV(object):
@@ -230,13 +231,13 @@ class ImportCSV(object):
         """
         file_data=None
         if file == None:
-            logging.warn("No file specified")
+            log.warn("No file specified")
             return None
         self.basepath = os.path.dirname(file)
         with open(file, mode='r') as csv_file:
             file_data = csv_file.read().split('\n')
             if len(file_data) == 0:
-                logging.warn("File contains no data")
+                log.warn("File contains no data")
         # Ignore comments
         bad_lines = []
         for i, line in enumerate(file_data):
@@ -288,13 +289,13 @@ class ImportCSV(object):
                 ID = int(ID)
                 try:
                     self.Project = self.cli.service.get_project(ID)
-                    logging.info('Loading existing project (ID=%s)' % ID)
+                    log.info('Loading existing project (ID=%s)' % ID)
                     return
                 except WebFault:
-                    logging.info('Project ID not found. Creating new project')
+                    log.info('Project ID not found. Creating new project')
 
             except ValueError:
-                logging.info('Project ID not valid. Creating new project')
+                log.info('Project ID not valid. Creating new project')
                 self.warnings.append(
                     'Project ID not valid. Creating new project')
 
@@ -372,7 +373,7 @@ class ImportCSV(object):
                     self.Network.description = \
                         data[field_idx['description']].strip()
                     self.update_network_flag = True
-                    logging.info('Loading existing network (ID=%s)' % ID)
+                    log.info('Loading existing network (ID=%s)' % ID)
                     # load existing nodes
                     if self.Network.nodes is not None:
                         for node in self.Network.nodes.Node:
@@ -400,7 +401,7 @@ class ImportCSV(object):
                         self.cli.factory.create('hyd:ScenarioArray')
                     self.Network = dict(self.Network)
                 except WebFault:
-                    logging.info('Network ID not found. Creating new network.')
+                    log.info('Network ID not found. Creating new network.')
                     self.warnings.append('Network ID not found. Creating new network.')
                     ID = None
 
@@ -535,7 +536,7 @@ class ImportCSV(object):
 
             if nodename in self.Nodes.keys():
                 node = self.Nodes[nodename]
-                logging.info('Node %s exists.' % nodename)
+                log.info('Node %s exists.' % nodename)
             else:
                 node = dict(
                     id = self.node_id.next(),
@@ -547,7 +548,7 @@ class ImportCSV(object):
                     node['x'] = float(linedata[field_idx['x']])
                 except ValueError:
                     node['x'] = 0
-                    logging.info('X coordinate of node %s is not a number.'
+                    log.info('X coordinate of node %s is not a number.'
                                  % node['name'])
                     self.warnings.append('X coordinate of node %s is not a number.'
                                          % node['name'])
@@ -555,7 +556,7 @@ class ImportCSV(object):
                     node['y'] = float(linedata[field_idx['y']])
                 except ValueError:
                     node['y'] = 0
-                    logging.info('Y coordinate of node %s is not a number.'
+                    log.info('Y coordinate of node %s is not a number.'
                                  % node['name'])
                     self.warnings.append('Y coordinate of node %s is not a number.'
                                          % node['name'])
@@ -619,7 +620,7 @@ class ImportCSV(object):
 
             if linkname in self.Links.keys():
                 link = self.Links[linkname]
-                logging.info('Link %s exists.' % linkname)
+                log.info('Link %s exists.' % linkname)
             else:
                 link = dict(
                     id = self.link_id.next(),
@@ -635,7 +636,7 @@ class ImportCSV(object):
                     link['node_2_id'] = tonode['id']
 
                 except KeyError:
-                    logging.info(('Start or end node not found (%s -- %s).' +
+                    log.info(('Start or end node not found (%s -- %s).' +
                                   ' No link created.') %
                                  (linedata[field_idx['from']].strip(),
                                   linedata[field_idx['to']].strip()))
@@ -712,7 +713,7 @@ class ImportCSV(object):
 
             if group_name in self.Groups.keys():
                 group = self.Groups[group_name]
-                logging.info('Group %s exists.' % group_name)
+                log.info('Group %s exists.' % group_name)
             else:
                 group = dict(
                     id = self.group_id.next(),
@@ -765,7 +766,7 @@ class ImportCSV(object):
             group = self.Groups.get(group_name)
 
             if group is None:
-                logging.info("Group %s has not been specified."%(group_name) +
+                log.info("Group %s has not been specified."%(group_name) +
                           ' Group item not created.')
                 self.warnings.append("Group %s has not been specified"%(group_name) +
                           ' Group item not created.')
@@ -775,7 +776,7 @@ class ImportCSV(object):
             member_type = member_data[field_idx['type']].strip().upper()
 
             if type_map.get(member_type) is None:
-                logging.info("Type %s does not exist."%(member_type) +
+                log.info("Type %s does not exist."%(member_type) +
                           ' Group item not created.')
                 self.warnings.append("Type %s does not exist"%(member_type) +
                           ' Group item not created.')
@@ -784,7 +785,7 @@ class ImportCSV(object):
 
             member = type_map[member_type].get(member_name)
             if member is None:
-                logging.info("%s %s does not exist."%(member_type, member_name) +
+                log.info("%s %s does not exist."%(member_type, member_name) +
                           ' Group item not created.')
                 self.warnings.append("%s %s does not exist."%(member_type, member_type) +
                           ' Group item not created.')
@@ -925,7 +926,7 @@ class ImportCSV(object):
             #3: identify the individual elements and their structure.
 
             split_str = constraint_str.split(' ')
-            logging.info(constraint_str)
+            log.info(constraint_str)
             constant = split_str[-1]
             op = split_str[-2]
 
@@ -1052,7 +1053,7 @@ class ImportCSV(object):
 
     def set_resource_types(self, template_file):
 
-        logging.info("Setting resource types based on %s." % template_file)
+        log.info("Setting resource types based on %s." % template_file)
         with open(template_file) as f:
             xml_template = f.read()
 
@@ -1107,7 +1108,7 @@ class ImportCSV(object):
                     full_file_path = os.path.join(self.basepath, value)
                     if self.file_dict.get(full_file_path) is None:
                         with open(full_file_path) as f:
-                            logging.info('Reading data from %s ...' % full_file_path)
+                            log.info('Reading data from %s ...' % full_file_path)
                             filedata = f.read()
                             self.file_dict[full_file_path] = filedata
                     else:
@@ -1137,7 +1138,7 @@ class ImportCSV(object):
                         else:
                             continue
                     if len(filedata) == 0:
-                        logging.info('%s: No data found in file %s' %
+                        log.info('%s: No data found in file %s' %
                                      (resource_name, full_file_path))
                         self.warnings.append('%s: No data found in file %s' %
                                              (resource_name, full_file_path))
@@ -1265,7 +1266,7 @@ class ImportCSV(object):
             return True
 
     def commit(self):
-        logging.info("Committing Network")
+        log.info("Committing Network")
         for node in self.Nodes.values():
             self.Network['nodes'].Node.append(node)
         for link in self.Links.values():
@@ -1273,17 +1274,17 @@ class ImportCSV(object):
         for group in self.Groups.values():
             self.Network['resourcegroups'].ResourceGroup.append(group)
         self.Network['scenarios'].Scenario.append(self.Scenario)
-        logging.info("Network created for sending")
+        log.info("Network created for sending")
 
         if self.update_network_flag:
-            logging.info('Updating network (ID=%s)' % self.Network['id'])
+            log.info('Updating network (ID=%s)' % self.Network['id'])
             self.Network = self.cli.service.update_network(self.Network)
         else:
-            logging.info("Adding Network")
+            log.info("Adding Network")
             self.Network = self.cli.service.add_network(self.Network)
 
-        logging.info("Network updated. Network ID is %s", self.Network.id)
-      #  logging.info("Network Scenarios are: %s",
+        log.info("Network updated. Network ID is %s", self.Network.id)
+      #  log.info("Network Scenarios are: %s",
       #               [s.id for s in self.Network.scenarios.Scenario] + [self.Sceanrio.id])
 
         self.message = 'Data import was successful.'
@@ -1301,12 +1302,12 @@ class ImportCSV(object):
 
     def validate_template(self, template_file):
 
-        logging.info('Validating template file (%s).' % template_file)
+        log.info('Validating template file (%s).' % template_file)
 
         with open(template_file) as f:
             xml_template = f.read()
 
-        template_xsd_path = config.get('templates', 'template_xsd_path')
+        template_xsd_path = os.path.expanduser(config.get('templates', 'template_xsd_path'))
         print template_xsd_path
         xmlschema_doc = etree.parse(template_xsd_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
@@ -1406,11 +1407,11 @@ if __name__ == '__main__':
             csv.create_network(file=args.network)
 
             for nodefile in args.nodes:
-                logging.info("Reading Nodes")
+                log.info("Reading Nodes")
                 csv.read_nodes(nodefile)
 
             if args.links is not None:
-                logging.info("Reading Links")
+                log.info("Reading Links")
                 for linkfile in args.links:
                     csv.read_links(linkfile)
 
@@ -1438,7 +1439,7 @@ if __name__ == '__main__':
                 csv.set_resource_types(args.template)
 
         else:
-            logging.info('No nodes found. Nothing imported.')
+            log.info('No nodes found. Nothing imported.')
 
         errors = []
 

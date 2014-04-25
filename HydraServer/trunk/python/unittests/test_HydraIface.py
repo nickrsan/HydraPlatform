@@ -21,15 +21,16 @@ if "../../../../../HydraLib/trunk/" not in sys.path:
 import unittest
 from db import HydraIface
 from db import hdb
-from HydraLib import hydra_logging
-import logging
 import datetime
+from HydraLib import hydra_logging
+
+import logging
+log = logging.getLogger(__name__)
 
 class HydraIfaceTest(unittest.TestCase):
     def setUp(self):
         self.am = None
         self.x = None
-        hydra_logging.init(level='INFO')
         HydraIface.init(hdb.connect())
 
     def tearDown(self):
@@ -46,7 +47,7 @@ class HydraIfaceTest(unittest.TestCase):
 
 
         hdb.commit()
-        logging.debug("Tearing down")
+        log.debug("Tearing down")
         hdb.disconnect()
         hydra_logging.shutdown()
 
@@ -129,11 +130,11 @@ class HydraIfaceTest(unittest.TestCase):
 
 
 def run():
-   # hydra_logging.init(level='DEBUG')
+   # hydra_log.init(level='DEBUG')
    # HydraIface.init(hdb.connect())
     unittest.main()
    # hdb.disconnect()
-   # hydra_logging.shutdown()
+   # hydra_log.shutdown()
 
 if __name__ == "__main__":
     run() # run all tests

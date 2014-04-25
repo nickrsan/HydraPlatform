@@ -18,8 +18,9 @@
 # -*- coding: utf-8 -*-
 
 import test_SoapServer
-import logging
 import timeit
+import logging
+log = logging.getLogger(__name__)
 
 class NetworkTest(test_SoapServer.SoapServerTest):
 
@@ -28,7 +29,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
     def test_add_large_network(self):
         time = timeit.Timer(self.create_large_network).timeit(number=1)
-        logging.debug(time)
+        log.debug(time)
         assert time < 50
 
 

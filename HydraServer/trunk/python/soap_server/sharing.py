@@ -13,11 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from HydraLib.HydraException import HydraError
 from spyne.model.primitive import String, Integer
 from spyne.decorator import rpc
-from db import HydraIface
 from hydra_base import HydraService
+from lib import sharing
 
 
 class SharingService(HydraService):
@@ -38,31 +37,13 @@ class SharingService(HydraService):
             project to be shared with other users 
         """
 
-        net_i = HydraIface.Network(network_id=network_id)
-       
-        #Check if the user is allowed to share this network.
-        net_i.check_share_permission(ctx.in_header.user_id)
-       
-        if read_only == 'Y':
-            write = 'N'
-            share = 'N'
-        else:
-            write = 'Y'
+        sharing.share_network(network_id,
+                              usernames,
+                              read_only,
+                              share,
+                              **ctx.in_header.__dict__)
 
-        if net_i.db.created_by != int(ctx.in_header.user_id) and share == 'Y':
-            raise HydraError("Cannot share the 'sharing' ability as user %s is not"
-                         " the owner of network %s"%
-                         (ctx.in_header.user_id, network_id))
-
-        for username in usernames:
-            user_i = HydraIface.User()
-            user_i.db.username = username
-            user_i.get_user_id()
-            net_i.set_ownership(user_i.db.user_id, write=write, share=share)
-    
-            net_i.project.set_ownership(user_i.db.user_id, write='N', share='N')
-
-        return "OK"
+        return 'OK'
 
     @rpc(Integer, String(max_occurs='unbounded'),
          String(pattern="[YN]"), String(pattern="[YN]"), _returns=String)
@@ -77,37 +58,11 @@ class SharingService(HydraService):
             The share flat ('Y' or 'N') must be set to 'Y' to allow the 
             project to be shared with other users
         """
-        proj_i = HydraIface.Project(project_id=project_id)
-        proj_i.load_all()
-
-        #Is the sharing user allowed to share this project?
-        proj_i.check_share_permission(ctx.in_header.user_id)
-       
-        user_id = int(ctx.in_header.user_id)
-
-        if user_id not in proj_i.get_owners():
-           raise HydraError("Permission Denied. Cannot share project.")
-     
-        if read_only == 'Y':
-            write = 'N'
-            share = 'N'
-        else:
-            write = 'Y'
-
-        if proj_i.db.created_by != ctx.in_header.user_id and share == 'Y':
-            raise HydraError("Cannot share the 'sharing' ability as user %s is not"
-                         " the owner of project %s"%
-                         (ctx.in_header.user_id, project_id))
-
-        for username in usernames:
-            user_i = HydraIface.User()
-            user_i.db.username = username
-            user_i.get_user_id()
-            proj_i.set_ownership(user_i.db.user_id, write=write, share=share)
-            
-            for net_i in proj_i.networks:
-                net_i.set_ownership(user_i.db.user_id, write=write, share=share)
-
+        sharing.share_project(project_id,
+                              usernames,
+                              read_only,
+                              share,
+                              **ctx.in_header.__dict__)
         return "OK"
 
     @rpc(Integer, String(max_occurs="unbounded"), 
@@ -122,34 +77,12 @@ class SharingService(HydraService):
             flag sets write access. If the read flag is 'N', then there is
             automatically no write access or share access.
         """
-        proj_i = HydraIface.Project(project_id=project_id)
-       
-        #Is the sharing user allowed to share this project?
-        proj_i.check_share_permission(ctx.in_header.user_id)
-       
-        #You cannot edit something you cannot see.
-        if read == 'N':
-            write = 'N'
-            share = 'N'
-
-        for username in usernames:
-            user_i = HydraIface.User()
-            user_i.db.username = username
-            user_i.get_user_id()
-
-            #The creator of a project must always have read and write access
-            #to their project
-            if proj_i.db.created_by == user_i.db.user_id:
-                raise HydraError("Cannot set permissions on project %s"
-                                 " for user %s as tis user is the creator." % 
-                                 (project_id, username)) 
-            
-            proj_i.set_ownership(user_i.db.user_id, read=read, write=write)
-            
-            for net_i in proj_i.networks:
-                net_i.set_ownership(user_i.db.user_id, read=read, write=write, share=share)
-
-        return "OK"
+        sharing.set_project_permission(project_id,
+                                       usernames,
+                                       read,
+                                       write,
+                                       share,
+                                       **ctx.in_header.__dict__)
 
     @rpc(Integer, String(max_occurs="unbounded"), 
          String(pattern="[YN]"), String(pattern="[YN]"), String(pattern="[YN]"),
@@ -162,32 +95,15 @@ class SharingService(HydraService):
             automatically no write access or share access.
         """
 
-        net_i = HydraIface.Network(network_id=network_id)
-
-        #Check if the user is allowed to share this network.
-        net_i.check_share_permission(ctx.in_header.user_id)
-
-        #You cannot edit something you cannot see.
-        if read == 'N':
-            write = 'N'
-            share = 'N'
-       
-        for username in usernames:
-            user_i = HydraIface.User()
-            user_i.db.username = username
-            user_i.get_user_id()
-            #The creator of a network must always have read and write access
-            #to their project
-            if net_i.db.created_by == user_i.db.user_id:
-                raise HydraError("Cannot set permissions on network %s"
-                                 " for user %s as tis user is the creator." % 
-                                 (network_id, username))
-            
-            net_i.set_ownership(user_i.db.user_id, read=read, write=write, share=share)
+        sharing.set_network_permission(network_id,
+                                       usernames,
+                                       read,
+                                       write,
+                                       share,
+                                       **ctx.in_header.__dict__)
 
         return "OK"
 
-class DataSharingService(HydraService):
     @rpc(Integer, String(max_occurs="unbounded"),
          String(pattern="[YN]"), String(pattern="[YN]"), String(pattern="[YN]"),
          _returns=String)
@@ -200,24 +116,12 @@ class DataSharingService(HydraService):
             The exceptions paramater lists the usernames of those with permission to view the data
             read, write and share indicate whether these users can read, edit and share this data.
         """
-
-        dataset_i = HydraIface.Dataset(dataset_id=dataset_id)
-        #check that I can lock the dataset
-        if dataset_i.db.created_by != int(ctx.in_header.user_id):
-            raise HydraError('Permission denied. '
-                            'User %s is not the owner of dataset %s'
-                            %(ctx.in_header.user_id, dataset_i.db.data_name))
-
-        dataset_i.db.locked = 'Y'
-        if exceptions is not None:
-            for username in exceptions:
-                user_i = HydraIface.User()
-                user_i.db.username = username
-                user_i.get_user_id()
-
-                dataset_i.set_ownership(user_i.db.user_id, read=read, write=write, share=share)
-
-        dataset_i.save()
+        sharing.lock_dataset(dataset_id,
+                             exceptions,
+                             read,
+                             write,
+                             share,
+                             **ctx.in_header.__dict__)
 
         return "OK"
 

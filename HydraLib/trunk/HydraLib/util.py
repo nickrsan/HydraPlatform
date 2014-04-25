@@ -19,6 +19,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from operator import mul
 
+log = logging.getLogger(__name__)
 
 def get_datetime(timestamp):
 
@@ -68,6 +69,7 @@ def timestamp_to_ordinal(timestamp):
 
     fraction = (Decimal(repr(total_seconds)) / Decimal(86400)).quantize(Decimal('.00000000000000000001'),rounding=ROUND_HALF_UP)
     ordinal_ts_time += fraction
+    log.debug("%s converted to %s", timestamp, ordinal_ts_time)
 
     return ordinal_ts_time
 
@@ -86,6 +88,7 @@ def ordinal_to_timestamp(date):
 
     td = datetime.timedelta(seconds=int(time_in_secs), microseconds=time_in_ms)
     d = datetime.datetime.fromordinal(day) + td
+    log.debug("%s converted to %s", date, d)
 
     return d
 

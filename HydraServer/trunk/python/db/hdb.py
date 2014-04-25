@@ -16,8 +16,7 @@
 import mysql.connector
 import logging
 from HydraLib import config
-import sqlite3
-
+log = logging.getLogger(__name__)
 global CNX
 CNX = None
 
@@ -70,7 +69,7 @@ class HydraRSRow(object):
         return dict(self.rs_zip)
 
 def connect(user=None, password=None, db_name=None):
-    logging.debug("CONNECTING")
+    log.debug("CONNECTING")
     if user is None:
         user = config.get('mysqld', 'user')
     if password is None:
@@ -94,7 +93,7 @@ def rollback():
     CNX.rollback()
 
 def disconnect():
-    logging.debug("DIS - CONNECTING")
+    log.debug("DIS - CONNECTING")
     global CNX
     if CNX is not None:
         CNX.disconnect()

@@ -19,7 +19,6 @@ from spyne.model.complex import ComplexModel
 from spyne.decorator import srpc, rpc
 from db import HydraIface
 from hydra_complexmodels import LoginResponse
-import pytz
 import logging
 from HydraLib.HydraException import HydraError
 
@@ -30,6 +29,7 @@ import random
 
 from spyne.service import ServiceBase
 
+log = logging.getLogger(__name__)
 _session_db = set()
 _user_map   = {}
 
@@ -49,7 +49,7 @@ def make_root_user():
         user.save()
         user.commit()
     else:
-        logging.info("Root user exists.")
+        log.info("Root user exists.")
 
     sql = """
         select

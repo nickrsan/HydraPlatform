@@ -19,6 +19,7 @@
 import test_SoapServer
 import copy
 import logging
+log = logging.getLogger(__name__)
 
 class NetworkTest(test_SoapServer.SoapServerTest):
 
@@ -40,7 +41,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             assert s.resourcescenarios is None
         
         partial_network = self.client.service.get_network(new_scenario.network_id, 'Y', [scenario_id])
-        logging.debug(partial_network)
+        log.debug(partial_network)
 
         assert len(partial_network.scenarios.Scenario) == 1
         assert len(full_network.scenarios.Scenario)    == 2
@@ -193,6 +194,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         new_network = self.client.service.get_network(network.id)
 
         assert len(new_network.links.Link) == len(network.links.Link)+1; "New node was not added correctly"
+        return new_network
 
     def test_add_node(self):
         project = self.create_project('test')
@@ -208,8 +210,8 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         for i in range(nnodes):
             node = self.client.factory.create('hyd:Node')
             node.id = i * -1
-            node.name = 'Node ' + str(i)
-            node.description = 'Test node ' + str(i)
+            node.name = 'node ' + str(i)
+            node.description = 'test node ' + str(i)
             node.x = x[i]
             node.y = y[i]
 
@@ -218,16 +220,16 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         for i in range(nlinks):
             link = self.client.factory.create('hyd:Link')
             link.id = i * -1
-            link.name = 'Link ' + str(i)
-            link.description = 'Test link ' + str(i)
+            link.name = 'link ' + str(i)
+            link.description = 'test link ' + str(i)
             link.node_1_id = nodes.Node[i].id
             link.node_2_id = nodes.Node[i + 1].id
 
             links.Link.append(link)
 
         network.project_id = project.id
-        network.name = 'Test'
-        network.description = 'A network for SOAP unit tests.'
+        network.name = 'test'
+        network.description = 'a network for soap unit tests.'
         network.nodes = nodes
         network.links = links
 
@@ -236,8 +238,8 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         node = self.client.factory.create('hyd:Node')
         new_node_num = nnodes + 1
         node.id = new_node_num * -1
-        node.name = 'Node ' + str(new_node_num)
-        node.description = 'Test node ' + str(new_node_num)
+        node.name = 'node ' + str(new_node_num)
+        node.description = 'test node ' + str(new_node_num)
         node.x = 100
         node.y = 101
 
@@ -267,7 +269,42 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
         new_network = self.client.service.get_network(network.id)
 
-        assert len(new_network.nodes.Node) == len(network.nodes.Node)+1; "New node was not added correctly"
+        assert len(new_network.nodes.Node) == len(network.nodes.Node)+1; "new node was not added correctly"
+        
+        return new_network
+
+   
+    def test_update_node(self):
+        network = self.test_add_node()
+
+        node_to_update = network.nodes.Node[0]
+        node_to_update.name = "Updated Node Name"
+
+        new_node = self.client.service.update_node(node_to_update)
+
+        new_network = self.client.service.get_network(network.id)
+
+        updated_node = None
+        for n in new_network.nodes.Node:
+            if n.id == node_to_update.id:
+                updated_node = n
+        assert updated_node.name == "Updated Node Name" 
+
+    def test_update_link(self):
+        network = self.test_add_link()
+
+        link_to_update = network.links.Link[0]
+        link_to_update.name = "Updated link Name"
+
+        new_link = self.client.service.update_link(link_to_update)
+
+        new_network = self.client.service.get_network(network.id)
+
+        updated_link = None
+        for l in new_network.links.Link:
+            if l.id == link_to_update.id:
+                updated_link = l
+        assert updated_link.name == "Updated link Name" 
 
     def test_load(self):
         project = self.create_project('test')

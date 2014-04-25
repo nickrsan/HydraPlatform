@@ -13,19 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from spyne.model.primitive import Integer, String
+from spyne.model.primitive import Integer, Unicode
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
-from db import HydraIface
 from hydra_complexmodels import User,\
         Role,\
         Perm,\
         get_as_complexmodel
 
-import bcrypt
-
 from hydra_base import HydraService
-from HydraLib.HydraException import HydraError
+from lib import users
 
 class UserService(HydraService):
     """
@@ -37,89 +34,49 @@ class UserService(HydraService):
         """
             Add a new user.
         """
-        #check_perm(ctx.in_header.user_id, 'add_user')
-        user_i = HydraIface.User()
-        
-        user_i.db.username     = user.username
-        user_i.db.display_name = user.display_name
-        
-        user_id = user_i.get_user_id()
-
-        #If the user is already there, cannot add another with 
-        #the same username.
-        if user_id is not None:
-            raise HydraError("User %s already exists!"%user.username)
-
-        user_i.db.password = bcrypt.hashpw(user.password, bcrypt.gensalt())
-        
-        user_i.save()
-
+        user_i = users.add_user(user, **ctx.in_header.__dict__)
         return get_as_complexmodel(ctx, user_i)
 
     @rpc(User, _returns=User)
     def update_user_display_name(ctx, user):
         """
-            Add a new user.
+            Update a user's display name
         """
-        #check_perm(ctx.in_header.user_id, 'edit_user')
-        user_i = HydraIface.User(user_id=user.id)
-
-        user_i.db.display_name = user.display_name
-
-        user_i.save()
+        user_i = users.update_user_display_name(user, **ctx.in_header.__dict__)
 
         return get_as_complexmodel(ctx, user_i)
 
 
-    @rpc(Integer, String, _returns=User)
+    @rpc(Integer, Unicode, _returns=User)
     def update_user_password(ctx, user_id, new_password):
         """
-            Add a new user.
+            Update a user's password
         """
-        #check_perm(ctx.in_header.user_id, 'edit_user')
-        user_i = HydraIface.User(user_id=user_id)
-
-        user_i.db.password = bcrypt.hashpw(new_password, bcrypt.gensalt())
-
-        user_i.save()
+        user_i = users.update_user_password(user_id, 
+                                            new_password,
+                                            **ctx.in_header.__dict__)
 
         return get_as_complexmodel(ctx, user_i)
 
-    @rpc(String, _returns=User)
+    @rpc(Unicode, _returns=User)
     def get_user_by_name(ctx, username):
         """
-            Add a new user.
+            Get a user by username
         """
-        user_i = HydraIface.User()
-        
-        user_i.db.username = username
-        
-        user_id = user_i.get_user_id()
-
-        #If the user is already there, cannot add another with 
-        #the same username.
-        if user_id is not None:
-            user_i.load_all()
+        user_i = users.get_user_by_name(username, **ctx.in_header.__dict__)
+        if user_i:
             return get_as_complexmodel(ctx, user_i)
         
         return None
 
-    @rpc(Integer, _returns=String)
+    @rpc(Integer, _returns=Unicode)
     def delete_user(ctx, user_id):
         """
-            Add a new user.
+            Delete a user.
         """
-        #check_perm(ctx.in_header.user_id, 'edit_user')
-        user_i = HydraIface.User(user_id=user_id)
-        
-        #If the user is already there, cannot add another with 
-        #the same username.
-        if user_i.load() is False:
-            raise HydraError("User %s is not in the system."%user_id)
-
-        user_i.delete()
-
-        return 'OK'
+        success = 'OK'
+        users.delete_user(user_id, **ctx.in_header.__dict__)
+        return success
 
 
     @rpc(Role, _returns=Role)
@@ -127,93 +84,61 @@ class UserService(HydraService):
         """
             Add a new role.
         """
-        #check_perm(ctx.in_header.user_id, 'add_role')
-        role_i = HydraIface.Role()
-        role_i.db.role_name = role.name
-        role_i.db.role_code = role.code
-
-        role_i.save()
-
+        role_i = users.add_role(role, **ctx.in_header.__dict__)
         return get_as_complexmodel(ctx, role_i)
 
-    @rpc(Integer, _returns=String)
+    @rpc(Integer, _returns=Unicode)
     def delete_role(ctx, role_id):
         """
-            Add a new role.
+            Delete a role.
         """
-        #check_perm(ctx.in_header.user_id, 'edit_role')
-        role_i = HydraIface.Role(role_id=role_id)
-
-        role_i.delete()
-
-        return 'OK'
+        success = 'OK'
+        users.delete_role(role_id, **ctx.in_header.__dict__)
+        return success
 
     @rpc(Perm, _returns=Perm)
     def add_perm(ctx, perm):
         """
             Add a new permission
         """
-        #check_perm(ctx.in_header.user_id, 'add_perm')
-        perm_i = HydraIface.Perm()
-        perm_i.db.perm_name = perm.name
-        perm_i.db.perm_code = perm.code
-
-        perm_i.save()
-
+        perm_i = users.add_perm(perm, **ctx.in_header.__dict__)
         return get_as_complexmodel(ctx, perm_i)
 
-    @rpc(Integer, _returns=String)
+    @rpc(Integer, _returns=Unicode)
     def delete_perm(ctx, perm_id):
         """
-            Add a new permission
+            Delete a permission
         """
-
-        #check_perm(ctx.in_header.user_id, 'edit_perm')
-        perm_i = HydraIface.Perm(perm_id=perm_id)
-
-        perm_i.delete()
-
-        return 'OK' 
+        success = 'OK'
+        users.delete_perm(perm_id)
+        return success
 
     @rpc(Integer, Integer, _returns=Role)
     def set_user_role(ctx, user_id, role_id):
-        #check_perm(ctx.in_header.user_id, 'edit_role')
-        roleuser_i = HydraIface.RoleUser(user_id=user_id, role_id=role_id)
-        
-        roleuser_i.save()
-        roleuser_i.role.load_all()
+        role_i = users.set_user_role(user_id,
+                                     role_id,
+                                     **ctx.in_header.__dict__)
 
-        return get_as_complexmodel(ctx, roleuser_i.role)
+        return get_as_complexmodel(ctx, role_i)
 
-    @rpc(Integer, Integer, _returns=String)
+    @rpc(Integer, Integer, _returns=Unicode)
     def delete_user_role(ctx, user_id, role_id):
-
-        #check_perm(ctx.in_header.user_id, 'edit_role')
-        roleuser_i = HydraIface.RoleUser(user_id=user_id, role_id=role_id)
-        
-        roleuser_i.delete()
-
-        return 'OK'
+        success = 'OK'
+        users.delete_user_role(user_id, role_id, **ctx.in_header.__dict__)
+        return success
 
     @rpc(Integer, Integer, _returns=Role)
     def set_role_perm(ctx, role_id, perm_id):
-        #check_perm(ctx.in_header.user_id, 'edit_perm')
-        roleperm_i = HydraIface.RolePerm(role_id=role_id, perm_id=perm_id)
+        role_i = users.set_role_perm(role_id,
+                                     perm_id,
+                                     **ctx.in_header.__dict__)
+        return get_as_complexmodel(ctx, role_i)
 
-        roleperm_i.save()
-
-        roleperm_i.role.load_all()
-
-        return get_as_complexmodel(ctx, roleperm_i.role)
-
-    @rpc(Integer, Integer, _returns=String)
+    @rpc(Integer, Integer, _returns=Unicode)
     def delete_role_perm(ctx, role_id, perm_id):
-        #check_perm(ctx.in_header.user_id, 'edit_perm')
-        roleperm_i = HydraIface.RolePerm(role_id=role_id, perm_id=perm_id)
-        
-        roleperm_i.delete()
-
-        return 'OK'
+        success = 'OK'
+        users.delete_role_perm(role_id, perm_id, **ctx.in_header.__dict__)
+        return success
 
 
     @rpc(Role, _returns=Role)
@@ -222,42 +147,7 @@ class UserService(HydraService):
             Update the role.
             Used to add permissions and users to a role.
         """
-        #check_perm(ctx.in_header.user_id, 'edit_role')
-        role_i = HydraIface.Role(role_id=role.id)
-        role_i.db.role_name = role.name
-        role_i.db.role_code = role.code
-
-        for perm in role.permissions:
-            if hasattr('id', perm) and perm.id is not None:
-                perm_i = HydraIface.Perm(perm_id=perm.id)
-
-            perm_i = HydraIface.Perm()
-            perm_i.db.perm_name = perm.name
-
-            perm_i.save()
-
-            roleperm_i = HydraIface.RolePerm(
-                                             role_id=role_i.db.role_id, 
-                                             perm_id=perm_i.db.perm_id
-                                            )
-
-            roleperm_i.save()
-
-        for user in role.users:
-            if hasattr('id', user) and user.id is not None:
-                user_i = HydraIface.User(user_id=user.id)
-
-            user_i = HydraIface.User()
-            user_i.db.username = user.username
-
-            user_i.save()
-
-            roleuser_i = HydraIface.RoleUser(user_id=user_i.db.user_id,
-                                             perm_id=perm_i.db.perm_id
-                                            )
-
-            roleuser_i.save()
-
+        role_i = users.update_role(role, **ctx.in_header.__dict__)
         return get_as_complexmodel(ctx, role_i)
 
             
@@ -267,115 +157,45 @@ class UserService(HydraService):
             Get the username & ID of all users.
         """
 
-        sql = """
-            select
-                username,
-                display_name,
-                user_id
-            from
-                tUser
-        """
-
-        rs = HydraIface.execute(sql)
-        users = []
-        for r in rs:
-            user = User()
-            user.username = r.username
-            user.display_name = r.display_name
-            user.id  = r.user_id
-            users.append(user)
-
-        return users
+        all_user_dicts = users.get_all_users(**ctx.in_header.__dict__)
+        all_user_cms = [User(u) for u in all_user_dicts]
+        return all_user_cms
 
     @rpc(_returns=SpyneArray(Perm))
     def get_all_perms(ctx):
         """
             Get all permissions
         """
-        sql = """
-            select
-                perm_name,
-                perm_id,
-                perm_code
-            from
-                tPerm
-        """
-        rs = HydraIface.execute(sql)
-        perms = []
-        for r in rs:
-            perm = Perm()
-            perm.name = r.perm_name
-            perm.id   = r.perm_id
-            perm.code = r.perm_code
-            perms.append(perm)
-        return perms
+        all_perm_dicts = users.get_all_perms(**ctx.in_header.__dict__)
+        all_perm_cms = [Perm(p) for p in all_perm_dicts]
+        return all_perm_cms
 
     @rpc(_returns=SpyneArray(Role))
     def get_all_roles(ctx):
         """
-            Get all roleissions
+            Get all roles
         """
-        sql = """
-            select
-                role_id
-            from
-                tRole
-        """
-        rs = HydraIface.execute(sql)
-        roles = []
-        for r in rs:
-            role = HydraIface.Role(role_id=r.role_id)
-            role.load_all()
-            roles.append(get_as_complexmodel(ctx, role))
-        
-        return roles
+        all_role_dicts = users.get_all_roles(**ctx.in_header.__dict__)
+        all_role_cms   = [Role(r) for r in all_role_dicts]
+        return all_role_cms
 
     @rpc(Integer, _returns=Role)
     def get_role(ctx, role_id):
         """
             Get a role by its ID.
         """
-        sql = """
-            select
-                role_id
-            from
-                tRole
-            where
-                role_id=%s
-        """ % (role_id)
-
-        rs = HydraIface.execute(sql)
-        if len(rs) == 0:
-            raise HydraError("Role not found (role_id=%s)", role_id)
-        
-        role = HydraIface.Role(role_id=rs[0].role_id)
-        role.load_all()
-        
-        return get_as_complexmodel(ctx, role)
+        role_i = users.get_role(role_id, **ctx.in_header.__dict__)        
+        return get_as_complexmodel(ctx, role_i)
 
 
-    @rpc(String, _returns=Role)
+    @rpc(Unicode, _returns=Role)
     def get_role_by_code(ctx, role_code):
         """
             Get a role by its code
         """
-        sql = """
-            select
-                role_id
-            from
-                tRole
-            where
-                role_code='%s'
-        """ % (role_code)
+        role_i = users.get_role_by_code(role_code, **ctx.in_header.__dict__)
 
-        rs = HydraIface.execute(sql)
-        if len(rs) == 0:
-            raise HydraError("Role not found (role_code=%s)", role_code)
-        
-        role = HydraIface.Role(role_id=rs[0].role_id)
-        role.load_all()
-        
-        return get_as_complexmodel(ctx, role)
+        return get_as_complexmodel(ctx, role_i)
 
 
     @rpc(Integer, _returns=Perm)
@@ -383,51 +203,15 @@ class UserService(HydraService):
         """
             Get all permissions
         """
-        sql = """
-            select
-                perm_id,
-                perm_name,
-                perm_code
-            from
-                tPerm
-            where
-                perm_id=%s
-        """ % (perm_id)
+        perm_dict = users.get_perm(perm_id, **ctx.in_header.__dict__)
+        perm_cm = Perm(perm_dict)
+        return perm_cm
 
-        rs = HydraIface.execute(sql)
-        if len(rs) == 0:
-            raise HydraError("perm not found (perm_id=%s)", perm_id)
-
-        p = Perm()
-        p.id = rs[0].perm_id
-        p.name= rs[0].perm_name
-        p.code = rs[0].perm_code
-
-        return p
-
-    @rpc(String, _returns=Perm)
+    @rpc(Unicode, _returns=Perm)
     def get_perm_by_code(ctx, perm_code):
         """
             Get a permission by its code 
         """
-        sql = """
-            select
-                perm_id,
-                perm_name,
-                perm_code
-            from
-                tPerm
-            where
-                perm_code='%s'
-        """ % (perm_code)
-
-        rs = HydraIface.execute(sql)
-        if len(rs) == 0:
-            raise HydraError("perm not found (perm_id=%s)", perm_code)
-
-        p = Perm()
-        p.id = rs[0].perm_id
-        p.name= rs[0].perm_name
-        p.code = rs[0].perm_code
-
-        return p
+        perm_dict = users.get_perm_by_code(perm_code, **ctx.in_header.__dict__)
+        perm_cm = Perm(perm_dict)
+        return perm_cm
