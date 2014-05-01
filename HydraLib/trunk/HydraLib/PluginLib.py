@@ -690,8 +690,6 @@ def set_resource_types(client, xml_template, network,
                     type_id = type_ids[typename],
                 ))
 
-    import pudb
-    pudb.set_trace()
     for link in network.links.Link:
         for typename, link_name_list in linktype_dict.items():
             if type_ids[typename] and link.name in link_name_list:
