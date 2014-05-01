@@ -43,7 +43,7 @@ def init(level=None):
  #   logging.addLevelName( logging.CRITICAL, "\033[0;35m%s\033[0;35m" % logging.getLevelName(logging.CRITICAL))
 
  #   logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s\033[0m', level=level)
-    
+
     config_file = os.path.expanduser(config.get('logging_conf', 'log_config_path'))
 
     logging.config.fileConfig(config_file)
@@ -53,7 +53,7 @@ def shutdown():
 
 class ColorizingStreamHandler(logging.StreamHandler):
 #
-#Thanks to Vinay Sajip 
+#Thanks to Vinay Sajip
 #(http://plumberjack.blogspot.co.uk/2010/12/colorizing-logging-output-in-terminals.html)
 ##
 
@@ -109,8 +109,8 @@ class ColorizingStreamHandler(logging.StreamHandler):
         }
     else:
         level_map = {
-            logging.DEBUG: (None, 'blue', False),
-            logging.INFO: (None, 'black', False),
+            logging.DEBUG: (None, 'cyan', False),
+            logging.INFO: (None, 'blue', False),
             logging.WARNING: (None, 'yellow', False),
             logging.ERROR: (None, 'red', False),
             logging.CRITICAL: ('red', 'white', True),

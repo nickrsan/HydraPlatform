@@ -439,7 +439,7 @@ def build_response(xml_string):
     obj = objectify.fromstring(xml_string)
     resp = obj.Body.getchildren()[0]
     res  = resp.getchildren()[0]
-    
+
     return res
 
 def get_as_dict(element):
@@ -642,7 +642,8 @@ def write_xml_result(plugin_name, xml_string, file_path=None):
 
 
 def set_resource_types(client, xml_template, network,
-                       nodetype_dict, linktype_dict, networktype):
+                       nodetype_dict, linktype_dict,
+                       grouptype_dict, networktype):
     log.info("Setting resource types")
 
     template = client.service.upload_template_xml(xml_template)
@@ -656,6 +657,12 @@ def set_resource_types(client, xml_template, network,
                 break
 
     for type_name in linktype_dict.keys():
+        for tmpltype in template.types.TemplateType:
+            if tmpltype.name == type_name:
+                type_ids.update({tmpltype.name: tmpltype.id})
+                break
+
+    for type_name in grouptype_dict.keys():
         for tmpltype in template.types.TemplateType:
             if tmpltype.name == type_name:
                 type_ids.update({tmpltype.name: tmpltype.id})
@@ -683,12 +690,23 @@ def set_resource_types(client, xml_template, network,
                     type_id = type_ids[typename],
                 ))
 
+    import pudb
+    pudb.set_trace()
     for link in network.links.Link:
         for typename, link_name_list in linktype_dict.items():
             if type_ids[typename] and link.name in link_name_list:
                 args.ResourceTypeDef.append(dict(
                     ref_key = 'LINK',
                     ref_id  = link.id,
+                    type_id = type_ids[typename],
+                ))
+
+    for group in network.resourcegroups.ResourceGroup:
+        for typename, group_name_list in grouptype_dict.items():
+            if type_ids[typename] and group.name in group_name_list:
+                args.ResourceTypeDef.append(dict(
+                    ref_key = 'GROUP',
+                    ref_id  = group.id,
                     type_id = type_ids[typename],
                 ))
 
