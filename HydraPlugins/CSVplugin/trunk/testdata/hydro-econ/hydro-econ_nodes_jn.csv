@@ -1,5 +1,5 @@
-Name  , X               , Y               , Type, stor_group, BC , infeasQ, Description
-Units ,                 ,                 ,     ,           ,    ,        ,
-J1    , 507143.686842058, 164415.577117707, jn  , nonstor   , 0.0, NULL   ,
-J2    , 501188.133600215, 147022.654581869, jn  , nonstor   , 0.0, NULL   ,
-J3    , 501120.45685883 , 42217.605943564 , jn  , nonstor   , 0.0, NULL   ,
+Name  , X               , Y               , Type,  BC , infeasQ, Description
+Units ,                 ,                 ,     ,     ,        ,
+J1    , 507143.686842058, 164415.577117707, jn  ,  0.0, NULL   ,
+J2    , 501188.133600215, 147022.654581869, jn  ,  0.0, NULL   ,
+J3    , 501120.45685883 , 42217.605943564 , jn  ,  0.0, NULL   ,
