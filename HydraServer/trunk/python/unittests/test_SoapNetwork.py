@@ -306,6 +306,17 @@ class NetworkTest(test_SoapServer.SoapServerTest):
                 updated_link = l
         assert updated_link.name == "Updated link Name" 
 
+    def test_update_node_aud(self):
+        network = self.test_add_node()
+
+        node_to_update = network.nodes.Node[0]
+        for i in range(104):
+            node_to_update.name = "Updated Node Name %s"%(i)
+
+            new_node = self.client.service.update_node(node_to_update)
+
+        assert open('~/.hydra/audit/tNodeaud', mode='r') 
+
     def test_load(self):
         project = self.create_project('test')
         network = self.client.factory.create('hyd:Network')

@@ -43,8 +43,6 @@ def run():
         if not table_name.endswith('_aud'):
             table = Table(table_name, metadata, autoload=True, autoload_with=db)
             tables.append(table)
-            #print("TABLE: %s"%table)
-            #print table.__repr__
         else:
             table = Table(table_name, metadata, autoload=True, autoload_with=db)
             table.drop(db)
@@ -105,34 +103,123 @@ def create_triggers(db, tables):
                 pass
     #metadata.create_all()
 
-    ins_trigger_text = """CREATE TRIGGER %(trigger_name)s AFTER INSERT ON %(table_name)s FOR EACH ROW INSERT INTO %(table_name)s_aud SELECT d.*, 'insert', NULL, NOW() FROM %(table_name)s AS d where %(pks)s;"""
+    trigger_text = """
+                    CREATE TRIGGER
+                        %(trigger_name)s
+                    AFTER %(action)s ON
+                        %(table_name)s
+                    FOR EACH ROW
+                        BEGIN
+                            select
+                                count(*)
+                            into
+                                @rowcount
+                            from
+                                %(table_name)s_aud
+                            where
+                                %(pk)s;
+                            
+                           IF @rowcount >= %(upper_bound)s THEN
+                                CALL export%(table_name)stofile();
+                           END IF;
+                            
+                            INSERT INTO %(table_name)s_aud
+                            SELECT
+                                d.*,
+                                '%(action)s',
+                                NULL,
+                                NOW()
+                            FROM
+                                %(table_name)s
+                                AS d
+                            WHERE
+                                %(pkd)s;
+                        END
+                        """
     for table in tables:
+
+        create_export_proc(db, table)
+
         pk_cols = [c.name for c in table.primary_key]
-        pks = []
+        pkd = []
+        pk = []
+        
         for pk_col in pk_cols:
-            pks.append("d.%s = NEW.%s"%(pk_col, pk_col))
-        trig_ddl = DDL(ins_trigger_text % {
+            pkd.append("d.%s = NEW.%s"%(pk_col, pk_col))
+
+        for pk_col in pk_cols:
+            pk.append("%s = NEW.%s"%(pk_col, pk_col))
+        
+        text_dict = {
+            'action'       : 'INSERT',
             'trigger_name' : table.name + "_ins_trig",
             'table_name'   : table.name,
-            'pks'          : ' and '.join(pks)
-        })
-        
+            'pkd'           : ' and '.join(pkd),
+            'pk'           : ' and '.join(pk),
+            'output_file'  : '/tmp/%s_aud_'%(table.name,),
+            'upper_bound'  : 100,
+            'lower_bound'  : 3,
+            'limit'        : 98,
+        }
+
+        logging.info(trigger_text % text_dict)
+        trig_ddl = DDL(trigger_text % text_dict)
         trig_ddl.execute_at('after-create', table.metadata)  
 
-    upd_trigger_text = """CREATE TRIGGER %(trigger_name)s AFTER UPDATE ON %(table_name)s FOR EACH ROW INSERT INTO %(table_name)s_aud SELECT d.*, 'update', NULL, NOW() FROM %(table_name)s AS d where %(pks)s;"""
-    for table in tables:
-        pk_cols = [c.name for c in table.primary_key]
-        pks = []
-        for pk_col in pk_cols:
-            pks.append("d.%s = NEW.%s"%(pk_col, pk_col))
-        trig_ddl = DDL(upd_trigger_text % {
-            'trigger_name' : table.name + "_upd_trig",
-            'table_name'   : table.name,
-            'pks'          : ' and '.join(pks)
-        })
+        text_dict['action'] = 'UPDATE'
+        text_dict['trigger_name'] = table.name + "_upd_trig"
+        trig_ddl = DDL(trigger_text % text_dict)
         trig_ddl.execute_at('after-create', table.metadata)  
 
     metadata.create_all()
+
+def create_export_proc(db, table):
+        pk_cols = [c.name for c in table.primary_key]
+        pk = []
+
+        for pk_col in pk_cols:
+            pk.append("%s = NEW.%s"%(pk_col, pk_col))
+
+        text_dict = {
+            'trigger_name' : table.name + "_file_export",
+            'table_name'   : table.name,
+            'pk'           : ' and '.join(pk),
+            'output_file'  : '/tmp/%s_aud_'%(table.name,),
+            'upper_bound'  : 100,
+            'lower_bound'  : 3,
+            'limit'        : 98,
+        }
+
+        drop_proc_text = """DROP PROCEDURE IF EXISTS export%(table_name)stofile;"""%{'table_name':table.name}
+        try:
+            db.execute(drop_proc_text)
+        except:
+            pass
+        proc_text = """
+            CREATE PROCEDURE export%(table_name)stofile()
+            BEGIN
+
+            SET @s = CONCAT('SELECT * INTO OUTFILE ', CONCAT('%(output_file)s', localtime),'from
+                                    %(table_name)s_aud
+                                where
+                                    %(pk)s
+                                order by cr_date desc
+                                LIMIT %(limit)s;');
+            PREPARE stmt2 FROM @s;
+            EXECUTE stmt2;
+            DEALLOCATE PREPARE stmt2;
+
+            delete from %(table_name)s_aud
+            where
+                %(pk)s
+            order by cr_date desc
+            LIMIT %(limit)s;
+
+            END
+        """%text_dict
+
+        trig_ddl = DDL(proc_text % text_dict)
+        trig_ddl.execute_at('after-create', table.metadata)  
 
 def copy_table(table):
     args = []
