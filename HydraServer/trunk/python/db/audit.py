@@ -24,33 +24,74 @@ from sqlalchemy import create_engine,\
         DDL
 from sqlalchemy.engine import reflection
 import logging
+from mysql.connector.connection import MySQLConnection
+from HydraLib import config
+from subprocess import Popen
+from sqlalchemy.types import DECIMAL, NUMERIC
+from sqlalchemy.dialects.mysql.base import DOUBLE
+from decimal import Decimal
 
-def run():
-    from mysql.connector.connection import MySQLConnection
+engine_name = config.get('mysqld', 'url')
+sqlite_engine = "sqlite:///%s"%(config.get('sqlite', 'backup_url'))
 
+def connect():
+    """
+        return an inspector object
+    """
     MySQLConnection.get_characterset_info = MySQLConnection.get_charset
 
-    db = create_engine("mysql+mysqlconnector://root:@localhost/hydradb")
-    db.echo = True
+    db = create_engine(engine_name, echo=True)
+    db.connect()
+    
+    return db
+
+def create_sqlite_backup_db(audit_tables):
+    """
+        return an inspector object
+    """
+    #we always want to create a whole new DB, so delete the old one first
+    #if it exists.
+    try:
+        Popen("rm %s"%(config.get('sqlite', 'backup_url')), shell=True)
+        logging.warn("Old sqlite backup DB removed")
+    except Exception, e:
+        logging.warn(e)
+
+    db = create_engine(sqlite_engine, echo=True)
     db.connect()
     metadata = MetaData(db)
+   
+    for main_audit_table in audit_tables:
+        cols = []
+        for c in main_audit_table.columns:
+            col = c.copy()
+            if col.type.python_type == Decimal:
+                col.type = DECIMAL()
 
+            cols.append(col)
+        Table(main_audit_table.name, metadata, *cols, sqlite_autoincrement=True)
 
+    metadata.create_all(db)
+
+def run():
+    db = connect()
+    metadata = MetaData(db)
     insp = reflection.Inspector.from_engine(db)
-
     tables = []
     for table_name in insp.get_table_names():
+        table = Table(table_name, metadata, autoload=True, autoload_with=db)
         if not table_name.endswith('_aud'):
-            table = Table(table_name, metadata, autoload=True, autoload_with=db)
             tables.append(table)
         else:
-            table = Table(table_name, metadata, autoload=True, autoload_with=db)
             table.drop(db)
             metadata.remove(table)        
 
+    audit_tables = []
     for t in tables:
-        copy_table(t)
-
+        audit_table = create_audit_table(t)
+        audit_tables.append(audit_table)
+        
+    create_sqlite_backup_db(audit_tables)
     create_triggers(db, tables)
     metadata.create_all()
 
@@ -85,7 +126,6 @@ def create_triggers(db, tables):
     drop_trigger_text = """DROP TRIGGER IF EXISTS %(trigger_name)s;"""
     for table in tables:
         pk_cols = [c.name for c in table.primary_key]
-        pks = []
         for pk_col in pk_cols:
             try:
                 db.execute(drop_trigger_text % {
@@ -110,19 +150,6 @@ def create_triggers(db, tables):
                         %(table_name)s
                     FOR EACH ROW
                         BEGIN
-                            select
-                                count(*)
-                            into
-                                @rowcount
-                            from
-                                %(table_name)s_aud
-                            where
-                                %(pk)s;
-                            
-                           IF @rowcount >= %(upper_bound)s THEN
-                                CALL export%(table_name)stofile();
-                           END IF;
-                            
                             INSERT INTO %(table_name)s_aud
                             SELECT
                                 d.*,
@@ -136,30 +163,21 @@ def create_triggers(db, tables):
                                 %(pkd)s;
                         END
                         """
+    
     for table in tables:
 
-        create_export_proc(db, table)
 
         pk_cols = [c.name for c in table.primary_key]
         pkd = []
-        pk = []
         
         for pk_col in pk_cols:
             pkd.append("d.%s = NEW.%s"%(pk_col, pk_col))
 
-        for pk_col in pk_cols:
-            pk.append("%s = NEW.%s"%(pk_col, pk_col))
-        
         text_dict = {
             'action'       : 'INSERT',
             'trigger_name' : table.name + "_ins_trig",
             'table_name'   : table.name,
             'pkd'           : ' and '.join(pkd),
-            'pk'           : ' and '.join(pk),
-            'output_file'  : '/tmp/%s_aud_'%(table.name,),
-            'upper_bound'  : 100,
-            'lower_bound'  : 3,
-            'limit'        : 98,
         }
 
         logging.info(trigger_text % text_dict)
@@ -173,55 +191,7 @@ def create_triggers(db, tables):
 
     metadata.create_all()
 
-def create_export_proc(db, table):
-        pk_cols = [c.name for c in table.primary_key]
-        pk = []
-
-        for pk_col in pk_cols:
-            pk.append("%s = NEW.%s"%(pk_col, pk_col))
-
-        text_dict = {
-            'trigger_name' : table.name + "_file_export",
-            'table_name'   : table.name,
-            'pk'           : ' and '.join(pk),
-            'output_file'  : '/tmp/%s_aud_'%(table.name,),
-            'upper_bound'  : 100,
-            'lower_bound'  : 3,
-            'limit'        : 98,
-        }
-
-        drop_proc_text = """DROP PROCEDURE IF EXISTS export%(table_name)stofile;"""%{'table_name':table.name}
-        try:
-            db.execute(drop_proc_text)
-        except:
-            pass
-        proc_text = """
-            CREATE PROCEDURE export%(table_name)stofile()
-            BEGIN
-
-            SET @s = CONCAT('SELECT * INTO OUTFILE ', CONCAT('%(output_file)s', localtime),'from
-                                    %(table_name)s_aud
-                                where
-                                    %(pk)s
-                                order by cr_date desc
-                                LIMIT %(limit)s;');
-            PREPARE stmt2 FROM @s;
-            EXECUTE stmt2;
-            DEALLOCATE PREPARE stmt2;
-
-            delete from %(table_name)s_aud
-            where
-                %(pk)s
-            order by cr_date desc
-            LIMIT %(limit)s;
-
-            END
-        """%text_dict
-
-        trig_ddl = DDL(proc_text % text_dict)
-        trig_ddl.execute_at('after-create', table.metadata)  
-
-def copy_table(table):
+def create_audit_table(table):
     args = []
     for c in table.columns:
         col = c.copy()

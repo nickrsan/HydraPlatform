@@ -19,6 +19,7 @@ from HydraLib import config
 from hdb import HydraMySqlCursor
 from HydraLib.HydraException import HydraDBError
 from mysql.connector import DatabaseError
+import truncate
 log = logging.getLogger(__name__)
 
 global DB_STRUCT
@@ -37,6 +38,9 @@ SQL_CALL_COUNT = {}
 #Used to count how often the results of a single piece of sql change.
 global SQL_RESULT_DIFF_COUNT
 SQL_RESULT_DIFF_COUNT = {}
+
+global TRANSACTION_COUNT
+TRANSACTION_COUNT = 0
 
 def execute(sql):
 #    update_call_count(sql)
@@ -431,6 +435,8 @@ class DBIface(object):
         cursor.close()
 
         self.has_changed = False
+        
+        self._check_truncate_audit()
 
     def update(self):
         """
@@ -450,6 +456,16 @@ class DBIface(object):
         cursor.close()
 
         self.has_changed = False
+        
+        self._check_truncate_audit()
+
+    def _check_truncate_audit(self):       
+        return
+        global TRANSACTION_COUNT
+        TRANSACTION_COUNT = TRANSACTION_COUNT + 1
+        if TRANSACTION_COUNT > config.getint('db', 'purge_threshold'):
+            TRANSACTION_COUNT = 0
+            truncate.run()
 
     def load(self):
         """
@@ -505,6 +521,7 @@ class DBIface(object):
         cursor = CONNECTION.cursor(cursor_class=HydraMySqlCursor)
         cursor.execute(complete_delete)
         cursor.close()
+        self._check_truncate_audit()
 
     def get_val(self, attr):
         val = self.__getattr__(attr)
