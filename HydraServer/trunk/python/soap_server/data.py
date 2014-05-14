@@ -22,6 +22,7 @@ from hydra_complexmodels import Descriptor,\
         Scalar,\
         Array as HydraArray,\
         Dataset,\
+        Scenario,\
         DatasetGroup,\
         get_as_complexmodel
 
@@ -44,6 +45,12 @@ class DataService(HydraService):
 
         return [d.db.dataset_id for d in datasets]
 
+
+    @rpc(Integer, _returns=SpyneArray(Scenario))
+    def get_dataset_scenarios(ctx, dataset_id):
+
+        dataset_scenarios = data.get_dataset_scenarios(dataset_id, **ctx.in_header.__dict__)
+        return [get_as_complexmodel(ctx,s) for s in dataset_scenarios]
 
     @rpc(Unicode, _returns=DatasetGroup)
     def get_dataset_group(ctx, group_name):
@@ -80,12 +87,12 @@ class DataService(HydraService):
         return ret_data
 
     @rpc(Dataset, _returns=Dataset)
-    def update_dataset(ctx, data):
+    def update_dataset(ctx, dataset):
         """
             Update a piece of data directly, rather than through a resource
             scenario.
         """
-        new_dataset = data.update_dataset(data, **ctx.in_header.__dict__)
+        new_dataset = data.update_dataset(dataset, **ctx.in_header.__dict__)
         return Dataset(new_dataset)
 
 

@@ -41,10 +41,13 @@ class ConstraintTest(test_HydraIface.HydraIfaceTest):
         rc = node_c.add_attribute(attr_a.db.attr_id)
         rc.save()
 
-        rsa = node_a.assign_value(scenario.db.scenario_id, ra.db.resource_attr_id, 'scalar' ,1, 'm3', 'flow', 'int')
-        rsb = node_a.assign_value(scenario.db.scenario_id, rb.db.resource_attr_id, 'scalar' ,2, 'm3', 'flow', 'int')
-        rsc = node_a.assign_value(scenario.db.scenario_id, rc.db.resource_attr_id, 'scalar' ,3, 'm3', 'flow', 'int')
+        rsa = HydraIface.ResourceScenario(scenario_id=scenario.db.scenario_id, resource_attr_id=ra.db.resource_attr_id)
+        rsb = HydraIface.ResourceScenario(scenario_id=scenario.db.scenario_id, resource_attr_id=rb.db.resource_attr_id)
+        rsc = HydraIface.ResourceScenario(scenario_id=scenario.db.scenario_id, resource_attr_id=rc.db.resource_attr_id)
 
+        rsa.assign_value('scalar' ,1, 'm3', 'flow', 'int')
+        rsb.assign_value('scalar' ,2, 'm3', 'flow', 'int')
+        rsc.assign_value('scalar' ,3, 'm3', 'flow', 'int')
 
         con = HydraIface.Constraint()
         con.db.constraint_name = "Comparative resource allocation"

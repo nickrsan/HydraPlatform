@@ -88,6 +88,10 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
         rc = node_c.add_attribute(attr_a.db.attr_id)
         rc.save()
 
+        rsa = HydraIface.ResourceScenario(scenario, scenario_id=scenario.db.scenario_id, resource_attr_id=ra.db.resource_attr_id)
+        rsb = HydraIface.ResourceScenario(scenario, scenario_id=scenario.db.scenario_id, resource_attr_id=rb.db.resource_attr_id)
+        rsc = HydraIface.ResourceScenario(scenario, scenario_id=scenario.db.scenario_id, resource_attr_id=rc.db.resource_attr_id)
+
         base_time = datetime.datetime.now()
         t1 = timestamp_to_ordinal(base_time)
         t2 = timestamp_to_ordinal(base_time + datetime.timedelta(days=10)) 
@@ -95,16 +99,16 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
 
         ts_values = [(t1, [1, 2, 3]), (t2, [[1,2],[3,4]]), (t3, [1])]
 
-        rsa = node_a.assign_value(scenario.db.scenario_id, ra.db.resource_attr_id, 'timeseries' , ts_values, 'm3', 'flow', 'int')
-        rsb = node_a.assign_value(scenario.db.scenario_id, rb.db.resource_attr_id, 'scalar' ,3, 'm3', 'flow', 'int')
-        rsc = node_a.assign_value(scenario.db.scenario_id, rc.db.resource_attr_id, 'scalar' ,3, 'm3', 'flow', 'int')
+        rsa.assign_value('timeseries' , ts_values, 'm3', 'flow', 'int')
+        rsb.assign_value('scalar' ,3, 'm3', 'flow', 'int')
+        rsc.assign_value('scalar' ,3, 'm3', 'flow', 'int')
         rsc.commit()
 
         rsc_dataset_id = rsc.db.dataset_id
 
-        rsd = node_a.assign_value(scenario.db.scenario_id, rc.db.resource_attr_id, 'scalar' ,10, 'm3', 'flow', 'int')
-        rsd.commit()
-        rsd_dataset_id = rsd.db.dataset_id
+        rsc.assign_value('scalar' ,10, 'm3', 'flow', 'int')
+        rsc.commit()
+        rsd_dataset_id = rsc.db.dataset_id
 
         assert rsd_dataset_id != rsc_dataset_id, "A new dataset should have been created but wasn't!"
 
@@ -131,6 +135,11 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
         rc = node_c.add_attribute(attr_a.db.attr_id)
         rc.save()
 
+
+        rsa = HydraIface.ResourceScenario(scenario, scenario_id=scenario.db.scenario_id, resource_attr_id=ra.db.resource_attr_id)
+        rsb = HydraIface.ResourceScenario(scenario, scenario_id=scenario.db.scenario_id, resource_attr_id=rb.db.resource_attr_id)
+        rsc = HydraIface.ResourceScenario(scenario, scenario_id=scenario.db.scenario_id, resource_attr_id=rc.db.resource_attr_id)
+
         base_time = datetime.datetime.now()
         t1 = timestamp_to_ordinal(base_time)
         t2 = timestamp_to_ordinal(base_time + datetime.timedelta(days=10)) 
@@ -138,7 +147,7 @@ class ScenarioTest(test_HydraIface.HydraIfaceTest):
 
         ts_values = [(t1, [1, 2, 3]), (t2, [[1,2],[3,4]]), (t3, [1])]
 
-        rsa = node_a.assign_value(scenario.db.scenario_id, ra.db.resource_attr_id, 'timeseries' , ts_values, 'm3', 'flow', 'int')
+        rsa.assign_value('timeseries' , ts_values, 'm3', 'flow', 'int')
         rsa.load_all()
 
 

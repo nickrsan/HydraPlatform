@@ -32,6 +32,14 @@ class ScenarioService(HydraService):
         about negative IDS
     """
 
+    @rpc(Integer, _returns=Scenario)
+    def get_scenario(ctx, scenario_id):
+        """
+            Get the specified scenario
+        """
+        scen = scenario.get_scenario(scenario_id, **ctx.in_header.__dict__)
+        return Scenario(scen)
+
     @rpc(Integer, Scenario, _returns=Scenario)
     def add_scenario(ctx, network_id, scen):
         """
@@ -77,6 +85,16 @@ class ScenarioService(HydraService):
 
         return ScenarioDiff(scenariodiff)
 
+
+    @rpc(Integer, _returns=Unicode)
+    def lock_scenario(ctx, scenario_id):
+        result = scenario.lock_scenario(scenario_id, **ctx.in_header.__dict__)
+        return result
+
+    @rpc(Integer, _returns=Unicode)
+    def unlock_scenario(ctx, scenario_id):
+        result = scenario.unlock_scenario(scenario_id, **ctx.in_header.__dict__)
+        return result
 
     @rpc(Integer, ResourceScenario, _returns=ResourceScenario)
     def update_resourcedata(ctx,scenario_id, resource_scenario):

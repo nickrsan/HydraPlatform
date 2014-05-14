@@ -20,6 +20,7 @@ from HydraLib import units
 import logging
 from db import HydraIface, IfaceLib
 from numpy import array
+from HydraLib.HydraException import HydraError
 global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 #"2013-08-13T15:55:43.468886Z"
@@ -642,15 +643,72 @@ def delete_dataset(dataset_id,**kwargs):
     d = HydraIface.Dataset(dataset_id=dataset_id)
     d.delete()
     d.save()
- 
+
+def get_dataset_scenarios(dataset_id, **kwargs):
+    d = HydraIface.Dataset(dataset_id=dataset_id)
+    
+    #Get the scenarios attached to this dataset
+    attached_scenarios = d.get_scenarios()
+    scenarios = []
+    for scenario_id, resource_attr_id, locked in attached_scenarios: 
+        scenario_i = HydraIface.Scenario(scenario_id=scenario_id)
+        scenarios.append(scenario_i.get_as_dict(), **kwargs)
+
+    return scenarios
+
 def update_dataset(dataset,**kwargs):
+    
+    if dataset.id is None:
+        raise HydraError("Dataset must have an ID to be updated.")
+
     d = HydraIface.Dataset(dataset_id=dataset.id)
-    d.db.data_type  = dataset.type
-    d.db.data_units = dataset.unit
-    d.db.data_dimen = dataset.dimension
-    d.db.data_name  = dataset.name
-    d.db.locked     = dataset.locked
-    val = parse_value(dataset.value)
-    d.set_val(val)
-    d.set_hash()
-    d.save()
+    
+    #Get the scenarios attached to this dataset
+    locked_scenarios = []
+    unlocked_scenarios = []
+    attached_scenarios = d.get_scenarios()
+    for scenario_id, resource_attr_id, locked in attached_scenarios: 
+        if locked == 'Y':
+            locked_scenarios.append((scenario_id, resource_attr_id))
+        else:
+            unlocked_scenarios.append((scenario_id, resource_attr_id))
+
+    #Are any of these scenarios locked?
+    if len(locked_scenarios) > 0:
+        logging.info("Updating a dataset with is connected to some locked scenarios.")
+
+        logging.info("Creating a new dataset for the unlocked scenarios to connect to and"
+                     "leaving the datset connected to the locked scenarios alone.")
+        #Yes, then create a whole new dataset with the updated info and
+        #attach it to the unlocked scenarios.
+        new_dataset = HydraIface.Dataset()
+        new_dataset.db.data_type  = dataset.type
+        new_dataset.db.data_units = dataset.unit
+        new_dataset.db.data_dimen = dataset.dimension
+        new_dataset.db.data_name  = dataset.name
+        new_dataset.db.locked     = dataset.locked
+        val = parse_value(dataset)
+        new_dataset.set_val(dataset.type, val)
+        new_dataset.set_hash(val)
+        new_dataset.save()
+
+        for scenario_id, resource_attr_id in unlocked_scenarios:
+            rs_i = HydraIface.ResourceScenario(resource_attr_id=resource_attr_id,
+                                             scenario_id=scenario_id)
+            rs_i.db.dataset_id = new_dataset.db.dataset_id
+            rs_i.save()
+    
+    else:
+        logging.info("Dataset is not connected to locked scenarios.")
+        logging.info("Can update dataset directly.")
+        #If there are no locked scenarios, it's OK to edit this dataset
+        #for all of them.
+        d.db.data_type  = dataset.type
+        d.db.data_units = dataset.unit
+        d.db.data_dimen = dataset.dimension
+        d.db.data_name  = dataset.name
+        d.db.locked     = dataset.locked
+        val = parse_value(dataset)
+        d.set_val(dataset.type, val)
+        d.set_hash(val)
+        d.save()

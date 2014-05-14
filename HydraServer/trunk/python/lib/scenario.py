@@ -14,7 +14,7 @@
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
 import logging
-from HydraLib.HydraException import HydraError
+from HydraLib.HydraException import HydraError, PermissionError
 from db import HydraIface
 from HydraLib import units
 from db import IfaceLib
@@ -64,12 +64,34 @@ def clone_constraint_group(constraint_id, grp_i):
 
     return new_grp_i
 
+def get_scenario(scenario_id,**kwargs):
+    """
+        Get the specified scenario
+    """
+
+    user_id = kwargs.get('user_id')
+    scen = HydraIface.Scenario(scenario_id=scenario_id)
+    scen.load_all()
+    ownership = scen.network.check_ownership(user_id) 
+    if ownership['view'] == 'N':
+        raise PermissionError("Permission denied."
+                              " User %s cannot view scenario %s"%(user_id, scenario_id))
+    data_args = {'include_data':'Y', 'user_id':user_id}
+    return scen.get_as_dict(**data_args)
+
 def add_scenario(network_id, scenario,**kwargs):
     """
         Add a scenario to a specified network.
     """
     user_id = kwargs.get('user_id')
     log.info("Adding scenarios to network")
+    
+    net_i = HydraIface.Network(network_id=network_id)
+    ownership = net_i.check_ownership(user_id) 
+    if ownership['edit'] == 'N':
+        raise PermissionError("Permission denied."
+                              " User %s cannot edit network %s"%(user_id, scenario.id))
+
     scen = HydraIface.Scenario()
     scen.db.scenario_name        = scenario.name
     scen.db.scenario_description = scenario.description
@@ -126,6 +148,15 @@ def update_scenario(scenario,**kwargs):
     """
     user_id = kwargs.get('user_id')
     scen = HydraIface.Scenario(scenario_id=scenario.id)
+   
+    ownership = scen.network.check_ownership(user_id) 
+    if ownership['edit'] == 'N':
+        raise PermissionError("Permission denied."
+                              " User %s cannot edit scenario %s"%(user_id, scenario.id))
+
+    if scen.db.locked == 'Y':
+        raise PermissionError('Scenario is locked. Unlock before editing.')
+    
     scen.db.scenario_name = scenario.name
     scen.db.scenario_description = scenario.description
     scen.db.start_time           = timestamp_to_ordinal(scenario.start_time)
@@ -184,13 +215,16 @@ def delete_scenario(scenario_id,**kwargs):
     """
 
     success = True
-    scen_i = HydraIface.Scenario(scenario_id = scenario_id)
+    
+    _check_can_edit_scenario(scenario_id, kwargs['user_id'])
 
-    if scen_i.load() is False:
+    scenario_i = HydraIface.Scenario(scenario_id = scenario_id)
+
+    if scenario_i.load() is False:
         raise HydraError("Scenario %s does not exist."%(scenario_id))
 
-    scen_i.db.status = 'X'
-    scen_i.save()
+    scenario_i.db.status = 'X'
+    scenario_i.save()
 
     return success
 
@@ -355,6 +389,35 @@ def compare_scenarios(scenario_id_1, scenario_id_2,**kwargs):
 
     return scenariodiff
 
+def lock_scenario(scenario_id, **kwargs):
+    #user_id = kwargs.get('user_id')
+    #check_perm(user_id, 'edit_network')
+   
+    scenario_i = HydraIface.Scenario(scenario_id=scenario_id)
+    ownership = scenario_i.network.check_ownership(kwargs['user_id']) 
+    if ownership['edit'] == 'Y':
+        scenario_i.db.locked = 'Y'
+        scenario_i.save()
+    else:
+        raise PermissionError('User %s cannot lock scenario %s' % (kwargs['user_id'], scenario_id))
+
+    return 'OK'
+
+def unlock_scenario(scenario_id, **kwargs):
+    #user_id = kwargs.get('user_id')
+    #check_perm(user_id, 'edit_network')
+   
+    scenario_i = HydraIface.Scenario(scenario_id=scenario_id)
+    ownership = scenario_i.network.check_ownership(kwargs['user_id']) 
+    if ownership['edit'] == 'Y':
+        scenario_i.db.locked = 'N'
+        scenario_i.save()
+    else:
+        raise PermissionError('User %s cannot unlock scenario %s' % (kwargs['user_id'], scenario_id))
+
+    return 'OK'
+
+
 
 def update_resourcedata(scenario_id, resource_scenario,**kwargs):
     """
@@ -364,6 +427,9 @@ def update_resourcedata(scenario_id, resource_scenario,**kwargs):
     """
     user_id = kwargs.get('user_id')
     res = None
+    
+    _check_can_edit_scenario(scenario_id, kwargs['user_id'])
+
     if resource_scenario.value is not None:
         res = _update_resourcescenario(scenario_id, resource_scenario, user_id=user_id)
         if res is None:
@@ -376,6 +442,9 @@ def delete_resourcedata(scenario_id, resource_scenario,**kwargs):
     """
         Remove the data associated with a resource in a scenario.
     """
+
+    _check_can_edit_scenario(scenario_id, kwargs['user_id'])
+
     _delete_resourcescenario(scenario_id, resource_scenario)
 
 def get_dataset(dataset_id,**kwargs):
@@ -406,10 +475,8 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False, user_id=
         returns a HydraIface.ResourceScenario object.
     """
     ra_id = resource_scenario.resource_attr_id
-
-    r_a = HydraIface.ResourceAttr(resource_attr_id=ra_id)
-
-    res = r_a.get_resource()
+    r_scen_i = HydraIface.ResourceScenario(scenario_id=scenario_id,
+                                           resource_attr_id=ra_id)
 
     data_type = resource_scenario.value.type.lower()
 
@@ -439,10 +506,10 @@ def _update_resourcescenario(scenario_id, resource_scenario, new=False, user_id=
         if dimension is None or len(dimension) == 0:
             dimension = None
 
-    rs_i = res.assign_value(scenario_id, ra_id, data_type, value,
-                    data_unit, name, dimension, metadata, new=new, user_id=user_id)
+    r_scen_i.assign_value(data_type, value, data_unit, name, dimension, 
+                          metadata=metadata, new=new, user_id=user_id)
 
-    return rs_i
+    return r_scen_i 
 
 
 def add_data_to_attribute(scenario_id, resource_attr_id, dataset,**kwargs):
@@ -450,10 +517,11 @@ def add_data_to_attribute(scenario_id, resource_attr_id, dataset,**kwargs):
             Add data to a resource scenario outside of a network update
     """
     user_id = kwargs.get('user_id')
-    r_a = HydraIface.ResourceAttr(resource_attr_id=resource_attr_id)
 
-    res = r_a.get_resource()
+    _check_can_edit_scenario(scenario_id, user_id)
 
+    r_scen_i = HydraIface.ResourceScenario(scenario_id=scenario_id,
+                                           resource_attr_id=resource_attr_id)
     data_type = dataset.type.lower()
 
     value = parse_value(dataset)
@@ -469,13 +537,12 @@ def add_data_to_attribute(scenario_id, resource_attr_id, dataset,**kwargs):
 
     user_id = user_id
 
-    rs_i = res.assign_value(scenario_id, resource_attr_id, data_type, value,
-                    dataset.unit, dataset.name, dataset.dimension, dataset_metadata,
-                            new=False, user_id=user_id)
+    r_scen_i.assign_value(data_type, value, dataset.unit, dataset.name, dataset.dimension,
+                          metadata=dataset_metadata, new=False, user_id=user_id)
 
-    rs_i.load_all()
+    r_scen_i.load_all()
 
-    return rs_i
+    return r_scen_i
 
 def get_scenario_data(scenario_id,**kwargs):
     """
@@ -782,4 +849,14 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
                  len(resource_scenarios), ref_key,ref_id)
 
     return resource_scenarios 
+
+def _check_can_edit_scenario(scenario_id, user_id):
+    scenario_i = HydraIface.Scenario(scenario_id=scenario_id)
+    
+    scenario_i.network.check_write_permission(user_id)
+
+    if scenario_i.db.locked == 'Y':
+        raise PermissionError('Cannot update scenario %s as it is locked.'%(scenario_id))
+
+
 

@@ -15,6 +15,7 @@
 #
 from db import HydraIface
 from HydraLib.HydraException import HydraError
+import scenario
 import logging
 log = logging.getLogger(__name__)
 
@@ -63,6 +64,8 @@ def update_resourcegroup(group,**kwargs):
 
 
 def add_resourcegroupitem(group_item, scenario_id,**kwargs):
+
+    scenario._check_can_edit_scenario(scenario_id, kwargs['user_id'])
     #Check whether the ref_id is correct.
     sql = """
         select
@@ -107,6 +110,7 @@ def add_resourcegroupitem(group_item, scenario_id,**kwargs):
 
 def delete_resourcegroupitem(item_id,**kwargs):
     group_item_i = HydraIface.ResourceGroupItem(item_id=item_id)
+    scenario._check_can_edit_scenario(group_item_i.db.scenario_id, kwargs['user_id'])
     group_item_i.delete()
     group_item_i.save()
    

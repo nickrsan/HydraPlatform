@@ -209,53 +209,6 @@ class GenericResource(IfaceBase):
         else:
             return None
 
-    def assign_value(self, scenario_id, resource_attr_id, data_type, val,
-                     units, name, dimension, metadata={}, new=False, user_id=None):
-        """
-            Insert or update a piece of data in a scenario. the 'new' flag
-            indicates that the data is new, thus allowing us to avoid unnecessary
-            queries for non-existant data. If this flag is not True, a check
-            will be performed in the DB for its existance.
-        """
-
-        #cater for a project -- if the scenario ID is null, set it to 1.
-        if scenario_id is None:
-            scenario_id = 1
-
-        if scenario_id == 1 and self.name != 'Project':
-            raise HydraAttributeError("An error has occurred while setting"
-                             "resource attribute %s this data."
-                             "Scenario 1 is reserved for project attributes."
-                             %(resource_attr_id))
-
-
-        rs = ResourceScenario()
-        rs.db.scenario_id=scenario_id
-        rs.db.resource_attr_id=resource_attr_id
-        data_in_db = rs.load()
-        
-        dataset_id=None
-        if new is not True:
-            #Was the 'new' flag correct?
-            if data_in_db is True:
-                dataset_id = rs.db.dataset_id
-
-        dataset_id = add_dataset(data_type,
-                                    val,
-                                    units,
-                                    dimension,
-                                    metadata,
-                                    name=name,
-                                    dataset_id=dataset_id,
-                                    user_id=user_id)
-
-        rs.db.dataset_id = dataset_id
-
-        rs.save()
-
-        return rs
-
-
     def get_types_by_attr(self):
         """
             Using the attributes of the resource, get all the
@@ -597,6 +550,32 @@ class Project(GenericResource):
             self.load()
 
 
+    def check_ownership(self, user_id):
+
+        sql = """
+            select
+                o.edit,
+                o.view,
+                o.share
+            from
+                tOwner    o
+            wheree
+                o.ref_key = 'PROJECT'
+            and o.ref_id  = %(project_id)s 
+            and o.user_id = %(user_id)s
+        """ % {
+            'project_id' : self.db.project_id,
+            'user_id'    : user_id
+        }
+        
+        rs = execute(sql)
+        
+        if len(rs) == 0:
+            return {'view' : 'N', 'edit' : 'N', 'share' : 'N'}
+        else:
+            r = rs[0]
+            return {'view' : r.view, 'edit' : r.edit, 'share' : r.share}
+
 class Scenario(GenericResource):
     """
         A set of nodes and links
@@ -764,6 +743,32 @@ class Network(GenericResource):
             scenarios.append(s_i)
 
         return scenarios
+
+    def check_ownership(self, user_id):
+
+        sql = """
+            select
+                o.edit,
+                o.view,
+                o.share
+            from
+                tOwner    o
+            where
+                o.ref_key = 'NETWORK'
+            and o.ref_id  = %(network_id)s 
+            and o.user_id = %(user_id)s
+        """ % {
+            'network_id' : self.db.network_id,
+            'user_id'    : user_id
+        }
+        
+        rs = execute(sql)
+        
+        if len(rs) == 0:
+            return {'view' : 'N', 'edit' : 'N', 'share' : 'N'}
+        else:
+            r = rs[0]
+            return {'view' : r.view, 'edit' : r.edit, 'share' : r.share}
 
     def add_link(self, name, desc, layout, node_1_id, node_2_id):
         """
@@ -1307,6 +1312,7 @@ class ResourceScenario(IfaceBase):
 
         if scenario_id is not None and resource_attr_id is not None:
             self.load()
+            self.get_parent()
 
     def load(self):
         """
@@ -1371,6 +1377,80 @@ class ResourceScenario(IfaceBase):
         obj_dict['value'] = self.dataset.get_as_dict(**kwargs)
 
         return obj_dict
+
+    def assign_value(self, data_type, val,
+                     units, name, dimension, metadata={}, new=False, user_id=None):
+        """
+            Insert or update a piece of data in a scenario. the 'new' flag
+            indicates that the data is new, thus allowing us to avoid unnecessary
+            queries for non-existant data. If this flag is not True, a check
+            will be performed in the DB for its existance.
+        """
+
+        #cater for a project -- if the scenario ID is null, set it to 1.
+        if self.db.scenario_id is None:
+            self.db.scenario_id = 1
+            self.get_parent()
+
+        if self.db.scenario_id == 1:
+            ra = self.get_resource_attr()
+            if ra.db.ref_key != 'PROJECT':
+                raise HydraAttributeError("An error has occurred while setting"
+                             "resource attribute %s this data."
+                             "Scenario 1 is reserved for project attributes."
+                             %(self.db.resource_attr_id))
+
+        if self.scenario.db.locked == 'Y':
+            raise PermissionError("Cannot assign value. Scenario %s is locked"
+                                 %(self.db.scenario_id))
+
+        dataset_id=None
+        if new is not True:
+            #Was the 'new' flag correct?
+            if self.load() is True:
+                dataset_id = self.db.dataset_id
+
+        #Has this dataset been seen before? If so, it may be attached
+        #to other scenarios, which may be locked. If they are locked, we must
+        #not change their data, so new data must be created for the unlocked scenarios
+        locked_scenarios = []
+        unlocked_scenarios = []
+        if dataset_id is not None:
+            attached_scenarios = self.dataset.get_scenarios()
+            for scenario_id, resource_attr_id, locked in attached_scenarios: 
+                if locked == 'Y':
+                    locked_scenarios.append((scenario_id, resource_attr_id))
+                else:
+                    unlocked_scenarios.append((scenario_id, resource_attr_id))
+
+        #Are any of these scenarios locked?
+        if len(locked_scenarios) > 0:
+            dataset_id = add_dataset(data_type, val, units, dimension, metadata=metadata, name=name, dataset_id=None, user_id=user_id)
+
+            for scenario_id, resource_attr_id in unlocked_scenarios:
+                rs_i = ResourceScenario(resource_attr_id=resource_attr_id,
+                                                 scenario_id=scenario_id)
+                rs_i.db.dataset_id = dataset_id
+                rs_i.save()
+            #my dataset has just been set by the previous loop, so reload
+            #to get it.
+            self.load()
+
+        else:
+
+            dataset_id = add_dataset(data_type,
+                                val,
+                                units,
+                                dimension,
+                                metadata,
+                                name=name,
+                                dataset_id=dataset_id,
+                                user_id=user_id)
+
+            self.db.dataset_id = dataset_id
+
+            self.save()
+
 
 class Dataset(IfaceBase):
     """
@@ -1646,8 +1726,27 @@ class Dataset(IfaceBase):
             m_i = Metadata(self.db.dataset_id,k)
             m_i.db.metadata_val = v
             self.metadatas.append(m_i)
+    
+    def get_scenarios(self):
+        sql = """
+            select
+                rs.resource_attr_id,
+                s.scenario_id,
+                s.locked
+            from
+                tResourceScenario rs,
+                tScenario s
+            where
+                rs.dataset_id = %(dataset_id)s
+            and s.scenario_id = rs.scenario_id
+        """%{'dataset_id':self.db.dataset_id}
+        rs = execute(sql)
 
+        dataset_scenarios = []
+        for r in rs:
+            dataset_scenarios.append((r.scenario_id, r.resource_attr_id, r.locked))
 
+        return dataset_scenarios
 
 class DatasetGroup(IfaceBase):
     """

@@ -59,6 +59,7 @@ class SoapServerTest(unittest.TestCase):
     def setUp(self):
         logging.getLogger('suds').setLevel(logging.ERROR)
         logging.getLogger('suds.client').setLevel(logging.CRITICAL)
+        logging.getLogger('suds.metrics').setLevel(logging.CRITICAL)
         # Clear SUDS cache:
         shutil.rmtree(os.path.join(tmp(), 'suds'), True)
         global CLIENT

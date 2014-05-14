@@ -855,12 +855,14 @@ def update_network(network,**kwargs):
         resource_attr_id_map.update(group_attr_id_map)
 
         group_id_map[group.id] = g_i.db.group_id
-
+    errors = []
     if network.scenarios is not None:
         for s in network.scenarios:
             if s.id is not None and s.id > 0:
                 scen = HydraIface.Scenario(network=net_i, scenario_id=s.id)
-
+                if scen.db.locked == 'Y':
+                    errors.append('Scenario %s was not updated as it is locked'%(s.id)) 
+                    continue
             else:
                 scenario_id = get_scenario_by_name(network.id, s.name)
                 scen = HydraIface.Scenario(scenario_id = scenario_id)
@@ -906,7 +908,9 @@ def update_network(network,**kwargs):
 
     net_i.load_all()
 
-    return net_i.get_as_dict(**{'user_id':user_id})
+    net = net_i.get_as_dict(**{'user_id':user_id})
+    net['error'] = errors
+    return net
 
 def delete_network(network_id, purge_data,**kwargs):
     """

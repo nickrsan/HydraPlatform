@@ -1062,6 +1062,7 @@ class ImportCSV(object):
                                          self.Network,
                                          self.nodetype_dict,
                                          self.linktype_dict,
+                                         {},#Should group types be put into import csv?
                                          self.networktype)
         except KeyError as e:
             raise HydraPluginError("Type '%s' not found in template."

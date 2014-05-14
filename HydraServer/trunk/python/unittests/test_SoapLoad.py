@@ -21,6 +21,7 @@ import test_SoapServer
 import timeit
 import logging
 log = logging.getLogger(__name__)
+import cProfile, pstats, StringIO
 
 class NetworkTest(test_SoapServer.SoapServerTest):
 
@@ -32,7 +33,18 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         log.debug(time)
         assert time < 50
 
+    def test_get_network(self):
+        n = self.client.service.get_network(1000)
+        log.info(n)
 
 if __name__ == '__main__':
-    #cProfile.run('test_SoapServer.run()', sort='cumulative')
+  #  pr = cProfile.Profile()
+  #  pr.enable()
+  #  test_SoapServer.run()
+  #  pr.disable()
+  #  s = StringIO.StrinigIO()
+  #  sortby = 'cumulative'
+  #  ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+  #  ps.print_stats()
+  #  print s.getvalue()
     test_SoapServer.run()

@@ -80,7 +80,10 @@ def connect(user=None, password=None, db_name=None):
     global CNX
 
     if CNX is None:
-        cnx = mysql.connector.connect(user=user,
+        cnx = mysql.connector.connect(
+                                      pool_name = "mypool",
+                                      pool_size = 1,
+                                      user=user,
                                       password=password,
                                       database=db_name)
         CNX = cnx
@@ -91,6 +94,9 @@ def commit():
 
 def rollback():
     CNX.rollback()
+
+def close():
+    CNX.close()
 
 def disconnect():
     log.debug("DIS - CONNECTING")

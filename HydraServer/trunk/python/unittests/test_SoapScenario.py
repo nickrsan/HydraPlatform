@@ -19,6 +19,7 @@
 import test_SoapServer
 import datetime
 import copy
+import suds
 from HydraLib import PluginLib
 import logging
 log = logging.getLogger(__name__)
@@ -338,6 +339,113 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         assert len(scenario_diff.groups.scenario_2_items) == 1, "Group comparison was not successful!"
         assert scenario_diff.groups.scenario_1_items is None, "Group comparison was not successful!"
 
+
+    def test_lock_scenario(self):
+
+        network =  self.create_network_with_data()
+       
+        network = self.client.service.get_network(network.id)
+
+        scenario_to_lock = network.scenarios.Scenario[0]
+        scenario_id = scenario_to_lock.id
+        
+        log.info('Cloning scenario %s'%scenario_id)
+        unlocked_scenario = self.client.service.clone_scenario(scenario_id)
+        
+        log.info("Locking scenario")
+        self.client.service.lock_scenario(scenario_id)
+
+        locked_scenario = self.client.service.get_scenario(scenario_id)
+
+        assert locked_scenario.locked == 'Y'
+
+        dataset = self.client.factory.create('ns1:Dataset')
+       
+        dataset = self.client.factory.create('ns1:Dataset')
+        dataset.type = 'descriptor'
+        dataset.name = 'Max Capacity'
+        dataset.unit = 'metres / second'
+        dataset.dimension = 'number of units per time unit'
+ 
+        descriptor = self.client.factory.create('ns1:Descriptor')
+        descriptor.desc_val = 'I am an updated test!'
+
+        dataset.value = descriptor
+
+        
+        locked_resource_scenarios = []
+        for rs in locked_scenario.resourcescenarios.ResourceScenario:
+            if rs.value.type == 'descriptor':
+                locked_resource_scenarios.append(rs)
+
+        unlocked_resource_scenarios = []
+        for rs in unlocked_scenario.resourcescenarios.ResourceScenario:
+            if rs.value.type == 'descriptor':
+                unlocked_resource_scenarios.append(rs)
+
+        resource_attr_id = unlocked_resource_scenarios[0].resource_attr_id
+       
+        locked_resource_scenarios_value = None
+        for rs in locked_scenario.resourcescenarios.ResourceScenario:
+            if rs.resource_attr_id == resource_attr_id:
+                locked_resource_scenarios_value = rs.value
+
+        unlocked_resource_scenarios_value = None
+        for rs in unlocked_scenario.resourcescenarios.ResourceScenario:
+            if rs.resource_attr_id == resource_attr_id:
+                unlocked_resource_scenarios_value = rs.value
+        log.info("Updating a shared dataset")
+        ds = unlocked_resource_scenarios_value
+        ds.dimension = 'updated_dimension'
+        updated_ds = self.client.service.update_dataset(ds)
+
+        updated_unlocked_scenario = self.client.service.get_scenario(unlocked_scenario.id)
+        #This should not have changed
+        updated_locked_scenario = self.client.service.get_scenario(locked_scenario.id)
+
+        locked_resource_scenarios_value = None
+        for rs in updated_locked_scenario.resourcescenarios.ResourceScenario:
+            if rs.resource_attr_id == resource_attr_id:
+                locked_resource_scenarios_value = rs.value
+
+        unlocked_resource_scenarios_value = None
+        for rs in updated_unlocked_scenario.resourcescenarios.ResourceScenario:
+            if rs.resource_attr_id == resource_attr_id:
+                unlocked_resource_scenarios_value = rs.value
+
+        self.assertRaises(suds.WebFault, self.client.service.add_data_to_attribute, scenario_id, resource_attr_id, dataset)
+    
+        #THe most complicated situation is this:
+        #Change a dataset in an unlocked scenario, which is shared by a locked scenario.
+        #The original dataset should stay connected to the locked scenario and a new
+        #dataset should be created for the edited scenario.
+        self.client.service.add_data_to_attribute(unlocked_scenario.id, resource_attr_id, dataset)
+
+        updated_unlocked_scenario = self.client.service.get_scenario(unlocked_scenario.id)
+        #This should not have changed
+        updated_locked_scenario = self.client.service.get_scenario(locked_scenario.id)
+
+        locked_resource_scenarios_value = None
+        for rs in updated_locked_scenario.resourcescenarios.ResourceScenario:
+            if rs.resource_attr_id == resource_attr_id:
+                locked_resource_scenarios_value = rs.value
+
+        unlocked_resource_scenarios_value = None
+        for rs in updated_unlocked_scenario.resourcescenarios.ResourceScenario:
+            if rs.resource_attr_id == resource_attr_id:
+                unlocked_resource_scenarios_value = rs.value
+
+
+        assert locked_resource_scenarios_value.value != unlocked_resource_scenarios_value.value
+
+        item_to_remove = locked_scenario.resourcegroupitems.ResourceGroupItem[0].id
+        self.assertRaises(suds.WebFault, self.client.service.delete_resourcegroupitem, item_to_remove)
+        log.info("Locking scenario")
+        self.client.service.unlock_scenario(scenario_id)
+
+        locked_scenario = self.client.service.get_scenario(scenario_id)
+
+        assert locked_scenario.locked == 'N'
 
 if __name__ == '__main__':
     test_SoapServer.run()

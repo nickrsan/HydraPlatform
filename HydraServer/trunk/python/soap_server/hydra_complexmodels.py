@@ -159,7 +159,7 @@ class LoginResponse(ComplexModel):
 class HydraComplexModel(ComplexModel):
     __namespace__ = 'soap_server.hydra_complexmodels'
 
-    error = String()
+    error = SpyneArray(String())
 
     def __init__(self, obj_dict=None):
         super(HydraComplexModel, self).__init__()
@@ -673,6 +673,7 @@ class Scenario(Resource):
         ('description',          String(min_occurs=1, default="")),
         ('network_id',           Integer(default=None)),
         ('status',               String(default='A', pattern="[AX]")),
+        ('locked',               String(default='N', pattern="[YN]")),
         ('start_time',           String(default=None)),
         ('end_time',             String(default=None)),
         ('time_step',            String(default=None)),
