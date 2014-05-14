@@ -65,6 +65,10 @@ from db import HydraIface
 import datetime
 import traceback
 
+import signal
+
+from cherrypy.wsgiserver import CherryPyWSGIServer
+
 log = logging.getLogger(__name__)
 
 
@@ -175,24 +179,29 @@ class HydraServer():
 
     def run_server(self):
 
-        wsgi_application = self.create_application()
-
-        from wsgiref.simple_server import make_server
-
-        port = config.getint('hydra_server', 'port')
         spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
+        application.start()
+#run_twisted(((wsgi_application_1, 'app1'), (wsgi_application_2, 'app2')), port, interface='127.0.0.1')
+     #   log.info("listening to http://127.0.0.1:%s", port)
+     #   log.info("wsdl is at: http://localhost:%s/?wsdl", port)
 
-        log.info("listening to http://127.0.0.1:%s", port)
-        log.info("wsdl is at: http://localhost:%s/?wsdl", port)
-
-        server = make_server('127.0.0.1', port, wsgi_application)
-        server.serve_forever()
-
-# These few lines are needed to turn the server into a WSGI script.
-server = HydraServer()
-application = server.create_application()
+    #    server = make_server('127.0.0.1', port, wsgi_application)
+     #   server.serve_forever()
 
 
+#spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
+def stop_server(*args, **kwargs):
+    log.info("Shutting Down")
+    application.stop()
+
+signal.signal(signal.SIGINT,  stop_server)
+        # These few lines are needed to turn the server into a WSGI script.
+port = config.getint('hydra_server', 'port')
+s = HydraServer()
+spyne_application = s.create_application()
+application = CherryPyWSGIServer(('localhost',port),spyne_application, numthreads=1)
+
+#To kill this process, use this command:
+#ps -ef | grep 'server.py' | grep 'python' | awk '{print $2}' | xargs kill
 if __name__ == '__main__':
-    server = HydraServer()
-    server.run_server()
+    application.start()
