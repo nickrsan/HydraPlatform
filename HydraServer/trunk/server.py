@@ -175,7 +175,9 @@ class HydraServer():
         wsgi_application = WsgiApplication(application)
         wsgi_application.max_content_length = 100 * 0x100000 # 10 MB
 
-        return wsgi_application
+        port = config.getint('hydra_server', 'port')
+        cp_wsgi_application = CherryPyWSGIServer(('localhost',port), wsgi_application, numthreads=1)
+        return cp_wsgi_application
 
     def run_server(self):
 
@@ -196,10 +198,8 @@ def stop_server(*args, **kwargs):
 
 signal.signal(signal.SIGINT,  stop_server)
         # These few lines are needed to turn the server into a WSGI script.
-port = config.getint('hydra_server', 'port')
 s = HydraServer()
-spyne_application = s.create_application()
-application = CherryPyWSGIServer(('localhost',port),spyne_application, numthreads=1)
+application = s.create_application()
 
 #To kill this process, use this command:
 #ps -ef | grep 'server.py' | grep 'python' | awk '{print $2}' | xargs kill
