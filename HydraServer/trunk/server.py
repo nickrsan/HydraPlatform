@@ -168,40 +168,39 @@ class HydraServer():
             UnitService,
         ]
 
-        application = HydraSoapApplication(applications, 'hydra.base',
+        app = HydraSoapApplication(applications, 'hydra.base',
                     in_protocol=Soap11(validator='lxml'),
                     out_protocol=Soap11()
                 )
-        wsgi_application = WsgiApplication(application)
+        wsgi_application = WsgiApplication(app)
         wsgi_application.max_content_length = 100 * 0x100000 # 10 MB
 
-        port = config.getint('hydra_server', 'port')
-        cp_wsgi_application = CherryPyWSGIServer(('localhost',port), wsgi_application, numthreads=1)
-        return cp_wsgi_application
+        return wsgi_application 
 
     def run_server(self):
 
+    #   from wsgiref.simple_server import make_server
+    #   server = make_server('127.0.0.1', port, wsgi_application)
+    #   server.serve_forever()
+        port = config.getint('hydra_server', 'port')
+        
         spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
-        application.start()
-#run_twisted(((wsgi_application_1, 'app1'), (wsgi_application_2, 'app2')), port, interface='127.0.0.1')
-     #   log.info("listening to http://127.0.0.1:%s", port)
-     #   log.info("wsdl is at: http://localhost:%s/?wsdl", port)
+        cp_wsgi_application = CherryPyWSGIServer(('localhost',port), application, numthreads=1)
+        
+        log.info("listening to http://127.0.0.1:%s", port)
+        log.info("wsdl is at: http://localhost:%s/?wsdl", port)
+      
+        try:
+            cp_wsgi_application.start()
+        except KeyboardInterrupt:
+            cp_wsgi_application.stop()
 
-    #    server = make_server('127.0.0.1', port, wsgi_application)
-     #   server.serve_forever()
-
-
-#spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
-def stop_server(*args, **kwargs):
-    log.info("Shutting Down")
-    application.stop()
-
-signal.signal(signal.SIGINT,  stop_server)
-        # These few lines are needed to turn the server into a WSGI script.
+# These few lines are needed by mod_wsgi to turn the server into a WSGI script.
 s = HydraServer()
 application = s.create_application()
+
 
 #To kill this process, use this command:
 #ps -ef | grep 'server.py' | grep 'python' | awk '{print $2}' | xargs kill
 if __name__ == '__main__':
-    application.start()
+    s.run_server()
