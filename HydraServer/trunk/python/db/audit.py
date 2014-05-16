@@ -38,7 +38,7 @@ def connect():
     """
         return an inspector object
     """
-    MySQLConnection.get_characterset_info = MySQLConnection.get_charset
+   # MySQLConnection.get_characterset_info = MySQLConnection.get_charset
 
     db = create_engine(engine_name, echo=True)
     db.connect()
@@ -98,9 +98,9 @@ def run():
 def create_triggers(db, tables):
 
 
-    from mysql.connector.connection import MySQLConnection
+  #  from mysql.connector.connection import MySQLConnection
 
-    MySQLConnection.get_characterset_info = MySQLConnection.get_charset
+   # MySQLConnection.get_characterset_info = MySQLConnection.get_charset
 
     db = create_engine("mysql+mysqlconnector://root:@localhost/hydradb")
     db.echo = True
