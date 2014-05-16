@@ -183,19 +183,19 @@ class HydraServer():
         domain = config.get('hydra_server', 'domain')
         
         spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
-        #cp_wsgi_application = CherryPyWSGIServer(('localhost',port), application, numthreads=1)
-        from wsgiref.simple_server import make_server
+        cp_wsgi_application = CherryPyWSGIServer((domain,port), application, numthreads=1)
+        #from wsgiref.simple_server import make_server
 
-        server = make_server(domain, port, application)
+        #server = make_server(domain, port, application)
         log.info("listening to http://%s:%s", domain, port)
         log.info("wsdl is at: http://%s:%s/?wsdl", domain, port)
-        server.serve_forever()
+        #server.serve_forever()
         
       
-        #try:
-        #    cp_wsgi_application.start()
-        #except KeyboardInterrupt:
-        #    cp_wsgi_application.stop()
+        try:
+            cp_wsgi_application.start()
+        except KeyboardInterrupt:
+            cp_wsgi_application.stop()
 
 # These few lines are needed by mod_wsgi to turn the server into a WSGI script.
 s = HydraServer()
