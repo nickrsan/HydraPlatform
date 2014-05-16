@@ -179,21 +179,23 @@ class HydraServer():
 
     def run_server(self):
 
-    #   from wsgiref.simple_server import make_server
-    #   server = make_server('127.0.0.1', port, wsgi_application)
-    #   server.serve_forever()
         port = config.getint('hydra_server', 'port')
+        domain = config.get('hydra_server', 'domain')
         
         spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
-        cp_wsgi_application = CherryPyWSGIServer(('localhost',port), application, numthreads=1)
+        #cp_wsgi_application = CherryPyWSGIServer(('localhost',port), application, numthreads=1)
+        from wsgiref.simple_server import make_server
+
+        server = make_server(domain, port, application)
+        log.info("listening to http://%s:%s", domain, port)
+        log.info("wsdl is at: http://%s:%s/?wsdl", domain, port)
+        server.serve_forever()
         
-        log.info("listening to http://127.0.0.1:%s", port)
-        log.info("wsdl is at: http://localhost:%s/?wsdl", port)
       
-        try:
-            cp_wsgi_application.start()
-        except KeyboardInterrupt:
-            cp_wsgi_application.stop()
+        #try:
+        #    cp_wsgi_application.start()
+        #except KeyboardInterrupt:
+        #    cp_wsgi_application.stop()
 
 # These few lines are needed by mod_wsgi to turn the server into a WSGI script.
 s = HydraServer()

@@ -66,8 +66,8 @@ def create_sqlite_backup_db(audit_tables):
         logging.warn(e)
 
     try:
-        backup_dir = config.get('sqlite', 'backup_dir')
-        os.mkdir(aux_dir)
+        backup_dir = config.get('db', 'export_target')
+        os.mkdir(backup_dir)
         logging.warn("%s created", backup_dir)
     except Exception, e:
         logging.warn(e)
@@ -112,16 +112,6 @@ def run():
 
 def create_triggers(db, tables):
 
-
-<<<<<<< HEAD
-  #  from mysql.connector.connection import MySQLConnection
-
-   # MySQLConnection.get_characterset_info = MySQLConnection.get_charset
-=======
-#    from mysql.connector.connection import MySQLConnection
-
-#    MySQLConnection.get_characterset_info = MySQLConnection.get_charset
->>>>>>> Update audit script to create directory structure if it doesn't exist
 
     db = create_engine("mysql+mysqlconnector://root:@localhost/hydradb")
     db.echo = True
