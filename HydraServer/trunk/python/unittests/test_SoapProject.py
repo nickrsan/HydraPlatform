@@ -134,12 +134,23 @@ class ProjectTest(test_SoapServer.SoapServerTest):
         
         proj = self.create_project('Project with multiple networks')
 
-        self.create_network(proj)
-        self.create_network(proj)
+        self.create_network_with_data(proj.id)
+        self.create_network_with_data(proj.id)
 
         nets = self.client.service.get_networks(proj.id)
+        test_net = nets[0][0]
+        assert test_net.scenarios is not None
+        test_scenario = test_net.scenarios.Scenario[0]
+        assert len(test_scenario.resourcescenarios.ResourceScenario) > 0
+        assert len(test_net.nodes.Node) > 0
+        assert len(test_net.links.Link) > 0
 
         assert len(nets.Network) == 2, "Networks were not retrieved correctly"
+        
+        nets = self.client.service.get_networks(proj.id, 'N')
+
+        test_scenario = nets[0][0].scenarios.Scenario[0]
+        assert test_scenario.resourcescenarios is None
 
 if __name__ == '__main__':
     test_SoapServer.run()

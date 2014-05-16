@@ -14,7 +14,7 @@
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
 from spyne.decorator import rpc
-from spyne.model.primitive import Integer, String 
+from spyne.model.primitive import Integer, String, Unicode 
 from spyne.model.complex import Array as SpyneArray
 from hydra_complexmodels import Project,\
 ProjectSummary,\
@@ -78,13 +78,13 @@ class ProjectService(HydraService):
         project.delete_project(project_id,  **ctx.in_header.__dict__)
         return 'OK' 
 
-    @rpc(Integer, _returns=SpyneArray(Network))
-    def get_networks(ctx, project_id):
+    @rpc(Integer, Unicode(pattern="[YN]", default='Y'), _returns=SpyneArray(Network))
+    def get_networks(ctx, project_id, include_data):
         """
             Get all networks in a project
             Returns an array of network objects.
         """
-        net_dicts = project.get_networks(project_id,  **ctx.in_header.__dict__)
+        net_dicts = project.get_networks(project_id, include_data, **ctx.in_header.__dict__)
         networks = [Network(n) for n in net_dicts]
         return networks
 

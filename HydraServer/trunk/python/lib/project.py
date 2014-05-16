@@ -151,7 +151,7 @@ def delete_project(project_id,**kwargs):
     x.save()
     x.commit()
 
-def get_networks(project_id,**kwargs):
+def get_networks(project_id, include_data='N', **kwargs):
     """
         Get all networks in a project
         Returns an array of network objects.
@@ -175,7 +175,7 @@ def get_networks(project_id,**kwargs):
 
     for r in rs:
         try:
-            net = network.get_network(r.network_id, 'Y', **kwargs)
+            net = network.get_network(r.network_id, include_data, **kwargs)
             networks.append(net)
         except PermissionError:
             log.info("Not returning network %s as user %s does not have "

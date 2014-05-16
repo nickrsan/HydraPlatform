@@ -67,7 +67,7 @@ class ColorizingStreamHandler(logging.StreamHandler):
             message = self.format(record)
             stream = self.stream
             if not self.is_tty:
-                stream.write(message)
+                stream.write("%s : %s"%(os.getpid(),message))
             else:
                 self.output_colorized(message)
             stream.write(getattr(self, 'terminator', '\n'))
