@@ -30,6 +30,7 @@ from subprocess import Popen
 from sqlalchemy.types import DECIMAL, NUMERIC
 from sqlalchemy.dialects.mysql.base import DOUBLE
 from decimal import Decimal
+import os
 
 engine_name = config.get('mysqld', 'url')
 sqlite_engine = "sqlite:///%s"%(config.get('sqlite', 'backup_url'))
@@ -54,6 +55,20 @@ def create_sqlite_backup_db(audit_tables):
     try:
         Popen("rm %s"%(config.get('sqlite', 'backup_url')), shell=True)
         logging.warn("Old sqlite backup DB removed")
+    except Exception, e:
+        logging.warn(e)
+
+    try:
+        aux_dir = config.get('DEFAULT', 'hydra_aux_dir')
+        os.mkdir(aux_dir)
+        logging.warn("%s created", aux_dir)
+    except Exception, e:
+        logging.warn(e)
+
+    try:
+        backup_dir = config.get('sqlite', 'backup_dir')
+        os.mkdir(aux_dir)
+        logging.warn("%s created", backup_dir)
     except Exception, e:
         logging.warn(e)
 
@@ -98,9 +113,15 @@ def run():
 def create_triggers(db, tables):
 
 
+<<<<<<< HEAD
   #  from mysql.connector.connection import MySQLConnection
 
    # MySQLConnection.get_characterset_info = MySQLConnection.get_charset
+=======
+#    from mysql.connector.connection import MySQLConnection
+
+#    MySQLConnection.get_characterset_info = MySQLConnection.get_charset
+>>>>>>> Update audit script to create directory structure if it doesn't exist
 
     db = create_engine("mysql+mysqlconnector://root:@localhost/hydradb")
     db.echo = True
