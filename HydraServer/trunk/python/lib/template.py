@@ -165,21 +165,22 @@ def upload_template_xml(template_xml,**kwargs):
         if type_name in existing_types:
             type_id = type_name_map[type_name]
             type_i = HydraIface.TemplateType(type_id=type_id)
+            
         else:
             type_i = HydraIface.TemplateType()
             type_i.db.template_id = tmpl_i.db.template_id
             type_i.db.type_name = resource.find('name').text
 
-            if resource.find('alias') is not None:
-                type_i.db.alias = resource.find('alias').text
+        if resource.find('alias') is not None:
+            type_i.db.alias = resource.find('alias').text
 
-            if resource.find('layout') is not None and \
-               resource.find('layout').text is not None:
-                layout = resource.find('layout')
-                layout_string = get_layout_as_dict(layout)
-                type_i.db.layout = str(layout_string)
+        if resource.find('layout') is not None and \
+            resource.find('layout').text is not None:
+            layout = resource.find('layout')
+            layout_string = get_layout_as_dict(layout)
+            type_i.db.layout = str(layout_string)
 
-            type_i.save()
+        type_i.save()
 
         #delete any TypeAttrs which are in the DB but not in the XML file
         existing_attrs = []
