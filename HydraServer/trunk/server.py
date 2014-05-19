@@ -179,8 +179,8 @@ class HydraServer():
 
     def run_server(self):
 
-        port = config.getint('hydra_server', 'port')
-        domain = config.get('hydra_server', 'domain')
+        port = config.getint('hydra_server', 'port', 12345)
+        domain = config.get('hydra_server', 'domain', '127.0.0.1')
         
         spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
         cp_wsgi_application = CherryPyWSGIServer((domain,port), application, numthreads=1)

@@ -74,16 +74,23 @@ def load_config():
 
     return config
 
-def get(section, option):
+def get(section, option, default=None):
 
     if CONFIG is None:
         load_config()
 
-    return CONFIG.get(section, option)
+    try:
+        return CONFIG.get(section, option)
+    except:
+        return default
 
-def getint(section, option):
+def getint(section, option, default=None):
 
     if CONFIG is None:
         load_config()
 
-    return CONFIG.getint(section, option)
+    try:
+        return CONFIG.getint(section, option)
+    except:
+        return default
+    
