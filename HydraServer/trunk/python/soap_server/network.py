@@ -63,7 +63,7 @@ class NetworkService(HydraService):
         ret_net = Network(net)
         return ret_net
 
-    @rpc(Unicode, Integer, _returns=Network)
+    @rpc(Integer, Unicode, _returns=Network)
     def get_network_by_name(ctx, project_id, network_name):
         """
         Return a whole network as a complex model.
@@ -72,6 +72,16 @@ class NetworkService(HydraService):
         net = network.get_network_by_name(project_id, network_name, **ctx.in_header.__dict__)
 
         return Network(net)
+
+    @rpc(Integer, Unicode, _returns=Unicode)
+    def network_exists(ctx, project_id, network_name):
+        """
+        Return a whole network as a complex model.
+        """
+
+        net_exists = network.network_exists(project_id, network_name, **ctx.in_header.__dict__)
+
+        return net_exists
 
     @rpc(Network, _returns=Network)
     def update_network(ctx, net):

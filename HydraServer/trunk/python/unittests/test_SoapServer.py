@@ -45,7 +45,7 @@ class FixNamespace(MessagePlugin):
             self.fix_ns(e)
 
 def connect():
-    port = config.getint('hydra_server', 'port')
+    port = config.getint('hydra_server', 'port', 12345)
     url = 'http://localhost:%s?wsdl' % port
     client = Client(url, plugins=[FixNamespace()])
 

@@ -740,7 +740,7 @@ def get_network_by_name(project_id, network_name,**kwargs):
         where
             project_id = %s
         and lower(network_name) like '%%%s%%'
-    """
+    """ % (project_id, network_name)
 
     rs = HydraIface.execute(sql)
     if len(rs) == 0:
@@ -750,9 +750,30 @@ def get_network_by_name(project_id, network_name,**kwargs):
 
     network_id = rs[0].network_id
 
-    net = get_network(network_id, 'Y', None)
+    net = get_network(network_id, 'N', None, **kwargs)
 
     return net
+
+def network_exists(project_id, network_name,**kwargs):
+    """
+    Return a whole network as a complex model.
+    """
+
+    sql = """
+        select
+            network_id
+        from
+            tNetwork
+        where
+            project_id = %s
+        and lower(network_name) like '%%%s%%'
+    """ % (project_id, network_name)
+
+    rs = HydraIface.execute(sql)
+    if len(rs) == 0:
+        return 'N'
+    else:
+        return 'Y'
 
 def update_network(network,**kwargs):
     """

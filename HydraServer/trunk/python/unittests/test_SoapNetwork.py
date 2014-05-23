@@ -19,6 +19,7 @@
 import test_SoapServer
 import copy
 import logging
+import suds
 log = logging.getLogger(__name__)
 
 class NetworkTest(test_SoapServer.SoapServerTest):
@@ -47,6 +48,15 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         assert len(full_network.scenarios.Scenario)    == 2
         for s in partial_network.scenarios.Scenario:
             assert len(s.resourcescenarios.ResourceScenario) > 0
+
+        self.assertRaises(suds.WebFault, self.client.service.get_network_by_name, net.project_id, "I am not a network")
+        net_by_name = self.client.service.get_network_by_name(net.project_id, net.name)
+        assert net_by_name.id == full_network.id
+
+        no_net_exists = self.client.service.network_exists(net.project_id, "I am not a network")
+        assert no_net_exists == 'N'
+        net_exists = self.client.service.network_exists(net.project_id, net.name)
+        assert net_exists == 'Y'
 
     def test_get_extents(self):
         """
