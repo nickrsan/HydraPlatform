@@ -353,10 +353,19 @@ class RetrievalTest(test_SoapServer.SoapServerTest):
         net = self.create_network_with_data()
         scenario_id = net.scenarios.Scenario[0].id       
         node_id     = net.nodes.Node[0].id
-        
         node_data = self.client.service.get_node_data(node_id, scenario_id)
-
         assert len(node_data) > 0
+        node_id     = net.nodes.Node[1].id
+        node_data = self.client.service.get_node_data(node_id, scenario_id)
+        assert len(node_data) > 0
+
+        link_id     = net.links.Link[0].id
+        link_data = self.client.service.get_link_data(link_id, scenario_id)
+        assert len(link_data) > 0
+        link_id     = net.links.Link[1].id
+        link_data = self.client.service.get_link_data(link_id, scenario_id)
+        assert len(link_data) > 0
+
 
 if __name__ == '__main__':
     test_SoapServer.run()

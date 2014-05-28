@@ -639,17 +639,20 @@ def get_scenario_data(scenario_id,**kwargs):
             if dr.data_type == 'scalar':
                 val = {
                     'object_type' : 'Scalar',
-                    'param_value' : dr.value
+                    'param_value' : dr.value,
+                    'metadatas'  : metadata.get(dr.dataset_id, {}),
                 }
             elif dr.data_type == 'descriptor':
                 val = {
                     'object_type': 'Descriptor',
-                    'desc_val'   : dr.value
+                    'desc_val'   : dr.value,
+                    'metadatas'  : metadata.get(dr.dataset_id, {}),
                 }
             elif dr.data_type == 'array':
                 val = {
                     'object_type': 'Array',
-                    'arr_data'      : create_dict(eval(dr.value))
+                    'arr_data'      : create_dict(eval(dr.value)),
+                    'metadatas'  : metadata.get(dr.dataset_id, {}),
                 }
             d = dict(
                 dataset_id = dr.dataset_id,
@@ -661,7 +664,6 @@ def get_scenario_data(scenario_id,**kwargs):
                 data_hash  = dr.data_hash,
                 locked     = dr.locked,
                 value      = val,
-                metadatas  = metadata.get(dr.dataset_id, {})
             )
         else:
             dataset = HydraIface.Dataset()
@@ -800,24 +802,72 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
         }
 
 
-    rs = HydraIface.execute(sql)
+    data_rs = HydraIface.execute(sql)
+
+
+    sql = """
+        select
+            metadata_name,
+            metadata_val,
+            dataset_id
+        from
+            tMetadata
+        where
+            dataset_id  in (
+                select
+                    distinct(rs.dataset_id)
+                from
+                    tResourceScenario rs,
+                    tResourceAttr ra
+                where
+                    ra.ref_key = '%(ref_key)s'
+                    and ra.ref_id = %(ref_id)s 
+                    and rs.scenario_id = %(scenario_id)s
+                    and rs.resource_attr_id = ra.resource_attr_id
+                    %(attr_filter)s
+                )
+    """ % {
+            'scenario_id' : scenario_id,
+            'ref_key'     : ref_key,
+            'ref_id'      : ref_id,
+            'attr_filter' : attr_string,
+        } 
+
+    metadata_rs = HydraIface.execute(sql)
+    metadata = {}
+    for m in metadata_rs:
+        metadata_dict = dict(
+            object_type   = 'Metadata',
+            metadata_name = m.metadata_name,
+            metadata_val  = m.metadata_val,
+            dataset_id    = m.dataset_id
+        )
+        if metadata.get(m.dataset_id):
+            metadata[m.dataset_id].append(metadata_dict)
+        else:
+            metadata[m.dataset_id] = [metadata_dict]
+
+
     resource_scenarios = [] 
-    for dr in rs:
+    for dr in data_rs:
         if dr.data_type in ('scalar', 'array', 'descriptor'):
             if dr.data_type == 'scalar':
                 val = {
                     'object_type' : 'Scalar',
-                    'param_value' : dr.value
+                    'param_value' : dr.value,
+                    'metadatas'  : metadata.get(dr.dataset_id, {}),
                 }
             elif dr.data_type == 'descriptor':
                 val = {
                     'object_type': 'Descriptor',
-                    'desc_val'   : dr.value
+                    'desc_val'   : dr.value,
+                    'metadatas'  : metadata.get(dr.dataset_id, {}),
                 }
             elif dr.data_type == 'array':
                 val = {
                     'object_type': 'Array',
-                    'arr_data'      : dr.value
+                    'arr_data'      : dr.value,
+                    'metadatas'  : metadata.get(dr.dataset_id, {}),
                 }
             d = dict(
                 dataset_id = dr.dataset_id,
