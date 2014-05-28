@@ -137,7 +137,7 @@ def upload_template_xml(template_xml,**kwargs):
         tmpl_i = HydraIface.Template()
         tmpl_i.db.template_name = template_name
         tmpl_i.db.layout = template_layout
-        tmpl_i.save()
+    tmpl_i.save()
 
     types = xml_tree.find('resources')
 
@@ -209,7 +209,6 @@ def upload_template_xml(template_xml,**kwargs):
             else:
                 typeattr.save()
         IfaceLib.bulk_insert(typeattrs, 'tTypeAttr')
-
     tmpl_i.load_all()
 
     return tmpl_i
