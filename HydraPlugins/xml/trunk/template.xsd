@@ -30,6 +30,7 @@
                                                     <xs:enumeration value="NETWORK"/>
                                                     <xs:enumeration value="NODE"/>
                                                     <xs:enumeration value="LINK"/>
+                                                    <xs:enumeration value="GROUP"/>
                                                 </xs:restriction>
                                             </xs:simpleType>
                                         </xs:element>
