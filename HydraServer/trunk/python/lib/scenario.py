@@ -690,7 +690,7 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
     """
 
     user_id = kwargs.get('user_id')
-    attr_string = ""
+    attr_string = ''
     
     if type_id is not None:
         sql = """
@@ -715,7 +715,7 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
             tResourceAttr ra,
             tResourceScenario rs
         where
-            ra.ref_key = %(ref_key)s
+            ra.ref_key = '%(ref_key)s'
             and ra.ref_id  = %(ref_id)s
             and rs.resource_attr_id = ra.resource_attr_id
             and rs.scenario_id = %(scenario_id)s
@@ -786,7 +786,7 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
                     tResourceScenario rs,
                     tResourceAttr ra
                 where
-                    ra.ref_key = %(ref_key)s
+                    ra.ref_key = '%(ref_key)s'
                     and ra.ref_id = %(ref_id)s 
                     and rs.scenario_id = %(scenario_id)s
                     and rs.resource_attr_id = ra.resource_attr_id

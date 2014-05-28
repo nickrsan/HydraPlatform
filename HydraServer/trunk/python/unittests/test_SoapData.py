@@ -328,5 +328,35 @@ class SharingTest(test_SoapServer.SoapServerTest):
 
         self.client = old_client
 
+    def test_get_extents(self):
+        """
+        Extents test: Test that the min X, max X, min Y and max Y of a
+        network are retrieved correctly.
+        """
+        net = self.create_network_with_data()
+
+        extents = self.client.service.get_network_extents(net.id)
+
+        assert extents.min_x == 10
+        assert extents.max_x == 100
+        assert extents.min_y == 9
+        assert extents.max_y == 99
+
+class RetrievalTest(test_SoapServer.SoapServerTest):
+    def test_get_node_data(self):
+        """
+            Test for the potentially likely case of creating a network with two
+            scenarios, then querying for the network without data to identify
+            the scenarios, then querying for the network with data but in only
+            a select few scenarios.
+        """
+        net = self.create_network_with_data()
+        scenario_id = net.scenarios.Scenario[0].id       
+        node_id     = net.nodes.Node[0].id
+        
+        node_data = self.client.service.get_node_data(node_id, scenario_id)
+
+        assert len(node_data) > 0
+
 if __name__ == '__main__':
     test_SoapServer.run()
