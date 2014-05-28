@@ -243,7 +243,7 @@ class Dataset(HydraComplexModel):
             self.value     = self.value.__dict__
         
         metadata = []
-        for m in obj_dict['metadatas']:
+        for m in obj_dict.get('metadatas', []):
             complex_m = Metadata(m).__dict__
             metadata.append(complex_m)
         self.metadata = metadata
