@@ -209,72 +209,6 @@ class GenericResource(IfaceBase):
         else:
             return None
 
-    def get_types_by_attr(self):
-        """
-            Using the attributes of the resource, get all the
-            types that this resource matches.
-            @returns a dictionary, keyed on the template name, with the
-            value being the list of type names which match the resources
-            attributes.
-        """
-
-        #Create a list of all of this resources attributes.
-        attr_ids = []
-        for attr in self.get_attributes():
-            attr_ids.append(attr.db.attr_id)
-        all_attr_ids = set(attr_ids)
-
-        #Get all template information.
-        template_sql = """
-            select
-                tmpl.template_name,
-                tmpl.template_id,
-                typ.type_id,
-                typ.type_name,
-                tattr.attr_id
-            from
-                tTemplate tmpl,
-                tTemplateType typ,
-                tTypeAttr tattr
-            where
-                tmpl.template_id   = typ.template_id
-                and typ.type_id = tattr.type_id
-        """
-        rs = execute(template_sql)
-
-        template_dict   = {}
-        type_name_map = {}
-        for r in rs:
-            type_name_map[r.type_id] = r.type_name
-
-            if template_dict.get(r.template_id):
-                if template_dict[r.template_id].get(r.type_id):
-                    template_dict[r.template_id]['types'][r.type_id].add(r.attr_id)
-                else:
-                    template_dict[r.template_id]['types'][r.type_id] = set([r.attr_id])
-            else:
-                template_dict[r.template_id] = {
-                                            'template_name' : r.template_name,
-                                            'types'  : {r.type_id:set([r.attr_id])}
-                                         }
-
-        resource_type_templates = {}
-        #Find which type IDS this resources matches by checking if all
-        #the types attributes are in the resources attribute list.
-        for tmpl_id, tmpl in template_dict.items():
-            template_name = tmpl['template_name']
-            tmpl_types = tmpl['types']
-            resource_types = []
-            for type_id, type_attrs in tmpl_types.items():
-                if type_attrs.issubset(all_attr_ids):
-                    resource_types.append((type_id, type_name_map[type_id]))
-
-            if len(resource_types) > 0:
-                resource_type_templates[tmpl_id] = {'template_name' : template_name,
-                                                    'types'  : resource_types
-                                                   }
-
-        return resource_type_templates
 
     def get_templates_and_types(self):
         """
@@ -1255,10 +1189,13 @@ class Template(IfaceBase):
             self.load()
 
 
-    def add_templatetype(self, name):
+    def add_templatetype(self, name, alias, resource_type, layout):
         type_i = TemplateType(template=self)
         type_i.db.template_id = self.db.template_id
         type_i.db.type_name = name
+        type_i.db.alias     = alias
+        type_i.db.resource_type = resource_type
+        type_i.db.layout        = layout
         type_i.save()
 
         self.templatetypes.append(type_i)

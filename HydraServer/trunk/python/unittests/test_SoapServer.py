@@ -134,6 +134,7 @@ class SoapServerTest(unittest.TestCase):
         type1 = self.client.factory.create('hyd:TemplateType')
         type1.name = "Test type 1"
         type1.alias = "Test type alias"
+        type1.resource_type='NODE'
 
         typeattrs = self.client.factory.create('hyd:TypeAttrArray')
 
@@ -153,6 +154,7 @@ class SoapServerTest(unittest.TestCase):
         #**********************
         type2 = self.client.factory.create('hyd:TemplateType')
         type2.name = "Test type 2"
+        type2.resource_type='LINK'
 
         typeattrs = self.client.factory.create('hyd:TypeAttrArray')
 

@@ -64,6 +64,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         type1 = self.client.factory.create('hyd:TemplateType')
         type1.name = "Test type 1"
         type1.alias = "Test type alias"
+        type1.resource_type = 'NODE'
 
         tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
@@ -83,6 +84,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         #**********************
         type2 = self.client.factory.create('hyd:TemplateType')
         type2.name = "Test type 2"
+        type2.resource_type = 'LINK'
 
         tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
@@ -134,11 +136,13 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         type_1 = self.client.factory.create('hyd:TemplateType')
         type_1.name = "Test type 1"
-        type_1.name = "Test type 1 alias"
+        type_1.alias = "Test type 1 alias"
+        type_1.resource_type = 'NODE'
 
         type_2 = self.client.factory.create('hyd:TemplateType')
         type_2.name = "Test type 2"
-        type_2.name = "Test type 2 alias"
+        type_2.alias = "Test type 2 alias"
+        type_2.resource_type = 'LINK'
 
         tattrs_1 = self.client.factory.create('hyd:TypeAttrArray')
         tattrs_2 = self.client.factory.create('hyd:TypeAttrArray')
@@ -200,6 +204,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         templatetype = self.client.factory.create('hyd:TemplateType')
         templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
         templatetype.alias = "%s alias" % templatetype.name
+        templatetype.resource_type='NODE'
         layout = self.client.factory.create("xs:anyType")
         layout.color = 'red'
         layout.shapefile = 'blah.shp'
@@ -242,6 +247,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         templatetype.name = "Test type name @ %s" % (datetime.datetime.now())
         templatetype.alias = templatetype.name + " alias"
         templatetype.template_id = self.get_template().id
+        templatetype.resource_type = 'NODE'
 
         tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
@@ -306,6 +312,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
         templatetype.alias = templatetype.name + " alias"
         templatetype.template_id = self.get_template().id
+        templatetype.resource_type = 'NODE'
 
         tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
@@ -340,6 +347,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         templatetype = self.client.factory.create('hyd:TemplateType')
         templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
         templatetype.alias = templatetype.name + " alias"
+        templatetype.resource_type = 'NODE'
 
         tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
@@ -530,6 +538,33 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         xmlschema.assertValid(xml_tree)
 
+
+    def test_apply_template_to_network(self):
+        network = self.create_network_with_data()
+        template = self.get_template()
+       
+        #Test the links as it's easier
+        for l in network.links.Link:
+            assert l.types is None
+
+        for n in network.nodes.Node:
+            assert len(n.types.TypeSummary) == 1
+            assert n.types.TypeSummary[0].name == 'Test type 1'
+
+        self.client.service.apply_template_to_network(template.id,
+                                                             network.id)
+
+        network = self.client.service.get_network(network.id)
+        
+        for l in network.links.Link:
+            assert l.types is not None
+            assert len(n.types.TypeSummary) == 1
+            assert l.types.TypeSummary[0].name == 'Test type 2'
+
+        for n in network.nodes.Node:
+            assert len(n.types.TypeSummary) == 2
+            for t in n.types.TypeSummary:
+                assert t.name == 'Test type 1'
 
 if __name__ == '__main__':
     test_SoapServer.run()

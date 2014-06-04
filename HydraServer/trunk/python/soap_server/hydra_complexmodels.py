@@ -395,6 +395,7 @@ class TemplateType(HydraComplexModel):
     _type_info = [
         ('id',          Integer(default=None)),
         ('name',        String(default=None)),
+        ('resource_type', String(values=['GROUP', 'NODE', 'LINK', 'NETWORK'], default=None)),
         ('alias',       String(default=None)),
         ('layout',      AnyDict(min_occurs=0, max_occurs=1, default=None)),
         ('template_id', Integer(min_occurs=1, default=None)),
@@ -409,6 +410,8 @@ class TemplateType(HydraComplexModel):
         self.id        = obj_dict['type_id']
         self.name      = obj_dict['type_name']
         self.alias     = obj_dict['alias']
+        self.resource_type = obj_dict['resource_type']
+
         if obj_dict['layout'] is not None:
             self.layout    = eval(obj_dict['layout'])
         else:
