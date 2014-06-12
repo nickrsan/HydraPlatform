@@ -118,14 +118,16 @@ def upload_template_xml(template_xml,**kwargs):
             attr.attr_id
         from
             tTemplate tmpl,
-            tTemplateType type,
-            tTypeAttr typeattr,
-            tAttr attr
+            tTemplateType type
+            left join tTypeAttr typeattr on (
+                typeattr.type_id=type.type_id
+            )
+            left join tAttr attr on (
+                attr.attr_id = typeattr.attr_id
+            )
         where
             tmpl.template_name = '%s'
         and type.template_id   = tmpl.template_id
-        and typeattr.type_id   = type.type_id
-        and attr.attr_id       = typeattr.attr_id
     """ % template_name
 
     rs = HydraIface.execute(sql)
@@ -146,6 +148,7 @@ def upload_template_xml(template_xml,**kwargs):
     attr_name_map = {r.attr_name:(r.attr_id,r.type_id) for r in rs}
 
     existing_types = set([r.type_name for r in rs])
+    logging.info("Existing types in template %s: %s", template_name, existing_types)
 
     new_types = set([r.find('name').text for r in types.findall('resource')])
 
