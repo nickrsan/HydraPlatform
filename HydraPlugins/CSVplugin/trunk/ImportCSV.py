@@ -647,7 +647,6 @@ class ImportCSV(object):
                     link['node_2_id'] = tonode['id']
 
                 except KeyError:
-                    import pudb; pudb.set_trace()
                     log.info(('Start or end node not found (%s -- %s).' +
                                   ' No link created.') %
                                  (linedata[field_idx['from']].strip(),
