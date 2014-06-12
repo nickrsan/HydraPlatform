@@ -242,7 +242,7 @@ class ImportCSV(object):
         bad_lines = []
         for i, line in enumerate(file_data):
             try:
-                line = ''.join([i if ord(i) < 128 else ' ' for i in line])
+                line = ''.join([x if ord(x) < 128 else ' ' for x in line])
                 line.decode('ascii')
             except UnicodeDecodeError, e:
                 #If there are unknown characters in this line, save the line
