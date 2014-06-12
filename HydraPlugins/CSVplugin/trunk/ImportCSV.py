@@ -242,6 +242,7 @@ class ImportCSV(object):
         bad_lines = []
         for i, line in enumerate(file_data):
             try:
+                line = ''.join([i if ord(i) < 128 else ' ' for i in line])
                 line.decode('ascii')
             except UnicodeDecodeError, e:
                 #If there are unknown characters in this line, save the line
@@ -445,6 +446,7 @@ class ImportCSV(object):
             )
 
     def read_metadata(self, filename):
+        log.info("Reading metadata from file %s", filename)
         metadata = self.get_file_data(filename)
         keys = metadata[0].split(',')
         self.check_header(filename, keys)
@@ -505,7 +507,16 @@ class ImportCSV(object):
         keys  = node_data[0].split(',')
         self.check_header(file, keys)
         units = node_data[1].split(',')
-        data  = node_data[2:-1]
+        
+        dataset_names = []
+        if len(node_data) > 2:
+            dataset_name_line = node_data[2].split(',')
+            if dataset_name_line[0].lower() == 'dataset name' or\
+               dataset_name_line[0].lower() == 'dataset_name':
+               dataset_names = [name for name in dataset_name_line[1:]]
+               data  = node_data[3:-1]
+            else:
+                data = node_data[2:-1]
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -636,6 +647,7 @@ class ImportCSV(object):
                     link['node_2_id'] = tonode['id']
 
                 except KeyError:
+                    import pudb; pudb.set_trace()
                     log.info(('Start or end node not found (%s -- %s).' +
                                   ' No link created.') %
                                  (linedata[field_idx['from']].strip(),
@@ -1280,13 +1292,11 @@ class ImportCSV(object):
         if self.update_network_flag:
             log.info('Updating network (ID=%s)' % self.Network['id'])
             self.Network = self.cli.service.update_network(self.Network)
+            log.info("Network updated.")
         else:
             log.info("Adding Network")
-            self.Network = self.cli.service.add_network(self.Network)
-
-        log.info("Network updated. Network ID is %s", self.Network.id)
-      #  log.info("Network Scenarios are: %s",
-      #               [s.id for s in self.Network.scenarios.Scenario] + [self.Sceanrio.id])
+            self.Network = self.cli.service.add_network(self.Network, 'N')
+            log.info("Network inserted. Network ID is %s", self.Network.id)
 
         self.message = 'Data import was successful.'
 
@@ -1318,6 +1328,7 @@ class ImportCSV(object):
             xmlschema.assertValid(xml_tree)
         except etree.DocumentInvalid as e:
             raise HydraPluginError('Template validation failed: ' + e.message)
+        log.info("Template OK")
 
 
 def commandline_parser():

@@ -185,8 +185,8 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         type_summary      = self.client.factory.create('hyd:TypeSummary')
         type_summary.id   = tmpl.id
         type_summary.name = tmpl.name
-        type_summary.id   = tmpl.types.TemplateType[0].id
-        type_summary.name = tmpl.types.TemplateType[0].name
+        type_summary.id   = tmpl.types.TemplateType[1].id
+        type_summary.name = tmpl.types.TemplateType[1].name
 
         type_summary_arr.TypeSummary.append(type_summary)
 
@@ -198,7 +198,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         for resource_attr in new_link.attributes.ResourceAttr:
             link_attr_ids.append(resource_attr.attr_id)
 
-        for typeattr in tmpl.types.TemplateType[0].typeattrs.TypeAttr:
+        for typeattr in tmpl.types.TemplateType[1].typeattrs.TypeAttr:
             assert typeattr.attr_id in link_attr_ids
 
         new_network = self.client.service.get_network(network.id)
