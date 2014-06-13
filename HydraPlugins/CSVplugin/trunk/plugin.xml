@@ -65,13 +65,30 @@ Written by Philipp Meier philipp@diemeiers.ch
                         to UTC.</help>
         </arg>
         <arg>
-            <name>rules</name>
-            <switch>-r</switch>
+            <name>groups</name>
+            <switch>-g</switch>
             <multiple>Y</multiple>
             <argtype>file</argtype>
-            <help>File(s) containing rules or constraints as
-                        mathematical expressions.</help>
+            <help>One or multiple files containing information
+                        on groups.</help>
         </arg>
+        <arg>
+            <name>group_members</name>
+            <switch>-k</switch>
+            <multiple>Y</multiple>
+            <argtype>file</argtype>
+            <help>One or multiple files containing information on the members of the
+            groups specified in the -g argument.</help>
+        </arg>
+        <arg>
+            <name>template</name>
+            <switch>-m</switch>
+            <multiple>N</multiple>
+            <argtype>file</argtype>
+            <help>One XML containing the template appropriate 
+                to the network bing imported.</help>
+        </arg>
+
     </non_mandatory_args> 
     <switches>
         <arg>
