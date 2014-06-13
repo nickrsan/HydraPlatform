@@ -197,6 +197,10 @@ class ImportCSV(object):
         self.Groups   = dict()
         self.Attributes = dict()
 
+        #This stores all the types in the template
+        #so that node, link and group types can be validated
+        self.Types      = dict()
+
         #These are used to keep track of whether
         #duplicate names have been specified in the files.
         self.link_names = []
@@ -212,6 +216,7 @@ class ImportCSV(object):
         self.add_attrs = True
         self.nodetype_dict = dict()
         self.linktype_dict = dict()
+        self.grouptype_dict = dict()
         self.networktype = ''
 
         self.cli = PluginLib.connect(url=url)
@@ -573,6 +578,11 @@ class ImportCSV(object):
                                          % node['name'])
                 if field_idx['type'] is not None:
                     node_type = linedata[field_idx['type']].strip()
+
+                    if len(self.Types):
+                        if node_type not in self.Types.get('NODE', []):
+                            raise HydraPluginError("Node type %s not specified in the template."%(node_type))
+
                     if node_type not in self.nodetype_dict.keys():
                         self.nodetype_dict.update({node_type: (nodename,)})
                     else:
@@ -658,6 +668,9 @@ class ImportCSV(object):
 
                 if field_idx['type'] is not None:
                     link_type = linedata[field_idx['type']].strip()
+                    if len(self.Types):
+                        if link_type not in self.Types.get('LINK', []):
+                            raise HydraPluginError("Node type %s not specified in the template."%(link_type))
                     if link_type not in self.linktype_dict.keys():
                         self.linktype_dict.update({link_type: (linkname,)})
                     else:
@@ -692,12 +705,12 @@ class ImportCSV(object):
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
-
-        #The 'node' and 'link' columns indicate whether the entry
-        #is a node or link. THe only stipulation is that no attributes
-        #can then be called 'node' or 'link' or 'group'
+        
+        #Indicates what the mandatory columns are and where
+        #we expect to see them.
         field_idx = {'name': 0,
                      'description': -1,
+                     'type': None,
                      }
 
         attrs = dict()
@@ -732,6 +745,17 @@ class ImportCSV(object):
                     description = group_data[field_idx['description']].strip(),
                     attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
                 )
+
+                if field_idx['type'] is not None:
+                    group_type = group_data[field_idx['type']].strip()
+                    if len(self.Types):
+                        if group_type not in self.Types.get('GROUP', []):
+                            raise HydraPluginError("Group type %s not specified in the template."%(group_type))
+                    if group_type not in self.grouptype_dict.keys():
+                        self.grouptype_dict.update({group_type: (group_name,)})
+                    else:
+                        self.grouptype_dict[group_type] += (group_name,)
+
             if len(attrs) > 0:
                 group = self.add_data(group, attrs, group_data, metadata, units=units)
 
@@ -1073,7 +1097,7 @@ class ImportCSV(object):
                                          self.Network,
                                          self.nodetype_dict,
                                          self.linktype_dict,
-                                         {},#Should group types be put into import csv?
+                                         self.grouptype_dict,
                                          self.networktype)
         except KeyError as e:
             raise HydraPluginError("Type '%s' not found in template."
@@ -1327,6 +1351,18 @@ class ImportCSV(object):
             xmlschema.assertValid(xml_tree)
         except etree.DocumentInvalid as e:
             raise HydraPluginError('Template validation failed: ' + e.message)
+
+        resources = xml_tree.find('resources')
+        types = [(r.find('name').text, r.find('type').text) for r in resources.findall('resource')]
+
+        for t in types:
+            resource_type = t[1]
+            type_name     = t[0]
+            if self.Types.get(resource_type):
+                self.Types[resource_type].append(type_name)
+            else:
+                self.Types[resource_type] = [type_name]
+
         log.info("Template OK")
 
 
