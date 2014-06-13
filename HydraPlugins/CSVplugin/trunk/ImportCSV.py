@@ -670,7 +670,7 @@ class ImportCSV(object):
                     link_type = linedata[field_idx['type']].strip()
                     if len(self.Types):
                         if link_type not in self.Types.get('LINK', []):
-                            raise HydraPluginError("Node type %s not specified in the template."%(link_type))
+                            raise HydraPluginError("Link type %s not specified in the template."%(link_type))
                     if link_type not in self.linktype_dict.keys():
                         self.linktype_dict.update({link_type: (linkname,)})
                     else:
@@ -755,6 +755,7 @@ class ImportCSV(object):
                         self.grouptype_dict.update({group_type: (group_name,)})
                     else:
                         self.grouptype_dict[group_type] += (group_name,)
+
 
             if len(attrs) > 0:
                 group = self.add_data(group, attrs, group_data, metadata, units=units)
