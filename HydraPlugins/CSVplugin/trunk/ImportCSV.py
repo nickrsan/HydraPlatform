@@ -1446,7 +1446,10 @@ if __name__ == '__main__':
             # Validation
 
             if args.template is not None:
-                csv.validate_template(args.template)
+                try:
+                    csv.validate_template(args.template)
+                except Exception, e:
+                    raise HydraPluginError("An error has occurred with the template. (%s)"%(e))
 
             # Create project and network only when there is actual data to
             # import.
