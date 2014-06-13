@@ -45,6 +45,17 @@ Written by Philipp Meier philipp@diemeiers.ch
                         If no name is provided a default name will be assigned.</help>
         </arg>
         <arg>
+           <name>network_id</name>
+           <switch>-i</switch>
+           <multiple>N</multiple>
+           <argtype>string</argtype>
+           <help>The ID of an existing network. If no network_id is
+               specified, a new network will be created. If a network
+               id is specified, the network will be updated and a new scenario
+               created for the data.
+           </help>
+        </arg>
+        <arg>
            <name>network</name>
            <switch>-t</switch>
            <multiple>N</multiple>
