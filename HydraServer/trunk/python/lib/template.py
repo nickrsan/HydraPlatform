@@ -392,6 +392,7 @@ def assign_types_to_resources(resource_types,**kwargs):
     log.info("Types loaded in %s",(datetime.datetime.now()-x))
     node_ids = []
     link_ids = []
+    group_ids = []
     network_id = None
     for resource_type in resource_types:
         ref_id  = resource_type.ref_id
@@ -410,8 +411,9 @@ def assign_types_to_resources(resource_types,**kwargs):
             resource.db.link_id=ref_id
             link_ids.append(ref_id)
         elif resource_type.ref_key == 'GROUP':
-            resource = HydraIface.Group()
-            resource.db.resourcegroup_id=ref_id
+            resource = HydraIface.ResourceGroup()
+            resource.db.group_id=ref_id
+            group_ids.append(ref_id)
         resource.ref_key = ref_key
         resource.ref_id  = ref_id
         resources.append(resource)
@@ -428,12 +430,14 @@ def assign_types_to_resources(resource_types,**kwargs):
         where
             (rt.ref_key = 'NETWORK' and rt.ref_id = %(network_id)s
         or  rt.ref_key = 'NODE'    and rt.ref_id in %(node_ids)s
-        or  rt.ref_key = 'LINK'    and rt.ref_id in %(link_ids)s)
+        or  rt.ref_key = 'LINK'    and rt.ref_id in %(link_ids)s
+        or  rt.ref_key = 'GROUP'    and rt.ref_id in %(group_ids)s)
         order by ref_key
     """% {
             'network_id' :network_id,
             'node_ids'   :make_param(node_ids),
-            'link_ids'   :make_param(link_ids)
+            'link_ids'   :make_param(link_ids),
+            'group_ids'  : make_param(group_ids),
         }
     type_rs = HydraIface.execute(sql)
     current_resource_types = [(r.ref_key, r.ref_id, r.type_id) for r in type_rs]

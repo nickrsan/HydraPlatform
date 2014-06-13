@@ -826,7 +826,7 @@ class ImportCSV(object):
             if member is None:
                 log.info("%s %s does not exist."%(member_type, member_name) +
                           ' Group item not created.')
-                self.warnings.append("%s %s does not exist."%(member_type, member_type) +
+                self.warnings.append("%s %s does not exist."%(member_type, member_name) +
                           ' Group item not created.')
                 continue
 
@@ -1310,6 +1310,10 @@ class ImportCSV(object):
             return True
 
     def commit(self):
+
+        #if len(self.warnings) > 0:
+        #    raise HydraPluginError("Errors were found")
+
         log.info("Committing Network")
         for node in self.Nodes.values():
             self.Network['nodes'].Node.append(node)

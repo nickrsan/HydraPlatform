@@ -1,7 +1,6 @@
-Name       , totalCap, Description
-Units      , hm^3    , 
-stor       , 4000.0  , Storage Nodes
-nonstor    , 0.0     , Non Storage Nodes
-managedstor, 10.0    , Managed Storage Nodes
-dem        , 0.0     , Demand Nodes
-
+Name       ,Type, totalCap, Description
+Units      ,, hm^3    , 
+stor       ,grptyp,4000, Storage Nodes
+nonstor    ,grptyp,0, Non Storage Nodes
+managedstor,grptyp,10, Managed Storage Nodes
+dem        ,grptyp,0, Demand Nodes
