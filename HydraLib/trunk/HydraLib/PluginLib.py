@@ -649,6 +649,7 @@ def set_resource_types(client, xml_template, network,
     template = client.service.upload_template_xml(xml_template)
 
     type_ids = dict()
+    warnings = []
 
     for type_name in nodetype_dict.keys():
         for tmpltype in template.types.TemplateType:
@@ -681,34 +682,44 @@ def set_resource_types(client, xml_template, network,
             type_id = type_ids[networktype],
         ))
 
-    for node in network.nodes.Node:
-        for typename, node_name_list in nodetype_dict.items():
-            if type_ids[typename] and node.name in node_name_list:
-                args.ResourceTypeDef.append(dict(
-                    ref_key = 'NODE',
-                    ref_id  = node.id,
-                    type_id = type_ids[typename],
-                ))
+    if network.nodes:
+        for node in network.nodes.Node:
+            for typename, node_name_list in nodetype_dict.items():
+                if type_ids[typename] and node.name in node_name_list:
+                    args.ResourceTypeDef.append(dict(
+                        ref_key = 'NODE',
+                        ref_id  = node.id,
+                        type_id = type_ids[typename],
+                    ))
+    else:
+        warnings.append("No nodes found when setting template types")
 
-    for link in network.links.Link:
-        for typename, link_name_list in linktype_dict.items():
-            if type_ids[typename] and link.name in link_name_list:
-                args.ResourceTypeDef.append(dict(
-                    ref_key = 'LINK',
-                    ref_id  = link.id,
-                    type_id = type_ids[typename],
-                ))
-
-    for group in network.resourcegroups.ResourceGroup:
-        for typename, group_name_list in grouptype_dict.items():
-            if type_ids[typename] and group.name in group_name_list:
-                args.ResourceTypeDef.append(dict(
-                    ref_key = 'GROUP',
-                    ref_id  = group.id,
-                    type_id = type_ids[typename],
-                ))
+    if network.links:
+        for link in network.links.Link:
+            for typename, link_name_list in linktype_dict.items():
+                if type_ids[typename] and link.name in link_name_list:
+                    args.ResourceTypeDef.append(dict(
+                        ref_key = 'LINK',
+                        ref_id  = link.id,
+                        type_id = type_ids[typename],
+                    ))
+    else:
+       warnings.append("No links found when setting template types")
+    
+    if network.resourcegroups:
+        for group in network.resourcegroups.ResourceGroup:
+            for typename, group_name_list in grouptype_dict.items():
+                if type_ids[typename] and group.name in group_name_list:
+                    args.ResourceTypeDef.append(dict(
+                        ref_key = 'GROUP',
+                        ref_id  = group.id,
+                        type_id = type_ids[typename],
+                    ))
+    else:
+       warnings.append("No resourcegroups found when setting template types")
 
     client.service.assign_types_to_resources(args)
+    return warnings
 
 def parse_suds_array(arr):
     """

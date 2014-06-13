@@ -1094,12 +1094,13 @@ class ImportCSV(object):
             xml_template = f.read()
 
         try:
-            PluginLib.set_resource_types(self.cli, xml_template,
+            warnings = PluginLib.set_resource_types(self.cli, xml_template,
                                          self.Network,
                                          self.nodetype_dict,
                                          self.linktype_dict,
                                          self.grouptype_dict,
                                          self.networktype)
+            self.warnings.extend(warnings)
         except KeyError as e:
             raise HydraPluginError("Type '%s' not found in template."
                                    % e.message)
