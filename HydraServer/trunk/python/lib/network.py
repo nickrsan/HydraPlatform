@@ -879,11 +879,16 @@ def update_network(network,**kwargs):
     errors = []
     if network.scenarios is not None:
         for s in network.scenarios:
-            if s.id is not None and s.id > 0:
-                scen = HydraIface.Scenario(network=net_i, scenario_id=s.id)
-                if scen.db.locked == 'Y':
-                    errors.append('Scenario %s was not updated as it is locked'%(s.id)) 
-                    continue
+            if s.id is not None:
+                if s.id > 0:
+                    scen = HydraIface.Scenario(network=net_i, scenario_id=s.id)
+                    if scen.db.locked == 'Y':
+                        errors.append('Scenario %s was not updated as it is locked'%(s.id)) 
+                        continue
+                else:
+                    scen = HydraIface.Scenario(network=net_i)
+                    scenario_id = get_scenario_by_name(network.id, s.name)
+                    s.name = s.name + "update" + str(datetime.datetime.now())
             else:
                 scenario_id = get_scenario_by_name(network.id, s.name)
                 scen = HydraIface.Scenario(scenario_id = scenario_id)

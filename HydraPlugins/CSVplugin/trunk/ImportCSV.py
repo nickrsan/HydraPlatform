@@ -40,6 +40,9 @@ Option                 Short  Parameter Description
                                         information. If no file is specified, a
                                         new network will be created using
                                         default values.
+``--network_id``       ``-i`` NETWORK_ID   Specify the ID of the network to be 
+                                        updated, if not specified,a new network 
+                                        will be created.
 ``--nodes``            ``-n`` NODES     One or multiple files containing nodes
                                         and attributes.
 ``--links``            ``-l`` LINKS     One or multiple files containing
@@ -323,7 +326,7 @@ class ImportCSV(object):
             'Default scenario created by the CSV import plug-in.'
         self.Scenario.id = -1
 
-    def create_network(self, file=None):
+    def create_network(self, file=None, network_id=None):
 
         if file is not None:
             net_data = self.get_file_data(file)
@@ -364,22 +367,17 @@ class ImportCSV(object):
             if field_idx['type'] is not None:
                 self.networktype = data[field_idx['type']].strip()
 
-            try:
-                ID = int(data[field_idx['id']])
-            except ValueError:
-                ID = None
-
-            if ID is not None:
+            if network_id is not None:
                 # Check if network exists on the server.
                 try:
                     self.Network = \
-                        self.cli.service.get_network(data[field_idx['id']])
+                        self.cli.service.get_network(network_id)
                     # Assign name and description in case anything has changed
                     self.Network.name = data[field_idx['name']].strip()
                     self.Network.description = \
                         data[field_idx['description']].strip()
                     self.update_network_flag = True
-                    log.info('Loading existing network (ID=%s)' % ID)
+                    log.info('Loading existing network (ID=%s)' % network_id)
                     # load existing nodes
                     if self.Network.nodes is not None:
                         for node in self.Network.nodes.Node:
@@ -407,11 +405,11 @@ class ImportCSV(object):
                         self.cli.factory.create('hyd:ScenarioArray')
                     self.Network = dict(self.Network)
                 except WebFault:
-                    log.info('Network ID not found. Creating new network.')
-                    self.warnings.append('Network ID not found. Creating new network.')
-                    ID = None
+                    log.info('Network %s not found. Creating new network.', network_id)
+                    self.warnings.append('Network %s not found. Creating new network.'%(network_id,))
+                    network_id = None
 
-            if ID is None:
+            if network_id is None:
                 # Create a new network
                 self.Network = dict(
                     project_id = self.Project.id,
@@ -1407,6 +1405,11 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-l', '--links', nargs='+',
                         help='''One or multiple files containing information
                         on links.''')
+    parser.add_argument('-i', '--network_id',
+                        help='''The ID of an existing network. If specified, 
+                        this network will be updated. If not, a new network 
+                        will be created.
+                        on links.''')
     parser.add_argument('-g', '--groups', nargs='+',
                         help='''One or multiple files containing information
                         on groups and their attributes (but not members)''')
@@ -1467,7 +1470,7 @@ if __name__ == '__main__':
             # import.
             csv.create_project(ID=args.project)
             csv.create_scenario(name=args.scenario)
-            csv.create_network(file=args.network)
+            csv.create_network(file=args.network, network_id=args.network_id)
 
             for nodefile in args.nodes:
                 log.info("Reading Nodes")
