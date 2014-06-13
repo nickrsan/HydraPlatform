@@ -54,26 +54,35 @@ class NetworkService(HydraService):
             net_cm = Network()
             net_cm.id = net['network_id']
             net_cm.name = net['network_name']
+            scenarios = []
             for scen in net['scenarios']:
                 s = Scenario()
                 s.id=scen['scenario_id']
                 s.name=scen['scenario_name']
-                net_cm.scenarios.append(s)
+                scenarios.append(s)
+            nodes = []
        	    for node in net['nodes']:
        	        n = Node()
                 n.id = node['node_id']
                 n.name = node['node_name']
-                net_cm.nodes.append(n)
+                nodes.append(n)
+            links = []
             for link in net['links']:
                 l = Link()
                 l.id = link['link_id']
                 l.name = link['link_name']
-                net_cm.links.append(l)
+                links.append(l)
+            resourcegroups = []
             for grp in net['resourcegroups']:
                 g = ResourceGroup()
                 g.id = grp['group_id']
                 g.name = grp['group_name']
-                net_cm.resourcegroups.append(g)
+                resourcegroups.append(g)
+            net_cm.scenarios = scenarios
+            net_cm.nodes = nodes
+            net_cm.links = links
+            net_cm.resourcegroups = resourcegroups
+
             return net_cm
 
     @rpc(Integer,

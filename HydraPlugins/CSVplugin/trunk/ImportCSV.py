@@ -459,8 +459,11 @@ class ImportCSV(object):
 
         metadata_dict = {}
         for data_line in data:
-            split_data = data_line.split(',')
-            metadata_dict[split_data[0].strip()] = self.get_metadata_as_dict(keys[1:], split_data[1:])
+            try:
+                split_data = data_line.split(',')
+                metadata_dict[split_data[0].strip()] = self.get_metadata_as_dict(keys[1:], split_data[1:])
+            except Exception, e:
+                raise HydraPluginError("Malformed metadata on line %s in file %s"%(split_data, filename))
         return metadata_dict
 
     def get_metadata_as_dict(self, keys, metadata):
@@ -840,10 +843,13 @@ class ImportCSV(object):
         """
             Create attribute locally. It will get added in bulk later.
         """
-        attribute = self.cli.factory.create('hyd:Attr')
-        attribute.name = name.strip()
-        if unit is not None and len(unit.strip()) > 0:
-            attribute.dimen = self.cli.service.get_dimension(unit.strip())
+        try:
+            attribute = self.cli.factory.create('hyd:Attr')
+            attribute.name = name.strip()
+            if unit is not None and len(unit.strip()) > 0:
+                attribute.dimen = self.cli.service.get_dimension(unit.strip())
+        except Exception,e:
+            raise HydraPluginError("Invalid attribute %s %s: error was: %s"%(name,unit,e))
 
         return attribute
 
@@ -1320,7 +1326,8 @@ class ImportCSV(object):
             log.info("Network updated.")
         else:
             log.info("Adding Network")
-            self.Network = self.cli.service.add_network(self.Network, 'N')
+            new_network = self.cli.service.add_network(self.Network, 'N')
+            self.Network = new_network
             log.info("Network inserted. Network ID is %s", self.Network.id)
 
         self.message = 'Data import was successful.'
