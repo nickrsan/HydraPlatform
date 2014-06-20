@@ -35,96 +35,6 @@ NS = "soap_server.hydra_complexmodels"
 
 log = logging.getLogger(__name__)
 
-def parse_value(data):
-    """
-        Turn a complex model object into a hydraiface - friendly value.
-    """
-
-    data_type = data.type
-
-    if data.value is None:
-        log.warn("Cannot parse dataset. No value specified.")
-        return None
-
-    #attr_data.value is a dictionary,
-    #but the keys have namespaces which must be stripped.
-    val_names = data.value.keys()
-    value = []
-    for name in val_names:
-        value.append(data.value[name])
-
-    if data_type == 'descriptor':
-        return value[0][0]
-    elif data_type == 'timeseries':
-        # The brand new way to parse time series data:
-        ts = []
-        for ts_val in value[0]:
-            #The value is a list, so must get index 0
-            timestamp = ts_val['{%s}ts_time'%NS][0]
-            # Check if we have received a seasonal time series first
-            ordinal_ts_time = timestamp_to_ordinal(timestamp)
-            arr_data = ts_val['{%s}ts_value'%NS][0]
-            try:
-                arr_data = dict(arr_data)
-                try:
-                    ts_value = eval(arr_data)
-                except:
-                    ts_value = parse_array(arr_data)
-            except:
-                try:
-                    ts_value = float(arr_data)
-                except:
-                    ts_value = arr_data
-
-            ts.append((ordinal_ts_time, ts_value))
-
-        return ts
-    elif data_type == 'eqtimeseries':
-        start_time = data.value['{%s}start_time'%NS][0]
-        start_time = timestamp_to_ordinal(start_time) 
-        frequency  = data.value['{%s}frequency'%NS][0]
-        arr_data   = data.value['{%s}arr_data'%NS][0]
-        try:
-            val = eval(arr_data)
-        except:
-            val = parse_array(arr_data)
-
-        arr_data   = val
-
-        return (start_time, frequency, arr_data)
-    elif data_type == 'scalar':
-        return value[0][0]
-    elif data_type == 'array':
-        arr_data   = data.value['{%s}arr_data'%NS][0]
-
-        try:
-            val = eval(arr_data)
-        except:
-            val = parse_array(arr_data)
-        return val
-
-
-def parse_array(arr):
-    """
-        Take a list of nested dictionaries and return a python list containing
-        a single value, a string or sub lists.
-    """
-    ret_arr = []
-    sub_arr = arr.get('{%s}array'%NS, None)
-    for val in sub_arr:
-        sub_arr = val.get('{%s}array'%NS, None)
-        if sub_arr is not None:
-            ret_arr.append(parse_array(val))
-            continue
-
-        actual_vals = val.get('{%s}item'%NS)
-        for v in actual_vals:
-            try:
-                ret_arr.append(float(v))
-            except:
-                ret_arr.append(v)
-    return ret_arr
-
 def create_dict(arr_data):
     arr_data = array(arr_data)
 
@@ -187,7 +97,6 @@ def update_dataset(dataset_id, name, data_type, val, units, dimension, metadata=
         dataset.data_dimen = dimension
         dataset.created_by = kwargs['user_id']
         dataset.data_hash  = dataset.set_hash(val)
-
     return dataset
 
     
@@ -286,7 +195,7 @@ def _process_incoming_data(data, user_id=None):
     datasets = {}
 
     for d in data:
-        val = parse_value(d)
+        val = d.parse_value()
 
         if val is None:
             log.info("Cannot parse data (dataset_id=%s). "

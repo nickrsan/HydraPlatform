@@ -13,10 +13,40 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from HydraLib.HydraException import HydraError
-from db import HydraIface
+from HydraLib.HydraException import HydraError, ResourceNotFoundError
 import logging
 log = logging.getLogger(__name__)
+from db import DBSession
+from db.HydraAlchemy import Network, Project, User, Dataset
+from sqlalchemy.orm.exc import NoResultFound
+
+def _get_project(project_id):
+    try:
+        proj_i = DBSession.query(Project).filter(Project.project_id==project_id).one()
+        return proj_i
+    except NoResultFound:
+        raise ResourceNotFoundError("Project %s not found"%(project_id,))
+
+def _get_network(network_id):
+    try:
+        net_i = DBSession.query(Network).filter(Network.network_id == network_id).one()
+        return net_i
+    except NoResultFound:
+        raise ResourceNotFoundError("Network %s not found"%(network_id))
+
+def _get_user(username):
+    try:
+        user_i = DBSession.query(User).filter(User.username==username).one()
+        return user_i
+    except NoResultFound:
+        raise ResourceNotFoundError("User %s not found"%(username))
+
+def _get_dataset(dataset_id):
+    try:
+        dataset_i = DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).one()
+        return dataset_i
+    except NoResultFound:
+        raise ResourceNotFoundError("Dataset %s not found"%(dataset_id))
 
 def share_network(network_id, usernames, read_only, share,**kwargs):
     """
@@ -30,29 +60,27 @@ def share_network(network_id, usernames, read_only, share,**kwargs):
     """
 
     user_id = kwargs.get('user_id')
-    net_i = HydraIface.Network(network_id=network_id)
-   
-    #Check if the user is allowed to share this network.
-    net_i.check_share_permission(int(user_id))
-   
+    net_i = _get_network(network_id)
+    net_i.check_share_permission(user_id)
+
     if read_only == 'Y':
         write = 'N'
         share = 'N'
     else:
         write = 'Y'
 
-    if net_i.db.created_by != int(user_id) and share == 'Y':
+    if net_i.created_by != int(user_id) and share == 'Y':
         raise HydraError("Cannot share the 'sharing' ability as user %s is not"
                      " the owner of network %s"%
                      (user_id, network_id))
 
     for username in usernames:
-        user_i = HydraIface.User()
-        user_i.db.username = username
-        user_i.get_user_id()
-        net_i.set_ownership(user_i.db.user_id, write=write, share=share)
-
-        net_i.project.set_ownership(user_i.db.user_id, write='N', share='N')
+        user_i = _get_user(username)
+        #Set the owner ship on the network itself
+        net_i.set_owner(user_i.user_id, write=write, share=share)
+        #Give the user read access to the containing project
+        net_i.project.set_owner(user_i.user_id, write='N', share='N')
+    DBSession.flush()
 
 def share_project(project_id, usernames, read_only, share,**kwargs):
     """
@@ -66,15 +94,18 @@ def share_project(project_id, usernames, read_only, share,**kwargs):
         project to be shared with other users
     """
     user_id = kwargs.get('user_id')
-    proj_i = HydraIface.Project(project_id=project_id)
-    proj_i.load_all()
+
+    proj_i = _get_project(project_id)
 
     #Is the sharing user allowed to share this project?
     proj_i.check_share_permission(int(user_id))
    
     user_id = int(user_id)
 
-    if user_id not in proj_i.get_owners():
+    for owner in proj_i.projectowners:
+        if user_id == owner.user_id:
+            break
+    else:
        raise HydraError("Permission Denied. Cannot share project.")
  
     if read_only == 'Y':
@@ -83,19 +114,19 @@ def share_project(project_id, usernames, read_only, share,**kwargs):
     else:
         write = 'Y'
 
-    if proj_i.db.created_by != user_id and share == 'Y':
+    if proj_i.created_by != user_id and share == 'Y':
         raise HydraError("Cannot share the 'sharing' ability as user %s is not"
                      " the owner of project %s"%
                      (user_id, project_id))
 
     for username in usernames:
-        user_i = HydraIface.User()
-        user_i.db.username = username
-        user_i.get_user_id()
-        proj_i.set_ownership(user_i.db.user_id, write=write, share=share)
+        user_i = _get_user(username)
+        
+        proj_i.set_ownership(user_i.user_id, write=write, share=share)
         
         for net_i in proj_i.networks:
-            net_i.set_ownership(user_i.db.user_id, write=write, share=share)
+            net_i.set_owner(user_i.user_id, write=write, share=share)
+    DBSession.flush()
 
 def set_project_permission(project_id, usernames, read, write, share,**kwargs):
     """
@@ -107,7 +138,8 @@ def set_project_permission(project_id, usernames, read, write, share,**kwargs):
         automatically no write access or share access.
     """
     user_id = kwargs.get('user_id')
-    proj_i = HydraIface.Project(project_id=project_id)
+
+    proj_i = _get_project(project_id)
    
     #Is the sharing user allowed to share this project?
     proj_i.check_share_permission(user_id)
@@ -118,21 +150,20 @@ def set_project_permission(project_id, usernames, read, write, share,**kwargs):
         share = 'N'
 
     for username in usernames:
-        user_i = HydraIface.User()
-        user_i.db.username = username
-        user_i.get_user_id()
+        user_i = _get_user(username)
 
         #The creator of a project must always have read and write access
         #to their project
-        if proj_i.db.created_by == user_i.db.user_id:
+        if proj_i.created_by == user_i.user_id:
             raise HydraError("Cannot set permissions on project %s"
                              " for user %s as tis user is the creator." % 
                              (project_id, username)) 
         
-        proj_i.set_ownership(user_i.db.user_id, read=read, write=write)
+        proj_i.set_owner(user_i.user_id, read=read, write=write)
         
         for net_i in proj_i.networks:
-            net_i.set_ownership(user_i.db.user_id, read=read, write=write, share=share)
+            net_i.set_owner(user_i.user_id, read=read, write=write, share=share)
+    DBSession.flush()
 
 def set_network_permission(network_id, usernames, read, write, share,**kwargs):
     """
@@ -143,7 +174,8 @@ def set_network_permission(network_id, usernames, read, write, share,**kwargs):
     """
 
     user_id = kwargs.get('user_id')
-    net_i = HydraIface.Network(network_id=network_id)
+
+    net_i = _get_network(network_id)
 
     #Check if the user is allowed to share this network.
     net_i.check_share_permission(user_id)
@@ -154,17 +186,18 @@ def set_network_permission(network_id, usernames, read, write, share,**kwargs):
         share = 'N'
    
     for username in usernames:
-        user_i = HydraIface.User()
-        user_i.db.username = username
-        user_i.get_user_id()
+        
+        user_i = _get_user(username)
+
         #The creator of a network must always have read and write access
         #to their project
-        if net_i.db.created_by == user_i.db.user_id:
+        if net_i.created_by == user_i.user_id:
             raise HydraError("Cannot set permissions on network %s"
                              " for user %s as tis user is the creator." % 
                              (network_id, username))
         
-        net_i.set_ownership(user_i.db.user_id, read=read, write=write, share=share)
+        net_i.set_owner(user_i.user_id, read=read, write=write, share=share)
+    DBSession.flush()
 
 def lock_dataset(dataset_id, exceptions, read, write, share,**kwargs):
     """
@@ -177,21 +210,16 @@ def lock_dataset(dataset_id, exceptions, read, write, share,**kwargs):
     """
 
     user_id = kwargs.get('user_id')
-    dataset_i = HydraIface.Dataset(dataset_id=dataset_id)
+    dataset_i = _get_dataset(dataset_id)
     #check that I can lock the dataset
-    if dataset_i.db.created_by != int(user_id):
+    if dataset_i.created_by != int(user_id):
         raise HydraError('Permission denied. '
                         'User %s is not the owner of dataset %s'
-                        %(user_id, dataset_i.db.data_name))
+                        %(user_id, dataset_i.data_name))
 
-    dataset_i.db.locked = 'Y'
+    dataset_i.locked = 'Y'
     if exceptions is not None:
         for username in exceptions:
-            user_i = HydraIface.User()
-            user_i.db.username = username
-            user_i.get_user_id()
-
-            dataset_i.set_ownership(user_i.db.user_id, read=read, write=write, share=share)
-
-    dataset_i.save()
-
+            user_i = _get_user(username)
+            dataset_i.set_owner(user_i.user_id, read=read, write=write, share=share)
+    DBSession.flush()

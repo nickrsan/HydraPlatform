@@ -422,7 +422,7 @@ def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=Non
 
     data_type = resource_scenario.value.type.lower()
 
-    value = data.parse_value(resource_scenario.value)
+    value = resource_scenario.value.parse_value()
 
     if value is None:
         log.info("Cannot set data on resource attribute %s",ra_id)
@@ -503,7 +503,7 @@ def add_data_to_attribute(scenario_id, resource_attr_id, dataset,**kwargs):
 
     data_type = dataset.type.lower()
 
-    value = data.parse_value(dataset)
+    value = dataset.parse_value()
 
     dataset_metadata = {}
     if dataset.metadata is not None:
