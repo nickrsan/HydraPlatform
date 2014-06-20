@@ -30,7 +30,7 @@ engine = create_engine(config.get('mysqld', 'url'))
 from sqlalchemy.orm import sessionmaker
 session = sessionmaker()
 
-maker = sessionmaker(autoflush=True, autocommit=False,
+maker = sessionmaker(autoflush=False, autocommit=False,
                      extension=ZopeTransactionExtension())
 
 DBSession = scoped_session(maker)

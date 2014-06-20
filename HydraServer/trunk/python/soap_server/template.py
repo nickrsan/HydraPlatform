@@ -87,10 +87,10 @@ class TemplateService(HydraService):
                                                        resource_id,
                                                        **ctx.in_header.__dict__)
         ret_type = TypeSummary()
-        ret_type.name = templatetype.db.type_name
-        ret_type.id   = templatetype.db.type_id
-        ret_type.template_name = templatetype.template.db.template_name 
-        ret_type.template_id = templatetype.template.db.template_id 
+        ret_type.name = templatetype.type_name
+        ret_type.id   = templatetype.type_id
+        ret_type.template_name = templatetype.template.template_name 
+        ret_type.template_id = templatetype.template.template_id 
 
         return ret_type 
 

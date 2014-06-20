@@ -13,8 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from db import HydraIface
-from HydraLib.HydraException import HydraError
+from db import DBSession
+from db.model import Perm, User, RolePerm, RoleUser
+from sqlalchemy.orm.exc import NoResultFound
+from HydraLib.HydraException import PermissionError
 
 def check_perm(user_id, permission_code):
     """
@@ -24,38 +26,16 @@ def check_perm(user_id, permission_code):
         If the user does not have permission to perfom an action, a permission
         error is thrown.
     """
-    sql = """
-        select
-            perm_id
-        from
-            tPerm
-        where
-            perm_code = '%s'
-    """%(permission_code)
-    rs = HydraIface.execute(sql)
-    if len(rs) == 0:
-        raise HydraError("No permission %s"%(permission_code))
+    try:
+        perm = DBSession.query(Perm).filter(Perm.perm_code==permission_code).one()
+    except NoResultFound:
+        raise PermissionError("No permission %s"%(permission_code))
 
-    perm_id = rs[0].perm_id
-    
-    sql = """
-        select
-            r.role_id
-        from
-            tUser u,
-            tRoleUser r,
-            tPerm p,
-            tRolePerm rp
-        where
-            u.user_id  = %s
-        and r.user_id  = u.user_id
-        and rp.role_id = r.role_id
-        and rp.perm_id = p.perm_id
-        and p.perm_id  = %s
-    """ % (user_id, perm_id)
 
-    rs = HydraIface.execute(sql)
-
-    if len(rs) == 0:
-        raise HydraError("Permission denied. User %s does not have permission %s"%
+    try:
+        res = DBSession.query(User).join(RoleUser, RoleUser.user_id==User.user_id).\
+            join(Perm, Perm.perm_id==perm.perm_id).\
+            join(RolePerm, RolePerm.perm_id==Perm.perm_id).filter(User.user_id==user_id).one()
+    except NoResultFound:
+        raise PermissionError("Permission denied. User %s does not have permission %s"%
                         (user_id, permission_code))

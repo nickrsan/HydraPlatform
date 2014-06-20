@@ -54,8 +54,6 @@ Option                 Short  Parameter Description
                                         group members.
 ``--template``         ``-m`` TEMPLATE  XML file defining the types for the
                                         network. Required if types are set.
-``--rules``            ``-l`` RULES     File(s) containing rules or constraints
-                                        as mathematical expressions.
 ``--timezone``         ``-z`` TIMEZONE  Specify a timezone as a string
                                         following the Area/Loctation pattern
                                         (e.g.  Europe/London). This timezone
@@ -153,8 +151,6 @@ TODO
 
 - Implement updating of existing scenario.
 
-- Implement rules and constraints
-
 Building a windows executable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  - Use pyinstaller (pip install pyisntaller) to build a windows executable.
@@ -248,6 +244,7 @@ class ImportCSV(object):
             if len(file_data) == 0:
                 log.warn("File contains no data")
         # Ignore comments
+
         bad_lines = []
         for i, line in enumerate(file_data):
             try:
@@ -264,7 +261,7 @@ class ImportCSV(object):
         #Complain about the lines that the bad characters are on.
         if len(bad_lines) > 0:
             lines = [a[0] for a in bad_lines]
-            raise HydraPluginError("Lines %s, contain non ascii characters"%(lines))
+            raise HydraPluginError("Lines %s, in %s contain non ascii characters"%(lines, file))
 
         return file_data
 
@@ -406,11 +403,9 @@ class ImportCSV(object):
                         self.cli.factory.create('hyd:ScenarioArray')
                     self.Network = dict(self.Network)
                 except WebFault:
-                    log.info('Network %s not found. Creating new network.', network_id)
-                    self.warnings.append('Network %s not found. Creating new network.'%(network_id,))
-                    network_id = None
+                    raise HydraPluginError('Network %s not found. Creating new network.'%(network_id))
 
-            if network_id is None:
+            else:
                 # Create a new network
                 self.Network = dict(
                     project_id = self.Project.id,
@@ -948,43 +943,6 @@ class ImportCSV(object):
 
         return resource
 
-    def read_constraints(self, constraint_file):
-        """
-            Read constraints which should be in the format:
-            (ITEM op (ITEM op (ITEM op ITEM))...)
-        """
-        with open(constraint_file, mode='r') as csv_file:
-            self.constraint_data = csv_file.read()
-
-        constraints = self.constraint_data.split('\n')
-
-        for constraint_str in constraints:
-            if constraint_str.strip() == "":
-                continue
-            #parse the constraint string. that meanse:
-            #1: identify the constant
-            #2: identify the operation
-            #3: identify the individual elements and their structure.
-
-            split_str = constraint_str.split(' ')
-            log.info(constraint_str)
-            constant = split_str[-1]
-            op = split_str[-2]
-
-            constraint = self.cli.factory.create("hyd:Constraint")
-            constraint.constant = constant
-            constraint.op = op
-
-            main_group = self.get_group(constraint_str)
-
-            group = self.parse_constraint_group(main_group)
-
-            group_complexmodel = self.convert_to_complexmodel(group)
-
-            constraint.constraintgroup = group_complexmodel
-
-            self.Scenario.constraints.Constraint.append(constraint)
-
     def convert_to_complexmodel(self, group):
 
             regex = re.compile('[\[\]]')
@@ -1099,7 +1057,7 @@ class ImportCSV(object):
             xml_template = f.read()
 
         try:
-            PluginLib.set_resource_types(self.cli, xml_template,
+            warnings = PluginLib.set_resource_types(self.cli, xml_template,
                                          self.NetworkSummary,
                                          self.nodetype_dict,
                                          self.linktype_dict,
@@ -1320,7 +1278,7 @@ class ImportCSV(object):
             self.Network['links'].Link.append(link)
         for group in self.Groups.values():
             self.Network['resourcegroups'].ResourceGroup.append(group)
-        #self.Network['scenarios'].Scenario.append(self.Scenario)
+        self.Network['scenarios'].Scenario.append(self.Scenario)
         log.info("Network created for sending")
 
         if self.update_network_flag:
@@ -1424,9 +1382,6 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-m', '--template',
                         help='''Template XML file, needed if node and link
                         types are specified,''')
-    parser.add_argument('-r', '--rules', nargs='+',
-                        help='''File(s) containing rules or constraints as
-                        mathematical expressions.''')
     parser.add_argument('-z', '--timezone',
                         help='''Specify a timezone as a string following the
                         Area/Location pattern (e.g. Europe/London). This
@@ -1495,13 +1450,9 @@ if __name__ == '__main__':
                 for groupmemberfile in args.groupmembers:
                     csv.read_group_members(groupmemberfile)
 
-            if args.rules is not None:
-                for constraintfile in args.rules:
-                    csv.read_constraints(constraintfile)
-
             csv.commit()
             if csv.NetworkSummary.scenario_ids:
-                scen_ids = csv.NetworkSummary.scenario_ids
+                scen_ids = csv.NetworkSummary.scenario_ids.integer
             network_id = csv.NetworkSummary.id
 
             if args.template is not None:

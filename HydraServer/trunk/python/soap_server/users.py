@@ -134,7 +134,7 @@ class UserService(HydraService):
                                      role_id,
                                      **ctx.in_header.__dict__)
 
-        return RoleUser(role_i)
+        return Role(role_i)
 
     @rpc(Integer, Integer, _returns=Unicode)
     def delete_user_role(ctx, user_id, role_id):
@@ -147,7 +147,7 @@ class UserService(HydraService):
         role_i = users.set_role_perm(role_id,
                                      perm_id,
                                      **ctx.in_header.__dict__)
-        return RolePerm(role_i)
+        return Role(role_i)
 
     @rpc(Integer, Integer, _returns=Unicode)
     def delete_role_perm(ctx, role_id, perm_id):

@@ -15,12 +15,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from db import HydraIface
 from HydraLib import units
 from HydraLib.HydraException import HydraError
 from HydraLib.util import array_dim
 from HydraLib.util import arr_to_vector
 from HydraLib.util import vector_to_arr
+from db.model import Dataset
+from db import DBSession
 import logging
 log = logging.getLogger(__name__)
 
@@ -104,11 +105,12 @@ def convert_dataset(dataset_id, to_unit,**kwargs):
     """Convert a whole dataset (specified by 'dataset_id' to new unit
     ('to_unit').
     """
-    ds_i = HydraIface.Dataset(dataset_id=dataset_id)
-    dataset_type = ds_i.db.data_type
+
+    ds_i = DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).one()
+    dataset_type = ds_i.data_type
 
     dsval = ds_i.get_val()
-    old_unit = ds_i.db.data_units
+    old_unit = ds_i.data_units
 
     if old_unit is not None:
         if dataset_type == 'scalar':
@@ -131,12 +133,12 @@ def convert_dataset(dataset_id, to_unit,**kwargs):
         elif dataset_type == 'descriptor':
             raise HydraError('Cannot convert descriptor.')
 
-        ds_i.db.data_units = to_unit
+        ds_i.data_units = to_unit
         ds_i.set_val(dataset_type, new_val)
         ds_i.set_hash(new_val)
-        ds_i.save()
+        DBSession.flush()
 
-        return ds_i.db.dataset_id
+        return ds_i.dataset_id
 
     else:
         raise HydraError('Dataset has no units.')

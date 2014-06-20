@@ -18,8 +18,7 @@ from spyne.model.primitive import Integer, String, Unicode
 from spyne.model.complex import Array as SpyneArray
 from hydra_complexmodels import Project,\
 ProjectSummary,\
-Network,\
-get_as_complexmodel
+Network
 from hydra_base import HydraService
 from lib import project
 

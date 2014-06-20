@@ -28,7 +28,8 @@ class ProjectTest(test_SoapServer.SoapServerTest):
     #    #super(ProjectTest).__init__(self)
     #    pass
 
-    def add_data(self, proj):
+
+    def add_attributes(self, proj):
         #Create some attributes, which we can then use to put data on our nodes
         attr1 = self.create_attr("proj_attr_1")
         attr2 = self.create_attr("proj_attr_2")
@@ -44,13 +45,27 @@ class ProjectTest(test_SoapServer.SoapServerTest):
         proj_attr_3.attr_id = attr3.id
         proj_attr_3.id = -3
 
-        attributes = self.client.factory.create('hyd:ResourceScenarioArray')
+        attributes = self.client.factory.create('hyd:ResourceAttrArray')
         
-        attributes.ResourceScenario.append(self.create_descriptor(proj_attr_1, val="just project desscriptor"))
-        attributes.ResourceScenario.append(self.create_array(proj_attr_2))
-        attributes.ResourceScenario.append(self.create_timeseries(proj_attr_3))
+        attributes.ResourceAttr.append(proj_attr_1)
+        attributes.ResourceAttr.append(proj_attr_2)
+        attributes.ResourceAttr.append(proj_attr_3)
 
         proj.attributes = attributes
+
+        return proj
+
+    def add_data(self, proj):
+
+        attribute_data = self.client.factory.create('hyd:ResourceScenarioArray')
+        
+        attrs = proj.attributes.ResourceAttr
+
+        attribute_data.ResourceScenario.append(self.create_descriptor(attrs[0], val="just project desscriptor"))
+        attribute_data.ResourceScenario.append(self.create_array(attrs[1]))
+        attribute_data.ResourceScenario.append(self.create_timeseries(attrs[2]))
+
+        proj.attribute_data =attribute_data 
 
         return proj
 
@@ -59,7 +74,7 @@ class ProjectTest(test_SoapServer.SoapServerTest):
         project.name = 'SOAP test %s'%(datetime.datetime.now())
         project.description = \
             'A project created through the SOAP interface.'
-      
+        project = self.add_attributes(project) 
         project = self.add_data(project)
         
         project = self.client.service.add_project(project)
@@ -84,7 +99,7 @@ class ProjectTest(test_SoapServer.SoapServerTest):
             'An updated project created through the SOAP interface.', \
             "Update did not work correctly."
 
-        rs_to_check = updated_project.attributes.ResourceScenario[0]
+        rs_to_check = updated_project.attribute_data.ResourceScenario[0]
         assert rs_to_check.value.type == 'descriptor' and \
                rs_to_check.value.value.desc_val == 'just project desscriptor', \
                "There is an inconsistency with the attributes."

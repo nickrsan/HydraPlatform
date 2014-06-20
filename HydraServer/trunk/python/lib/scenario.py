@@ -17,7 +17,7 @@ import logging
 from HydraLib.HydraException import HydraError, PermissionError, ResourceNotFoundError
 from HydraLib import units
 from db import DBSession
-from db.HydraAlchemy import Scenario, ResourceGroupItem, ResourceScenario, TypeAttr, ResourceAttr, NetworkOwner, Dataset
+from db.model import Scenario, ResourceGroupItem, ResourceScenario, TypeAttr, ResourceAttr, NetworkOwner, Dataset
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload_all
@@ -74,8 +74,8 @@ def add_scenario(network_id, scenario,**kwargs):
     scen.scenario_name        = scenario.name
     scen.scenario_description = scenario.description
     scen.network_id           = network_id
-    scen.start_time           = timestamp_to_ordinal(scenario.start_time)
-    scen.end_time             = timestamp_to_ordinal(scenario.end_time)
+    scen.start_time           = str(timestamp_to_ordinal(scenario.start_time)) if scenario.start_time else None
+    scen.end_time             = str(timestamp_to_ordinal(scenario.end_time)) if scenario.end_time else None
     scen.time_step            = scenario.time_step
 
     #Just in case someone puts in a negative ID for the scenario.
@@ -133,8 +133,8 @@ def update_scenario(scenario,**kwargs):
     
     scen.scenario_name        = scenario.name
     scen.scenario_description = scenario.description
-    scen.start_time           = timestamp_to_ordinal(scenario.start_time)
-    scen.end_time             = timestamp_to_ordinal(scenario.end_time)
+    scen.start_time           = str(timestamp_to_ordinal(scenario.start_time)) if scenario.start_time else None
+    scen.end_time             = str(timestamp_to_ordinal(scenario.end_time)) if scenario.end_time else None
     scen.time_step            = scenario.time_step
 
     for r_scen in scenario.resourcescenarios:
@@ -445,7 +445,12 @@ def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=Non
 
         returns a ResourceScenario object.
     """
+
+    if scenario is None:
+        scenario = DBSession.query(Scenario).filter(Scenario.scenario_id==1).one()
+
     ra_id = resource_scenario.resource_attr_id
+    logging.info("Assigning resource attribute: %s",ra_id)
     for rs in scenario.resourcescenarios:
         if rs.resource_attr_id == ra_id:
             r_scen_i = rs
@@ -487,7 +492,7 @@ def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=Non
 
     assign_value(r_scen_i, data_type, value, data_unit, name, dimension, 
                           metadata=metadata, data_hash=data_hash, user_id=user_id)
-
+   
     return r_scen_i 
 
 def assign_value(rs, data_type, val,

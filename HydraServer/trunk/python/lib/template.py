@@ -14,8 +14,8 @@
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
 from db import DBSession
-from db.HydraAlchemy import Template, TemplateType, TypeAttr, Attr, Network, Node, Link, ResourceGroup, ResourceType, ResourceAttr
-from db import HydraAlchemy
+from db.model import Template, TemplateType, TypeAttr, Attr, Network, Node, Link, ResourceGroup, ResourceType, ResourceAttr
+from data import add_dataset
 
 from HydraLib.HydraException import HydraError
 from HydraLib import config
@@ -23,7 +23,37 @@ from lxml import etree
 from decimal import Decimal
 import logging
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm import joinedload_all
 log = logging.getLogger(__name__)
+
+def get_types_by_attr(resource):
+    """
+        Using the attributes of the resource, get all the
+        types that this resource matches.
+        @returns a dictionary, keyed on the template name, with the
+        value being the list of type names which match the resources
+        attributes.
+    """
+
+    resource_type_templates = []
+
+    #Create a list of all of this resources attributes.
+    attr_ids = []
+    for attr in resource.attributes:
+        attr_ids.append(attr.attr_id)
+    all_resource_attr_ids = set(attr_ids)
+
+    all_types = DBSession.query(TemplateType).options(joinedload_all('typeattrs')).all()
+    #tmpl type attrs must be a subset of the resource's attrs
+    for ttype in all_types:
+        type_attr_ids = []
+        for typeattr in ttype.typeattrs:
+            type_attr_ids.append(typeattr.attr_id)
+        if set(type_attr_ids).issubset(all_resource_attr_ids):
+            resource_type_templates.append(ttype)
+
+    return resource_type_templates
+
 
 def parse_attribute(attribute):
 
@@ -69,17 +99,17 @@ def parse_typeattr(type_i, attribute):
         unit = default.find('unit').text
         val  = default.find('value').text
         try:
-            val = Decimal(val)
+            Decimal(val)
             data_type = 'scalar'
         except:
             data_type = 'descriptor'
 
-        dataset_id = HydraAlchemy.add_dataset(data_type,
+        dataset = add_dataset(data_type,
                                val,
                                unit,
                                dimension,
                                name="%s Default"%attr.attr_name,)
-        typeattr_i.default_dataset_id = dataset_id
+        typeattr_i.default_dataset_id = dataset.dataset_id
 
     return typeattr_i
 
@@ -188,7 +218,6 @@ def upload_template_xml(template_xml,**kwargs):
             except NoResultFound:
                 logging.debug("Attr %s not found in type %s"%(attr_id, type_id))
                 continue
-
 
         #Add or update type typeattrs
         for attribute in resource.findall('attribute'):
@@ -318,32 +347,16 @@ def get_matching_resource_types(resource_type, resource_id,**kwargs):
     """
     resource_i = None
     if resource_type == 'NETWORK':
-        resource_i = DBSession.query(Network).filter(Network.network_id==resource_id)
+        resource_i = DBSession.query(Network).filter(Network.network_id==resource_id).one()
     elif resource_type == 'NODE':
-        resource_i = DBSession.query(Node).filter(Node.node_id==resource_id)
+        resource_i = DBSession.query(Node).filter(Node.node_id==resource_id).one()
     elif resource_type == 'LINK':
-        resource_i = DBSession.query(Link).filter(Link.link_id==resource_id)
+        resource_i = DBSession.query(Link).filter(Link.link_id==resource_id).one()
     elif resource_type == 'GROUP':
-        resource_i = DBSession.query(ResourceGroup).filter(ResourceGroup.resourcegroup_id==resource_id)
+        resource_i = DBSession.query(ResourceGroup).filter(ResourceGroup.resourcegroup_id==resource_id).one()
 
-    templates = HydraAlchemy.get_types_by_attr(resource_i)
-    type_list = []
-    for template_id, template in templates.items():
-        template_name = template['template_name']
-        types  = template['types']
-
-        for type_id, type_name in types:
-            type_summary      = dict(
-                object_type   = "TemplateSummary",
-                template_id   = template_id,
-                template_name = template_name,
-                type_id       = type_id,
-                type_name     = type_name,
-            )
-
-            type_list.append(type_summary)
-
-    return type_list
+    matching_types = get_types_by_attr(resource_i)
+    return matching_types
 
 def assign_types_to_resources(resource_types,**kwargs):
     """
@@ -411,7 +424,8 @@ def assign_type_to_resource(type_id, resource_type, resource_id,**kwargs):
         resource = DBSession.query(ResourceGroup).filter(ResourceGroup.resourcegroup_id==resource_id).one()
     res_attrs, resource_type = set_resource_type(resource, type_id, **kwargs)
     DBSession.execute(ResourceType.__table__.insert(), [resource_type])
-    DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
+    if len(res_attrs) > 0:
+        DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
 
     #Make DBsession 'dirty' to pick up the inserts by doing a fake delete. 
     DBSession.query(Attr).filter(Attr.attr_id==None).delete()
@@ -480,10 +494,16 @@ def remove_type_from_resource( type_id, resource_type, resource_id,**kwargs):
     """ 
         Remove a resource type trom a resource 
     """ 
+    node_id = resource_id if resource_type == 'NODE' else None
+    link_id = resource_id if resource_type == 'LINK' else None
+    group_id = resource_id if resource_type == 'GROUP' else None
+
     resourcetype = DBSession.query(ResourceType).filter(
                                         ResourceType.type_id==type_id,
                                         ResourceType.ref_key==resource_type,
-                                        ResourceType.ref_id == resource_id) 
+                                        ResourceType.node_id == node_id,
+    ResourceType.link_id == link_id,
+    ResourceType.group_id == group_id).one() 
     DBSession.delete(resourcetype) 
 
 def add_template(template,**kwargs):
@@ -548,53 +568,9 @@ def get_templates(**kwargs):
         Get all resource template templates.
     """
 
-    rs = DBSession.query(TypeAttr.attr_id, TypeAttr.type_id, Attr.attr_name).filter(
-                                        Attr.attr_id==TypeAttr.attr_id).all()
+    templates = DBSession.query(Template).options(joinedload_all('templatetypes.typeattrs')).all()
 
-    tattrs = {}
-    for r in rs:
-        tattr = {
-            'object_type' : 'TypeAttr',
-            'attr_id'     : r.attr_id,
-            'attr_name'   : r.attr_name,
-            'type_id'     : r.type_id,
-        }
-        tattr_list = tattrs.get(r.type_id, [])
-        tattr_list.append(tattr)
-        tattrs[r.type_id] = tattr_list
-
-    rs = DBSession.query(TemplateType).all()
-    types = {}
-    for r in rs:
-        tmpl_type = {
-            'object_type' : 'TemplateType',
-            'type_id'     : r.type_id,
-            'type_name'   : r.type_name,
-            'template_id' : r.template_id,
-            'resource_type' : r.resource_type,
-            'alias'       : r.alias,
-            'layout'      : r.layout,
-            'typeattrs'   : tattrs.get(r.type_id, [])
-        }
-        type_list = types.get(r.template_id, [])
-        type_list.append(tmpl_type)
-        types[r.template_id] = type_list
-
-    rs = DBSession.query(Template).all()
-    
-    template_ret_objs = []
-
-    for r in rs:
-        template = {
-            'object_type'   : 'Template',
-            'template_id'   : r.template_id,
-            'template_name' : r.template_name,
-            'layout'        : r.layout,
-            'templatetypes' : types.get(r.template_id, []),
-        }
-        template_ret_objs.append(template)
-
-    return template_ret_objs
+    return templates 
 
 def remove_attr_from_type(type_id, attr_id,**kwargs):
     """
@@ -702,6 +678,7 @@ def add_typeattr(typeattr,**kwargs):
     ta.attr_is_var = typeattr.is_var
     ta.default_dataset_id = typeattr.default_dataset_id
     DBSession.add(ta)
+    DBSession.flush()
 
     updated_template_type = DBSession.query(TemplateType).filter(TemplateType.type_id==ta.type_id).one()
 
@@ -734,7 +711,7 @@ def get_network_as_xml_template(network_id,**kwargs):
     layout = _get_layout_as_etree(net_i.network_layout)
 
     resources = etree.SubElement(template_xml, "resources")
-    if net_i.get_attributes():
+    if net_i.attributes:
         net_resource    = etree.SubElement(resources, "resource")
 
         resource_type   = etree.SubElement(net_resource, "type")
@@ -747,12 +724,12 @@ def get_network_as_xml_template(network_id,**kwargs):
             resource_layout = etree.SubElement(net_resource, "layout")
             resource_layout.text = net_i.network_layout
 
-        for net_attr in net_i.get_attributes():
+        for net_attr in net_i.attributes:
             _make_attr_element(net_resource, net_attr)
 
     existing_types = {'NODE': [], 'LINK': []}
     for node_i in net_i.nodes:
-        node_attributes = node_i.get_attributes()
+        node_attributes = node_i.attributes
         attr_ids = [attr.attr_id for attr in node_attributes]
         if attr_ids>0 and attr_ids not in existing_types['NODE']:
 
@@ -776,7 +753,7 @@ def get_network_as_xml_template(network_id,**kwargs):
             resources.append(node_resource)
 
     for link_i in net_i.links:
-        link_attributes = link_i.get_attributes()
+        link_attributes = link_i.attributes
         attr_ids = [attr.attr_id for attr in link_attributes]
         if attr_ids>0 and attr_ids not in existing_types['LINK']:
             link_resource    = etree.Element("resource")
@@ -807,7 +784,7 @@ def _make_attr_element(parent, resource_attr_i):
         General function to add an attribute element to a resource element.
     """
     attr = etree.SubElement(parent, "attribute")
-    attr_i = resource_attr_i.get_attr()
+    attr_i = resource_attr_i.attr
 
     attr_name      = etree.SubElement(attr, 'name')
     attr_name.text = attr_i.attr_name

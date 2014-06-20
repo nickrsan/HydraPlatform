@@ -63,8 +63,6 @@ TODO
 
 - Implement updating of existing scenario.
 
-- Implement rules and constraints
-
 API docs
 ~~~~~~~~
 """
@@ -135,7 +133,6 @@ class ExportCSV(object):
                 if int(scenario.id) == int(scenario_id):
                     log.info("Exporting Scenario %s"%(scenario.name))
                     csv.export_network(network, scenario)
-                    csv.export_constraints(scenario)
                     break
             else:
                 raise Exception("No scenario with ID %s found"%(args.scenario))
@@ -144,7 +141,6 @@ class ExportCSV(object):
             for scenario in network.scenarios.Scenario:
                 log.info("Exporting Scenario %s"%(scenario.name))
                 csv.export_network(network, scenario)
-                csv.export_constraints(scenario)
 
     def export_network(self, network, scenario):
         log.info("\n************NETWORK****************")
@@ -445,34 +441,6 @@ class ExportCSV(object):
         group_member_file.write(group_member_heading)
         group_member_file.writelines(group_member_entries)
 
-
-    def export_constraints(self, scenario):
-        """
-            Export the constraints in a scenario to 'constraints.csv'
-            Each constraint looks like a mathematical equation, with some stuff
-            on the left, an operation in the middle and a constant on the right.
-            The 'stuff' on the left looks something like:
-
-            (TYPE[NAME][ATTRIBUTE] op TYPE[NAME][ATTRIBUTE]...) for example:
-
-            The following equation states that the sum of the flow of
-            nodes a and B must be equal to that of node c.
-
-            ((NODE[Node A][Flow] + NODE[Node B][Flow]) - NODE[Node C][Flow]) == 0.0
-
-        """
-        log.info("\n************CONSTRAINTS****************")
-
-        if scenario.constraints is not None:
-            constraint_file = open(os.path.join(scenario.target_dir, "constraints.csv"), 'w')
-            for constraint in scenario.constraints.Constraint:
-                constraint_line = "%s %s %s\n" % (
-                    constraint.value, constraint.op, constraint.constant)
-
-                constraint_file.write(constraint_line)
-
-            constraint_file.close()
-            log.info("Constraints written to file: %s", constraint_file.name)
 
     def get_resource_attributes(self, resources):
         #get every attribute across every resource

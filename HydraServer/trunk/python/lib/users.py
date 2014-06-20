@@ -15,7 +15,7 @@
 #
 from sqlalchemy.exc import InvalidRequestError
 
-from db.HydraAlchemy import User, Role, Perm, RoleUser, RolePerm
+from db.model import User, Role, Perm, RoleUser, RolePerm
 from db import DBSession
 
 import bcrypt

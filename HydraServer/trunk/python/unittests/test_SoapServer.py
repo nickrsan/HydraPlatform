@@ -47,8 +47,18 @@ class FixNamespace(MessagePlugin):
 def connect():
     port = config.getint('hydra_server', 'port')
     domain = config.get('hydra_server', 'domain')
-    url = 'http://%s:%s?wsdl' % (domain, port)
+    path = config.get('hydra_server', 'path')
+    if path:
+        if path[0] == '/':
+            path = path[1:]
+        url = 'http://%s:%s/%s?wsdl' % (domain, port, path)
+    else:
+        url = 'http://%s:%s?wsdl' % (domain, port)
+
     client = Client(url, plugins=[FixNamespace()])
+
+    cache = client.options.cache
+    cache.setduration(days=10)
 
     client.add_prefix('hyd', 'soap_server.hydra_complexmodels')
     global CLIENT
@@ -62,7 +72,7 @@ class SoapServerTest(unittest.TestCase):
         logging.getLogger('suds.client').setLevel(logging.CRITICAL)
         logging.getLogger('suds.metrics').setLevel(logging.CRITICAL)
         # Clear SUDS cache:
-        shutil.rmtree(os.path.join(tmp(), 'suds'), True)
+        #shutil.rmtree(os.path.join(tmp(), 'suds'), True)
         global CLIENT
         if CLIENT is None:
             connect()
@@ -208,12 +218,12 @@ class SoapServerTest(unittest.TestCase):
         network = self.client.service.add_network(network)
         return network
 
-    def create_link(self, node_1_name, node_2_name, node_1_id, node_2_id):
+    def create_link(self, link_id, node_1_name, node_2_name, node_1_id, node_2_id):
 
         ra_array = self.client.factory.create('hyd:ResourceAttrArray')
 
         link = {
-            'id'          : None,
+            'id'          : link_id,
             'name'        : "%s_to_%s"%(node_1_name, node_2_name),
             'description' : 'A test link between two nodes.',
             'layout'      : None,
@@ -354,6 +364,7 @@ class SoapServerTest(unittest.TestCase):
             if prev_node is not None:
                 #Connect the two nodes with a link
                 link = self.create_link(
+                    n*-1,
                     node['name'],
                     prev_node['name'],
                     node['id'],
@@ -508,7 +519,11 @@ class SoapServerTest(unittest.TestCase):
     def check_network(self, request_net, response_net):
 
         assert repr(response_net.layout) == repr(request_net['layout'])
-
+    
+        for n in response_net.nodes.Node:
+            assert n.x is not None
+            assert n.y is not None
+            assert len(n.attributes.ResourceAttr) > 0
 
         before_times = [] 
 

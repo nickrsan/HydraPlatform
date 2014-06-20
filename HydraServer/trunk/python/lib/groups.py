@@ -17,7 +17,7 @@ from HydraLib.HydraException import HydraError, ResourceNotFoundError
 import scenario
 
 from db import DBSession
-from db.HydraAlchemy import ResourceGroup, ResourceGroupItem, Node, Link
+from db.model import ResourceGroup, ResourceGroupItem, Node, Link
 from sqlalchemy.orm.exc import NoResultFound
 
 import logging

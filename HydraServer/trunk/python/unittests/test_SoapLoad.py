@@ -33,9 +33,9 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         log.debug(time)
         assert time < 50
 
-    def test_get_network(self):
-        n = self.client.service.get_network(1000)
-        log.info(n)
+    #def test_get_network(self):
+    #    n = self.client.service.get_network(1000)
+    #    log.info(n)
 
 if __name__ == '__main__':
   #  pr = cProfile.Profile()

@@ -22,67 +22,18 @@ import time
 
 from util.permissions import check_perm
 import template
-from db.HydraAlchemy import Project, Network, Scenario, Node, Link, ResourceGroup, ResourceAttr, ResourceType, ResourceGroupItem, Dataset, TimeSeriesData, Metadata, DatasetOwner, ResourceScenario
+from db.model import Project, Network, Scenario, Node, Link, ResourceGroup,\
+        ResourceAttr, ResourceType, ResourceGroupItem, Dataset, DatasetOwner,\
+        ResourceScenario, TemplateType
 from sqlalchemy.orm import noload, joinedload, joinedload_all
 from db import DBSession
-from sqlalchemy import func, or_, and_
+from sqlalchemy import func, and_
 from sqlalchemy.orm.exc import NoResultFound
 from HydraLib.util import timestamp_to_ordinal
+from db.util import add_attributes, add_resource_types
 
 log = logging.getLogger(__name__)
 
-def _add_attributes(resource_i, attributes):
-    if attributes is None:
-        return {}
-    resource_attrs = {}
-    #ra is for ResourceAttr
-    for ra in attributes:
-
-        if ra.id < 0:
-            ra_i = resource_i.add_attribute(ra.attr_id, ra.attr_is_var)
-        else:
-            ra_i = DBSession.query(ResourceAttr).filter(ResourceAttr.resource_attr_id==ra.id).one()
-            ra_i.attr_is_var = ra.attr_is_var
-
-        resource_attrs[ra.id] = ra_i
-
-    return resource_attrs
-
-def _add_resource_types(resource_i, types):
-    """
-    Save a reference to the types used for this resource.
-
-    @returns a list of type_ids representing the type ids
-    on the resource.
-
-    """
-    if types is None:
-        return []
-
-    existing_type_ids = []
-    if resource_i.types:
-        for t in resource_i.types:
-            existing_type_ids.append(t.type_id)
-
-    new_type_ids = []
-    for templatetype in types:
-
-        if templatetype.id in existing_type_ids:
-            continue
-
-        rt_i = ResourceType()
-        rt_i.type_id     = templatetype.id
-        rt_i.ref_key     = resource_i.ref_key
-        if resource_i.ref_key == 'NODE':
-            rt_i.node_id      = resource_i.node_id
-        elif resource_i.ref_key == 'LINK':
-            rt_i.link_id      = resource_i.link_id
-        elif resource_i.ref_key == 'GROUP':
-            rt_i.group_id     = resource_i.group_id
-        resource_i.types.append(rt_i)
-        new_type_ids.append(templatetype.id)
-
-    return new_type_ids
 
 def _update_attributes(resource_i, attributes):
     if attributes is None:
@@ -127,13 +78,130 @@ def _get_all_attributes(network):
 
     return attrs
 
+def _bulk_add_resource_attrs(network_id, ref_key, resources, resource_name_map):
+    start_time = datetime.datetime.now()
+
+    #List of resource attributes
+    resource_attrs = {}
+
+    #First get all the attributes assigned from the csv files.
+    t0 = time.time()
+    for resource in resources:
+        resource_i = resource_name_map[resource.name]
+        resource_attrs[resource.id] = []
+        for ra in resource.attributes:
+            resource_attrs[resource.id].append({
+                'ref_key'     : ref_key,
+                'node_id'     : resource_i.node_id    if ref_key=='NODE' else None,
+                'link_id'     : resource_i.link_id    if ref_key=='LINK' else None,
+                'group_id'    : resource_i.group_id   if ref_key=='GROUP' else None,
+                'network_id'  : resource_i.network_id if ref_key=='NETWORK' else None,
+                'attr_id'     : ra.attr_id,
+                'attr_is_var' : ra.attr_is_var,
+            })
+
+    #Now get all the attributes supposed to be on the resources based on the types.
+    t0 = time.time()
+    all_types = DBSession.query(TemplateType).options(joinedload('typeattrs')).all()
+    type_dict = {}
+    for t in all_types:
+        type_dict[t.type_id] = t.typeattrs
+    #Holds all the attributes supposed to be on a resource based on its specified
+    #type
+    resource_resource_types = []
+    for resource in resources:
+        resource_i = resource_name_map[resource.name]
+        existing_attrs = [ra['attr_id'] for ra in resource_attrs[resource.id]]
+        for resource_type in resource.types:
+            #Go through all the resource types and add the appropriate resource
+            #type entries
+            resource_resource_types.append(
+                {
+                    'ref_key'     : ref_key,
+                    'node_id'     : resource_i.node_id    if ref_key=='NODE' else None,
+                    'link_id'     : resource_i.link_id    if ref_key=='LINK' else None,
+                    'group_id'    : resource_i.group_id   if ref_key=='GROUP' else None,
+                    'network_id'  : resource_i.network_id if ref_key=='NETWORK' else None,
+                    'type_id'     : resource_type.id,
+                }
+            )
+            #Go through all types in the resource and add attributes from these types
+            #which have not already been added.
+            typeattrs = type_dict[resource_type.id]
+            for ta in typeattrs:
+                if ta.attr_id not in existing_attrs:
+                    resource_attrs[resource.id].append({
+                        'ref_key'     : ref_key,
+                        'node_id'     : resource_i.node_id    if ref_key=='NODE' else None,
+                        'link_id'     : resource_i.link_id    if ref_key=='LINK' else None,
+                        'group_id'    : resource_i.group_id   if ref_key=='GROUP' else None,
+                        'network_id'  : resource_i.network_id if ref_key=='NETWORK' else None,
+                        'attr_id' : ta.attr_id,
+                        'attr_is_var' : ta.attr_is_var,
+                    })
+
+    if len(resource_resource_types) > 0:
+        DBSession.execute(ResourceType.__table__.insert(), resource_resource_types)
+    logging.info("%s ResourceTypes inserted in %s secs", len(resource_resource_types), str(time.time() - t0))
+
+    logging.info("Resource attributes from types added in %s"%(datetime.datetime.now() - start_time))
+
+    if len(resource_attrs) > 0:
+        all_resource_attrs = []
+        for na in resource_attrs.values():
+            all_resource_attrs.extend(na)
+        if len(all_resource_attrs) > 0:
+            DBSession.execute(ResourceAttr.__table__.insert(), all_resource_attrs)
+            logging.info("ResourceAttr insert took %s secs"% str(time.time() - t0))
+        else:
+            logging.warn("No attributes on any resource....")
+
+    logging.info("Resource attributes insertion from types done in %s"%(datetime.datetime.now() - start_time))
+
+    #Now that the attributes are in, we need to map the attributes in the DB
+    #to the attributes in the incoming data so that the resource scenarios
+    #know what to refer to.
+    res_qry = DBSession.query(ResourceAttr)
+    if ref_key == 'NODE':
+        res_qry = res_qry.join(Node).filter(Node.network_id==network_id)
+    elif ref_key == 'GROUP':
+        res_qry = res_qry.join(ResourceGroup).filter(ResourceGroup.network_id==network_id)
+    elif ref_key == 'LINK':
+        res_qry.join(Link).filter(Link.network_id==network_id)
+
+    real_resource_attrs = res_qry.all()
+    resource_attr_dict = {}
+    for resource_attr in real_resource_attrs:
+        if ref_key == 'NODE':
+            ref_id = resource_attr.node_id
+        elif ref_key == 'GROUP':
+            ref_id = resource_attr.group_id
+        elif ref_key == 'LINK':
+            ref_id = resource_attr.link_id
+        resource_attr_dict[(ref_id, resource_attr.attr_id)] = resource_attr
+    
+
+    resource_attrs = {}
+    for resource in resources:
+        iface_resource = resource_name_map[resource.name]
+        if ref_key == 'NODE':
+            ref_id = iface_resource.node_id
+        elif ref_key == 'GROUP':
+            ref_id = iface_resource.group_id
+        elif ref_key == 'LINK':
+            ref_id = iface_resource.link_id
+        for ra in resource.attributes:
+            resource_attrs[ra.id] = resource_attr_dict[(ref_id, ra.attr_id)]
+    logging.info("Resource attributes added in %s"%(datetime.datetime.now() - start_time))
+    return resource_attrs
+
 def _add_nodes(net_i, nodes):
 
     #check_perm(user_id, 'edit_topology')
 
     start_time = datetime.datetime.now()
 
-    #List of HydraIface resource attributes
+    #List of resource attributes
     node_attrs = {}
 
     #Maps temporary node_ids to real node_ids
@@ -150,50 +218,23 @@ def _add_nodes(net_i, nodes):
                     'node_name' : node.name,
                      'node_description': node.description,
                      'node_layout'     : node.layout,
-                     'node.node_x'     : node.x,
-                     'node.node_y'     : node.y,
+                     'node_x'     : node.x,
+                     'node_y'     : node.y,
                     }
         node_list.append(node_dict)
     t0 = time.time()
-    DBSession.execute(Node.__table__.insert(), node_list)
+    if len(node_list):
+        DBSession.execute(Node.__table__.insert(), node_list)
     logging.info("Node insert took %s secs"% str(time.time() - t0))
-    
-
+   
     iface_nodes = dict()
     for n_i in net_i.nodes:
         iface_nodes[n_i.node_name] = n_i
 
-    node_attr_dicts = []
     for node in nodes:
-        if node.id not in node_id_map:
-            node_i = iface_nodes[node.name]
-            for ra in node.attributes:
-                ra_dict = {
-                    'ref_key' : 'NODE',
-                    'node_id' : node_i.node_id,
-                    'attr_id' : ra.attr_id,
-                    'attr_is_var' : ra.attr_is_var,
-                }
-                node_attr_dicts.append(ra_dict)
-            _add_resource_types(node_i, node.types)
-            node_id_map[node.id] = node_i
+        node_id_map[node.id] = iface_nodes[node.name]
 
-    t0 = time.time()
-    DBSession.execute(ResourceAttr.__table__.insert(), node_attr_dicts)
-    logging.info("ResourceAttr insert took %s secs"% str(time.time() - t0))
-
-    #Now that the attributes are in, we need to map the attributes in the DB
-    #to the attributes in the incoming data so that the resource scenarios
-    #know what to refer to.
-    all_node_attrs = DBSession.query(ResourceAttr).filter(ResourceAttr.node_id==Node.node_id, Node.network_id==net_i.network_id).all()
-    node_attr_dict = {}
-    for node_attr in all_node_attrs:
-        node_attr_dict[(node_attr.node_id, node_attr.attr_id)] = node_attr
- 
-    for node in nodes:
-        for ra in node.attributes:
-            node_id = iface_nodes[node.name].node_id
-            node_attrs[ra.id] = node_attr_dict[(node_id, ra.attr_id)]
+    node_attrs = _bulk_add_resource_attrs(net_i.network_id, 'NODE', nodes, iface_nodes)
 
     log.info("Nodes added in %s", get_timing(start_time))
 
@@ -205,7 +246,7 @@ def _add_links(net_i, links, node_id_map):
 
     start_time = datetime.datetime.now()
 
-    #List of HydraIface resource attributes
+    #List of resource attributes
     link_attrs = {}
     #Map negative IDS to their new, positive, counterparts.
     link_id_map = dict()
@@ -217,11 +258,8 @@ def _add_links(net_i, links, node_id_map):
     log.info("Adding links to network")
     link_dicts = []
     for link in links:
-        if link.node_1_id in node_id_map:
-            node_1 = node_id_map[link.node_1_id]
-
-        if link.node_2_id in node_id_map:
-            node_2 = node_id_map[link.node_2_id]
+        node_1 = node_id_map.get(link.node_1_id)
+        node_2 = node_id_map.get(link.node_2_id)
 
         if node_1 is None or node_2 is None:
             raise HydraError("Node IDS (%s, %s)are incorrect!"%(node_1, node_2))
@@ -233,49 +271,22 @@ def _add_links(net_i, links, node_id_map):
                            'node_1_id' : node_1.node_id,
                            'node_2_id' : node_2.node_id
                           })
-    DBSession.execute(Link.__table__.insert(), link_dicts)
+    if len(link_dicts) > 0:
+        DBSession.execute(Link.__table__.insert(), link_dicts)
+    log.info("Links added in %s", get_timing(start_time))
     iface_links = {}
 
     for l_i in net_i.links:
         iface_links[l_i.link_name] = l_i
 
-    link_attr_dicts = []
-    for link in links:
-        iface_link = iface_links[link.name]
-        _add_resource_types(iface_link, link.types)
-        for ra in link.attributes:
-            ra_dict = {
-                'ref_key' : 'LINK',
-                'link_id' : iface_link.link_id,
-                'attr_id' : ra.attr_id,
-                'attr_is_var' : ra.attr_is_var,
-            }
-            link_attr_dicts.append(ra_dict)
-
-        link_id_map[link.id] = iface_link
-
-    DBSession.execute(ResourceAttr.__table__.insert(), link_attr_dicts)
-
-    #Now that the attributes are in, we need to map the attributes in the DB
-    #to the attributes in the incoming data so that the resource scenarios
-    #know what to refer to.
-    all_link_attrs = DBSession.query(ResourceAttr).filter(ResourceAttr.link_id==Link.link_id, Link.network_id==net_i.network_id).all()
-    link_attr_dict = {}
-    for link_attr in all_link_attrs:
-        link_attr_dict[(link_attr.link_id, link_attr.attr_id)] = link_attr
- 
-    for link in links:
-        for ra in link.attributes:
-            link_id = iface_links[link.name].link_id
-            link_attrs[ra.id] = link_attr_dict[(link_id, ra.attr_id)]
-
+    link_attrs = _bulk_add_resource_attrs(net_i.network_id, 'LINK', links, iface_links)
     log.info("Links added in %s", get_timing(start_time))
 
     return link_id_map, link_attrs
 
 def _add_resource_groups(net_i, resourcegroups):
     start_time = datetime.datetime.now()
-    #List of HydraIface resource attributes
+    #List of resource attributes
     group_attrs = {}
     #Map negative IDS to their new, positive, counterparts.
     group_id_map = dict()
@@ -284,23 +295,40 @@ def _add_resource_groups(net_i, resourcegroups):
         return group_id_map, group_attrs
     #Then add all the groups.
     log.info("Adding groups to network")
+    group_dicts = []
     if resourcegroups:
         for group in resourcegroups:
-            net_i.add_group(group.name,
-                        group.description,
-                        group.status)
+
+            group_dicts.append({'network_id' : net_i.network_id,
+                           'group_name' : group.name,
+                           'group_description' : group.description,
+                          })
+
+    if len(group_dicts) > 0:
+        DBSession.execute(ResourceGroup.__table__.insert(), group_dicts)
+        log.info("Resource Groups added in %s", get_timing(start_time))
 
         iface_groups = {}
         for g_i in net_i.resourcegroups:
             iface_groups[g_i.group_name] = g_i
-
+ 
         for group in resourcegroups:
-            grp_i = iface_groups[group.name]
-            group_attrs.update(_add_attributes(grp_i, group.attributes))
-            _add_resource_types(grp_i, group.types)
-            group_id_map[group.id] = grp_i
+            if group.id not in group_id_map:
+                group_i = iface_groups[group.name]
+                group_attrs[group.id] = []
+                for ra in group.attributes:
+                    group_attrs[group.id].append({
+                        'ref_key' : 'GROUP',
+                        'group_id' : group_i.group_id,
+                        'attr_id' : ra.attr_id,
+                        'attr_is_var' : ra.attr_is_var,
+                    })
+                group_id_map[group.id] = group_i
+            group_id_map[group.id] = group_i
 
-        log.info("Groups added in %s", get_timing(start_time))
+
+        group_attrs = _bulk_add_resource_attrs(net_i.network_id, 'GROUP', resourcegroups, iface_groups)
+    log.info("Groups added in %s", get_timing(start_time))
 
     return group_id_map, group_attrs
 
@@ -349,16 +377,15 @@ def add_network(network,**kwargs):
     #These two lists are used for comparison and lookup, so when
     #new attributes are added, these lists are extended.
 
-    #List of all the HydraIface resource attributes
+    #List of all the resource attributes
     all_resource_attrs = {}
 
-    network_attrs  = _add_attributes(net_i, network.attributes)
-    _add_resource_types(net_i, network.types)
+    network_attrs  = add_attributes(net_i, network.attributes)
+    add_resource_types(net_i, network.types)
 
     all_resource_attrs.update(network_attrs)
 
     log.info("Network attributes added in %s", get_timing(start_time))
-
     node_id_map, node_attrs = _add_nodes(net_i, network.nodes)
     all_resource_attrs.update(node_attrs)
 
@@ -376,8 +403,8 @@ def add_network(network,**kwargs):
             scen = Scenario()
             scen.scenario_name        = s.name
             scen.scenario_description = s.description
-            scen.start_time           = timestamp_to_ordinal(s.start_time)
-            scen.end_time             = timestamp_to_ordinal(s.end_time)
+            scen.start_time           = str(timestamp_to_ordinal(s.start_time)) if s.start_time else None
+            scen.end_time             = str(timestamp_to_ordinal(s.end_time)) if s.end_time else None
             scen.time_step            = s.time_step
 
             #extract the data from each resourcescenario
@@ -430,20 +457,29 @@ def get_network(network_id, include_data='N', scenario_ids=None,**kwargs):
     log.debug("getting network %s"%network_id)
     user_id = kwargs.get('user_id')
     try:
-        qry = DBSession.query(Network).filter(Network.network_id == network_id).\
-        options(noload('scenarios')).\
-        options(joinedload_all('nodes.attributes')).options(joinedload_all('nodes.types.templatetype.template')).\
-        options(joinedload_all('links.attributes')).options(joinedload_all('links.types.templatetype.template')).\
-        options(joinedload_all('resourcegroups.attributes')).options(joinedload_all('resourcegroups.types.templatetype.template')).\
-        options(joinedload('attributes')).options(joinedload_all('types.templatetype.template'))
-        net_i = qry.one()
+        log.debug("Querying Network")
+        net_i = DBSession.query(Network).filter(Network.network_id == network_id).\
+        options(noload('scenarios')).options(noload('nodes')).options(noload('links')).options(joinedload_all('types.templatetype.template')).one()
+        net_i.attributes
+        log.debug("Nodes...") 
+        net_i.nodes = DBSession.query(Node).filter(Node.network_id==network_id).options(joinedload_all('attributes')).options(joinedload_all('types.templatetype.template')).all()
+        log.debug("Links...") 
+        net_i.links = DBSession.query(Link).filter(Link.network_id==network_id).options(joinedload_all('attributes')).options(joinedload_all('types.templatetype.template')).all()
+        log.debug("Groups...") 
+        net_i.resourcegroups = DBSession.query(ResourceGroup).filter(ResourceGroup.network_id==network_id).options(joinedload_all('attributes')).options(joinedload_all('types.templatetype.template')).all()
+        log.debug("Network Retrieved")
          
         scen_qry = DBSession.query(Scenario).filter(Scenario.network_id == net_i.network_id).options(joinedload(Scenario.resourcescenarios)).options(noload('resourcescenarios.dataset')).options(joinedload('resourcegroupitems'))
         if scenario_ids:
             logging.info("Filtering by scenario_ids %s",scenario_ids)
-            scen_qry = scen_qry.join(Network.scenarios).filter(Scenario.scenario_id.in_(scenario_ids)).options(noload('resourcescenarios').noload('dataset'))
+            scen_qry = scen_qry.join(Network.scenarios).filter(Scenario.scenario_id.in_(scenario_ids))
+        if include_data == 'N':
+            scen_qry = scen_qry.options(noload('resourcescenarios').noload('dataset'))
 
+
+        log.debug("Querying Scenarios")
         scens = scen_qry.all()
+        log.debug("Scenarios Retrieved")
         net_i.scenarios = scens
     except NoResultFound:
         raise ResourceNotFoundError("Network (network_id=%s) not found." %
@@ -453,49 +489,59 @@ def get_network(network_id, include_data='N', scenario_ids=None,**kwargs):
     
     scenario_ids = [s.scenario_id for s in net_i.scenarios]
 
-#    datasets = DBSession.query(Dataset.dataset_id,
-#            Dataset.data_type,
-#            Dataset.data_units,
-#            Dataset.data_dimen,
-#            Dataset.data_name,
-#            Dataset.locked,
-#            DatasetOwner.user_id,
-#            null().label('timeseriesdata'),
-#            null().label('metadata'),
-#            case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
-#                    else_=Dataset.start_time).label('start_time'),
-#            case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
-#                    else_=Dataset.frequency).label('frequency'),
-#            case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
-#                    else_=Dataset.value).label('value')).join(ResourceScenario, ResourceScenario.dataset_id==Dataset.dataset_id).outerjoin(DatasetOwner, 
-#                                and_(DatasetOwner.dataset_id==Dataset.dataset_id, 
-#                                DatasetOwner.user_id==user_id)).filter(ResourceScenario.scenario_id.in_(scenario_ids)).all()
-#
-    datasets = DBSession.query(Dataset).join(ResourceScenario, ResourceScenario.dataset_id==Dataset.dataset_id).outerjoin(DatasetOwner, 
+    if include_data == 'N':
+        return net_i
+    log.debug("Getting datasets")
+    if len(scenario_ids) > 0:
+        datasets = DBSession.query(Dataset).join(ResourceScenario, ResourceScenario.dataset_id==Dataset.dataset_id).outerjoin(DatasetOwner, 
                                 and_(DatasetOwner.dataset_id==Dataset.dataset_id, 
-                                DatasetOwner.user_id==user_id)).filter(ResourceScenario.scenario_id.in_(scenario_ids)).all()
-
+                                DatasetOwner.user_id==user_id)).filter(ResourceScenario.scenario_id.in_(scenario_ids)).options(noload('timeseriesdata')).options(noload('metadata')).options(joinedload('owners')).all()
+    else:
+        datasets = []
+    
+    
+    log.debug("Dataset query done")
     dataset_dict = {}
     for dataset in datasets:
+        DBSession.expunge(dataset)
+        dataset_dict[dataset.dataset_id] = dataset
+    log.debug("Getting Metadata")
+    metadata = data._get_metadata(dataset_dict.keys())
+    metadata_dict = {}
+    for m in metadata:
+        if metadata_dict.get(m.dataset_id):
+            metadata_dict[m.dataset_id].append(m)
+        else:
+            metadata_dict[m.dataset_id] = [m]
+    log.debug("Metadata Retrieved")
+
+    log.debug("Getting Timeseries")
+    timeseries = data._get_timeseriesdata(dataset_dict.keys())
+    ts_dict = {}
+    for ts in timeseries:
+        if ts_dict.get(ts.dataset_id):
+            ts_dict[ts.dataset_id].append(ts)
+        else:
+            ts_dict[ts.dataset_id] = [ts]
+    log.debug("Timeseries Retrieved")
+   
+    for dataset_id, dataset in dataset_dict.items():
         if dataset.locked == 'N' or (dataset.locked == 'Y' and dataset.check_user(user_id)):
-            tsdata = DBSession.query(TimeSeriesData).filter(TimeSeriesData.dataset_id==dataset.dataset_id).all()
-            metadata = DBSession.query(Metadata).filter(Metadata.dataset_id==dataset.dataset_id).all()
-            dataset.timeseriesdata = tsdata
-            dataset.metadata = metadata
+            dataset.timeseriesdata = ts_dict.get(dataset.dataset_id, [])
+            dataset.metadata = metadata_dict.get(dataset.dataset_id, [])
         else:
             dataset.value = None
             dataset.start_time = None
             dataset.frequency = None
             dataset.timeseriesdata = []
             dataset.metadata = []
-        dataset_dict[dataset.dataset_id] = dataset
 
+    log.debug("Datasets Retrieved")
     for s in net_i.scenarios:
         for rs in s.resourcescenarios:
             rs.dataset = dataset_dict[rs.dataset_id]
     DBSession.expunge_all()
     return net_i
-
 
 def get_node(node_id,**kwargs): 
     try:
@@ -565,7 +611,7 @@ def update_network(network,**kwargs):
 
     all_resource_attrs = {} 
     all_resource_attrs.update(_update_attributes(net_i, network.attributes))
-    _add_resource_types(net_i, network.types)
+    add_resource_types(net_i, network.types)
 
     #Maps temporary node_ids to real node_ids
     node_id_map = dict()
@@ -590,7 +636,7 @@ def update_network(network,**kwargs):
                                node.y)
             net_i.nodes.append(n)
         all_resource_attrs.update(_update_attributes(n, node.attributes))
-        _add_resource_types(n, node.types)
+        add_resource_types(n, node.types)
 
         node_id_map[node.id] = n
 
@@ -616,7 +662,7 @@ def update_network(network,**kwargs):
             l.node_b          = node_2
 
         all_resource_attrs.update(_update_attributes(l, link.attributes))
-        _add_resource_types(l, link.types)
+        add_resource_types(l, link.types)
         link_id_map[link.id] = l
 
     group_id_map = dict()
@@ -638,7 +684,7 @@ def update_network(network,**kwargs):
             net_i.resourcegroups.append(net_i)
 
         all_resource_attrs.update(_update_attributes(g_i, group.attributes))
-        _add_resource_types(g_i, group.types)
+        add_resource_types(g_i, group.types)
 
         group_id_map[group.id] = g_i
     errors = []
@@ -659,8 +705,8 @@ def update_network(network,**kwargs):
 
             scen.scenario_name        = s.name
             scen.scenario_description = s.description
-            scen.start_time           = timestamp_to_ordinal(s.start_time)
-            scen.end_time             = timestamp_to_ordinal(s.end_time)
+            scen.start_time           = str(timestamp_to_ordinal(s.start_time)) if s.start_time else None
+            scen.end_time             = str(timestamp_to_ordinal(s.end_time)) if s.end_time else None
             scen.time_step            = s.time_step
             scen.network_id           = net_i.network_id
 
@@ -754,13 +800,24 @@ def add_node(network_id, node,**kwargs):
 
     new_node = net_i.add_node(node.name, node.description, node.layout, node.x, node.y)
 
-    _add_attributes(new_node, node.attributes)
-    for typesummary in node.types:
-        template.set_resource_type(new_node,
-                                        typesummary.id,
-                                         **kwargs)
+    add_attributes(new_node, node.attributes)
+
     DBSession.flush()
 
+    res_types = []
+    res_attrs = []
+    for typesummary in node.types:
+        ra, rt = template.set_resource_type(new_node,
+                                        typesummary.id,
+                                         **kwargs)
+        res_types.append(rt)
+        res_attrs.extend(ra)
+
+    DBSession.execute(ResourceType.__table__.insert(), res_types)
+    DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
+
+    DBSession.refresh(new_node)
+    
     return new_node
 
 def update_node(node,**kwargs):
@@ -785,7 +842,7 @@ def update_node(node,**kwargs):
 
     _update_attributes(node_i, node.attributes)
 
-    _add_resource_types(node_i, node.types)
+    add_resource_types(node_i, node.types)
     DBSession.flush()
 
     return node_i
@@ -859,12 +916,24 @@ def add_link(network_id, link,**kwargs):
     
     link_i = net_i.add_link(link.name, link.description, link.layout, node_1, node_2)
 
-    _add_attributes(link_i, link.attributes)
+    add_attributes(link_i, link.attributes)
 
-    for resource_type in link.types:
-        template.set_resource_type(link_i,
-                                   resource_type.id,
-                                   **kwargs)
+    DBSession.flush()
+
+    res_types = []
+    res_attrs = []
+    for typesummary in link.types:
+        ra, rt = template.set_resource_type(link_i,
+                                        typesummary.id,
+                                         **kwargs)
+        res_types.append(rt)
+        res_attrs.extend(ra)
+
+    DBSession.execute(ResourceType.__table__.insert(), res_types)
+    DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
+
+    DBSession.refresh(link_i)
+
     return link_i
 
 def update_link(link,**kwargs):
@@ -884,8 +953,8 @@ def update_link(link,**kwargs):
     link_i.node_2_id = link.node_2_id
     link_i.link_description = link.description
 
-    _add_attributes(link_i, link.attributes)
-    _add_resource_types(link_i, link.types)
+    add_attributes(link_i, link.attributes)
+    add_resource_types(link_i, link.types)
     DBSession.flush()
     return link_i
 
@@ -936,8 +1005,8 @@ def add_group(network_id, group,**kwargs):
 
     res_grp_i = net_i.add_group(group.name, group.description, group.status)
 
-    _add_attributes(res_grp_i, group.attributes)
-    _add_resource_types(res_grp_i, group.types)
+    add_attributes(res_grp_i, group.attributes)
+    add_resource_types(res_grp_i, group.types)
     
     DBSession.flush()
 

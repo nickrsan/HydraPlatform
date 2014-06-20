@@ -21,7 +21,7 @@ from spyne.model.primitive import Float
 from spyne.model.primitive import DateTime
 from spyne.model.primitive import AnyDict
 from spyne.model.primitive import Double
-from spyne.util.odict import odict
+from decimal import Decimal as Dec
 import sys
 from HydraLib.util import timestamp_to_ordinal, ordinal_to_timestamp
 import logging
@@ -36,50 +36,11 @@ log = logging.getLogger(__name__)
 def get_timestamp(ordinal):
     if ordinal is None:
         return None
+
+    if type(ordinal) in (str, unicode):
+        ordinal = Dec(ordinal)
     timestamp = str(ordinal_to_timestamp(ordinal))
     return timestamp
-
-def get_as_dict(obj, parent=None, **kwargs):
-    d = {}
-    name = obj.__table__.name[1:]
-    d['object_type'] = name
-    cols = [c.name for c in obj.__table__.columns]
-    rels = [x.key for x in obj.__mapper__.relationships]
-
-    for colname in cols:
-        val = getattr(obj, colname)
-        if colname == 'cr_date':
-            val = str(val)
-        else:
-            d[colname] = val
-
-    for relname in rels:
-        if parent and relname.lower() == parent.lower():
-            continue
-
-        val = getattr(obj, relname)
-        if hasattr(val, '__iter__'):
-            child_dicts = []
-            for child in val:
-                logging.info(child)
-                child_dicts.append(get_as_dict(child, name))
-            d[relname] = child_dicts
-        else:
-            d[relname] = get_as_dict(val, name) 
-    return d
-
-def get_as_complexmodel(ctx, obj, **kwargs):
-
-    kwargs['user_id'] = int(ctx.in_header.user_id)
-    if hasattr(obj, 'get_as_dict'):
-        obj_dict = obj.get_as_dict(**kwargs)
-    else:
-        obj_dict    = get_as_dict(obj, **kwargs)
-    object_type = obj_dict['object_type']
-
-    cm = getattr(current_module, object_type)(obj_dict)
-
-    return cm
 
 def create_dict(arr_data):
     arr_data = array(arr_data)
@@ -240,7 +201,7 @@ class Dataset(HydraComplexModel):
                     except:
                         ts_value = arr_data
 
-                ts.append((ordinal_ts_time, ts_value))
+                ts.append((ordinal_ts_time, str(ts_value)))
 
             return ts
         elif data_type == 'eqtimeseries':
@@ -253,7 +214,7 @@ class Dataset(HydraComplexModel):
             except:
                 val = self.parse_array(arr_data)
 
-            arr_data   = val
+            arr_data   = str(val)
 
             return (start_time, frequency, arr_data)
         elif data_type == 'scalar':
@@ -265,7 +226,7 @@ class Dataset(HydraComplexModel):
                 val = eval(arr_data)
             except:
                 val = self.parse_array(arr_data)
-            return val
+            return str(val)
 
 
     def parse_array(self, arr):
@@ -339,7 +300,7 @@ class TimeSeriesData(HydraComplexModel):
         if  val is None:
             return
 
-        self.ts_time  = [get_timestamp(val.ts_time)]
+        self.ts_time  = [get_timestamp(Dec(val.ts_time))]
         
         try:
             ts_val = eval(val.ts_value)
@@ -382,8 +343,8 @@ class EqTimeSeries(HydraComplexModel):
         if  val is None:
             return
 
-        self.start_time = [ordinal_to_timestamp(start_time)]
-        self.frequency  = [frequency]
+        self.start_time = [ordinal_to_timestamp(Dec(start_time))]
+        self.frequency  = [Dec(frequency)]
         self.arr_data   = [create_dict(eval(val))]
 
 class Scalar(HydraComplexModel):
@@ -582,10 +543,10 @@ class TypeSummary(HydraComplexModel):
         if parent is None:
             return
 
-        self.name          = parent.templatetype.type_name
+        self.name          = parent.type_name
         self.id            = parent.type_id
-        self.template_name = parent.templatetype.template.template_name
-        self.template_id   = parent.templatetype.template_id
+        self.template_name = parent.template.template_name
+        self.template_id   = parent.template_id
 
 class Resource(HydraComplexModel):
     pass
@@ -622,7 +583,7 @@ class Node(Resource):
                 self.layout = {}
             self.status = parent.status
             self.attributes = [ResourceAttr(a) for a in parent.attributes]
-            self.types = [TypeSummary(t) for t in parent.types]
+            self.types = [TypeSummary(t.templatetype) for t in parent.types]
 
 
 
@@ -659,7 +620,7 @@ class Link(Resource):
             self.status    = parent.status
 
             self.attributes = [ResourceAttr(a) for a in parent.attributes]
-            self.types = [TypeSummary(t) for t in parent.types]
+            self.types = [TypeSummary(t.templatetype) for t in parent.types]
 
 class ResourceScenario(Resource):
     _type_info = [
@@ -724,7 +685,7 @@ class ResourceGroup(HydraComplexModel):
             self.status      = parent.status
             self.network_id  = parent.network_id
             self.attributes  = [ResourceAttr(a) for a in parent.attributes]
-            self.types       = [TypeSummary(t) for t in self.types]
+            self.types       = [TypeSummary(t.templatetype) for t in self.types]
 
 class Scenario(Resource):
     _type_info = [
@@ -849,7 +810,7 @@ class Network(Resource):
         self.nodes       = [Node(n) for n in parent.nodes]
         self.links       = [Link(l) for l in parent.links]
         self.resourcegroups = [ResourceGroup(rg) for rg in parent.resourcegroups]
-        self.types          = [TypeSummary(t) for t in parent.types]
+        self.types          = [TypeSummary(t.templatetype) for t in parent.types]
 
 class NetworkSummary(ComplexModel):
     _type_info = [
@@ -912,7 +873,8 @@ class Project(Resource):
         ('status',      String(default='A', pattern="[AX]")),
         ('cr_date',     String(default=None)),
         ('created_by',  Integer(default=None)),
-        ('attributes',  SpyneArray(ResourceScenario, default=[])),
+        ('attributes',  SpyneArray(ResourceAttr, default=[])),
+        ('attribute_data', SpyneArray(ResourceScenario, default=[])),
     ]
 
     def __init__(self, parent=None):
@@ -927,7 +889,8 @@ class Project(Resource):
         self.status      = parent.status
         self.cr_date     = str(parent.cr_date)
         self.created_by  = parent.created_by
-        self.attributes  = [ResourceScenario(rs) for rs in parent.get_attributes()]
+        self.attributes  = [ResourceAttr(ra) for ra in parent.attributes]
+        self.attribute_data  = [ResourceScenario(rs) for rs in parent.attribute_data]
 
 class ProjectSummary(Resource):
     _type_info = [
@@ -988,12 +951,12 @@ class RoleUser(HydraComplexModel):
         ('user_id',  Integer),
     ]
     def __init__(self, parent=None):
-        super(Perm, self).__init__(parent)
+        super(RoleUser, self).__init__(parent)
 
         if parent is None:
             return
 
-        self.user_id = parent.user_id
+        self.user_id = parent.user.user_id
 
 class RolePerm(HydraComplexModel):
     _type_info = [

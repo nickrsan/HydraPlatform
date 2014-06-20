@@ -13,12 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from db import hdb
-
 import logging
 log = logging.getLogger(__name__)
 
-from db.HydraAlchemy import Attr, Node, Link, Network, Project, Scenario, TemplateType
+from db.model import Attr, Node, Link, Network, Project, Scenario, TemplateType
 from db import DBSession
 from sqlalchemy.orm.exc import NoResultFound
 from HydraLib.HydraException import ResourceNotFoundError
@@ -168,9 +166,8 @@ def delete_attribute(attr_id,**kwargs):
     """
     success = True
     x = DBSession.query(Attr).filter(Attr.attr_id == attr_id).one()
-    x.db.status = 'X'
-    x.save()
-    hdb.commit()
+    x.status = 'X'
+    DBSession.flush()
     return success
 
 
@@ -183,7 +180,6 @@ def add_resource_attribute(resource_type, resource_id, attr_id, is_var,**kwargs)
         to be filled in by the simulator.
     """
     resource_i = _get_resource(resource_type, resource_id)
-    resource_i.load()
 
     attr_is_var = 'Y' if is_var else 'N'
 
@@ -207,8 +203,8 @@ def add_node_attrs_from_type(type_id, resource_type, resource_id,**kwargs):
 
 
     for item in type_i.typeattrs:
-        if attrs.get(item.db.attr_id) is None:
-            resource_i.add_attribute(item.db.attr_id)
+        if attrs.get(item.attr_id) is None:
+            resource_i.add_attribute(item.attr_id)
 
     DBSession.flush()
 

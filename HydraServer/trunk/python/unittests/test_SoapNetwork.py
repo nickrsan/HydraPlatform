@@ -472,7 +472,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         network = self.client.service.add_network(network)
         
         result = self.client.service.validate_network_topology(network.id)
-        assert result == 'Orphan nodes are present.'
+        assert len(result.integer) == 1#This means orphan nodes are present
 
     def test_consistency_of_update(self):
         """
@@ -510,6 +510,8 @@ class NetworkTest(test_SoapServer.SoapServerTest):
                                         #logging.info("%s vs %s",rs0.value, rs1.value)
                                         assert str(rs0.value) == str(rs1.value)
             else:
+                if str(a) != str(b):
+                    logging.info("%s vs %s",str(a), str(b))
                 assert str(a) == str(b)
 
 if __name__ == '__main__':

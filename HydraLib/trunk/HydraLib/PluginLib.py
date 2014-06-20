@@ -403,7 +403,7 @@ def connect(**kwargs):
     # Parse keyword arguments
     url = kwargs.get('url')
     if url is None:
-        url = config.get('hydra_client', 'url')
+        url = config.get('hydra_server', 'url')
 
     retxml = kwargs.get('retxml', False)
 
@@ -416,6 +416,8 @@ def connect(**kwargs):
     passwd = config.get('hydra_client', 'password')
     logging.info("Connecting to : %s",url)
     cli = Client(url, timeout=3600, plugins=[FixNamespace()], retxml=retxml)
+    cache = cli.options.cache
+    cache.setduration(days=10)
     login_response = cli.service.login(user, passwd)
     user_id = login_response.user_id
     session_id = login_response.session_id

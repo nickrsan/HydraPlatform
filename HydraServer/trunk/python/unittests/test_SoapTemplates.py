@@ -445,9 +445,10 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         network.nodes = nodes
         network.links = links
 
-        network = self.client.service.add_network(network)
+        net_summary = self.client.service.add_network(network)
+        new_net = self.client.service.get_network(net_summary.id)
 
-        for node in network.nodes.Node:
+        for node in new_net.nodes.Node:
             assert node.types is not None and node.types.TypeSummary[0].name == "Test type 1"; "type was not added correctly!"
 
 

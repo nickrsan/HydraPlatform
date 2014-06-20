@@ -18,7 +18,7 @@ import sys
 from HydraLib.util import timestamp_to_ordinal, get_datetime
 from HydraLib import units
 import logging
-from db.HydraAlchemy import Dataset, Metadata, TimeSeriesData, DatasetOwner, DatasetGroup, DatasetGroupItem
+from db.model import Dataset, Metadata, TimeSeriesData, DatasetOwner, DatasetGroup, DatasetGroupItem
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import case
 from sqlalchemy import null
@@ -31,6 +31,8 @@ from sqlalchemy import and_
 from decimal import Decimal
 global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+global qry_in_threshold
+qry_in_threshold = 500
 #"2013-08-13T15:55:43.468886Z"
 
 current_module = sys.modules[__name__]
@@ -83,7 +85,7 @@ def get_dataset(dataset_id,**kwargs):
                                     DatasetOwner.user_id==user_id)).one()
 
         if dataset.data_type == 'timeseries' and (dataset.locked == 'N' or (Dataset.locked == 'Y' and dataset.user_id is not None)):
-            tsdata = DBSession.query(TimeSeriesData).filter(TimeSeriesData.datset_id==dataset_id).all()
+            tsdata = DBSession.query(TimeSeriesData).filter(TimeSeriesData.dataset_id==dataset_id).all()
             metadata = DBSession.query(Metadata).filter(Metadata.dataset_id==dataset_id).all()
             dataset.timeseriesdata = tsdata
             dataset.metadata = metadata
@@ -221,6 +223,7 @@ def _bulk_insert_data(bulk_data, user_id=None):
     log.debug("Isolating new data")
     #Isolate only the new datasets and insert them
     new_scenario_data = []
+
     for sd in all_dataset_objects:
         if sd.dataset_id is None and sd not in new_scenario_data:
             DBSession.add(sd)
@@ -279,16 +282,89 @@ def _process_incoming_data(data, user_id=None):
 
     return data, datasets
 
+def _get_timeseriesdata(dataset_ids):
+    """
+        Get all the timeseries data entries for a given list of
+        dataset ids.
+    """
+    if len(dataset_ids) == 0:
+        return []
+
+    tsdata = []
+    if len(dataset_ids) > qry_in_threshold:
+        idx = 0
+        extent = qry_in_threshold - 1
+        while idx < len(dataset_ids):
+            log.info("Querying %s timeseries", len(dataset_ids[idx:extent]))
+            rs = DBSession.query(TimeSeriesData).filter(TimeSeriesData.dataset_id.in_(dataset_ids[idx:extent])).all()
+            tsdata.extend(rs)
+            idx = idx + qry_in_threshold 
+            
+            if idx + qry_in_threshold > len(dataset_ids):
+                extent = len(dataset_ids)
+            else:
+                extent = extent +qry_in_threshold 
+    else:
+        ts_qry = DBSession.query(TimeSeriesData).filter(TimeSeriesData.dataset_id.in_(dataset_ids))
+        for ts in ts_qry:
+            tsdata.append(ts)
+
+    return tsdata 
+
+def _get_metadata(dataset_ids):
+    """
+        Get all the metadata for a given list of datasets
+    """
+    metadata = []
+    if len(dataset_ids) == 0:
+        return []
+    if len(dataset_ids) > qry_in_threshold:
+        idx = 0
+        extent = qry_in_threshold - 1 
+        while idx < len(dataset_ids):
+            log.info("Querying %s metadatas", len(dataset_ids[idx:extent]))
+            rs = DBSession.query(Metadata).filter(Metadata.dataset_id.in_(dataset_ids[idx:extent])).all()
+            metadata.extend(rs)
+            idx = idx + qry_in_threshold 
+            
+            if idx + qry_in_threshold > len(dataset_ids):
+                extent = len(dataset_ids)
+            else:
+                extent = extent +qry_in_threshold 
+    else:
+        metadata_qry = DBSession.query(Metadata).filter(Metadata.dataset_id.in_(dataset_ids))
+        for m in metadata_qry:
+            metadata.append(m)
+
+    return metadata
+
 def _get_existing_data(hashes):
 
     str_hashes = [str(h) for h in hashes]
 
     hash_dict = {}
 
-    rs = DBSession.query(Dataset).filter(Dataset.data_hash.in_(str_hashes))
+    datasets = []
+    if len(str_hashes) > 100:
+        idx = 0
+        extent = 99
+        while idx < len(str_hashes):
+            log.info("Querying %s datasets", len(str_hashes[idx:extent]))
+            rs = DBSession.query(Dataset).filter(Dataset.data_hash.in_(str_hashes[idx:extent])).all()
+            datasets.extend(rs)
+            idx = idx + 100
+            
+            if idx + 100 > len(str_hashes):
+                extent = len(str_hashes)
+            else:
+                extent = extent + 100
+    else:
+        datasets = DBSession.query(Dataset).filter(Dataset.data_hash.in_(str_hashes))
 
-    for r in rs:
+
+    for r in datasets:
         hash_dict[r.data_hash] = r
+
     log.info("Retrieved %s datasets", len(hash_dict))
 
     return hash_dict
@@ -371,7 +447,7 @@ def get_vals_between_times(dataset_id, start_time, end_time, timestep,**kwargs):
     data_to_return = []
     if type(data) is list:
         for d in data:
-            data_to_return.append(create_dict(eval(d)))
+            data_to_return.append(create_dict(d))
     else:
         data_to_return.append(data)
 

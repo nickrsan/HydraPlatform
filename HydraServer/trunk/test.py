@@ -58,7 +58,7 @@ class SoapTest(unittest.TestCase):
         client.http_headers['username'] = 'root'
         client['RequestHeader'] = client.http_headers
         import pudb; pudb.set_trace()
-        net = client.get_network_quickly(107,'Y')
+        net = client.get_network(107)
 
     def test_OSA(self):
         url = config.get('hydra_client', 'url')

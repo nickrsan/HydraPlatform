@@ -29,11 +29,14 @@ getcontext().prec = 26
 
 from spyne.application import Application
 from spyne.protocol.soap import Soap11
-from spyne.server.wsgi import WsgiApplication
+from spyne.protocol.json import JsonDocument
 
 import spyne.decorator
 
 from spyne.error import Fault, ArgumentError
+
+from db.util import make_root_user
+import db.model
 
 from soap_server.network import NetworkService
 from soap_server.project import ProjectService
@@ -49,17 +52,34 @@ from soap_server.units import UnitService
 from soap_server.hydra_base import AuthenticationService,\
     LogoutService,\
     get_session_db,\
-    make_root_user,\
     AuthenticationError,\
     ObjectNotFoundError,\
     HydraServiceError
 from soap_server.sharing import SharingService
+from spyne.util.wsgi_wrapper import WsgiMounter
+
+applications = [
+    AuthenticationService,
+    UserService,
+    LogoutService,
+    NetworkService,
+    ProjectService,
+    ResourceGroupService,
+    AttributeService,
+    ScenarioService,
+    DataService,
+    PluginService,
+    TemplateService,
+    ImageService,
+    FileService,
+    SharingService,
+    UnitService,
+]
 
 from HydraLib.HydraException import HydraError
 
 from HydraLib import config
-from db import hdb
-from db import HydraIface
+from db import util
 
 import datetime
 import traceback
@@ -83,7 +103,6 @@ def _on_method_call(ctx):
 
 def _on_method_context_closed(ctx):
     commit_transaction()
-    hdb.commit()
 
 class HydraSoapApplication(Application):
     """
@@ -97,6 +116,8 @@ class HydraSoapApplication(Application):
     """
     def __init__(self, services, tns, name=None,
                                          in_protocol=None, out_protocol=None):
+
+#        super(HydraSoapApplication, self).__init__(services, tns)
 
         Application.__init__(self, services, tns, name, in_protocol,
                                                                  out_protocol)
@@ -116,23 +137,19 @@ class HydraSoapApplication(Application):
             log.info("Call took: %s"%(datetime.datetime.now()-start))
             return res
         except HydraError, e:
-            hdb.rollback()
             log.critical(e)
             traceback.print_exc(file=sys.stdout)
             code = "HydraError %s"%e.code
             raise HydraServiceError(e.message, code)
         except ObjectNotFoundError, e:
-            hdb.rollback()
             log.critical(e)
             raise
         except Fault, e:
-            hdb.rollback()
             log.critical(e)
             raise
         except Exception, e:
             log.critical(e)
             traceback.print_exc(file=sys.stdout)
-            hdb.rollback()
             raise Fault('Server', e.message)
 
 class HydraServer():
@@ -140,40 +157,32 @@ class HydraServer():
     def __init__(self):
 
         logging.getLogger('spyne').setLevel(logging.INFO)
-        #logging.getLogger('sqlalchemy').setLevel(logging.INFO)
-        connection = hdb.connect()
-        HydraIface.init(connection)
-
+ #       logging.getLogger('sqlalchemy').setLevel(logging.INFO)
+        util.create_default_users_and_perms()
+        util.create_default_net()
         make_root_user()
 
-    def create_application(self):
+    def create_soap_application(self):
 
-        applications = [
-            AuthenticationService,
-            UserService,
-            LogoutService,
-            NetworkService,
-            ProjectService,
-            ResourceGroupService,
-            AttributeService,
-            ScenarioService,
-            DataService,
-            PluginService,
-            TemplateService,
-            ImageService,
-            FileService,
-            SharingService,
-            UnitService,
-        ]
-
-        app = HydraSoapApplication(applications, 'hydra.base',
+        app = HydraSoapApplication(applications, tns='hydra.base',
                     in_protocol=Soap11(validator='lxml'),
                     out_protocol=Soap11()
                 )
-        wsgi_application = WsgiApplication(app)
-        wsgi_application.max_content_length = 100 * 0x100000 # 10 MB
+        #wsgi_application = WsgiApplication(app)
+        #wsgi_application.max_content_length = 100 * 0x100000 # 10 MB
 
-        return wsgi_application 
+        return app #wsgi_application 
+
+    def create_json_application(self):
+
+        app = HydraSoapApplication(applications, tns='hydra.base',
+                    in_protocol=JsonDocument(validator='soft'),
+                    out_protocol=JsonDocument()
+                )
+        #wsgi_application = WsgiApplication(app)
+        #wsgi_application.max_content_length = 100 * 0x100000 # 10 MB
+
+        return app #wsgi_application 
 
     def run_server(self):
 
@@ -181,15 +190,10 @@ class HydraServer():
         domain = config.get('hydra_server', 'domain', '127.0.0.1')
         
         spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
-        cp_wsgi_application = CherryPyWSGIServer((domain,port), application, numthreads=1)
-        #from wsgiref.simple_server import make_server
+        cp_wsgi_application = CherryPyWSGIServer((domain,port), root, numthreads=1)
 
-        #server = make_server(domain, port, application)
         log.info("listening to http://%s:%s", domain, port)
         log.info("wsdl is at: http://%s:%s/?wsdl", domain, port)
-        #server.serve_forever()
-        
-      
         try:
             cp_wsgi_application.start()
         except KeyboardInterrupt:
@@ -197,8 +201,16 @@ class HydraServer():
 
 # These few lines are needed by mod_wsgi to turn the server into a WSGI script.
 s = HydraServer()
-application = s.create_application()
+soap_application = s.create_soap_application()
+json_application = s.create_json_application()
 
+json = Application(applications, tns='hydra.base',
+            in_protocol=JsonDocument(), out_protocol=JsonDocument())
+
+root = WsgiMounter({
+    'soap': soap_application,
+    'json': json_application,
+})
 
 #To kill this process, use this command:
 #ps -ef | grep 'server.py' | grep 'python' | awk '{print $2}' | xargs kill

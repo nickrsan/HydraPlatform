@@ -17,7 +17,7 @@ from HydraLib.HydraException import HydraError, ResourceNotFoundError
 import logging
 log = logging.getLogger(__name__)
 from db import DBSession
-from db.HydraAlchemy import Network, Project, User, Dataset
+from db.model import Network, Project, User, Dataset
 from sqlalchemy.orm.exc import NoResultFound
 
 def _get_project(project_id):
@@ -102,7 +102,7 @@ def share_project(project_id, usernames, read_only, share,**kwargs):
    
     user_id = int(user_id)
 
-    for owner in proj_i.projectowners:
+    for owner in proj_i.owners:
         if user_id == owner.user_id:
             break
     else:
@@ -122,7 +122,7 @@ def share_project(project_id, usernames, read_only, share,**kwargs):
     for username in usernames:
         user_i = _get_user(username)
         
-        proj_i.set_ownership(user_i.user_id, write=write, share=share)
+        proj_i.set_owner(user_i.user_id, write=write, share=share)
         
         for net_i in proj_i.networks:
             net_i.set_owner(user_i.user_id, write=write, share=share)
@@ -156,7 +156,7 @@ def set_project_permission(project_id, usernames, read, write, share,**kwargs):
         #to their project
         if proj_i.created_by == user_i.user_id:
             raise HydraError("Cannot set permissions on project %s"
-                             " for user %s as tis user is the creator." % 
+                             " for user %s as this user is the creator." % 
                              (project_id, username)) 
         
         proj_i.set_owner(user_i.user_id, read=read, write=write)

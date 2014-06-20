@@ -13,34 +13,43 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from db import HydraIface
 from HydraLib.HydraException import ResourceNotFoundError
 import scenario
 import logging
 from HydraLib.HydraException import PermissionError
-from db.HydraAlchemy import Project
+from db.model import Project, ProjectOwner, Network
 from db import DBSession
 import network
+from sqlalchemy.orm.exc import NoResultFound
+from db.util import add_attributes
+
 
 log = logging.getLogger(__name__)
 
-def _add_project_attributes(resource_i, attributes):
-    if attributes is None:
+def _get_project(project_id):
+    try:
+        project = DBSession.query(Project).filter(Project.project_id==project_id).one()
+        return project
+    except NoResultFound:
+        raise ResourceNotFoundError("Project %s not found"%(project_id))
+
+def _add_project_attribute_data(project_i, attr_map, attribute_data):
+    if attribute_data is None:
         return []
     #As projects do not have scenarios (or to be more precise, they can only use
     #scenario 1, we can put
     #resource scenarios directly into the 'attributes' attribute
     #meaning we can add the data directly here.
+    resource_scenarios = []
+    for attr in attribute_data:
 
-    for attr in attributes:
-
+        rscen = scenario._update_resourcescenario(None, attr)
         if attr.resource_attr_id < 0:
-            ra_i = resource_i.add_attribute(attr.attr_id)
-            ra_i.save()
-            ra_i.load()
-            attr.resource_attr_id = ra_i.db.resource_attr_id
-    
-        scenario._update_resourcescenario(None, attr)
+            ra_i = attr_map[attr.resource_attr_id] 
+            rscen.resourceattr = ra_i
+
+        resource_scenarios.append(rscen)
+    return resource_scenarios 
 
 def add_project(project,**kwargs):
     """
@@ -55,8 +64,9 @@ def add_project(project,**kwargs):
     proj_i.project_description = project.description
     proj_i.created_by = user_id
 
-  #  for attr in project.attributes:
-  #      project.add_attribute(attr.attr_id)
+    attr_map = add_attributes(proj_i, project.attributes)
+    proj_data = _add_project_attribute_data(proj_i, attr_map, project.attribute_data)
+    proj_i.attribute_data = proj_data
 
     proj_i.set_owner(user_id)
     
@@ -73,18 +83,19 @@ def update_project(project,**kwargs):
 
     user_id = kwargs.get('user_id') 
     #check_perm(user_id, 'update_project')
-    proj_i = HydraIface.Project(project_id = project.id)
+    proj_i = _get_project(project.id) 
     
     proj_i.check_write_permission(user_id)
     
-    proj_i.db.project_name        = project.name
-    proj_i.db.project_description = project.description
+    proj_i.project_name        = project.name
+    proj_i.project_description = project.description
 
-    _add_project_attributes(proj_i, project.attributes)
+    attr_map = add_attributes(proj_i, project.attributes)
+    proj_data = _add_project_attribute_data(proj_i, attr_map, project.attribute_data)
+    proj_i.attribute_data = proj_data
+    DBSession.flush()
 
-    proj_i.save()
-
-    return proj_i.get_as_dict(**{'user_id':user_id})
+    return proj_i
 
 
 def get_project(project_id,**kwargs):
@@ -92,52 +103,24 @@ def get_project(project_id,**kwargs):
         get a project complexmodel
     """
     user_id = kwargs.get('user_id') 
-    proj_i = HydraIface.Project(project_id = project_id)
+    proj_i = _get_project(project_id)
 
     proj_i.check_read_permission(user_id)
 
-    if proj_i.load() is False:
-        raise ResourceNotFoundError("Project (project_id=%s) not found."%project_id)
+    return proj_i
 
-    return proj_i.get_as_dict(**{'user_id':user_id})
-
-def get_projects(user_to_check,**kwargs):
+def get_projects(uid,**kwargs):
     """
         get a project complexmodel
     """
-    user_id = kwargs.get('user_id') 
+    req_user_id = kwargs.get('user_id') 
 
     #Potentially join this with an rs of projects
     #where no owner exists?
-    sql = """
-        select
-            p.project_id,
-            p.project_name,
-            p.cr_date,
-            p.created_by
-        from
-            tOwner o,
-            tProject p
-        where
-            o.user_id = %s
-            and o.ref_key = 'PROJECT'
-            and p.project_id = o.ref_id 
-            and o.view = 'Y'
-        order by p.cr_date
 
-    """ % user_to_check
-
-    rs = HydraIface.execute(sql)
-
-    projects = []
-    for r in rs:
-        p = HydraIface.Project()
-        p.db.project_id = r.project_id
-        p.db.project_name = r.project_name
-        p.db.cr_date = str(r.cr_date)
-        p.db.created_by = r.created_by
-        p.ref_id = r.project_id
-        projects.append(p.get_as_dict(**{'user_id':user_id}))
+    projects = DBSession.query(Project).join(ProjectOwner).filter(ProjectOwner.user_id==uid).all()
+    for project in projects:
+        project.check_read_permission(req_user_id)
 
     return projects
 
@@ -148,11 +131,10 @@ def delete_project(project_id,**kwargs):
     """
     user_id = kwargs.get('user_id') 
     #check_perm(user_id, 'delete_project')
-    x = HydraIface.Project(project_id = project_id)
-    x.check_write_permission(user_id)
-    x.db.status = 'X'
-    x.save()
-    x.commit()
+    project = _get_project(project_id)
+    project.check_write_permission(user_id)
+    project.status = 'X'
+    DBSession.flush()
 
 def get_networks(project_id, include_data='N', **kwargs):
     """
@@ -160,22 +142,11 @@ def get_networks(project_id, include_data='N', **kwargs):
         Returns an array of network objects.
     """
     user_id = kwargs.get('user_id') 
-    x = HydraIface.Project(project_id = project_id)
-    x.check_read_permission(user_id)
+    project = _get_project(project_id)
+    project.check_read_permission(user_id)
 
-    networks = []
-
-    sql = """
-        select
-            network_id
-        from
-            tNetwork
-        where
-            project_id=%s
-    """%project_id
-
-    rs = HydraIface.execute(sql)
-
+    rs = DBSession.query(Network.network_id).filter(Network.project_id==project_id).all()
+    networks=[]
     for r in rs:
         try:
             net = network.get_network(r.network_id, include_data, **kwargs)

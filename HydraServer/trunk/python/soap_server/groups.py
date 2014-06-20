@@ -17,8 +17,7 @@ from spyne.model.primitive import Integer, Unicode
 from spyne.decorator import rpc
 from hydra_complexmodels import ResourceGroup,\
     ResourceGroupItem,\
-    Scenario,\
-    get_as_complexmodel
+    Scenario
 from hydra_base import HydraService
 from lib import groups as resourcegroups
 
@@ -35,7 +34,7 @@ class ResourceGroupService(HydraService):
         group_i = resourcegroups.add_resourcegroup(group,
                                                    network_id,
                                                    **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, group_i)
+        return ResourceGroup(group_i)
 
     @rpc(Integer, ResourceGroup, _returns=Unicode)
     def delete_resourcegroup(ctx, group_id):
@@ -54,7 +53,7 @@ class ResourceGroupService(HydraService):
         """
 
         group_i = resourcegroups.update_resourcegroup(group)
-        return get_as_complexmodel(ctx, group_i)
+        return ResourceGroup(group_i)
 
 
     @rpc(ResourceGroupItem, Integer, _returns=Scenario)
@@ -62,7 +61,7 @@ class ResourceGroupService(HydraService):
         group_item_i = resourcegroups.add_resourcegroupitem(group_item,
                                                             scenario_id,
                                                             **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, group_item_i)
+        return ResourceGroupItem(group_item_i)
 
     @rpc(Integer, _returns=Unicode)
     def delete_resourcegroupitem(ctx, item_id):
