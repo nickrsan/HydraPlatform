@@ -602,7 +602,7 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
         for r in rs:
             attr_ids.append(rs.attr_id)
 
-        resource_data = DBSession.query(Dataset).filter(
+        resource_data = DBSession.query(ResourceScenario).filter(
             ResourceScenario.dataset_id   == Dataset.dataset_id,
             ResourceAttr.resource_attr_id == ResourceScenario.resource_attr_id,
             ResourceScenario.scenario_id == scenario_id,
@@ -613,9 +613,9 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
                 ResourceAttr.link_id==ref_id,
                 ResourceAttr.group_id==ref_id
             ),
-            ResourceAttr.attr_id in attr_ids).options(joinedload_all('timeseriesdata')).options(joinedload_all('metadata')).distinct().all()
+            ResourceAttr.attr_id in attr_ids).options(joinedload_all('dataset.timeseriesdata')).options(joinedload_all('dataset.metadata')).distinct().all()
     else:
-        resource_data = DBSession.query(Dataset).filter(
+        resource_data = DBSession.query(ResourceScenario).filter(
         ResourceScenario.dataset_id   == Dataset.dataset_id,
         ResourceAttr.resource_attr_id == ResourceScenario.resource_attr_id,
         ResourceScenario.scenario_id == scenario_id,
@@ -625,21 +625,20 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
             ResourceAttr.node_id==ref_id,
             ResourceAttr.link_id==ref_id,
             ResourceAttr.group_id==ref_id
-        )).distinct().options(joinedload_all('timeseriesdata')).options(joinedload_all('metadata')).all()
+        )).distinct().options(joinedload_all('dataset.timeseriesdata')).options(joinedload_all('dataset.metadata')).all()
 
 
-    for datum in resource_data:
-       if datum.locked == 'Y':
+    for rs in resource_data:
+       if rs.dataset.locked == 'Y':
            try:
-                datum.check_read_permission(user_id)
+                rs.dataset.check_read_permission(user_id)
            except:
-               datum.value      = None
-               datum.frequency  = None
-               datum.start_time = None
-               if datum.data_type == 'timeseries':
-                   datum.timeseriesdata = []
-
-
+               rs.dataset.value      = None
+               rs.dataset.frequency  = None
+               rs.dataset.start_time = None
+               if rs.dataset.data_type == 'timeseries':
+                   rs.datset.timeseriesdata = []
+    DBSession.expunge_all() 
     return resource_data 
 
 def _check_can_edit_scenario(scenario_id, user_id):

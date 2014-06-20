@@ -437,10 +437,11 @@ class ImportCSV(object):
                     # well, we create a new one.
                     self.Network['scenarios'] = []
                 except WebFault:
-                    log.info('Network ID not found. Creating new network.')
-                    self.warnings.append('Network ID not found. Creating new network.')
+                    log.info('Network %s not found. Creating new network.', network_id)
+                    self.warnings.append('Network %s not found. Creating new network.'%(network_id,))
+                    network_id = None
 
-            else:
+            if network_id is None:
                 # Create a new network
                 self.Network = dict( 
                     project_id = self.Project['id'],
@@ -893,10 +894,8 @@ class ImportCSV(object):
         # Collect existing resource attributes:
         resource_attrs = dict()
 
-        if resource['attributes'] is None:
+        if resource.get('attributes') is None:
             return resource
-        else:
-            resource['attributes'] = []
 
         for res_attr in resource['attributes']:
             resource_attrs.update({res_attr.attr_id: res_attr})

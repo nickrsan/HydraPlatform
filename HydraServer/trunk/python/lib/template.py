@@ -195,7 +195,7 @@ def upload_template_xml(template_xml,**kwargs):
             type_i.alias = resource.find('alias').text
 
         if resource.find('type') is not None:
-            type_i.db.resource_type = resource.find('type').text
+            type_i.resource_type = resource.find('type').text
 
         if resource.find('layout') is not None and \
             resource.find('layout').text is not None:
@@ -382,6 +382,7 @@ def set_resource_type(resource, type_id, types={}, **kwargs):
         type_i = types[type_id]
     else:
         type_i = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).one()
+
     type_attrs = dict()
     for typeattr in type_i.typeattrs:
         type_attrs.update({typeattr.attr_id:

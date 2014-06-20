@@ -464,7 +464,7 @@ def get_network(network_id, include_data='N', scenario_ids=None,**kwargs):
     log.debug("getting network %s"%network_id)
     user_id = kwargs.get('user_id')
     try:
-        log.debug("Querying Network")
+        log.debug("Querying Network %s", network_id)
         net_i = DBSession.query(Network).filter(Network.network_id == network_id).\
         options(noload('scenarios')).options(noload('nodes')).options(noload('links')).options(joinedload_all('types.templatetype.template')).one()
         net_i.attributes
@@ -570,8 +570,8 @@ def get_network_by_name(project_id, network_name,**kwargs):
     """
 
     try:
-        network_id = DBSession.query(Network.network_id).filter(func.lower(Network.network_name).like(network_name.lower()), Network.project_id == project_id).one()
-        net = get_network(network_id, 'Y', None, **kwargs)
+        res = DBSession.query(Network.network_id).filter(func.lower(Network.network_name).like(network_name.lower()), Network.project_id == project_id).one()
+        net = get_network(res.network_id, 'Y', None, **kwargs)
         return net
     except NoResultFound:
         raise ResourceNotFoundError("Network with name %s not found"%(network_name))
@@ -581,22 +581,11 @@ def network_exists(project_id, network_name,**kwargs):
     """
     Return a whole network as a complex model.
     """
-
-    sql = """
-        select
-            network_id
-        from
-            tNetwork
-        where
-            project_id = %s
-        and lower(network_name) like '%%%s%%'
-    """ % (project_id, network_name)
-
-    rs = HydraIface.execute(sql)
-    if len(rs) == 0:
-        return 'N'
-    else:
+    try:
+        DBSession.query(Network.network_id).filter(func.lower(Network.network_name).like(network_name.lower()), Network.project_id == project_id).one()
         return 'Y'
+    except NoResultFound:
+        return 'N'
 
 def update_network(network,**kwargs):
     """
