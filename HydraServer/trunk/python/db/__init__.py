@@ -13,10 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from zope.sqlalchemy import ZopeTransactionExtension
 from sqlalchemy.orm import scoped_session
 from sqlalchemy import create_engine
 from HydraLib import config
+from zope.sqlalchemy import ZopeTransactionExtension
 
 import transaction
 

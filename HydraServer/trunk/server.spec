@@ -1,7 +1,7 @@
 # -*- mode: python -*-
 a = Analysis(['server.py'],
              pathex=['F:\\work\\HYDRA\\svn\\HYDRA\\HydraServer\\trunk'],
-             hiddenimports=['spyne.service', 'sqlalchemy', 'cherrypy', 'cherrypy.wsgiserver'],
+             hiddenimports=['spyne.service', 'sqlalchemy', 'cherrypy', 'cherrypy.wsgiserver', 'zope.sqlalchemy', 'zope.interface'],
              hookspath=None,
              runtime_hooks=None)
 

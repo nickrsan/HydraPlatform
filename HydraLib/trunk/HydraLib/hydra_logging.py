@@ -45,6 +45,8 @@ def init(level=None):
  #   logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s\033[0m', level=level)
 
     config_file = os.path.expanduser(config.get('logging_conf', 'log_config_path'))
+    
+    print config_file
 
     logging.config.fileConfig(config_file)
 
