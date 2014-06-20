@@ -588,7 +588,7 @@ def guess_timefmt(datestr):
     return None
 
 
-def create_xml_response(plugin_name, network_id, scenaro_ids,
+def create_xml_response(plugin_name, network_id, scenario_ids,
                         errors=[], warnings=[], message=None, files=[]):
     xml_string = """<plugin_result>
     <message>%(message)s</message>
@@ -615,7 +615,7 @@ def create_xml_response(plugin_name, network_id, scenaro_ids,
         plugin_name  = plugin_name,
         network_id   = network_id,
         scenario_list = "\n".join([scenario_string % scen_id
-                                   for scen_id in scenaro_ids]),
+                                   for scen_id in scenario_ids]),
         message      = message if message is not None else "",
         error_list   = "\n".join([error_string%error for error in errors]),
         warning_list = "\n".join([warning_string%warning for warning in warnings]),

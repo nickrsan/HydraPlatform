@@ -254,7 +254,7 @@ class SoapServerTest(unittest.TestCase):
     def test_create_network(self):
         self.create_network_with_data()
 
-    def create_network_with_data(self, project_id=None, num_nodes=10):
+    def create_network_with_data(self, project_id=None, num_nodes=10, ret_full_net=True):
         """
             Test adding data to a network through a scenario.
             This test adds attributes to one node and then assignes data to them.
@@ -493,13 +493,17 @@ class SoapServerTest(unittest.TestCase):
         start = datetime.datetime.now()
         log.info("Creating network...")
         response_network_summary = self.client.service.add_network(network)
-        response_net = self.client.service.get_network(response_network_summary.id)
-
-        self.check_network(network, response_net)
-     
         log.info("Network Creation took: %s"%(datetime.datetime.now()-start))
+        if ret_full_net is True:
+            log.info("Fetching new network...:")
+            start = datetime.datetime.now()
+            response_net = self.client.service.get_network(response_network_summary.id)
+            log.info("Network Retrieval took: %s"%(datetime.datetime.now()-start))
+            self.check_network(network, response_net)
+            return response_net
+        else:
+           return response_network_summary 
 
-        return response_net
 
     def check_network(self, request_net, response_net):
 

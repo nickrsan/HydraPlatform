@@ -1099,8 +1099,8 @@ class ImportCSV(object):
             xml_template = f.read()
 
         try:
-            warnings = PluginLib.set_resource_types(self.cli, xml_template,
-                                         self.Network,
+            PluginLib.set_resource_types(self.cli, xml_template,
+                                         self.NetworkSummary,
                                          self.nodetype_dict,
                                          self.linktype_dict,
                                          self.grouptype_dict,
@@ -1320,7 +1320,7 @@ class ImportCSV(object):
             self.Network['links'].Link.append(link)
         for group in self.Groups.values():
             self.Network['resourcegroups'].ResourceGroup.append(group)
-        self.Network['scenarios'].Scenario.append(self.Scenario)
+        #self.Network['scenarios'].Scenario.append(self.Scenario)
         log.info("Network created for sending")
 
         if self.update_network_flag:
@@ -1340,7 +1340,7 @@ class ImportCSV(object):
     def return_xml(self):
         """This is a fist version of a possible XML output.
         """
-        scen_ids = [s.id for s in self.NetworkSummary.scenario_ids]
+        scen_ids = [s.id for s in self.NetworkSummary.scenario_ids.integer]
 
         xml_response = PluginLib.create_xml_response('ImportCSV',
                                                      self.Network.id,
@@ -1502,7 +1502,7 @@ if __name__ == '__main__':
             csv.commit()
             if csv.NetworkSummary.scenario_ids:
                 scen_ids = csv.NetworkSummary.scenario_ids
-            network_id = csv.Network.id
+            network_id = csv.NetworkSummary.id
 
             if args.template is not None:
                 csv.set_resource_types(args.template)

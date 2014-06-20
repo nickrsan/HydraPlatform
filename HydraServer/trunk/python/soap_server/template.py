@@ -20,8 +20,7 @@ from hydra_complexmodels import Template,\
 TemplateType,\
 TypeAttr,\
 TypeSummary,\
-ResourceTypeDef,\
-get_as_complexmodel
+ResourceTypeDef
 
 from hydra_base import HydraService
 from lib import template

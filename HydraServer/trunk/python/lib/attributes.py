@@ -13,33 +13,33 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from db import HydraIface
-
-from db import IfaceLib
-
 from db import hdb
 
 import logging
 log = logging.getLogger(__name__)
 
-from db.HydraAlchemy import Attr
+from db.HydraAlchemy import Attr, Node, Link, Network, Project, Scenario, TemplateType
 from db import DBSession
 from sqlalchemy.orm.exc import NoResultFound
+from HydraLib.HydraException import ResourceNotFoundError
 from sqlalchemy import or_
 
 def _get_resource(ref_key, ref_id):
-    if ref_key == 'NODE':
-        return HydraIface.Node(node_id = ref_id)
-    elif ref_key == 'LINK':
-        return HydraIface.Link(link_id = ref_id)
-    elif ref_key == 'NETWORK':
-        return HydraIface.Network(network_id = ref_id)
-    elif ref_key == 'SCENARIO':
-        return HydraIface.Scenario(scenario_id = ref_id)
-    elif ref_key == 'PROJECT':
-        return HydraIface.Project(project_id = ref_id)
-    else:
-        return None
+    try:
+        if ref_key == 'NODE':
+            return DBSession.query(Node).filter(Node.node_id == ref_id).one()
+        elif ref_key == 'LINK':
+            return DBSession.query(Link).filter(Link.link_id == ref_id).one()
+        elif ref_key == 'NETWORK':
+            return DBSession.query(Network).filter(Network.network_id == ref_id).one()
+        elif ref_key == 'SCENARIO':
+            return DBSession.query(Scenario).filter(Scenario.scenario_id == ref_id).one()
+        elif ref_key == 'PROJECT':
+            return DBSession.query(Project).filter(Project.project_id == ref_id).one()
+        else:
+            return None
+    except NoResultFound:
+        raise ResourceNotFoundError("Resource %s with ID %s not found"%(ref_key, ref_id))
 
 def get_attribute_by_id(attr_id, **kwargs):
     """
@@ -110,63 +110,30 @@ def add_attributes(attrs,**kwargs):
     #If they are there already, don't add a new one. If an attribute
     #with the same name is there already but with a different dimension,
     #add a new attribute.
-    sql = """
-        select
-            attr_id,
-            attr_name,
-            attr_dimen
-        from
-            tAttr
-    """
 
-    rs = HydraIface.execute(sql)
+    all_attrs = DBSession.query(Attr).all()
+    attr_dict = {}
+    for attr in all_attrs:
+        attr_dict[(attr.attr_name, attr.attr_dimen)] = attr
 
     attrs_to_add = []
+    existing_attrs = []
     for potential_new_attr in attrs:
-        for r in rs:
-            if potential_new_attr.name == r.attr_name and \
-               potential_new_attr.dimen == r.attr_dimen:
-                #raise HydraError("Attribute %s already exists but "
-                #                    "with a different dimension: %s",\
-                #                    r.attr_name, r.attr_dimen)
-                break
-        else:
+        if attr_dict.get((potential_new_attr.name, potential_new_attr.dimen)) is None:
             attrs_to_add.append(potential_new_attr)
-
-    iface_attrs = []
-    for attr in attrs_to_add:
-        attr_i = HydraIface.Attr()
-        attr_i.db.attr_name = attr.name
-        attr_i.db.attr_dimen = attr.dimen
-        iface_attrs.append(attr_i)
-
-    IfaceLib.bulk_insert(iface_attrs, 'tAttr')
-
-    sql = """
-        select
-            attr_id,
-            attr_name,
-            attr_dimen
-        from
-            tAttr
-    """
-
-    rs = HydraIface.execute(sql)
-
-    all_attrs = []
-    for r in rs:
-        attr_i = HydraIface.Attr()
-        attr_i.db.attr_name  = r.attr_name
-        attr_i.db.attr_dimen = r.attr_dimen
-        attr_i.db.attr_id    = r.attr_id
-        all_attrs.append(attr_i)
-
+        else:
+            existing_attrs.append(attr_dict.get((potential_new_attr.name, potential_new_attr.dimen)))
     new_attrs = []
-    for attr in all_attrs:
-        for new_attr in attrs:
-            if new_attr.name == attr.db.attr_name and new_attr.dimen == attr.db.attr_dimen:
-                new_attrs.append(attr.get_as_dict())
-                break
+    for attr in attrs_to_add:
+        attr_i = Attr()
+        attr_i.attr_name = attr.name
+        attr_i.attr_dimen = attr.dimen
+        DBSession.add(attr_i)
+        new_attrs.append(attr_i)
+
+    DBSession.flush()
+    
+    new_attrs = new_attrs + existing_attrs
 
     return new_attrs
 
@@ -175,16 +142,32 @@ def get_attributes(**kwargs):
         Get all attributes
     """
 
-    attrs = DBSession.query(Attr)
+    attrs = DBSession.query(Attr).all()
 
     return attrs
+
+def _get_attr(attr_id):
+    try:
+        attr = DBSession.query(Attr).filter(Attr.attr_id == attr_id).one()
+        return attr
+    except NoResultFound:
+        raise ResourceNotFoundError("Attribute with ID %s not found"%(attr_id,))
+
+def _get_templatetype(type_id):
+    try:
+        typ = DBSession.query(TemplateType).filter(TemplateType.type_id == type_id).one()
+        return typ
+    except NoResultFound:
+        raise ResourceNotFoundError("Template Type with ID %s not found"%(type_id,))
+
+
 
 def delete_attribute(attr_id,**kwargs):
     """
         Set the status of an attribute to 'X'
     """
     success = True
-    x = HydraIface.Attr(attr_id = attr_id)
+    x = DBSession.query(Attr).filter(Attr.attr_id == attr_id).one()
     x.db.status = 'X'
     x.save()
     hdb.commit()
@@ -205,20 +188,28 @@ def add_resource_attribute(resource_type, resource_id, attr_id, is_var,**kwargs)
     attr_is_var = 'Y' if is_var else 'N'
 
     resource_i.add_attribute(attr_id, attr_is_var)
+    DBSession.flush()
 
-    return resource_i.get_as_dict()
+    return resource_i
 
 
 def add_node_attrs_from_type(type_id, resource_type, resource_id,**kwargs):
     """
         adds all the attributes defined by a type to a node.
     """
-    type_i = HydraIface.TemplateType(type_id)
-    type_i.load()
+    type_i = _get_templatetype(type_id)
 
     resource_i = _get_resource(resource_type, resource_id)
 
-    for item in type_i.typeattrs:
-        resource_i.add_attribute(item.db.attr_id)
+    attrs = {}
+    for attr in resource_i.attributes:
+        attrs[attr.attr_id] = attr
 
-    return resource_i.get_as_dict()
+
+    for item in type_i.typeattrs:
+        if attrs.get(item.db.attr_id) is None:
+            resource_i.add_attribute(item.db.attr_id)
+
+    DBSession.flush()
+
+    return resource_i

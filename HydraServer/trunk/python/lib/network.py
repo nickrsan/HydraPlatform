@@ -18,16 +18,14 @@ from HydraLib.HydraException import HydraError, ResourceNotFoundError
 import scenario
 import datetime
 import data
+import time
 
 from util.permissions import check_perm
 import template
 from db.HydraAlchemy import Project, Network, Scenario, Node, Link, ResourceGroup, ResourceAttr, ResourceType, ResourceGroupItem, Dataset, TimeSeriesData, Metadata, DatasetOwner, ResourceScenario
-from sqlalchemy.orm import noload, joinedload, joinedload_all, contains_eager
-from sqlalchemy.sql import exists
+from sqlalchemy.orm import noload, joinedload, joinedload_all
 from db import DBSession
 from sqlalchemy import func, or_, and_
-from sqlalchemy.sql.expression import case
-from sqlalchemy import null
 from sqlalchemy.orm.exc import NoResultFound
 from HydraLib.util import timestamp_to_ordinal
 
@@ -146,19 +144,56 @@ def _add_nodes(net_i, nodes):
 
     #First add all the nodes
     log.info("Adding nodes to network")
+    node_list = []
     for node in nodes:
-        net_i.add_node(node.name, node.description, node.layout, node.x, node.y)
+        node_dict = {'network_id'   : net_i.network_id,
+                    'node_name' : node.name,
+                     'node_description': node.description,
+                     'node_layout'     : node.layout,
+                     'node.node_x'     : node.x,
+                     'node.node_y'     : node.y,
+                    }
+        node_list.append(node_dict)
+    t0 = time.time()
+    DBSession.execute(Node.__table__.insert(), node_list)
+    logging.info("Node insert took %s secs"% str(time.time() - t0))
+    
 
     iface_nodes = dict()
     for n_i in net_i.nodes:
         iface_nodes[n_i.node_name] = n_i
 
+    node_attr_dicts = []
     for node in nodes:
         if node.id not in node_id_map:
             node_i = iface_nodes[node.name]
-            node_attrs.update(_add_attributes(node_i, node.attributes))
+            for ra in node.attributes:
+                ra_dict = {
+                    'ref_key' : 'NODE',
+                    'node_id' : node_i.node_id,
+                    'attr_id' : ra.attr_id,
+                    'attr_is_var' : ra.attr_is_var,
+                }
+                node_attr_dicts.append(ra_dict)
             _add_resource_types(node_i, node.types)
             node_id_map[node.id] = node_i
+
+    t0 = time.time()
+    DBSession.execute(ResourceAttr.__table__.insert(), node_attr_dicts)
+    logging.info("ResourceAttr insert took %s secs"% str(time.time() - t0))
+
+    #Now that the attributes are in, we need to map the attributes in the DB
+    #to the attributes in the incoming data so that the resource scenarios
+    #know what to refer to.
+    all_node_attrs = DBSession.query(ResourceAttr).filter(ResourceAttr.node_id==Node.node_id, Node.network_id==net_i.network_id).all()
+    node_attr_dict = {}
+    for node_attr in all_node_attrs:
+        node_attr_dict[(node_attr.node_id, node_attr.attr_id)] = node_attr
+ 
+    for node in nodes:
+        for ra in node.attributes:
+            node_id = iface_nodes[node.name].node_id
+            node_attrs[ra.id] = node_attr_dict[(node_id, ra.attr_id)]
 
     log.info("Nodes added in %s", get_timing(start_time))
 
@@ -180,6 +215,7 @@ def _add_links(net_i, links, node_id_map):
 
     #Then add all the links.
     log.info("Adding links to network")
+    link_dicts = []
     for link in links:
         if link.node_1_id in node_id_map:
             node_1 = node_id_map[link.node_1_id]
@@ -190,22 +226,48 @@ def _add_links(net_i, links, node_id_map):
         if node_1 is None or node_2 is None:
             raise HydraError("Node IDS (%s, %s)are incorrect!"%(node_1, node_2))
 
-        net_i.add_link(link.name,
-                    link.description,
-                    link.layout,
-                    node_1,
-                    node_2)
-
+        link_dicts.append({'network_id' : net_i.network_id,
+                           'link_name' : link.name,
+                           'link_description' : link.description,
+                           'link_layout' : link.layout,
+                           'node_1_id' : node_1.node_id,
+                           'node_2_id' : node_2.node_id
+                          })
+    DBSession.execute(Link.__table__.insert(), link_dicts)
     iface_links = {}
 
     for l_i in net_i.links:
         iface_links[l_i.link_name] = l_i
 
+    link_attr_dicts = []
     for link in links:
         iface_link = iface_links[link.name]
         _add_resource_types(iface_link, link.types)
-        link_attrs.update(_add_attributes(iface_link, link.attributes))
+        for ra in link.attributes:
+            ra_dict = {
+                'ref_key' : 'LINK',
+                'link_id' : iface_link.link_id,
+                'attr_id' : ra.attr_id,
+                'attr_is_var' : ra.attr_is_var,
+            }
+            link_attr_dicts.append(ra_dict)
+
         link_id_map[link.id] = iface_link
+
+    DBSession.execute(ResourceAttr.__table__.insert(), link_attr_dicts)
+
+    #Now that the attributes are in, we need to map the attributes in the DB
+    #to the attributes in the incoming data so that the resource scenarios
+    #know what to refer to.
+    all_link_attrs = DBSession.query(ResourceAttr).filter(ResourceAttr.link_id==Link.link_id, Link.network_id==net_i.network_id).all()
+    link_attr_dict = {}
+    for link_attr in all_link_attrs:
+        link_attr_dict[(link_attr.link_id, link_attr.attr_id)] = link_attr
+ 
+    for link in links:
+        for ra in link.attributes:
+            link_id = iface_links[link.name].link_id
+            link_attrs[ra.id] = link_attr_dict[(link_id, ra.attr_id)]
 
     log.info("Links added in %s", get_timing(start_time))
 
@@ -282,7 +344,8 @@ def add_network(network,**kwargs):
         net_i.network_layout = str(network.layout)
 
     network.network_id = net_i.network_id
-
+    DBSession.add(net_i)
+    DBSession.flush()
     #These two lists are used for comparison and lookup, so when
     #new attributes are added, these lists are extended.
 
@@ -307,9 +370,6 @@ def add_network(network,**kwargs):
 
     start_time = datetime.datetime.now()
 
-    DBSession.add(net_i)
-    DBSession.flush()
-    
     if network.scenarios is not None:
         log.info("Adding scenarios to network")
         for s in network.scenarios:
@@ -319,7 +379,6 @@ def add_network(network,**kwargs):
             scen.start_time           = timestamp_to_ordinal(s.start_time)
             scen.end_time             = timestamp_to_ordinal(s.end_time)
             scen.time_step            = s.time_step
-            net_i.scenarios.append(scen)
 
             #extract the data from each resourcescenario
             datasets = []

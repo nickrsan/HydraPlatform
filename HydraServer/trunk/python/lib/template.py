@@ -14,7 +14,7 @@
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
 from db import DBSession
-from db.HydraAlchemy import Template, TemplateType, TypeAttr, Attr, Network, Node, Link, ResourceGroup, ResourceType
+from db.HydraAlchemy import Template, TemplateType, TypeAttr, Attr, Network, Node, Link, ResourceGroup, ResourceType, ResourceAttr
 from db import HydraAlchemy
 
 from HydraLib.HydraException import HydraError
@@ -151,9 +151,8 @@ def upload_template_xml(template_xml,**kwargs):
             
         else:
             type_i = TemplateType()
-            type_i.template_id = tmpl_i.template_id
             type_i.type_name = resource.find('name').text
-            DBSession.add(type_i)
+            tmpl_i.templatetypes.append(type_i)
 
         if resource.find('alias') is not None:
             type_i.alias = resource.find('alias').text
@@ -182,8 +181,14 @@ def upload_template_xml(template_xml,**kwargs):
 
         for attr_to_delete in attrs_to_delete:
             attr_id, type_id = attr_name_map[attr_to_delete]
-            attr_i = DBSession.query(TypeAttr).filter(TypeAttr.attr_id==attr_id, TypeAttr.type_id==type_id).one()
-            DBSession.delete(attr_i)
+            try:
+                attr_i = DBSession.query(TypeAttr).filter(TypeAttr.attr_id==attr_id, TypeAttr.type_id==type_id).one()
+                DBSession.delete(attr_i)
+                logging.info("Attr %s in type %s deleted",attr_id, type_id)
+            except NoResultFound:
+                logging.debug("Attr %s not found in type %s"%(attr_id, type_id))
+                continue
+
 
         #Add or update type typeattrs
         for attribute in resource.findall('attribute'):
@@ -355,25 +360,36 @@ def assign_types_to_resources(resource_types,**kwargs):
         ref_id = resource_type.ref_id
         type_id = resource_type.type_id
         if types.get(resource_type.type_id) is None:
-            t = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).all()
+            t = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).one()
             types[resource_type.type_id] = t
+    res_types = []
+    res_attrs = []
     for resource_type in resource_types:
         ref_id  = resource_type.ref_id
         ref_key = resource_type.ref_key
         type_id = resource_type.type_id
         if resource_type.ref_key == 'NETWORK':
-            resource = DBSession.query(Network).filter(Network.network_id==ref_id).all()
+            resource = DBSession.query(Network).filter(Network.network_id==ref_id).one()
         elif resource_type.ref_key == 'NODE':
-            resource = DBSession.query(Node).filter(Node.node_id==ref_id).all()
+            resource = DBSession.query(Node).filter(Node.node_id==ref_id).one()
         elif resource_type.ref_key == 'LINK':
-            resource = DBSession.query(Link).filter(Link.link_id==ref_id).all()
+            resource = DBSession.query(Link).filter(Link.link_id==ref_id).one()
         elif resource_type.ref_key == 'GROUP':
-            resource = DBSession.query(ResourceGroup).filter(ResourceGroup.resourcegroup_id==ref_id).all()
+            resource = DBSession.query(ResourceGroup).filter(ResourceGroup.resourcegroup_id==ref_id).one()
         resource.ref_key = ref_key
         resource.ref_id  = ref_id
+        
 
-        set_type(resource, type_id, types)
-    DBSession.flush()
+        ra, rt = set_resource_type(resource, type_id, types)
+        res_types.append(rt)
+        res_attrs.extend(ra)
+    DBSession.execute(ResourceType.__table__.insert(), res_types)
+    DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
+    resource.attributes
+
+    #Make DBsession 'dirty' to pick up the inserts by doing a fake delete. 
+    DBSession.query(Attr).filter(Attr.attr_id==None).delete()
+
     ret_val = [t for t in types.values()]
     return ret_val
 
@@ -393,8 +409,14 @@ def assign_type_to_resource(type_id, resource_type, resource_id,**kwargs):
         resource = DBSession.query(Link).filter(Link.link_id==resource_id).one()
     elif resource_type == 'GROUP':
         resource = DBSession.query(ResourceGroup).filter(ResourceGroup.resourcegroup_id==resource_id).one()
-    set_resource_type(resource, type_id, **kwargs)
-    DBSession.flush() 
+    res_attrs, resource_type = set_resource_type(resource, type_id, **kwargs)
+    DBSession.execute(ResourceType.__table__.insert(), [resource_type])
+    DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
+
+    #Make DBsession 'dirty' to pick up the inserts by doing a fake delete. 
+    DBSession.query(Attr).filter(Attr.attr_id==None).delete()
+
+    return DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).one()
 
 def set_resource_type(resource, type_id, types={}, **kwargs):
     """
@@ -408,6 +430,9 @@ def set_resource_type(resource, type_id, types={}, **kwargs):
         @returns list of new resource attributes
         ,new resource type object
     """
+
+    ref_key = resource.ref_key
+
     existing_attr_ids = []
     for attr in resource.attributes:
         existing_attr_ids.append(attr.attr_id)
@@ -427,16 +452,27 @@ def set_resource_type(resource, type_id, types={}, **kwargs):
     # add attributes if necessary
     new_res_attrs = []
     for attr_id in missing_attr_ids:
-        ra_i = resource.add_attribute(attr_id,
-                                        attr_is_var=type_attrs[attr_id])
-        new_res_attrs.append(ra_i)
+        ra_dict = dict(
+            ref_key = ref_key,
+            attr_id = attr_id,
+            attr_is_var = type_attrs[attr_id],
+            node_id    = resource.node_id    if ref_key == 'NODE' else None,
+            link_id    = resource.link_id    if ref_key == 'LINK' else None,
+            group_id   = resource.group_id   if ref_key == 'GROUP' else None,
+            network_id = resource.network_id if ref_key == 'NETWORK' else None,
+
+        )
+        new_res_attrs.append(ra_dict)
 
     # add type to tResourceType if it doesn't exist already
-    resource_type = ResourceType()
-    resource_type.ref_key = resource.ref_key
-    resource_type.type_id = type_id
-    resource_type.templatetype = type_i
-    resource.types.append(resource_type)
+    resource_type = dict(
+        node_id    = resource.node_id    if ref_key == 'NODE' else None,
+        link_id    = resource.link_id    if ref_key == 'LINK' else None,
+        group_id   = resource.group_id   if ref_key == 'GROUP' else None,
+        network_id = resource.network_id if ref_key == 'NETWORK' else None,
+        ref_key    = ref_key,
+        type_id    = type_id,
+    )
 
     return new_res_attrs, resource_type
 

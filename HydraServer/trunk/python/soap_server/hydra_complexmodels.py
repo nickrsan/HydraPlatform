@@ -860,7 +860,7 @@ class NetworkSummary(ComplexModel):
         ('scenario_ids',        SpyneArray(Integer, default=None)),
         ('links',               SpyneArray(Link, default=None)),
         ('nodes',               SpyneArray(Node, default=None)),
-        ('groups',              SpyneArray(ResourceGroup, default=None)),
+        ('resourcegroups',      SpyneArray(ResourceGroup, default=None)),
     ]
 
     def __init__(self, parent=None):
@@ -881,7 +881,7 @@ class NetworkSummary(ComplexModel):
             self.scenario_ids.append(s.scenario_id)
         self.links = [Link(l, True) for l in parent.links]
         self.nodes = [Node(n, True) for n in parent.nodes]
-        self.groups = [ResourceGroup(g, True) for g in parent.resourcegroups]
+        self.resourcegroups = [ResourceGroup(g, True) for g in parent.resourcegroups]
 
 class NetworkExtents(Resource):
     _type_info = [
