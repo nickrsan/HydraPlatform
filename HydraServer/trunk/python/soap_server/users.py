@@ -19,7 +19,8 @@ from spyne.decorator import rpc
 from hydra_complexmodels import User,\
         Role,\
         Perm,\
-        get_as_complexmodel
+        RolePerm,\
+        RoleUser
 
 from hydra_base import HydraService
 from lib import users
@@ -49,7 +50,7 @@ class UserService(HydraService):
         #u.__dict__ = user_i.__dict__
         #return u
         
-        return get_as_complexmodel(ctx, user_i)
+        return User(user_i)
 
     @rpc(User, _returns=User)
     def update_user_display_name(ctx, user):
@@ -58,7 +59,7 @@ class UserService(HydraService):
         """
         user_i = users.update_user_display_name(user, **ctx.in_header.__dict__)
 
-        return get_as_complexmodel(ctx, user_i)
+        return User(user_i)
 
 
     @rpc(Integer, Unicode, _returns=User)
@@ -70,7 +71,7 @@ class UserService(HydraService):
                                             new_password,
                                             **ctx.in_header.__dict__)
 
-        return get_as_complexmodel(ctx, user_i)
+        return User(user_i)
 
     @rpc(Unicode, _returns=User)
     def get_user_by_name(ctx, username):
@@ -79,7 +80,7 @@ class UserService(HydraService):
         """
         user_i = users.get_user_by_name(username, **ctx.in_header.__dict__)
         if user_i:
-            return get_as_complexmodel(ctx, user_i)
+            return User(user_i)
         
         return None
 
@@ -99,7 +100,7 @@ class UserService(HydraService):
             Add a new role.
         """
         role_i = users.add_role(role, **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, role_i)
+        return Role(role_i)
 
     @rpc(Integer, _returns=Unicode)
     def delete_role(ctx, role_id):
@@ -116,7 +117,7 @@ class UserService(HydraService):
             Add a new permission
         """
         perm_i = users.add_perm(perm, **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, perm_i)
+        return Perm(perm_i)
 
     @rpc(Integer, _returns=Unicode)
     def delete_perm(ctx, perm_id):
@@ -133,7 +134,7 @@ class UserService(HydraService):
                                      role_id,
                                      **ctx.in_header.__dict__)
 
-        return get_as_complexmodel(ctx, role_i)
+        return RoleUser(role_i)
 
     @rpc(Integer, Integer, _returns=Unicode)
     def delete_user_role(ctx, user_id, role_id):
@@ -146,7 +147,7 @@ class UserService(HydraService):
         role_i = users.set_role_perm(role_id,
                                      perm_id,
                                      **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, role_i)
+        return RolePerm(role_i)
 
     @rpc(Integer, Integer, _returns=Unicode)
     def delete_role_perm(ctx, role_id, perm_id):
@@ -162,7 +163,7 @@ class UserService(HydraService):
             Used to add permissions and users to a role.
         """
         role_i = users.update_role(role, **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, role_i)
+        return Role(role_i)
 
             
     @rpc(_returns=SpyneArray(User))
@@ -172,7 +173,7 @@ class UserService(HydraService):
         """
 
         all_user_dicts = users.get_all_users(**ctx.in_header.__dict__)
-        all_user_cms = [get_as_complexmodel(ctx, u) for u in all_user_dicts]
+        all_user_cms = [User(u) for u in all_user_dicts]
         return all_user_cms
 
     @rpc(_returns=SpyneArray(Perm))
@@ -181,7 +182,7 @@ class UserService(HydraService):
             Get all permissions
         """
         all_perm_dicts = users.get_all_perms(**ctx.in_header.__dict__)
-        all_perm_cms = [get_as_complexmodel(ctx, p) for p in all_perm_dicts]
+        all_perm_cms = [Perm(p) for p in all_perm_dicts]
         return all_perm_cms
 
     @rpc(_returns=SpyneArray(Role))
@@ -190,7 +191,7 @@ class UserService(HydraService):
             Get all roles
         """
         all_role_dicts = users.get_all_roles(**ctx.in_header.__dict__)
-        all_role_cms   = [get_as_complexmodel(ctx, r) for r in all_role_dicts]
+        all_role_cms   = [Role(r) for r in all_role_dicts]
         return all_role_cms
 
     @rpc(Integer, _returns=Role)
@@ -199,7 +200,7 @@ class UserService(HydraService):
             Get a role by its ID.
         """
         role_i = users.get_role(role_id, **ctx.in_header.__dict__)        
-        return get_as_complexmodel(ctx, role_i)
+        return Role(role_i)
 
 
     @rpc(Unicode, _returns=Role)
@@ -209,7 +210,7 @@ class UserService(HydraService):
         """
         role_i = users.get_role_by_code(role_code, **ctx.in_header.__dict__)
 
-        return get_as_complexmodel(ctx, role_i)
+        return Role(role_i)
 
 
     @rpc(Integer, _returns=Perm)
@@ -218,7 +219,7 @@ class UserService(HydraService):
             Get all permissions
         """
         perm = users.get_perm(perm_id, **ctx.in_header.__dict__)
-        perm_cm = get_as_complexmodel(ctx, perm)
+        perm_cm = Perm(perm)
         return perm_cm
 
     @rpc(Unicode, _returns=Perm)
@@ -227,5 +228,5 @@ class UserService(HydraService):
             Get a permission by its code 
         """
         perm = users.get_perm_by_code(perm_code, **ctx.in_header.__dict__)
-        perm_cm = get_as_complexmodel(ctx, perm)
+        perm_cm = Perm(perm)
         return perm_cm

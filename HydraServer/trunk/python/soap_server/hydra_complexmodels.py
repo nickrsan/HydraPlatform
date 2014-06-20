@@ -81,94 +81,6 @@ def get_as_complexmodel(ctx, obj, **kwargs):
 
     return cm
 
-def parse_value(data):
-    """
-        Turn a complex model object into a hydraiface - friendly value.
-    """
-
-    data_type = data.type
-
-    if data.value is None:
-        log.warn("Cannot parse dataset. No value specified.")
-        return None
-
-    #attr_data.value is a dictionary,
-    #but the keys have namespaces which must be stripped.
-    val_names = data.value.keys()
-    value = []
-    for name in val_names:
-        value.append(data.value[name])
-
-    if data_type == 'descriptor':
-        return value[0][0]
-    elif data_type == 'timeseries':
-        # The brand new way to parse time series data:
-        ts = []
-        for ts_val in value[0]:
-            #The value is a list, so must get index 0
-            timestamp = ts_val['{%s}ts_time'%NS][0]
-            # Check if we have received a seasonal time series first
-            ordinal_ts_time = timestamp_to_ordinal(timestamp)
-            arr_data = ts_val['{%s}ts_value'%NS][0]
-            if type(arr_data) is odict:
-                try:
-                    ts_value = eval(arr_data)
-                except:
-                    ts_value = parse_array(arr_data)
-            else:
-                try:
-                    ts_value = float(arr_data)
-                except:
-                    ts_value = arr_data
-
-            ts.append((ordinal_ts_time, ts_value))
-
-        return ts
-    elif data_type == 'eqtimeseries':
-        start_time = data.value['{%s}start_time'%NS][0]
-        start_time = timestamp_to_ordinal(start_time) 
-        frequency  = data.value['{%s}frequency'%NS][0]
-        arr_data   = data.value['{%s}arr_data'%NS][0]
-        try:
-            val = eval(arr_data)
-        except:
-            val = parse_array(arr_data)
-
-        arr_data   = val
-
-        return (start_time, frequency, arr_data)
-    elif data_type == 'scalar':
-        return value[0][0]
-    elif data_type == 'array':
-        arr_data   = data.value['{%s}arr_data'%NS][0]
-
-        try:
-            val = eval(arr_data)
-        except:
-            val = parse_array(arr_data)
-        return val
-
-def parse_array(arr):
-    """
-        Take a list of nested dictionaries and return a python list containing
-        a single value, a string or sub lists.
-    """
-    ret_arr = []
-    sub_arr = arr.get('{%s}array'%NS, None)
-    for val in sub_arr:
-        sub_arr = val.get('{%s}array'%NS, None)
-        if sub_arr is not None:
-            ret_arr.append(parse_array(val))
-            continue
-
-        actual_vals = val.get('{%s}item'%NS)
-        for v in actual_vals:
-            try:
-                ret_arr.append(float(v))
-            except:
-                ret_arr.append(v)
-    return ret_arr
-
 def create_dict(arr_data):
     arr_data = array(arr_data)
 
@@ -249,7 +161,7 @@ class Dataset(HydraComplexModel):
         ('name',             String(min_occurs=1, default=None)),
         ('value',            AnyDict(min_occurs=1, default=None)),
         ('locked',           String(min_occurs=1, default='N', pattern="[YN]")),
-        ('metadata',         SpyneArray(Metadata, default=[])),
+        ('metadata',         SpyneArray(Metadata, default=None)),
     ]
 
     def __init__(self, parent=None):
@@ -264,18 +176,20 @@ class Dataset(HydraComplexModel):
 
         self.dimension = parent.data_dimen
         self.unit      = parent.data_units
-        
-        if parent.data_type == 'descriptor':
-            self.value = Descriptor(parent.value)
-        elif parent.data_type == 'array':
-            self.value = Array(parent.value)
-        elif parent.data_type == 'scalar':
-            self.value = Scalar(parent.value)
-        elif parent.data_type == 'eqtimeseries':
-            self.value = EqTimeSeries(parent.start_time, parent.frequency, parent.value)
-        else:
+        if parent.value is not None: 
+            if parent.data_type == 'descriptor':
+                self.value = Descriptor(parent.value)
+            elif parent.data_type == 'array':
+                self.value = Array(parent.value)
+            elif parent.data_type == 'scalar':
+                self.value = Scalar(parent.value)
+            elif parent.data_type == 'eqtimeseries':
+                self.value = EqTimeSeries(parent.start_time, parent.frequency, parent.value)
+        if parent.timeseriesdata and len(parent.timeseriesdata) > 0:
             self.value = TimeSeries(parent.timeseriesdata)
-        self.value = self.value.__dict__
+        
+        if self.value:
+            self.value = self.value.__dict__
         
         metadata = []
         for m in parent.metadata:
@@ -287,20 +201,21 @@ class Dataset(HydraComplexModel):
         """
             Turn a complex model object into a  - friendly value.
         """
+
         data = self.value
 
-        data_type = self.value.type
-
-        if self.value.value is None:
+        if data is None:
             log.warn("Cannot parse dataset. No value specified.")
             return None
+        
+        data_type = self.type
 
         #attr_data.value is a dictionary,
         #but the keys have namespaces which must be stripped.
-        val_names = data.value.keys()
+        val_names = data.keys()
         value = []
         for name in val_names:
-            value.append(data.value[name])
+            value.append(data[name])
 
         if data_type == 'descriptor':
             return value[0][0]
@@ -329,10 +244,10 @@ class Dataset(HydraComplexModel):
 
             return ts
         elif data_type == 'eqtimeseries':
-            start_time = data.value['{%s}start_time'%NS][0]
+            start_time = data['{%s}start_time'%NS][0]
             start_time = timestamp_to_ordinal(start_time) 
-            frequency  = data.value['{%s}frequency'%NS][0]
-            arr_data   = data.value['{%s}arr_data'%NS][0]
+            frequency  = data['{%s}frequency'%NS][0]
+            arr_data   = data['{%s}arr_data'%NS][0]
             try:
                 val = eval(arr_data)
             except:
@@ -344,7 +259,7 @@ class Dataset(HydraComplexModel):
         elif data_type == 'scalar':
             return value[0][0]
         elif data_type == 'array':
-            arr_data   = data.value['{%s}arr_data'%NS][0]
+            arr_data   = data['{%s}arr_data'%NS][0]
 
             try:
                 val = eval(arr_data)
@@ -374,6 +289,32 @@ class Dataset(HydraComplexModel):
                     ret_arr.append(v)
         return ret_arr
 
+    def get_metadata_as_dict(self):
+        
+        if self.metadata is None:
+            return {}
+        
+        metadata_dict = {}
+        for m in self.metadata:
+            metadata_dict[m.name] = m.value
+        return metadata_dict
+
+    def get_hash(self):
+        
+        metadata = self.get_metadata_as_dict()
+        
+        val = self.parse_value()
+
+        hash_string = "%s %s %s %s %s, %s"%(self.name,
+                                       self.unit,
+                                       self.dimension,
+                                       self.type,
+                                       str(val),
+                                       metadata)
+        data_hash  = hash(hash_string)
+
+        self.data_hash = data_hash
+        return data_hash
 
 class Descriptor(HydraComplexModel):
     _type_info = [
@@ -501,7 +442,7 @@ class DatasetGroup(HydraComplexModel):
             return
         self.group_name = parent.group_name
         self.group_id   = parent.group_id
-        self.datasetgroupitems = [DatasetGroupItem(d) for d in parent.datasetgroupitems]
+        self.datasetgroupitems = [DatasetGroupItem(d) for d in parent.items]
 
 class Attr(HydraComplexModel):
     _type_info = [
@@ -826,7 +767,7 @@ class ResourceGroupDiff(HydraComplexModel):
     ]
 
     def __init__(self, parent=None):
-        super(ResourceGroupDiff, self).__init__(parent)
+        super(ResourceGroupDiff, self).__init__()
 
         if parent is None:
             return
@@ -844,14 +785,15 @@ class ResourceScenarioDiff(HydraComplexModel):
     ]
 
     def __init__(self, parent=None):
-        super(ResourceScenarioDiff, self).__init__(parent)
+        super(ResourceScenarioDiff, self).__init__()
 
         if parent is None:
             return
 
-        self.resource_attr_id = parent.resource_attr_id
-        self.scenario_1_dataset = parent['scenario_1_dataset']
-        self.scenario_2_dataset = parent['scenario_2_dataset']
+        self.resource_attr_id   = parent['resource_attr_id']
+
+        self.scenario_1_dataset = Dataset(parent['scenario_1_dataset'])
+        self.scenario_2_dataset = Dataset(parent['scenario_2_dataset'])
 
 class ScenarioDiff(HydraComplexModel):
     _type_info = [
@@ -860,13 +802,13 @@ class ScenarioDiff(HydraComplexModel):
     ]
 
     def __init__(self, parent=None):
-        super(ScenarioDiff, self).__init__(parent)
+        super(ScenarioDiff, self).__init__()
 
         if parent is None:
             return
         
         self.resourcescenarios = [ResourceScenarioDiff(rd) for rd in parent['resourcescenarios']]
-        self.groups = [ResourceGroupDiff(rg) for rg in parent['groups']]
+        self.groups = ResourceGroupDiff(parent['groups'])
 
 class Network(Resource):
     _type_info = [

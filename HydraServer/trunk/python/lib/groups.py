@@ -31,7 +31,8 @@ def _get_group(group_id):
 
 def _get_item(item_id):
     try:
-        DBSession.query(ResourceGroupItem).filter(ResourceGroupItem.item_id==item_id).one()
+        item = DBSession.query(ResourceGroupItem).filter(ResourceGroupItem.item_id==item_id).one()
+        return item
     except NoResultFound:
         raise ResourceNotFoundError("ResourceGroupItem %s not found"%(item_id,))
 
@@ -110,5 +111,6 @@ def delete_resourcegroupitem(item_id,**kwargs):
     group_item_i = _get_item(item_id) 
     scenario._check_can_edit_scenario(group_item_i.scenario_id, kwargs['user_id'])
     DBSession.delete(group_item_i)
+    DBSession.flush()
    
     return 'OK'

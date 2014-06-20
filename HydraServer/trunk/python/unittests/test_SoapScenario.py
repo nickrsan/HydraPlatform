@@ -242,7 +242,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
        
         assert len(network.scenarios.Scenario) == 1, "The network should have only one scenario!"
 
-        self.create_constraint(network)
+        #self.create_constraint(network)
         
         network = self.client.service.get_network(network.id)
 

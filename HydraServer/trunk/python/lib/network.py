@@ -21,11 +21,13 @@ import data
 
 from util.permissions import check_perm
 import template
-from db.HydraAlchemy import Project, Network, Scenario, Node, Link, ResourceGroup, ResourceAttr, ResourceType, ResourceGroupItem, Dataset, DatasetOwner, ResourceScenario
-from sqlalchemy.orm import noload, joinedload, contains_eager
+from db.HydraAlchemy import Project, Network, Scenario, Node, Link, ResourceGroup, ResourceAttr, ResourceType, ResourceGroupItem, Dataset, TimeSeriesData, Metadata, DatasetOwner, ResourceScenario
+from sqlalchemy.orm import noload, joinedload, joinedload_all, contains_eager
 from sqlalchemy.sql import exists
 from db import DBSession
 from sqlalchemy import func, or_, and_
+from sqlalchemy.sql.expression import case
+from sqlalchemy import null
 from sqlalchemy.orm.exc import NoResultFound
 from HydraLib.util import timestamp_to_ordinal
 
@@ -328,7 +330,7 @@ def add_network(network,**kwargs):
                 scenario_resource_attrs.append(ra)
 
             data_start_time = datetime.datetime.now()
-            datasets = data.bulk_insert_data(datasets, user_id)
+            datasets = data._bulk_insert_data(datasets, user_id)
             log.info("Data bulk insert took %s", get_timing(data_start_time))
             for i, ra in enumerate(scenario_resource_attrs):
                 scen.add_resource_scenario(ra, datasets[i])
@@ -369,17 +371,18 @@ def get_network(network_id, include_data='N', scenario_ids=None,**kwargs):
     log.debug("getting network %s"%network_id)
     user_id = kwargs.get('user_id')
     try:
-        qry = DBSession.query(Network).filter(Network.network_id == network_id).options(noload('scenarios'))
+        qry = DBSession.query(Network).filter(Network.network_id == network_id).\
+        options(noload('scenarios')).\
+        options(joinedload_all('nodes.attributes')).options(joinedload_all('nodes.types.templatetype.template')).\
+        options(joinedload_all('links.attributes')).options(joinedload_all('links.types.templatetype.template')).\
+        options(joinedload_all('resourcegroups.attributes')).options(joinedload_all('resourcegroups.types.templatetype.template')).\
+        options(joinedload('attributes')).options(joinedload_all('types.templatetype.template'))
         net_i = qry.one()
          
-        scen_qry = DBSession.query(Scenario).filter(Scenario.network_id == net_i.network_id)
+        scen_qry = DBSession.query(Scenario).filter(Scenario.network_id == net_i.network_id).options(joinedload(Scenario.resourcescenarios)).options(noload('resourcescenarios.dataset')).options(joinedload('resourcegroupitems'))
         if scenario_ids:
             logging.info("Filtering by scenario_ids %s",scenario_ids)
-            scen_qry = scen_qry.join(Network.scenarios).filter(Scenario.scenario_id.in_(scenario_ids))
-
-        if include_data == 'N':
-            logging.info("Not returning data")
-            scen_qry = scen_qry.options(noload('resourcescenarios'))
+            scen_qry = scen_qry.join(Network.scenarios).filter(Scenario.scenario_id.in_(scenario_ids)).options(noload('resourcescenarios').noload('dataset'))
 
         scens = scen_qry.all()
         net_i.scenarios = scens
@@ -388,25 +391,50 @@ def get_network(network_id, include_data='N', scenario_ids=None,**kwargs):
                                   network_id)
  
     net_i.check_read_permission(user_id)
-
-    disallowed_datasets = DBSession.query(Dataset.data_type,
-                                          Dataset.data_dimen,
-                                          Dataset.data_units,
-                                          Dataset.locked,
-                                          Dataset.data_name).outerjoin(DatasetOwner).filter(and_(DatasetOwner.user_id==user_id, DatasetOwner.view=='N')).all()
     
-    disallowed_dataset_dict = dict([(dataset.dataset_id, dataset) for dataset in disallowed_datasets])
+    scenario_ids = [s.scenario_id for s in net_i.scenarios]
 
-    all_resourcescenario_datasets = DBSession.query(Dataset).filter(Dataset.dataset_id==ResourceScenario.dataset_id, ResourceScenario.scenario_id == Scenario.scenario_id, Scenario.network_id == Network.network_id).all()
-    allowed_dataset_dict = dict([(dataset.dataset_id, dataset) for dataset in all_resourcescenario_datasets])
+#    datasets = DBSession.query(Dataset.dataset_id,
+#            Dataset.data_type,
+#            Dataset.data_units,
+#            Dataset.data_dimen,
+#            Dataset.data_name,
+#            Dataset.locked,
+#            DatasetOwner.user_id,
+#            null().label('timeseriesdata'),
+#            null().label('metadata'),
+#            case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+#                    else_=Dataset.start_time).label('start_time'),
+#            case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+#                    else_=Dataset.frequency).label('frequency'),
+#            case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+#                    else_=Dataset.value).label('value')).join(ResourceScenario, ResourceScenario.dataset_id==Dataset.dataset_id).outerjoin(DatasetOwner, 
+#                                and_(DatasetOwner.dataset_id==Dataset.dataset_id, 
+#                                DatasetOwner.user_id==user_id)).filter(ResourceScenario.scenario_id.in_(scenario_ids)).all()
+#
+    datasets = DBSession.query(Dataset).join(ResourceScenario, ResourceScenario.dataset_id==Dataset.dataset_id).outerjoin(DatasetOwner, 
+                                and_(DatasetOwner.dataset_id==Dataset.dataset_id, 
+                                DatasetOwner.user_id==user_id)).filter(ResourceScenario.scenario_id.in_(scenario_ids)).all()
+
+    dataset_dict = {}
+    for dataset in datasets:
+        if dataset.locked == 'N' or (dataset.locked == 'Y' and dataset.check_user(user_id)):
+            tsdata = DBSession.query(TimeSeriesData).filter(TimeSeriesData.dataset_id==dataset.dataset_id).all()
+            metadata = DBSession.query(Metadata).filter(Metadata.dataset_id==dataset.dataset_id).all()
+            dataset.timeseriesdata = tsdata
+            dataset.metadata = metadata
+        else:
+            dataset.value = None
+            dataset.start_time = None
+            dataset.frequency = None
+            dataset.timeseriesdata = []
+            dataset.metadata = []
+        dataset_dict[dataset.dataset_id] = dataset
 
     for s in net_i.scenarios:
         for rs in s.resourcescenarios:
-            if rs.dataset_id in disallowed_dataset_dict.keys():
-                rs.dataset = disallowed_dataset_dict[rs.dataset_id]
-            else:
-                rs.dataset = allowed_dataset_dict[rs.dataset_id]
-
+            rs.dataset = dataset_dict[rs.dataset_id]
+    DBSession.expunge_all()
     return net_i
 
 

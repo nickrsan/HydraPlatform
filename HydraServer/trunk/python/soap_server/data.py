@@ -23,9 +23,7 @@ from hydra_complexmodels import Descriptor,\
         Array as HydraArray,\
         Dataset,\
         Scenario,\
-        DatasetGroup,\
-        get_as_complexmodel,\
-        parse_value
+        DatasetGroup
 
 from lib import data
 
@@ -37,34 +35,43 @@ class DataService(HydraService):
         The data SOAP service
     """
 
+    @rpc(Integer, _returns=Dataset)
+    def get_dataset(ctx, dataset_id):
+        """
+            Get a single dataset, by ID
+        """
+        dataset_i = data.get_dataset(dataset_id, **ctx.in_header.__dict__)
+        return Dataset(dataset_i)
+
+
     @rpc(SpyneArray(Dataset), _returns=SpyneArray(Integer))
     def bulk_insert_data(ctx, bulk_data):
         """
             Insert sereral pieces of data at once.
         """
-        datasets = data.bulk_insert_data(bulk_data, user_id=ctx.in_header.user_id)
+        datasets = data.bulk_insert_data(bulk_data, **ctx.in_header.__dict__)
 
-        return [d.db.dataset_id for d in datasets]
+        return [d.dataset_id for d in datasets]
 
 
     @rpc(Integer, _returns=SpyneArray(Scenario))
     def get_dataset_scenarios(ctx, dataset_id):
 
         dataset_scenarios = data.get_dataset_scenarios(dataset_id, **ctx.in_header.__dict__)
-        return [get_as_complexmodel(ctx,s) for s in dataset_scenarios]
+        return [Scenario(s) for s in dataset_scenarios]
 
     @rpc(Unicode, _returns=DatasetGroup)
     def get_dataset_group(ctx, group_name):
 
         dataset_grp_i = data.get_dataset_group(group_name, **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx,dataset_grp_i)
+        return DatasetGroup(dataset_grp_i)
 
     @rpc(DatasetGroup, _returns=DatasetGroup)
     def add_dataset_group(ctx, group):
 
         dataset_grp_i = data.add_dataset_group(group, **ctx.in_header.__dict__)
 
-        new_grp = get_as_complexmodel(ctx,dataset_grp_i)
+        new_grp = DatasetGroup(dataset_grp_i)
         return new_grp
 
     @rpc(Unicode, _returns=SpyneArray(DatasetGroup))
@@ -93,15 +100,16 @@ class DataService(HydraService):
             Update a piece of data directly, rather than through a resource
             scenario.
         """
-        val = parse_value(dataset)
+        val = dataset.parse_value()
 
         updated_dataset = data.update_dataset(dataset.id,
-                    dataset.name,
-                    dataset.data_type,
-                    val,
-                    dataset.units,
-                    dataset.metadata,
-                    **ctx.in_header.__dict__)
+                                        dataset.name,
+                                        dataset.type,
+                                        val,
+                                        dataset.unit,
+                                        dataset.dimension,
+                                        dataset.metadata,
+                                        **ctx.in_header.__dict__)
 
         return Dataset(updated_dataset)
 

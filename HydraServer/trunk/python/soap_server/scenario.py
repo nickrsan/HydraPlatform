@@ -118,24 +118,16 @@ class ScenarioService(HydraService):
                                          **ctx.in_header.__dict__)
         return success
 
-    @rpc(Integer, _returns=Dataset)
-    def get_dataset(ctx, dataset_id):
-        """
-            Get a single dataset, by ID
-        """
-        dataset_i = scenario.get_dataset(dataset_id, **ctx.in_header.__dict__)
-        return Dataset(dataset_i)
-
     @rpc(Integer, Integer, Dataset, _returns=ResourceScenario)
     def add_data_to_attribute(ctx, scenario_id, resource_attr_id, dataset):
         """
                 Add data to a resource scenario outside of a network update
         """
-        new_data = scenario.add_data_to_attribute(scenario_id,
+        new_rs = scenario.add_data_to_attribute(scenario_id,
                                                   resource_attr_id,
                                                   dataset,
                                                   **ctx.in_header.__dict__)
-        x = Dataset(new_data)
+        x = ResourceScenario(new_rs)
         return x
 
     @rpc(Integer, _returns=SpyneArray(Dataset))

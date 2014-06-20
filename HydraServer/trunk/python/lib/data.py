@@ -18,12 +18,15 @@ import sys
 from HydraLib.util import timestamp_to_ordinal, get_datetime
 from HydraLib import units
 import logging
-from db.HydraAlchemy import Dataset, DatasetGroup, DatasetGroupItem
+from db.HydraAlchemy import Dataset, Metadata, TimeSeriesData, DatasetOwner, DatasetGroup, DatasetGroupItem
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.sql.expression import case
+from sqlalchemy import null
 from db import DBSession
 
 from numpy import array
 from HydraLib.HydraException import HydraError, ResourceNotFoundError
+from sqlalchemy import and_
 
 from decimal import Decimal
 global FORMAT
@@ -49,6 +52,48 @@ def create_dict(arr_data):
             arr['array'].append(val)
 
         return arr
+
+def get_dataset(dataset_id,**kwargs):
+    """
+        Get a single dataset, by ID
+    """
+
+    user_id = int(kwargs.get('user_id'))
+
+    if dataset_id is None:
+        return None
+    try:
+        dataset = DBSession.query(Dataset.dataset_id,
+                Dataset.data_type,
+                Dataset.data_units,
+                Dataset.data_dimen,
+                Dataset.data_name,
+                Dataset.locked,
+                DatasetOwner.user_id,
+                null().label('timeseriesdata'),
+                null().label('metadata'),
+                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                        else_=Dataset.start_time).label('start_time'),
+                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                        else_=Dataset.frequency).label('frequency'),
+                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                        else_=Dataset.value).label('value')).filter(
+                Dataset.dataset_id==dataset_id).outerjoin(DatasetOwner, 
+                                    and_(DatasetOwner.dataset_id==Dataset.dataset_id, 
+                                    DatasetOwner.user_id==user_id)).one()
+
+        if dataset.data_type == 'timeseries' and (dataset.locked == 'N' or (Dataset.locked == 'Y' and dataset.user_id is not None)):
+            tsdata = DBSession.query(TimeSeriesData).filter(TimeSeriesData.datset_id==dataset_id).all()
+            metadata = DBSession.query(Metadata).filter(Metadata.dataset_id==dataset_id).all()
+            dataset.timeseriesdata = tsdata
+            dataset.metadata = metadata
+        else:
+            dataset.timeseriesdata = []
+            dataset.metadata = []
+    except NoResultFound:
+        raise HydraError("Dataset %s does not exist."%(dataset_id))
+
+    return dataset 
 
 def update_dataset(dataset_id, name, data_type, val, units, dimension, metadata={}, **kwargs):
     """
@@ -79,9 +124,7 @@ def update_dataset(dataset_id, name, data_type, val, units, dimension, metadata=
                                 dimension,
                                 metadata=metadata,
                                 name=name,
-                                dataset_id=None,
                                 user_id=kwargs['user_id'])
-
         for unlocked_rs in unlocked_scenarios:
             unlocked_rs.dataset = dataset
 
@@ -97,6 +140,7 @@ def update_dataset(dataset_id, name, data_type, val, units, dimension, metadata=
         dataset.data_dimen = dimension
         dataset.created_by = kwargs['user_id']
         dataset.data_hash  = dataset.set_hash(val)
+
     return dataset
 
     
@@ -128,7 +172,12 @@ def add_dataset(data_type, val, units, dimension, metadata={}, name="", user_id=
         DBSession.add(d)
         return d
 
-def bulk_insert_data(bulk_data, user_id=None):
+def bulk_insert_data(data, **kwargs):
+    datasets = _bulk_insert_data(data, user_id=kwargs.get('user_id'))
+    DBSession.flush()
+    return datasets
+
+def _bulk_insert_data(bulk_data, user_id=None):
     """
         Insert lots of datasets at once to reduce the number of DB interactions.
     """
@@ -259,7 +308,8 @@ def add_dataset_group(group,**kwargs):
 
     for item in group.datasetgroupitems:
         datasetitem = DatasetGroupItem(dataset_id=item.dataset_id)
-        grp_i.datasetitems.append(datasetitem)
+        grp_i.items.append(datasetitem)
+    DBSession.add(grp_i)
     DBSession.flush()
     return grp_i
 
@@ -268,7 +318,7 @@ def get_groups_like_name(group_name,**kwargs):
         Get all the datasets from the group with the specified name
     """
     try:
-        groups = DBSession.query(DatasetGroup).filter(DatasetGroup.group_name.like(group_name.lower())).one()
+        groups = DBSession.query(DatasetGroup).filter(DatasetGroup.group_name.like("%%%s%%"%group_name.lower())).all()
     except NoResultFound:
         raise ResourceNotFoundError("No dataset group found with name %s"%group_name)
 
@@ -321,7 +371,7 @@ def get_vals_between_times(dataset_id, start_time, end_time, timestep,**kwargs):
     data_to_return = []
     if type(data) is list:
         for d in data:
-            data_to_return.append(create_dict(d))
+            data_to_return.append(create_dict(eval(d)))
     else:
         data_to_return.append(data)
 

@@ -14,15 +14,13 @@ from decimal import Decimal
 from HydraLib.HydraException import HydraError, ResourceNotFoundError, PermissionError, OwnershipError
 
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.exc import InvalidRequestError
-from sqlalchemy.orm.exc import NoResultFound
 
 from HydraLib.util import ordinal_to_timestamp
 
-from sqlalchemy import orm
-
 from db import DeclarativeBase as Base, DBSession
 
+from sqlalchemy.sql.expression import case
+from sqlalchemy import and_
 import logging
 log = logging.getLogger(__name__)
 
@@ -112,10 +110,9 @@ class Dataset(Base):
    
     start_time = Column(Numeric(precision=30, scale=20),  nullable=False)
     frequency = Column(Numeric(asdecimal=True),  nullable=False)
-    value = Column(LargeBinary(),  nullable=False)
+    value = Column('value', LargeBinary(),  nullable=False)
 
     useruser = relationship('User', backref=backref("datasets", order_by=dataset_id))
-   
 
     def set_metadata(self, metadata_dict):
         if metadata_dict is None:
@@ -132,7 +129,15 @@ class Dataset(Base):
                 m_i = Metadata(metadata_name=k,metadata_val=v)
                 self.metadata.append(m_i)
 
-    def get_val(self):
+    def get_val(self, timestamp=None):
+        """
+            If a timestamp is passed to this function, 
+            return the values appropriate to the requested times.
+
+            If the timestamp is *before* the start of the timeseries data, return None
+            If the timestamp is *after* the end of the timeseries data, return the last
+            value.
+        """
         if self.data_type == 'array':
             return list(self.value)
         elif self.data_type == 'descriptor':
@@ -142,7 +147,36 @@ class Dataset(Base):
         elif self.data_type == 'scalar':
             return Decimal(str(self.value))
         elif self.data_type == 'timeseries':
-            return self.timeseriesdata
+            if timestamp is None:
+                return self.timeseriesdata
+            else:
+                ts_val_dict = {}
+                for ts in self.timeseriesdata:
+                    ts_val_dict[ts.ts_time] = ts.ts_value
+                sorted_times = ts_val_dict.keys()
+                sorted_times.sort()
+                sorted_times.reverse()
+
+                if isinstance(timestamp, list):
+                    #return value will now be a list of actual values instead
+                    #of a list of tuples.
+                    val = []
+                    for t in timestamp:
+                        for time in sorted_times:
+                            if t >= time:
+                                val.append(ts_val_dict[time])
+                                break
+                        else:
+                            val.append(None)
+
+                else:
+                    for time in sorted_times:
+                        if timestamp >= time:
+                            val =  ts_val_dict[time]
+                            break
+                    else:
+                        val = None
+                return val
 
     def set_val(self, data_type, val):
         if data_type in ('descriptor','scalar','array'):
@@ -177,7 +211,6 @@ class Dataset(Base):
                                        str(val),
                                        metadata)
         data_hash  = hash(hash_string)
-        logging.warn(hash_string)
 
         self.data_hash = data_hash
         return data_hash
@@ -219,6 +252,17 @@ class Dataset(Base):
             raise PermissionError("Permission denied. User %s does not have read"
                              " access on dataset %s" %
                              (user_id, self.dataset_id))
+
+    def check_user(self, user_id):
+        """
+            Check whether this user can read this dataset 
+        """
+
+        for owner in self.owners:
+            if int(owner.user_id) == int(user_id):
+                if owner.view == 'Y':
+                    return True
+        return False
 
     def check_write_permission(self, user_id):
         """
@@ -799,20 +843,25 @@ class ResourceScenario(Base):
     scenario     = relationship('Scenario', backref=backref("resourcescenarios", order_by=resource_attr_id, lazy='joined'))
     resourceattr = relationship('ResourceAttr', lazy='joined')
 
-    def get_dataset(self, user_id=None):
 
-        if user_id is None:
-            return self.dataset
+    def get_dataset(self, user_id):
+        dataset = DBSession.query(Dataset.dataset_id,
+                Dataset.data_type,
+                Dataset.data_units,
+                Dataset.data_dimen,
+                Dataset.data_name,
+                Dataset.locked,
+                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                        else_=Dataset.start_time).label('start_time'),
+                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                        else_=Dataset.frequency).label('frequency'),
+                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                        else_=Dataset.value).label('value')).filter(
+                Dataset.dataset_id==self.dataset_id).outerjoin(DatasetOwner, 
+                                    and_(Dataset.dataset_id==DatasetOwner.dataset_id, 
+                                    DatasetOwner.user_id==user_id)).one()
 
-        try:
-            self.dataset.check_read_permission(user_id)
-        except PermissionError:
-               self.dataset.value      = None
-               self.dataset.frequency  = None
-               self.dataset.start_time = None
-               if self.dataset.data_type == 'timeseries':
-                   self.dataset.timeseriesdata = []
-        return self.dataset
+        return dataset
 
 class Scenario(Base):
 

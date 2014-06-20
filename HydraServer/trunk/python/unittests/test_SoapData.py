@@ -159,6 +159,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
 
         self.create_user("UserA")
         self.create_user("UserB")
+        self.create_user("UserC")
         
         #One client is for the 'root' user and must remain open so it
         #can be closed correctly in the tear down. 
@@ -169,7 +170,8 @@ class SharingTest(test_SoapServer.SoapServerTest):
         self.login("UserA", 'password')
         
         network_1 = self.create_network_with_data()
-
+        
+        network_1 = self.client.service.get_network(network_1.id)
         #Let User B view network 1, but not edit it (read_only is 'Y')
         self.client.service.share_network(network_1.id, ["UserB", "UserC"], 'N')
 
@@ -222,6 +224,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
                 assert d.value.value is not None
 
         updated_net = self.client.service.update_network(netA)
+        updated_net = self.client.service.get_network(netA.id)
         scenario = updated_net.scenarios.Scenario[0]
         #After updating the network, check that the new dataset
         #has been applied
@@ -311,6 +314,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
                 assert d.value.value is not None
 
         updated_net = self.client.service.update_network(netA)
+        updated_net = self.client.service.get_network(updated_net.id)
         scenario = updated_net.scenarios.Scenario[0]
         #After updating the network, check that the new dataset
         #has been applied
