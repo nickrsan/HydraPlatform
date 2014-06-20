@@ -1,3 +1,3 @@
 ECHO 'Starting server...'
-dist\server\server.exe
+dist\HydraServer\HydraServer.exe
 PAUSE

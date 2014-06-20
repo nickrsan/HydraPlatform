@@ -1,7 +1,7 @@
 # -*- mode: python -*-
 a = Analysis(['server.py'],
              pathex=['F:\\work\\HYDRA\\svn\\HYDRA\\HydraServer\\trunk'],
-             hiddenimports=['spyne.service', 'sqlalchemy', 'cherrypy'],
+             hiddenimports=['spyne.service', 'sqlalchemy', 'cherrypy', 'cherrypy.wsgiserver'],
              hookspath=None,
              runtime_hooks=None)
 
@@ -15,7 +15,7 @@ pyz = PYZ(a.pure)
 exe = EXE(pyz,
           a.scripts,
           exclude_binaries=True,
-          name='server.exe',
+          name='HydraServer.exe',
           debug=False,
           strip=None,
           upx=True,
@@ -26,4 +26,4 @@ coll = COLLECT(exe,
                a.datas,
                strip=None,
                upx=True,
-               name='server')
+               name='HydraServer')

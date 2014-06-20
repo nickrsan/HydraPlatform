@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -523,14 +523,14 @@ def assign_type_to_resource(type_id, resource_type, resource_id,**kwargs):
 
     return templatetype
 
-def remove_type_from_resource( type_id, resource_type, resource_id,**kwargs): 
-    """ 
-        Remove a resource type trom a resource 
-    """ 
-    resourcetype_i = HydraIface.ResourceType(type_id=type_id, ref_key=resource_type, ref_id = resource_id) 
-    resourcetype_i.delete() 
-    resourcetype_i.save() 
-     
+def remove_type_from_resource( type_id, resource_type, resource_id,**kwargs):
+    """
+        Remove a resource type trom a resource
+    """
+    resourcetype_i = HydraIface.ResourceType(type_id=type_id, ref_key=resource_type, ref_id = resource_id)
+    resourcetype_i.delete()
+    resourcetype_i.save()
+
 def add_template(template,**kwargs):
     """
         Add template and a type and typeattrs.
@@ -655,7 +655,7 @@ def get_templates(**kwargs):
     """
 
     rs = HydraIface.execute(sql)
-    
+
     template_ret_objs = []
 
     for r in rs:
@@ -668,7 +668,7 @@ def get_templates(**kwargs):
         }
         template_ret_objs.append(template)
 
-    return template_ret_objs 
+    return template_ret_objs
 
 def remove_attr_from_type(type_id, attr_id,**kwargs):
     """
