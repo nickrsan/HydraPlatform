@@ -1447,7 +1447,7 @@ if __name__ == '__main__':
 
             csv.commit()
             if csv.NetworkSummary['scenario_ids']:
-                scen_ids = [s['id'] for s in csv.NetworkSummary['scenario_ids']]
+                scen_ids = csv.NetworkSummary['scenario_ids']
             network_id = csv.NetworkSummary['id']
 
             if args.template is not None:

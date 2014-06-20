@@ -94,7 +94,6 @@ class TemplateService(HydraService):
 
         return ret_type 
 
-
     @rpc(Integer, Integer, _returns=Unicode)
     def apply_template_to_network(ctx, template_id, network_id):
         """

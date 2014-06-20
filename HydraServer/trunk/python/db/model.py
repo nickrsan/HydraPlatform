@@ -318,6 +318,7 @@ class TemplateType(Base):
     type_id = Column(Integer(), primary_key=True, nullable=False)
     type_name = Column(String(45),  nullable=False)
     template_id = Column(Integer(), ForeignKey('tTemplate.template_id'))
+    resource_type = Column(String(45))
     alias = Column(String(100))
     layout = Column(Text(1000))
     

@@ -158,7 +158,7 @@ class HydraServer():
     def __init__(self):
 
         logging.getLogger('spyne').setLevel(logging.INFO)
-        logging.getLogger('sqlalchemy').setLevel(logging.INFO)
+#        logging.getLogger('sqlalchemy').setLevel(logging.INFO)
         util.create_default_users_and_perms()
         util.create_default_net()
         make_root_user()

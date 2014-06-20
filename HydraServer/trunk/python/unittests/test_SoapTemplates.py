@@ -84,6 +84,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         #**********************
         type2 = self.client.factory.create('hyd:TemplateType')
         type2.name = "Test type 2"
+        type2.alias = "Test type 2 alias"
         type2.resource_type = 'LINK'
 
         tattrs = self.client.factory.create('hyd:TypeAttrArray')
@@ -204,7 +205,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         templatetype = self.client.factory.create('hyd:TemplateType')
         templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
         templatetype.alias = "%s alias" % templatetype.name
-        templatetype.resource_type='NODE'
+        templatetype.resource_type = 'LINK'
         layout = self.client.factory.create("xs:anyType")
         layout.color = 'red'
         layout.shapefile = 'blah.shp'
@@ -272,6 +273,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         new_type.name = "Updated type name @ %s"%(datetime.datetime.now())
         new_type.alias = templatetype.name + " alias"
+        new_type.resource_type = 'NODE'
 
         tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
@@ -538,6 +540,32 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         xmlschema.assertValid(xml_tree)
 
+    def test_apply_template_to_network(self):
+        network = self.create_network_with_data()
+        template = self.get_template()
+       
+        #Test the links as it's easier
+        for l in network.links.Link:
+            assert l.types is None
+
+        for n in network.nodes.Node:
+            assert len(n.types.TypeSummary) == 1
+            assert n.types.TypeSummary[0].name == 'Test type 1'
+
+        self.client.service.apply_template_to_network(template.id,
+                                                             network.id)
+
+        network = self.client.service.get_network(network.id)
+        
+        for l in network.links.Link:
+            assert l.types is not None
+            assert len(n.types.TypeSummary) == 1
+            assert l.types.TypeSummary[0].name == 'Test type 2'
+
+        for n in network.nodes.Node:
+            assert len(n.types.TypeSummary) == 2
+            for t in n.types.TypeSummary:
+                assert t.name == 'Test type 1'
 
     def test_apply_template_to_network(self):
         network = self.create_network_with_data()

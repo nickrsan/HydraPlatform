@@ -1,4 +1,4 @@
-# (c) Copyright 2013, 2014, University of Manchester
+#d (c) Copyright 2013, 2014, University of Manchester
 #
 # HydraPlatform is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload_all
 log = logging.getLogger(__name__)
 
-def get_types_by_attr(resource):
+def get_types_by_attr(resource, template_id=None):
     """
         Using the attributes of the resource, get all the
         types that this resource matches.
@@ -43,7 +43,12 @@ def get_types_by_attr(resource):
         attr_ids.append(attr.attr_id)
     all_resource_attr_ids = set(attr_ids)
 
-    all_types = DBSession.query(TemplateType).options(joinedload_all('typeattrs')).all()
+    all_types = DBSession.query(TemplateType).options(joinedload_all('typeattrs'))
+    if template_id is not None:
+        all_types = all_types.filter(TemplateType.template_id==template_id)
+
+    all_types = all_types.all()
+
     #tmpl type attrs must be a subset of the resource's attrs
     for ttype in all_types:
         type_attr_ids = []
@@ -143,11 +148,11 @@ def upload_template_xml(template_xml,**kwargs):
     try:
 
         tmpl_i = DBSession.query(Template).filter(Template.template_name==template_name).one()
+        tmpl_i.layout = template_layout
     except NoResultFound:
         tmpl_i = Template(template_name=template_name, layout=template_layout)
         DBSession.add(tmpl_i)
 
-    tmpl_i.layout = template_layout
     types = xml_tree.find('resources')
 
     #Delete any types which are in the DB but no longer in the XML file
@@ -197,7 +202,10 @@ def upload_template_xml(template_xml,**kwargs):
             layout = resource.find('layout')
             layout_string = get_layout_as_dict(layout)
             type_i.layout = str(layout_string)
-        
+       
+        if resource.find('type') is not None and \
+           resource.find('type').text is not None:
+            type_i.resource_type = resource.find('type').text
         #delete any TypeAttrs which are in the DB but not in the XML file
         existing_attrs = []
         if not type_is_new:
@@ -228,118 +236,28 @@ def upload_template_xml(template_xml,**kwargs):
 
     return tmpl_i
 
-def get_template_dict():
-    #Get all template information.
-    template_sql = """
-        select
-            tmpl.template_name,
-            tmpl.template_id,
-            typ.type_id,
-            typ.type_name,
-            tattr.attr_id
-        from
-            tTemplate tmpl,
-            tTemplateType typ,
-            tTypeAttr tattr
-        where
-            tmpl.template_id   = typ.template_id
-            and typ.type_id = tattr.type_id
-    """
-    rs = HydraIface.execute(template_sql)
-
-    template_dict   = {
-        'type_name_map' : {}
-    }
-    for r in rs:
-        template_dict['type_name_map'][r.type_id] = r.type_name
-
-        if template_dict.get(r.template_id):
-            if template_dict[r.template_id].get(r.type_id):
-                template_dict[r.template_id]['types'][r.type_id].add(r.attr_id)
-            else:
-                template_dict[r.template_id]['types'][r.type_id] = set([r.attr_id])
-        else:
-            template_dict[r.template_id] = {
-                                        'template_name' : r.template_name,
-                                        'types'  : {r.type_id:set([r.attr_id])}
-                                     }
-
-    return template_dict
-
 def apply_template_to_network(template_id, network_id, **kwargs):
     """
         For each node and link in a network, check whether it matches
         a type in a given template. If so, assign the type to the node / link.
     """
 
-    net_i = HydraIface.Network(network_id=network_id)
-    net_i.load_all()
-    template_dict = get_template_dict()
+    net_i = DBSession.query(Network).filter(Network.network_id==network_id).one()
+    #There should only ever be one matching type, but if there are more,
+    #all we can do is pick the first one.
     for node_i in net_i.nodes:
-        template = get_types_by_attr(node_i, template_dict).get(template_id)
-        #There should only ever be one matching type, but if there are more,
-        #all we can do is pick the first one.
-        if template and len(template.get('types', {})) > 0:
-            type_id = template['types'][0][0]
-            assign_type_to_resource(type_id, 'NODE', node_i.db.node_id,**kwargs)
+        templates = get_types_by_attr(node_i, template_id)
+        if len(templates) > 0:
+            assign_type_to_resource(templates[0].type_id, 'NODE', node_i.node_id,**kwargs)
     for link_i in net_i.links:
-        template = get_types_by_attr(link_i, template_dict).get(template_id)
-        #There should only ever be one matching type, but if there are more,
-        #all we can do is pick the first one.
-        if template and len(template.get('types', {})) > 0:
-            type_id = template['types'][0][0]
-            assign_type_to_resource(type_id, 'LINK', link_i.db.link_id,**kwargs)
+        templates = get_types_by_attr(link_i, template_id)
+        if len(templates) > 0:
+            assign_type_to_resource(templates[0].type_id, 'LINK', link_i.link_id,**kwargs)
 
     for group_i in net_i.resourcegroups:
-        template = get_types_by_attr(group_i, template_dict).get(template_id)
-        #There should only ever be one matching type, but if there are more,
-        #all we can do is pick the first one.
-        if template and len(template.get('types', {})) > 0:
-            type_id = template['types'][0][0]
-            assign_type_to_resource(type_id, 'GROUP', group_i.db.resourcegroup_id,**kwargs)
-
-
-
-def get_types_by_attr(resource, template_dict=None):
-    """
-        Using the attributes of the resource, get all the
-        types that this resource matches.
-        @returns a dictionary, keyed on the template name, with the
-        value being the list of type names which match the resources
-        attributes.
-    """
-
-    #Create a list of all of this resources attributes.
-    attr_ids = []
-    for attr in resource.get_attributes():
-        attr_ids.append(attr.db.attr_id)
-    all_attr_ids = set(attr_ids)
-
-    if template_dict is None:
-        template_dict = get_template_dict()
-
-    type_name_map = template_dict['type_name_map']
-
-    resource_type_templates = {}
-    #Find which type IDS this resources matches by checking if all
-    #the types attributes are in the resources attribute list.
-    for tmpl_id, tmpl in template_dict.items():
-        #Ignore the special case entry
-        if tmpl_id == 'type_name_map':
-            continue
-
-        template_name = tmpl['template_name']
-        tmpl_types = tmpl['types']
-        resource_types = []
-        for type_id, type_attrs in tmpl_types.items():
-            if type_attrs.issubset(all_attr_ids):
-                resource_types.append((type_id, type_name_map[type_id]))
-
-        if len(resource_types) > 0:
-            resource_type_templates[tmpl_id] = {'template_name' : template_name,
-                                                'types'  : resource_types
-                                               }
-    return resource_type_templates
+        templates = get_types_by_attr(group_i, template_id)
+        if len(templates) > 0:
+            assign_type_to_resource(templates[0].type_id, 'GROUP', group_i.resourcegroup_id,**kwargs)
 
 def get_matching_resource_types(resource_type, resource_id,**kwargs):
     """
@@ -391,7 +309,7 @@ def assign_types_to_resources(resource_types,**kwargs):
         elif resource_type.ref_key == 'LINK':
             resource = DBSession.query(Link).filter(Link.link_id==ref_id).one()
         elif resource_type.ref_key == 'GROUP':
-            resource = DBSession.query(ResourceGroup).filter(ResourceGroup.resourcegroup_id==ref_id).one()
+            resource = DBSession.query(ResourceGroup).filter(ResourceGroup.group_id==ref_id).one()
         resource.ref_key = ref_key
         resource.ref_id  = ref_id
         
@@ -425,8 +343,14 @@ def assign_type_to_resource(type_id, resource_type, resource_id,**kwargs):
         resource = DBSession.query(Link).filter(Link.link_id==resource_id).one()
     elif resource_type == 'GROUP':
         resource = DBSession.query(ResourceGroup).filter(ResourceGroup.resourcegroup_id==resource_id).one()
-    res_attrs, resource_type = set_resource_type(resource, type_id, **kwargs)
-    DBSession.execute(ResourceType.__table__.insert(), [resource_type])
+    res_attrs, res_type = set_resource_type(resource, type_id, **kwargs)
+
+    type_i = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).one()
+    if resource_type != type_i.resource_type:
+        raise HydraError("Cannot assign a %s type to a %s"%
+                         (type_i.resource_type,resource_type))
+
+    DBSession.execute(ResourceType.__table__.insert(), [res_type])
     if len(res_attrs) > 0:
         DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
 
@@ -522,6 +446,9 @@ def add_template(template,**kwargs):
     for templatetype in template.types:
         ttype = TemplateType()
         ttype.type_name = templatetype.name
+        ttype.layout    = templatetype.layout
+        ttype.resource_type = templatetype.resource_type
+        ttype.alias         = templatetype.alias
         DBSession.add(ttype)
 
         for typeattr in templatetype.typeattrs:
@@ -551,6 +478,9 @@ def update_template(template,**kwargs):
         else:
             type_i = TemplateType()
             type_i.type_name = templatetype.name
+            type_i.layout    = templatetype.layout
+            type_i.resource_type = templatetype.resource_type
+            type_i.alias         = templatetype.alias
             DBSession.add(type_i)
 
         for typeattr in templatetype.typeattrs:
@@ -610,6 +540,7 @@ def add_templatetype(templatetype,**kwargs):
     """
     tmpltype = TemplateType()
     tmpltype.type_name  = templatetype.name
+    tmpltype.resource_type = templatetype.resource_type
     tmpltype.alias      = templatetype.alias
     tmpltype.layout     = templatetype.layout
 

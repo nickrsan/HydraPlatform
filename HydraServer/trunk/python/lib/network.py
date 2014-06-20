@@ -283,6 +283,9 @@ def _add_links(net_i, links, node_id_map):
     for l_i in net_i.links:
         iface_links[l_i.link_name] = l_i
 
+    for link in links:
+        link_id_map[link.id] = iface_links[link.name]
+
     link_attrs = _bulk_add_resource_attrs(net_i.network_id, 'LINK', links, iface_links)
     log.info("Links added in %s", get_timing(start_time))
 
@@ -694,12 +697,16 @@ def update_network(network,**kwargs):
     errors = []
     if network.scenarios is not None:
         for s in network.scenarios:
-            if s.id is not None and s.id > 0:
-                try:
-                    scen = DBSession.query(Scenario).filter(Scenario.scenario_id==s.id).one()
-                except NoResultFound:
-                    raise ResourceNotFoundError("Scenario %s not found"%(s.id))
-
+            if s.id is not None:
+                if s.id > 0:
+                    try:
+                        scen = DBSession.query(Scenario).filter(Scenario.scenario_id==s.id).one()
+                    except NoResultFound:
+                        raise ResourceNotFoundError("Scenario %s not found"%(s.id))
+                else:
+                    scenario_id = get_scenario_by_name(network.id, s.name)
+                    if scenario_id:
+                        s.name = s.name + "update" + str(datetime.datetime.now())
                 if scen.locked == 'Y':
                     errors.append('Scenario %s was not updated as it is locked'%(s.id)) 
                     continue
