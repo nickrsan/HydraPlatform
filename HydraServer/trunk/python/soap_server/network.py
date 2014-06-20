@@ -21,7 +21,8 @@ from hydra_complexmodels import Network,\
     Link,\
     Scenario,\
     ResourceGroup,\
-    NetworkExtents
+    NetworkExtents,\
+    NetworkSummary
 from lib import network
 from hydra_base import HydraService
 
@@ -30,8 +31,8 @@ class NetworkService(HydraService):
         The network SOAP service.
     """
 
-    @rpc(Network,Unicode(pattern="[YN]", default='Y'), _returns=Network)
-    def add_network(ctx, net, return_full_network):
+    @rpc(Network, _returns=NetworkSummary)
+    def add_network(ctx, net):
         """
         Takes an entire network complex model and saves it to the DB.  This
         complex model includes links & scenarios (with resource data).  Returns
@@ -48,42 +49,8 @@ class NetworkService(HydraService):
 
         """
         net = network.add_network(net, **ctx.in_header.__dict__)
-        if return_full_network == 'Y':
-            return Network(net)
-        else:
-            net_cm = Network()
-            net_cm.id = net['network_id']
-            net_cm.name = net['network_name']
-            scenarios = []
-            for scen in net['scenarios']:
-                s = Scenario()
-                s.id=scen['scenario_id']
-                s.name=scen['scenario_name']
-                scenarios.append(s)
-            nodes = []
-       	    for node in net['nodes']:
-       	        n = Node()
-                n.id = node['node_id']
-                n.name = node['node_name']
-                nodes.append(n)
-            links = []
-            for link in net['links']:
-                l = Link()
-                l.id = link['link_id']
-                l.name = link['link_name']
-                links.append(l)
-            resourcegroups = []
-            for grp in net['resourcegroups']:
-                g = ResourceGroup()
-                g.id = grp['group_id']
-                g.name = grp['group_name']
-                resourcegroups.append(g)
-            net_cm.scenarios = scenarios
-            net_cm.nodes = nodes
-            net_cm.links = links
-            net_cm.resourcegroups = resourcegroups
-
-            return net_cm
+        ret_net = NetworkSummary(net)
+        return ret_net
 
     @rpc(Integer,
          Unicode(pattern="[YN]", default='Y'),
@@ -94,7 +61,8 @@ class NetworkService(HydraService):
         """
             Return a whole network as a complex model.
         """
-        net  = network.get_network(network_id, include_data, scenario_ids, **ctx.in_header.__dict__)
+        net  = network.get_network(network_id, include_data, scenario_ids,
+                                   **ctx.in_header.__dict__)
         ret_net = Network(net)
         return ret_net
 
@@ -108,23 +76,13 @@ class NetworkService(HydraService):
 
         return Network(net)
 
-    @rpc(Integer, Unicode, _returns=Unicode)
-    def network_exists(ctx, project_id, network_name):
-        """
-        Return a whole network as a complex model.
-        """
-
-        net_exists = network.network_exists(project_id, network_name, **ctx.in_header.__dict__)
-
-        return net_exists
-
-    @rpc(Network, _returns=Network)
+    @rpc(Network, _returns=NetworkSummary)
     def update_network(ctx, net):
         """
             Update an entire network
         """
         net = network.update_network(net, **ctx.in_header.__dict__)
-        return Network(net)
+        return NetworkSummary(net)
 
     @rpc(Integer, _returns=Node)
     def get_node(ctx, node_id):
@@ -341,7 +299,7 @@ class NetworkService(HydraService):
 
         return scenarios
 
-    @rpc(Integer, _returns=Unicode)
+    @rpc(Integer, _returns=SpyneArray(Integer))
     def validate_network_topology(ctx, network_id):
         """
             Check for the presence of orphan nodes in a network.

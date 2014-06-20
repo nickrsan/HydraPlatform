@@ -288,7 +288,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         assert new_type.id == updated_type.id, "type ids to not match!"
         assert new_type.id > 0, "New type has incorrect ID!"
 
-        assert len(updated_type.typeattrs[0]) == 3, "Resource type attrs did not update correctly"
+        assert len(updated_type.typeattrs[0]) == 3, "Template type attrs did not update correctly"
 
     def test_get_type(self):
         new_type = self.get_template().types.TemplateType[0]
@@ -331,7 +331,6 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         tattr_3 = self.client.factory.create('hyd:TypeAttr')
         tattr_3.attr_id = attr_3.id
         tattr_3.type_id = new_type.id
-
 
         updated_type = self.client.service.add_typeattr(tattr_3)
 

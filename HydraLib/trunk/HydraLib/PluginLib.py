@@ -414,6 +414,7 @@ def connect(**kwargs):
     # Connect
     user = config.get('hydra_client', 'user')
     passwd = config.get('hydra_client', 'password')
+    logging.info("Connecting to : %s",url)
     cli = Client(url, timeout=3600, plugins=[FixNamespace()], retxml=retxml)
     login_response = cli.service.login(user, passwd)
     user_id = login_response.user_id

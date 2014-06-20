@@ -13,4 +13,35 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
+from zope.sqlalchemy import ZopeTransactionExtension
+from sqlalchemy.orm import scoped_session
+from sqlalchemy import create_engine
+from HydraLib import config
+
+import transaction
+
+import logging
+log = logging.getLogger(__name__)
+
+from sqlalchemy.ext.declarative import declarative_base
+DeclarativeBase = declarative_base()
+
+engine = create_engine(config.get('mysqld', 'url')) 
+from sqlalchemy.orm import sessionmaker
+session = sessionmaker()
+
+maker = sessionmaker(autoflush=True, autocommit=False,
+                     extension=ZopeTransactionExtension())
+
+DBSession = scoped_session(maker)
+DBSession.configure(bind=engine)
+
+def commit_transaction():
+    try:
+        transaction.commit()
+    except Exception, e:
+        log.critical(e)
+        transaction.abort()
+    if DBSession:
+        DBSession.close()
 

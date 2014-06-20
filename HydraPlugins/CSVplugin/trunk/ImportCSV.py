@@ -194,6 +194,7 @@ class ImportCSV(object):
     def __init__(self, url=None):
         self.Project  = None
         self.Network  = None
+        self.NetworkSummary  = None
         self.Scenario = None
         self.Nodes    = dict()
         self.Links    = dict()
@@ -1324,20 +1325,22 @@ class ImportCSV(object):
 
         if self.update_network_flag:
             log.info('Updating network (ID=%s)' % self.Network['id'])
-            self.Network = self.cli.service.update_network(self.Network)
-            log.info("Network updated.")
+            self.NetworkSummary = self.cli.service.update_network(self.Network)
+            log.info("Network  %s updated", self.NetworkSummary.id)
         else:
             log.info("Adding Network")
-            new_network = self.cli.service.add_network(self.Network, 'N')
-            self.Network = new_network
-            log.info("Network inserted. Network ID is %s", self.Network.id)
+            self.NetworkSummary = self.cli.service.add_network(self.Network)
+            log.info("Network created with %s nodes and %s links. Network ID is %s",
+                     len(self.NetworkSummary.nodes.Node), 
+                     len(self.NetworkSummary.links.Link),
+                     self.NetworkSummary.id)
 
         self.message = 'Data import was successful.'
 
     def return_xml(self):
         """This is a fist version of a possible XML output.
         """
-        scen_ids = [s.id for s in self.Network.scenarios.Scenario]
+        scen_ids = [s.id for s in self.NetworkSummary.scenario_ids]
 
         xml_response = PluginLib.create_xml_response('ImportCSV',
                                                      self.Network.id,
@@ -1497,8 +1500,8 @@ if __name__ == '__main__':
                     csv.read_constraints(constraintfile)
 
             csv.commit()
-            if csv.Network.scenarios:
-                scen_ids = [s.id for s in csv.Network.scenarios.Scenario]
+            if csv.NetworkSummary.scenario_ids:
+                scen_ids = csv.NetworkSummary.scenario_ids
             network_id = csv.Network.id
 
             if args.template is not None:

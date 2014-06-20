@@ -24,7 +24,8 @@ from hydra_complexmodels import Descriptor,\
         Dataset,\
         Scenario,\
         DatasetGroup,\
-        get_as_complexmodel
+        get_as_complexmodel,\
+        parse_value
 
 from lib import data
 
@@ -92,8 +93,17 @@ class DataService(HydraService):
             Update a piece of data directly, rather than through a resource
             scenario.
         """
-        new_dataset = data.update_dataset(dataset, **ctx.in_header.__dict__)
-        return Dataset(new_dataset)
+        val = parse_value(dataset)
+
+        updated_dataset = data.update_dataset(dataset.id,
+                    dataset.name,
+                    dataset.data_type,
+                    val,
+                    dataset.units,
+                    dataset.metadata,
+                    **ctx.in_header.__dict__)
+
+        return Dataset(updated_dataset)
 
 
     @rpc(Integer, _returns=Boolean)

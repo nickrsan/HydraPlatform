@@ -22,6 +22,11 @@ from db import hdb
 import logging
 log = logging.getLogger(__name__)
 
+from db.HydraAlchemy import Attr
+from db import DBSession
+from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import or_
+
 def _get_resource(ref_key, ref_id):
     if ref_key == 'NODE':
         return HydraIface.Node(node_id = ref_id)
@@ -41,57 +46,23 @@ def get_attribute_by_id(attr_id, **kwargs):
         Get a specific attribute by its ID.
     """
 
-    sql = """
-    select
-        attr_id,
-        attr_name,
-        attr_dimen
-    from
-        tAttr
-    where
-        attr_id = %s
-    """ % attr_id
-
-    rs = HydraIface.execute(sql)
-
-    if len(rs) == 0:
-       return None
-    else:
-        attr_i = HydraIface.Attr()
-        attr_i.attr_name  = rs[0].attr_name
-        attr_i.attr_dimen = rs[0].attr_dimen
-        attr_i.attr_id    = rs[0].attr_id
-        return attr_i.get_as_dict()
+    try:
+        attr_i = DBSession.query(Attr).filter(Attr.attr_id==attr_id).one()
+        return attr_i
+    except NoResultFound:
+        return None
 
 def get_attribute_by_name_and_dimension(name, dimension,**kwargs):
     """
         Get a specific attribute by its name.
     """
 
-    dimension_str = "and attr_dimen='%s'"%dimension if dimension is not None else '' 
-
-    sql = """
-        select
-            attr_id,
-            attr_name,
-            attr_dimen
-        from
-            tAttr
-        where
-            attr_name      = '%s'
-            %s
-    """ % (name, dimension_str)
-
-    rs = HydraIface.execute(sql)
-
-    if len(rs) == 0:
-       return None
-    else:
-        attr_i = HydraIface.Attr()
-        attr_i.db.attr_name  = rs[0].attr_name
-        attr_i.db.attr_dimen = rs[0].attr_dimen
-        attr_i.db.attr_id    = rs[0].attr_id
-        return attr_i.get_as_dict()
+    try:
+        attr_i = DBSession.query(Attr).filter(Attr.attr_name==name, or_(Attr.attr_dimen==dimension, Attr.attr_dimen == '')).one()
+        log.info("Attribute retrieved")
+        return attr_i
+    except NoResultFound:
+        return None
 
 def add_attribute(attr,**kwargs):
     """
@@ -108,11 +79,16 @@ def add_attribute(attr,**kwargs):
 
     """
     log.debug("Adding attribute: %s", attr.name)
-    attr_i = HydraIface.Attr()
-    attr_i.db.attr_name = attr.name
-    attr_i.db.attr_dimen = attr.dimen
-    attr_i.save()
-    return attr_i.get_as_dict()
+    try:
+        attr_i = DBSession.query(Attr).filter(Attr.attr_name == attr.name,
+                                              Attr.attr_dimen == attr.dimen).one()
+        log.info("Attr already exists")
+    except NoResultFound:
+        attr_i = Attr(attr_name = attr.name, attr_dimen = attr.dimen)
+        DBSession.add(attr_i)
+        DBSession.flush()
+        log.info("New attr added")
+    return attr_i
 
 def add_attributes(attrs,**kwargs):
     """
@@ -199,25 +175,7 @@ def get_attributes(**kwargs):
         Get all attributes
     """
 
-
-    sql = """
-        select
-            attr_id,
-            attr_name,
-            attr_dimen
-        from
-            tAttr
-    """
-
-    rs = HydraIface.execute(sql)
-
-    attrs = []
-    for r in rs:
-        x = HydraIface.Attr()
-        x.db.attr_name  = r.attr_name
-        x.db.attr_dimen = r.attr_dimen
-        x.db.attr_id    = r.attr_id
-        attrs.append(x.get_as_dict())
+    attrs = DBSession.query(Attr)
 
     return attrs
 

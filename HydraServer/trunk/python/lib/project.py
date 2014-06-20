@@ -18,6 +18,8 @@ from HydraLib.HydraException import ResourceNotFoundError
 import scenario
 import logging
 from HydraLib.HydraException import PermissionError
+from db.HydraAlchemy import Project
+from db import DBSession
 import network
 
 log = logging.getLogger(__name__)
@@ -48,19 +50,20 @@ def add_project(project,**kwargs):
     user_id = kwargs.get('user_id') 
 
     #check_perm(user_id, 'add_project')
-    proj_i = HydraIface.Project()
-    proj_i.db.project_name = project.name
-    proj_i.db.project_description = project.description
-    proj_i.db.created_by = user_id
+    proj_i = Project()
+    proj_i.project_name = project.name
+    proj_i.project_description = project.description
+    proj_i.created_by = user_id
 
-    proj_i.save()
+  #  for attr in project.attributes:
+  #      project.add_attribute(attr.attr_id)
 
-    _add_project_attributes(proj_i, project.attributes)
+    proj_i.set_owner(user_id)
+    
+    DBSession.add(proj_i)
+    DBSession.flush()
 
-    user_id = user_id
-    proj_i.set_ownership(user_id)
-
-    return proj_i.get_as_dict(**{'user_id':user_id})
+    return proj_i
 
 def update_project(project,**kwargs):
     """

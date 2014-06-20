@@ -14,7 +14,6 @@
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
 from spyne.model.complex import Array as SpyneArray, ComplexModel
-from spyne.model.primitive import Unicode
 from spyne.model.primitive import String
 from spyne.model.primitive import Integer
 from spyne.model.primitive import Decimal
@@ -24,7 +23,7 @@ from spyne.model.primitive import AnyDict
 from spyne.model.primitive import Double
 from spyne.util.odict import odict
 import sys
-from HydraLib.util import timestamp_to_ordinal
+from HydraLib.util import timestamp_to_ordinal, ordinal_to_timestamp
 import logging
 from numpy import array
 global FORMAT
@@ -34,11 +33,48 @@ NS = "soap_server.hydra_complexmodels"
 current_module = sys.modules[__name__]
 log = logging.getLogger(__name__)
 
+def get_timestamp(ordinal):
+    if ordinal is None:
+        return None
+    timestamp = str(ordinal_to_timestamp(ordinal))
+    return timestamp
 
-def get_as_complexmodel(ctx, iface_obj, **kwargs):
+def get_as_dict(obj, parent=None, **kwargs):
+    d = {}
+    name = obj.__table__.name[1:]
+    d['object_type'] = name
+    cols = [c.name for c in obj.__table__.columns]
+    rels = [x.key for x in obj.__mapper__.relationships]
+
+    for colname in cols:
+        val = getattr(obj, colname)
+        if colname == 'cr_date':
+            val = str(val)
+        else:
+            d[colname] = val
+
+    for relname in rels:
+        if parent and relname.lower() == parent.lower():
+            continue
+
+        val = getattr(obj, relname)
+        if hasattr(val, '__iter__'):
+            child_dicts = []
+            for child in val:
+                logging.info(child)
+                child_dicts.append(get_as_dict(child, name))
+            d[relname] = child_dicts
+        else:
+            d[relname] = get_as_dict(val, name) 
+    return d
+
+def get_as_complexmodel(ctx, obj, **kwargs):
 
     kwargs['user_id'] = int(ctx.in_header.user_id)
-    obj_dict    = iface_obj.get_as_dict(**kwargs)
+    if hasattr(obj, 'get_as_dict'):
+        obj_dict = obj.get_as_dict(**kwargs)
+    else:
+        obj_dict    = get_as_dict(obj, **kwargs)
     object_type = obj_dict['object_type']
 
     cm = getattr(current_module, object_type)(obj_dict)
@@ -161,41 +197,34 @@ class HydraComplexModel(ComplexModel):
 
     error = SpyneArray(String())
 
-    def __init__(self, obj_dict=None):
+    def __init__(self, sa_obj=None):
         super(HydraComplexModel, self).__init__()
 
-        if obj_dict is None:
+        if sa_obj is None:
             return
 
-        name = obj_dict['object_type']
+        name = sa_obj.__table__.name[1:]
+        cols = [c.name for c in sa_obj.__table__.columns]
 
+        for col in cols:
+            val = getattr(sa_obj, col)
+            setattr(self, col, val)
 
-        for attr_name, attr in obj_dict.items():
-            if attr_name == 'object_type':
-                continue
-            elif attr_name.find('layout') >= 0:
-                if attr:
-                    attr = eval(attr)
+            if col == 'cr_date':
+                val = str(val)
+
+            if col == 'layout':
+                if val:
+                    val = eval(val)
                 else:
-                    attr = {}
-            if type(attr) is list:
-                children = []
-                for child_obj_dict in attr:
-                    if child_obj_dict is not None:
-                        cm = getattr(current_module, child_obj_dict['object_type'])(child_obj_dict)
-                        children.append(cm)
-                setattr(self, attr_name, children)
-            elif type(attr) is dict and attr.get('object_type') is not None:
-                cm = getattr(current_module, attr['object_type'])(attr)
+                    val = {}
+            #turn someething like 'project_name' into just 'name'
+            #So that it's project.name instead of project.project_name.
 
-                setattr(self, attr_name, cm)
-            else:
-                #turn someething like 'project_name' into just 'name'
-                #So that it's project.name instead of project.project_name.
-                attr_prefix = "%s_"%name.lower()
-                if attr_name.find(attr_prefix) == 0:
-                    attr_name = attr_name.replace(attr_prefix, "")
-                setattr(self, attr_name, attr)
+            attr_prefix = "%s_"%name.lower()
+            if col.find(attr_prefix) == 0:
+                attr_name = col.replace(attr_prefix, "")
+                setattr(self, attr_name, val)
 
 class Metadata(ComplexModel):
     _type_info = [
@@ -203,11 +232,11 @@ class Metadata(ComplexModel):
         ('value' , String(min_occurs=1, default=None)),
     ]
 
-    def __init__(self, obj_dict=None):
-        if obj_dict is None:
+    def __init__(self, parent=None):
+        if parent is None:
             return
-        self.name    = obj_dict['metadata_name']
-        self.value   = obj_dict['metadata_val']
+        self.name    = parent.metadata_name
+        self.value   = parent.metadata_val
 
 
 
@@ -223,28 +252,34 @@ class Dataset(HydraComplexModel):
         ('metadata',         SpyneArray(Metadata, default=[])),
     ]
 
-    def __init__(self, obj_dict=None):
+    def __init__(self, parent=None):
         super(Dataset, self).__init__()
-        if obj_dict is None:
+        if  parent is None:
             return
 
-        self.locked    = obj_dict['locked']
-        self.id        = obj_dict['dataset_id']
-        self.type     = obj_dict['data_type']
-        self.name      = obj_dict['data_name']
+        self.locked    = parent.locked
+        self.id        = parent.dataset_id
+        self.type      = parent.data_type
+        self.name      = parent.data_name
 
-        self.dimension = obj_dict['data_dimen']
-        self.unit      = obj_dict['data_units']
-
-        if obj_dict.get('value', None):
-            val = obj_dict['value']
-
-            self.value     = getattr(current_module, val['object_type'])(val)
-            self.value     = self.value.__dict__
+        self.dimension = parent.data_dimen
+        self.unit      = parent.data_units
+        
+        if parent.data_type == 'descriptor':
+            self.value = Descriptor(parent.value)
+        elif parent.data_type == 'array':
+            self.value = Array(parent.value)
+        elif parent.data_type == 'scalar':
+            self.value = Scalar(parent.value)
+        elif parent.data_type == 'eqtimeseries':
+            self.value = EqTimeSeries(parent.start_time, parent.frequency, parent.value)
+        else:
+            self.value = TimeSeries(parent.timeseriesdata)
+        self.value = self.value.__dict__
         
         metadata = []
-        for m in obj_dict.get('metadatas', []):
-            complex_m = Metadata(m).__dict__
+        for m in parent.metadata:
+            complex_m = Metadata(m)
             metadata.append(complex_m)
         self.metadata = metadata
 
@@ -255,9 +290,9 @@ class Descriptor(HydraComplexModel):
 
     def __init__(self, val=None):
         super(Descriptor, self).__init__()
-        if val is None:
+        if  val is None:
             return
-        self.desc_val = [val['desc_val']]
+        self.desc_val = [val]
 
 class TimeSeriesData(HydraComplexModel):
     _type_info = [
@@ -268,15 +303,20 @@ class TimeSeriesData(HydraComplexModel):
 
     def __init__(self, val=None):
         super(TimeSeriesData, self).__init__()
-        if val is None:
+        if  val is None:
             return
-        self.ts_time  = [val['ts_time']]
 
-        ts_value = val['ts_value']
-        if type(ts_value) is list:
-            self.ts_value = [create_dict(ts_value)]
+        self.ts_time  = [get_timestamp(val.ts_time)]
+        
+        try:
+            ts_val = eval(val.ts_value)
+        except:
+            ts_val = val.ts_value
+
+        if type(ts_val) is list:
+            self.ts_value = [create_dict(ts_val)]
         else:
-            self.ts_value = [ts_value]
+            self.ts_value = [ts_val]
 
 class TimeSeries(HydraComplexModel):
     _type_info = [
@@ -285,10 +325,10 @@ class TimeSeries(HydraComplexModel):
 
     def __init__(self, val=None):
         super(TimeSeries, self).__init__()
-        if val is None:
+        if  val is None:
             return
         ts_vals = []
-        for ts in val['timeseriesdatas']:
+        for ts in val:
             ts_vals.append(TimeSeriesData(ts).__dict__)
         self.ts_values = ts_vals
 
@@ -304,44 +344,57 @@ class EqTimeSeries(HydraComplexModel):
         ('arr_data',  AnyDict),
     ]
 
-    def __init__(self, val=None):
+    def __init__(self, start_time=None, frequency=None, val=None):
         super(EqTimeSeries, self).__init__()
-        if val is None:
+        if  val is None:
             return
 
-        self.start_time = [val['start_time']]
-        self.frequency  = [val['frequency']]
-        self.arr_data   = [create_dict(val['arr_data'])]
+        self.start_time = [ordinal_to_timestamp(start_time)]
+        self.frequency  = [frequency]
+        self.arr_data   = [create_dict(eval(val))]
 
 class Scalar(HydraComplexModel):
     _type_info = [
         ('param_value', Float),
     ]
+
     def __init__(self, val=None):
         super(Scalar, self).__init__()
-        if val is None:
+        if  val is None:
             return
-        self.param_value = [val['param_value']]
+        self.param_value = [val]
 
 class Array(HydraComplexModel):
     _type_info = [
         ('arr_data', AnyDict),
     ]
+
     def __init__(self, val=None):
         super(Array, self).__init__()
-        if val is None:
+        if  val is None:
             return
-        arr_data = val['arr_data']
-        if type(arr_data) is list:
-            self.arr_data = [create_dict(arr_data)]
+        try:
+           val = eval(val)
+        except:
+            pass
+        if type(val) is list:
+            self.arr_data = [create_dict(val)]
         else:
-            self.arr_data = [arr_data]
+            self.arr_data = [val]
 
 class DatasetGroupItem(HydraComplexModel):
     _type_info = [
         ('group_id', Integer(default=None)),
         ('dataset_id', Integer(default=None)),
     ]
+
+    def __init__(self, parent=None):
+        super(DatasetGroupItem, self).__init__()
+        if  parent is None:
+            return
+
+        self.group_id = parent.group_id
+        self.dataset_id = parent.dataset_id
 
 class DatasetGroup(HydraComplexModel):
     _type_info = [
@@ -350,12 +403,28 @@ class DatasetGroup(HydraComplexModel):
         ('datasetgroupitems', SpyneArray(DatasetGroupItem)),
     ]
 
+    def __init__(self, parent=None):
+        super(DatasetGroup, self).__init__()
+        if  parent is None:
+            return
+        self.group_name = parent.group_name
+        self.group_id   = parent.group_id
+        self.datasetgroupitems = [DatasetGroupItem(d) for d in parent.datasetgroupitems]
+
 class Attr(HydraComplexModel):
     _type_info = [
         ('id', Integer(default=None)),
         ('name', String(default=None)),
         ('dimen', String(default=None)),
     ]
+
+    def __init__(self, parent=None):
+        super(Attr, self).__init__()
+        if  parent is None:
+            return
+        self.id = parent.attr_id
+        self.name = parent.attr_name
+        self.dimen = parent.attr_dimen
 
 class ResourceAttr(HydraComplexModel):
     _type_info = [
@@ -366,12 +435,24 @@ class ResourceAttr(HydraComplexModel):
         ('attr_is_var',  String(min_occurs=1, default='N')),
     ]
 
-    def __init__(self, obj_dict=None):
-        super(ResourceAttr, self).__init__(obj_dict)
-        if obj_dict is None:
+    def __init__(self, parent=None):
+        super(ResourceAttr, self).__init__()
+        if  parent is None:
             return
+        self.id = parent.resource_attr_id
+        self.attr_id = parent.attr_id
+        self.ref_key  = parent.ref_key
+        if parent.ref_key == 'NETWORK':
+            self.ref_id = parent.network_id
+        elif parent.ref_key  == 'NODE':
+            self.ref_id = parent.node_id
+        elif parent.ref_key == 'LINK':
+            self.ref_id = parent.link_id
+        elif parent.ref_key == 'GROUP':
+            parent.ref_id = parent.group_id
 
-        self.id = obj_dict['resource_attr_id']
+        self.attr_is_var = parent.attr_is_var
+
 
 class ResourceTypeDef(HydraComplexModel):
     _type_info = [
@@ -382,7 +463,7 @@ class ResourceTypeDef(HydraComplexModel):
 
 class TypeAttr(HydraComplexModel):
     _type_info = [
-        ('attr_id',   Integer(default=None)),
+        ('attr_id',   Integer(min_occurs=1, max_occurs=1)),
         ('attr_name', String(default=None)),
         ('type_id',   Integer(default=None)),
         ('data_type', String(default=None)),
@@ -390,6 +471,13 @@ class TypeAttr(HydraComplexModel):
         ('default_dataset_id', Integer(default=None)),
         ('is_var',    String(default=None)),
     ]
+
+    def __init__(self, parent=None):
+        super(TypeAttr, self).__init__()
+        if  parent is None:
+            return
+        for k, v in parent.__dict__.items():
+            setattr(self, k, v)
 
 class TemplateType(HydraComplexModel):
     _type_info = [
@@ -402,25 +490,23 @@ class TemplateType(HydraComplexModel):
         ('typeattrs',   SpyneArray(TypeAttr, default=[])),
     ]
 
-    def __init__(self, obj_dict=None):
+    def __init__(self, parent=None):
         super(TemplateType, self).__init__()
-        if obj_dict is None:
+        if parent is None:
             return
 
-        self.id        = obj_dict['type_id']
-        self.name      = obj_dict['type_name']
-        self.alias     = obj_dict['alias']
-        self.resource_type = obj_dict['resource_type']
-
-        if obj_dict['layout'] is not None:
-            self.layout    = eval(obj_dict['layout'])
+        self.id        = parent.type_id
+        self.name      = parent.type_name
+        self.alias     = parent.alias
+        if parent.layout is not None:
+            self.layout    = eval(parent.layout)
         else:
             self.layout = {}
-        self.template_id  = obj_dict['template_id']
+        self.template_id  = parent.template_id
 
         typeattrs = []
-        for typeattr_dict in obj_dict['typeattrs']:
-            typeattrs.append(TypeAttr(typeattr_dict))
+        for typeattr in parent.typeattrs:
+            typeattrs.append(TypeAttr(typeattr))
 
         self.typeattrs = typeattrs
 
@@ -432,20 +518,20 @@ class Template(HydraComplexModel):
         ('types',     SpyneArray(TemplateType, default=[])),
     ]
 
-    def __init__(self, obj_dict=None):
-        super(Template, self).__init__(obj_dict)
-        if obj_dict is None:
+    def __init__(self, parent=None):
+        super(Template, self).__init__()
+        if parent is None:
             return
 
-        self.name   = obj_dict['template_name']
-        self.id     = obj_dict['template_id']
-        if obj_dict['layout'] is not None:
-            self.layout    = eval(obj_dict['layout'])
+        self.name   = parent.template_name
+        self.id     = parent.template_id
+        if parent.layout is not None:
+            self.layout    = eval(parent.layout)
         else:
             self.layout = {}
 
         types = []
-        for templatetype in obj_dict['templatetypes']:
+        for templatetype in parent.templatetypes:
             types.append(TemplateType(templatetype))
         self.types = types
 
@@ -457,16 +543,16 @@ class TypeSummary(HydraComplexModel):
         ('template_id', Integer(default=None)),
     ]
 
-    def __init__(self, obj_dict=None):
+    def __init__(self, parent=None):
         super(TypeSummary, self).__init__()
 
-        if obj_dict is None:
+        if parent is None:
             return
 
-        self.name = obj_dict['type_name']
-        self.id   = obj_dict['type_id']
-        self.template_name = obj_dict['template_name']
-        self.template_id   = obj_dict['template_id']
+        self.name          = parent.templatetype.type_name
+        self.id            = parent.type_id
+        self.template_name = parent.templatetype.template.template_name
+        self.template_id   = parent.templatetype.template_id
 
 class Resource(HydraComplexModel):
     pass
@@ -483,13 +569,29 @@ class Node(Resource):
         ('attributes',  SpyneArray(ResourceAttr, default=[])),
         ('types',       SpyneArray(TypeSummary, default=[])),
     ]
-    def __eq__(self, other):
+
+    def __init__(self, parent=None, summary=False):
         super(Node, self).__init__()
-        if self.x == other.x and self.y == other.y \
-        and self.name == other.name:
-            return True
-        else:
-            return False
+
+        if parent is None:
+            return
+
+
+        self.id = parent.node_id
+        self.name = parent.node_name
+        self.x = parent.node_x
+        self.y = parent.node_y
+        if summary is False:
+            self.descriptiron = parent.node_description
+            if parent.node_layout is not None:
+                self.layout    = eval(parent.node_layout)
+            else:
+                self.layout = {}
+            self.status = parent.status
+            self.attributes = [ResourceAttr(a) for a in parent.attributes]
+            self.types = [TypeSummary(t) for t in parent.types]
+
+
 
 class Link(Resource):
     _type_info = [
@@ -504,6 +606,28 @@ class Link(Resource):
         ('types',       SpyneArray(TypeSummary, default=[])),
     ]
 
+    def __init__(self, parent=None, summary=False):
+        super(Link, self).__init__()
+
+        if parent is None:
+            return
+
+        
+        self.id = parent.link_id
+        self.name = parent.link_name
+        self.node_1_id = parent.node_1_id
+        self.node_2_id = parent.node_2_id
+        if summary is False:
+            self.descriptiron = parent.link_description
+            if parent.link_layout is not None:
+                self.layout    = eval(parent.link_layout)
+            else:
+                self.layout = {}
+            self.status    = parent.status
+
+            self.attributes = [ResourceAttr(a) for a in parent.attributes]
+            self.types = [TypeSummary(t) for t in parent.types]
+
 class ResourceScenario(Resource):
     _type_info = [
         ('resource_attr_id', Integer(default=None)),
@@ -511,14 +635,14 @@ class ResourceScenario(Resource):
         ('value',            Dataset),
     ]
 
-    def __init__(self, obj_dict=None):
+    def __init__(self, parent=None):
         super(ResourceScenario, self).__init__()
-        if obj_dict is None:
+        if parent is None:
             return
-        self.resource_attr_id = obj_dict['resource_attr_id']
-        self.attr_id          = obj_dict['attr_id']
+        self.resource_attr_id = parent.resource_attr_id
+        self.attr_id          = parent.resourceattr.attr_id
 
-        self.value = Dataset(obj_dict['value'])
+        self.value = Dataset(parent.dataset)
 
 class ResourceGroupItem(HydraComplexModel):
     _type_info = [
@@ -528,11 +652,19 @@ class ResourceGroupItem(HydraComplexModel):
         ('group_id', Integer(default=None)),
     ]
 
-    def __init__(self, obj_dict=None):
-        super(ResourceGroupItem, self).__init__(obj_dict)
-        if obj_dict is None:
+    def __init__(self, parent=None):
+        super(ResourceGroupItem, self).__init__(parent)
+        if parent is None:
             return
-        self.id = obj_dict['item_id']
+        self.id = parent.item_id
+        self.group_id = parent.group_id
+        self.ref_key = parent.ref_key
+        if self.ref_key == 'NODE':
+            self.ref_id = parent.node_id
+        elif self.ref_key == 'LINK':
+            self.ref_id = parent.link_id
+        elif self.ref_key == 'GROUP':
+            self.ref_id = parent.subgroup_id
 
 class ResourceGroup(HydraComplexModel):
     _type_info = [
@@ -545,129 +677,21 @@ class ResourceGroup(HydraComplexModel):
         ('types',       SpyneArray(TypeSummary, default=[])),
     ]
 
-    def __init__(self, obj_dict=None):
-        super(ResourceGroup, self).__init__(obj_dict)
+    def __init__(self, parent=None, summary=False):
+        super(ResourceGroup, self).__init__(parent)
 
-        if obj_dict is None:
+        if parent is None:
             return
 
-        name = obj_dict['object_type']
+        self.name        = parent.group_name
+        self.id          = parent.group_id
 
-        for attr_name, attr in obj_dict.items():
-            if attr_name == 'object_type':
-                continue
-            if attr_name.find('group')==0:
-                attr_name = attr_name.replace('group_', '')
-                setattr(self, attr_name, attr)
-
-class ResourceGroupDiff(HydraComplexModel):
-    _type_info = [
-       ('scenario_1_items', SpyneArray(ResourceGroupItem, default=[])),
-       ('scenario_2_items', SpyneArray(ResourceGroupItem, default=[]))
-    ]
-
-class ConstraintItem(HydraComplexModel):
-    """
-        A constraint item is the atomic element of a conatraint.  The value of
-        a constraint item can be value of a particular resource attribute or an
-        arbitrary static value, such as an integer, so we can support:
-
-        X.attr + Y.attr > 0
-        or
-        (X.attr * 5) + Y.attr > 0
-
-    """
-    _type_info = [
-        ('id',               Integer(default=None)),
-        ('constraint_id',    Integer(default=None)),
-        ('resource_attr_id', Integer(default=None)),
-        ('constant',            Unicode(default=None)),
-    ]
-
-class ConstraintGroup(HydraComplexModel):
-    _type_info = [
-        ('id',            Integer(default=None)),
-        ('constraint_id', Integer(default=None)),
-        ('op',            String(default=None, values=['+', '-', '*', '/', '^', 'and', 'or', 'not'])),
-        ('constraintitems', SpyneArray(ConstraintItem, default=[]))
-    ]
-
-ConstraintGroup._type_info['constraintgroups'] = SpyneArray(ConstraintGroup, default=[])
-
-class Constraint(HydraComplexModel):
-    _type_info = [
-        ('id',            Integer(default=None)),
-        ('scenario_id',   Integer(default=None)),
-        ('constant',      Decimal(default=None)),
-        ('op',            String(default=None, values=['<', '>', '<=', '>=', '==', '!='])),
-        ('value',         String(default=None)),
-        ('constraintgroup', ConstraintGroup),
-    ]
-
-    def __init__(self, obj_dict=None):
-        super(Constraint, self).__init__()
-
-        if obj_dict is None:
-            return
-
-        self.id          = obj_dict['constraint_id']
-        self.scenario_id = obj_dict['scenario_id']
-        self.constant    = obj_dict['constant']
-        self.op          = obj_dict['op']
-        self.group_id    = obj_dict['group_id']
-        self.constraintgroups = obj_dict['constraintgroups']
-        self.constraintitems  = obj_dict['constraintitems']
-
-        base_grp = self.get_group(self.group_id)
-
-        self.value = self.eval_constraintgroup(base_grp)
-
-    def get_group(self, group_id):
-        group = None
-        for grp in self.constraintgroups:
-            if grp['group_id'] == group_id:
-                return grp
-
-    def get_item(self, item_id):
-        item = None
-        for i in self.constraintitems:
-            if i['item_id'] == item_id:
-                return i
-
-    def eval_constraintgroup(self, group):
-        """
-            Turn the group -> item/group structure into a string.
-        """
-        op = group['op']
-
-        if group['ref_key_1'] == 'GRP':
-            sub_grp = self.get_group(group['ref_id_1'])
-            str_1 = self.eval_constraintgroup(sub_grp)
-        else:
-            sub_item = self.get_item(group['ref_id_1'])
-            str_1 = self.eval_constraintitem(sub_item)
-
-        if group['ref_key_2'] == 'GRP':
-            sub_grp = self.get_group(group['ref_id_2'])
-            str_2 = self.eval_constraintgroup(sub_grp)
-        else:
-            sub_item = self.get_item(group['ref_id_2'])
-            str_2 = self.eval_constraintitem(sub_item)
-
-        return "(%s %s %s)"%(str_1, op, str_2)
-
-    def eval_constraintitem(self, item):
-        """
-            Turn a constraint item into a string
-        """
-        if item['constant'] is not None:
-            return item['constant']
-        else:
-            ref_key = item['ref_key']
-            ref_id  = item['ref_id']
-            attr_name = item['attr_name']
-            item_str = "%s[%s][%s]" % (ref_key, ref_id, attr_name)
-            return item_str
+        if summary is False:
+            self.description = parent.group_description
+            self.status      = parent.status
+            self.network_id  = parent.network_id
+            self.attributes  = [ResourceAttr(a) for a in parent.attributes]
+            self.types       = [TypeSummary(t) for t in self.types]
 
 class Scenario(Resource):
     _type_info = [
@@ -681,9 +705,44 @@ class Scenario(Resource):
         ('end_time',             String(default=None)),
         ('time_step',            String(default=None)),
         ('resourcescenarios',    SpyneArray(ResourceScenario, default=[])),
-        ('constraints',          SpyneArray(Constraint, default=[])),
         ('resourcegroupitems',   SpyneArray(ResourceGroupItem, default=[])),
     ]
+
+    def __init__(self, parent=None):
+        super(Scenario, self).__init__(parent)
+
+        if parent is None:
+            return
+        self.id = parent.scenario_id
+        self.name = parent.scenario_name
+        self.description = parent.scenario_description
+        self.network_id = parent.network_id
+        self.status = parent.status
+        self.locked = parent.locked
+        self.start_time = get_timestamp(parent.start_time)
+        self.end_time = get_timestamp(parent.end_time)
+        self.time_step = parent.time_step
+
+        self.resourcescenarios = [ResourceScenario(rs) for rs in parent.resourcescenarios]
+        self.resourcegroupitems = [ResourceGroupItem(rgi) for rgi in parent.resourcegroupitems]
+
+
+class ResourceGroupDiff(HydraComplexModel):
+    _type_info = [
+       ('scenario_1_items', SpyneArray(ResourceGroupItem, default=[])),
+       ('scenario_2_items', SpyneArray(ResourceGroupItem, default=[]))
+    ]
+
+    def __init__(self, parent=None):
+        super(ResourceGroupDiff, self).__init__(parent)
+
+        if parent is None:
+            return
+
+        self.scenario_1_items = [ResourceGroupItem(rs) for rs in parent['scenario_1_items']]
+        self.scenario_2_items = [ResourceGroupItem(rs) for rs in parent['scenario_2_items']]
+
+
 
 class ResourceScenarioDiff(HydraComplexModel):
     _type_info = [
@@ -692,22 +751,30 @@ class ResourceScenarioDiff(HydraComplexModel):
         ('scenario_2_dataset',   Dataset),
     ]
 
-class ConstraintDiff(HydraComplexModel):
-    _type_info = [
-        #Constraints common to both scenarios
-        ('common_constraints',  SpyneArray(Constraint, default=[])),
-        #Constraints in scenario 1 but not in scenario 2
-        ('scenario_1_constraints', SpyneArray(Constraint, default=[])),
-        #Constraints in scenario 2 but not in scenario 1
-        ('scenario_2_constraints', SpyneArray(Constraint, default=[])),
-    ]
+    def __init__(self, parent=None):
+        super(ResourceScenarioDiff, self).__init__(parent)
+
+        if parent is None:
+            return
+
+        self.resource_attr_id = parent.resource_attr_id
+        self.scenario_1_dataset = parent['scenario_1_dataset']
+        self.scenario_2_dataset = parent['scenario_2_dataset']
 
 class ScenarioDiff(HydraComplexModel):
     _type_info = [
         ('resourcescenarios',    SpyneArray(ResourceScenarioDiff, default=[])),
-        ('constraints',          ConstraintDiff),
         ('groups',               ResourceGroupDiff),
     ]
+
+    def __init__(self, parent=None):
+        super(ScenarioDiff, self).__init__(parent)
+
+        if parent is None:
+            return
+        
+        self.resourcescenarios = [ResourceScenarioDiff(rd) for rd in parent['resourcescenarios']]
+        self.groups = [ResourceGroupDiff(rg) for rg in parent['groups']]
 
 class Network(Resource):
     _type_info = [
@@ -727,12 +794,60 @@ class Network(Resource):
         ('types',               SpyneArray(TypeSummary, default=[])),
     ]
 
-class NetworkSummary(Resource):
+    def __init__(self, parent=None):
+        super(Network, self).__init__(parent)
+
+        if parent is None:
+            return
+        self.project_id = parent.project_id
+        self.id         = parent.network_id
+        self.name       = parent.network_name
+        self.description = parent.network_description
+        self.created_by  = parent.created_by
+        self.cr_date     = str(parent.cr_date) 
+        if parent.network_layout is not None:
+            self.layout    = eval(parent.network_layout)
+        else:
+            self.layout = {}
+        self.status      = parent.status
+        self.attributes  = [ResourceAttr(ra) for ra in parent.attributes]
+        self.scenarios   = [Scenario(s) for s in parent.scenarios]
+        self.nodes       = [Node(n) for n in parent.nodes]
+        self.links       = [Link(l) for l in parent.links]
+        self.resourcegroups = [ResourceGroup(rg) for rg in parent.resourcegroups]
+        self.types          = [TypeSummary(t) for t in parent.types]
+
+class NetworkSummary(ComplexModel):
     _type_info = [
         ('project_id',          Integer(default=None)),
         ('id',                  Integer(default=None)),
         ('name',                String(default=None)),
+        ('description',         String(default=None)),
+        ('scenario_ids',        SpyneArray(Integer, default=None)),
+        ('links',               SpyneArray(Link, default=None)),
+        ('nodes',               SpyneArray(Node, default=None)),
+        ('groups',              SpyneArray(ResourceGroup, default=None)),
     ]
+
+    def __init__(self, parent=None):
+        """
+            Takes a network object and creates a very simplified summary from it.
+        """
+        super(NetworkSummary, self).__init__()
+
+        if parent is None:
+            return
+
+        self.project_id = parent.project_id
+        self.id         = parent.network_id
+        self.name       = parent.network_name
+        self.description = parent.network_description
+        self.scenario_ids = []
+        for s in parent.scenarios:
+            self.scenario_ids.append(s.scenario_id)
+        self.links = [Link(l, True) for l in parent.links]
+        self.nodes = [Node(n, True) for n in parent.nodes]
+        self.groups = [ResourceGroup(g, True) for g in parent.resourcegroups]
 
 class NetworkExtents(Resource):
     _type_info = [
@@ -742,6 +857,18 @@ class NetworkExtents(Resource):
         ('max_x',      Decimal(default=0)),
         ('max_y',      Decimal(default=0)),
     ]
+
+    def __init__(self, parent=None):
+        super(NetworkExtents, self).__init__(parent)
+
+        if parent is None:
+            return
+
+        self.network_id = parent.network_id
+        self.min_x = parent.min_x
+        self.min_y = parent.min_y
+        self.max_x = parent.max_x
+        self.max_y = parent.max_y
 
 class Project(Resource):
     _type_info = [
@@ -754,6 +881,20 @@ class Project(Resource):
         ('attributes',  SpyneArray(ResourceScenario, default=[])),
     ]
 
+    def __init__(self, parent=None):
+        super(Project, self).__init__(parent)
+
+        if parent is None:
+            return
+
+        self.id = parent.project_id
+        self.name = parent.project_name
+        self.description = parent.project_description
+        self.status      = parent.status
+        self.cr_date     = str(parent.cr_date)
+        self.created_by  = parent.created_by
+        self.attributes  = [ResourceScenario(rs) for rs in parent.get_attributes()]
+
 class ProjectSummary(Resource):
     _type_info = [
         ('id',          Integer(default=None)),
@@ -761,6 +902,16 @@ class ProjectSummary(Resource):
         ('cr_date',     String(default=None)),
         ('created_by',  Integer(default=None)),
     ]
+
+    def __init__(self, parent=None):
+        super(ProjectSummary, self).__init__(parent)
+
+        if parent is None:
+            return
+        self.id = parent.project_id
+        self.name = parent.project_name
+        self.cr_date = str(parent.cr_date)
+        self.created_by = parent.created_by
 
 class User(HydraComplexModel):
     _type_info = [
@@ -770,6 +921,17 @@ class User(HydraComplexModel):
         ('password', String(default=None)),
     ]
 
+    def __init__(self, parent=None):
+        super(User, self).__init__(parent)
+
+        if parent is None:
+            return
+
+        self.id = parent.user_id
+        self.username = parent.username
+        self.display_name = parent.display_name
+        self.password     = parent.password
+
 class Perm(HydraComplexModel):
     _type_info = [
         ('id',   Integer),
@@ -777,15 +939,40 @@ class Perm(HydraComplexModel):
         ('code', String),
     ]
 
+    def __init__(self, parent=None):
+        super(Perm, self).__init__(parent)
+
+        if parent is None:
+            return
+
+        self.id   = parent.perm_id
+        self.name = parent.perm_name
+        self.code = parent.perm_code
+
 class RoleUser(HydraComplexModel):
     _type_info = [
         ('user_id',  Integer),
     ]
+    def __init__(self, parent=None):
+        super(Perm, self).__init__(parent)
+
+        if parent is None:
+            return
+
+        self.user_id = parent.user_id
 
 class RolePerm(HydraComplexModel):
     _type_info = [
         ('perm_id',   Integer),
     ]
+
+    def __init__(self, parent=None):
+        super(RolePerm, self).__init__(parent)
+
+        if parent is None:
+            return
+
+        self.perm_id = parent.perm_id
 
 class Role(HydraComplexModel):
     _type_info = [
@@ -796,11 +983,33 @@ class Role(HydraComplexModel):
         ('roleusers', SpyneArray(RoleUser, default=[])),
     ]
 
+    def __init__(self, parent=None):
+        super(Role, self).__init__(parent)
+
+        if parent is None:
+            return
+
+        self.id = parent.role_id
+        self.name = parent.role_name
+        self.code = parent.role_code
+        self.roleperms = [RolePerm(rp) for rp in parent.roleperms]
+        self.roleusers = [RoleUser(ru) for ru in parent.roleusers]
+
 class PluginParam(HydraComplexModel):
     _type_info = [
         ('name',        String),
         ('value',       String),
     ]
+
+    def __init__(self, parent=None):
+        super(PluginParam, self).__init__(parent)
+
+        if parent is None:
+            return
+
+        self.name = parent.name
+        self.value = parent.value
+
 
 class Plugin(HydraComplexModel):
     _type_info = [
@@ -809,14 +1018,67 @@ class Plugin(HydraComplexModel):
         ('params',      SpyneArray(PluginParam, default=[])),
     ]
 
-class Owner(HydraComplexModel):
+    def __init__(self, parent=None):
+        super(Plugin, self).__init__(parent)
+
+        if parent is None:
+            return
+
+        self.name = parent.name
+        self.location = parent.location
+        self.params = [PluginParam(pp) for pp in parent.params]
+
+
+class ProjectOwner(HydraComplexModel):
     _type_info = [
-        ('ref_id',   Integer),
-        ('ref_key',  String),
+        ('project_id',   Integer),
         ('user_id',  Integer),
         ('edit',     String),
         ('view',     String)
     ]
+    def __init__(self, parent=None):
+        super(ProjectOwner, self).__init__(parent)
+
+        if parent is None:
+            return
+        self.project_id = parent.project_id
+        self.user_id    = parent.user_id
+        self.edit       = parent.edit
+        self.view       = parent.view
+
+class DatasetOwner(HydraComplexModel):
+    _type_info = [
+        ('dataset_id',   Integer),
+        ('user_id',  Integer),
+        ('edit',     String),
+        ('view',     String)
+    ]
+    def __init__(self, parent=None):
+        super(DatasetOwner, self).__init__(parent)
+
+        if parent is None:
+            return
+        self.dataset_id = parent.dataset_id
+        self.user_id    = parent.user_id
+        self.edit       = parent.edit
+        self.view       = parent.view
+
+class NetworkOwner(HydraComplexModel):
+    _type_info = [
+        ('network_id',   Integer),
+        ('user_id',  Integer),
+        ('edit',     String),
+        ('view',     String)
+    ]
+    def __init__(self, parent=None):
+        super(NetworkOwner, self).__init__(parent)
+
+        if parent is None:
+            return
+        self.network_id = parent.network_id
+        self.user_id    = parent.user_id
+        self.edit       = parent.edit
+        self.view       = parent.view
 
 class Unit(HydraComplexModel):
     _type_info = [
@@ -827,3 +1089,15 @@ class Unit(HydraComplexModel):
         ('info', String),
         ('dimension', String),
     ]
+
+    def __init__(self, parent=None):
+        super(Unit, self).__init__(parent)
+
+        if parent is None:
+            return
+        self.name = parent.name
+        self.abbr = parent.abbr
+        self.cf   = parent.cf
+        self.lf   = parent.lf
+        self.info = parent.info
+        self.dimension = parent.dimension

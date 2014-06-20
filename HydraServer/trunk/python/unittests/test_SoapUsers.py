@@ -170,6 +170,10 @@ class UsersTest(test_SoapServer.SoapServerTest):
             if user.id == 1:
                 assert user.username == 'root'
 
+    def test_get_username(self):
+        username = self.client.service.get_username(1)
+        assert username == 'root'
+
     def test_get_perms(self):
         perms = self.client.service.get_all_perms()
         assert len(perms.Perm) >= 19

@@ -43,7 +43,7 @@ class TemplateService(HydraService):
         tmpl_i = template.upload_template_xml(template_xml,
                                               **ctx.in_header.__dict__)
 
-        return get_as_complexmodel(ctx, tmpl_i)
+        return Template(tmpl_i)
 
     @rpc(String, Integer, _returns=SpyneArray(TypeSummary))
     def get_matching_resource_types(ctx, resource_type, resource_id):
@@ -71,7 +71,7 @@ class TemplateService(HydraService):
         """
         types = template.assign_types_to_resources(resource_types,
                                                     **ctx.in_header.__dict__)
-        ret_val = [get_as_complexmodel(ctx, t) for t in types]
+        ret_val = [TemplateType(t) for t in types]
         return ret_val
 
 
@@ -128,7 +128,7 @@ class TemplateService(HydraService):
         tmpl_i = template.add_template(tmpl,
                                       **ctx.in_header.__dict__)
 
-        return get_as_complexmodel(ctx, tmpl_i)
+        return Template(tmpl_i)
 
     @rpc(Template, _returns=Template)
     def update_template(ctx, tmpl):
@@ -137,7 +137,7 @@ class TemplateService(HydraService):
         """
         tmpl_i = template.update_template(tmpl,
                                            **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, tmpl_i)
+        return Template(tmpl_i)
 
     @rpc(_returns=SpyneArray(Template))
     def get_templates(ctx):
@@ -168,7 +168,7 @@ class TemplateService(HydraService):
         """
         tmpl_i = template.get_template(template_id,
                                       **ctx.in_header.__dict__)
-        tmpl = get_as_complexmodel(ctx, tmpl_i)
+        tmpl = Template(tmpl_i)
 
         return tmpl
 
@@ -180,7 +180,7 @@ class TemplateService(HydraService):
         tmpl_i = template.get_template_by_name(name,
                                               **ctx.in_header.__dict__)
         if tmpl_i is not None:
-            tmpl = get_as_complexmodel(ctx, tmpl_i)
+            tmpl = Template(tmpl_i)
 
             return tmpl
         else:
@@ -195,7 +195,7 @@ class TemplateService(HydraService):
         tmpl_type = template.add_templatetype(templatetype,
                                               **ctx.in_header.__dict__)
 
-        return get_as_complexmodel(ctx, tmpl_type)
+        return TemplateType(tmpl_type)
 
     @rpc(TemplateType, _returns=TemplateType)
     def update_templatetype(ctx, templatetype):
@@ -206,7 +206,7 @@ class TemplateService(HydraService):
         """
         type_i = template.update_templatetype(templatetype,
                                               **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, type_i)
+        return TemplateType(type_i)
 
     @rpc(Integer, _returns=TemplateType)
     def get_templatetype(ctx, type_id):
@@ -215,7 +215,7 @@ class TemplateService(HydraService):
         """
         type_i = template.get_templatetype(type_id,
                                            **ctx.in_header.__dict__)
-        templatetype = get_as_complexmodel(ctx, type_i)
+        templatetype = TemplateType(type_i)
         return templatetype
 
     @rpc(Integer, String, _returns=TemplateType)
@@ -227,7 +227,7 @@ class TemplateService(HydraService):
         type_i = template.get_templatetype_by_name(template_id, 
                                                    type_name,
                                                    **ctx.in_header.__dict__)
-        tmpltype = get_as_complexmodel(ctx, type_i)
+        tmpltype = TemplateType(type_i)
 
         return tmpltype
 
@@ -236,9 +236,11 @@ class TemplateService(HydraService):
         """
             Add an typeattr to an existing type.
         """
-        typeattr_i = template.add_typeattr(typeattr,
+        updated_template_type = template.add_typeattr(typeattr,
                                            **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, typeattr_i)
+
+        ta = TemplateType(updated_template_type)
+        return ta
 
 
     @rpc(TypeAttr, _returns=Unicode)

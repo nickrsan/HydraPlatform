@@ -18,7 +18,8 @@ from spyne.model.primitive import Integer, String, Unicode
 from spyne.model.complex import Array as SpyneArray
 from hydra_complexmodels import Project,\
 ProjectSummary,\
-Network
+Network,\
+get_as_complexmodel
 from hydra_base import HydraService
 from lib import project
 
@@ -34,9 +35,9 @@ class ProjectService(HydraService):
             returns a project complexmodel
         """
 
-        proj_dict = project.add_project(proj, **ctx.in_header.__dict__) 
-
-        return Project(proj_dict)
+        proj = project.add_project(proj, **ctx.in_header.__dict__) 
+        ret_proj = Project(proj)
+        return ret_proj
 
     @rpc(Project, _returns=Project)
     def update_project(ctx, proj):

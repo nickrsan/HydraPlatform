@@ -29,12 +29,26 @@ class UserService(HydraService):
         The user soap service
     """
 
+    @rpc(Integer, _returns=Unicode)
+    def get_username(ctx, uid):
+        """
+            Add a new user.
+        """
+        username = users.get_username(uid, **ctx.in_header.__dict__)
+        return username
+
+
+
     @rpc(User, _returns=User)
     def add_user(ctx, user):
         """
             Add a new user.
         """
         user_i = users.add_user(user, **ctx.in_header.__dict__)
+        #u = User()
+        #u.__dict__ = user_i.__dict__
+        #return u
+        
         return get_as_complexmodel(ctx, user_i)
 
     @rpc(User, _returns=User)
@@ -158,7 +172,7 @@ class UserService(HydraService):
         """
 
         all_user_dicts = users.get_all_users(**ctx.in_header.__dict__)
-        all_user_cms = [User(u) for u in all_user_dicts]
+        all_user_cms = [get_as_complexmodel(ctx, u) for u in all_user_dicts]
         return all_user_cms
 
     @rpc(_returns=SpyneArray(Perm))
@@ -167,7 +181,7 @@ class UserService(HydraService):
             Get all permissions
         """
         all_perm_dicts = users.get_all_perms(**ctx.in_header.__dict__)
-        all_perm_cms = [Perm(p) for p in all_perm_dicts]
+        all_perm_cms = [get_as_complexmodel(ctx, p) for p in all_perm_dicts]
         return all_perm_cms
 
     @rpc(_returns=SpyneArray(Role))
@@ -176,7 +190,7 @@ class UserService(HydraService):
             Get all roles
         """
         all_role_dicts = users.get_all_roles(**ctx.in_header.__dict__)
-        all_role_cms   = [Role(r) for r in all_role_dicts]
+        all_role_cms   = [get_as_complexmodel(ctx, r) for r in all_role_dicts]
         return all_role_cms
 
     @rpc(Integer, _returns=Role)
@@ -203,8 +217,8 @@ class UserService(HydraService):
         """
             Get all permissions
         """
-        perm_dict = users.get_perm(perm_id, **ctx.in_header.__dict__)
-        perm_cm = Perm(perm_dict)
+        perm = users.get_perm(perm_id, **ctx.in_header.__dict__)
+        perm_cm = get_as_complexmodel(ctx, perm)
         return perm_cm
 
     @rpc(Unicode, _returns=Perm)
@@ -212,6 +226,6 @@ class UserService(HydraService):
         """
             Get a permission by its code 
         """
-        perm_dict = users.get_perm_by_code(perm_code, **ctx.in_header.__dict__)
-        perm_cm = Perm(perm_dict)
+        perm = users.get_perm_by_code(perm_code, **ctx.in_header.__dict__)
+        perm_cm = get_as_complexmodel(ctx, perm)
         return perm_cm

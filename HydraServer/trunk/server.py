@@ -43,7 +43,6 @@ from soap_server.data import DataService
 from soap_server.plugins import PluginService
 from soap_server.users import UserService
 from soap_server.template import TemplateService
-from soap_server.constraints import ConstraintService
 from soap_server.static import ImageService, FileService
 from soap_server.groups import ResourceGroupService
 from soap_server.units import UnitService
@@ -65,18 +64,16 @@ from db import HydraIface
 import datetime
 import traceback
 
-import signal
-
 from cherrypy.wsgiserver import CherryPyWSGIServer
+from db import commit_transaction 
 
 log = logging.getLogger(__name__)
 
-
 def _on_method_call(ctx):
-
+    
     if ctx.function == AuthenticationService.login:
         return
-
+    
     if ctx.in_object is None:
         raise ArgumentError("RequestHeader is null")
     if ctx.in_header is None:
@@ -85,6 +82,7 @@ def _on_method_call(ctx):
         raise AuthenticationError(ctx.in_object.username)
 
 def _on_method_context_closed(ctx):
+    commit_transaction()
     hdb.commit()
 
 class HydraSoapApplication(Application):
@@ -142,6 +140,7 @@ class HydraServer():
     def __init__(self):
 
         logging.getLogger('spyne').setLevel(logging.INFO)
+        #logging.getLogger('sqlalchemy').setLevel(logging.INFO)
         connection = hdb.connect()
         HydraIface.init(connection)
 
@@ -160,7 +159,6 @@ class HydraServer():
             ScenarioService,
             DataService,
             PluginService,
-            ConstraintService,
             TemplateService,
             ImageService,
             FileService,

@@ -344,24 +344,6 @@ class GenericResource(IfaceBase):
 
         return obj_dict
 
-    def set_ownership(self, user_id, read='Y', write='Y', share='Y'):
-        owner = Owner()
-        owner.db.ref_key = self.ref_key
-
-        if self.ref_key not in ('PROJECT', 'NETWORK'):
-            raise OwnershipError("Only resources of type NETWORK and PROJECT may have an owner.")
-
-        owner.db.ref_id = self.ref_id
-        owner.db.user_id = int(user_id)
-        owner.load()
-        owner.db.view  = read
-        owner.db.edit  = write
-        owner.db.share = share
-
-        owner.save()
-
-        return owner
-
     def get_owners(self):
         if self.ref_key not in ('PROJECT', 'NETWORK'):
             return []
@@ -492,10 +474,9 @@ class Project(GenericResource):
                 o.view,
                 o.share
             from
-                tOwner    o
+                tProjectOwner    o
             wheree
-                o.ref_key = 'PROJECT'
-            and o.ref_id  = %(project_id)s 
+            o.project_id  = %(project_id)s 
             and o.user_id = %(user_id)s
         """ % {
             'project_id' : self.db.project_id,
@@ -509,6 +490,19 @@ class Project(GenericResource):
         else:
             r = rs[0]
             return {'view' : r.view, 'edit' : r.edit, 'share' : r.share}
+
+    def set_ownership(self, user_id, read='Y', write='Y', share='Y'):
+        owner = ProjectOwner()
+        owner.db.project_id = self.db.project_id
+        owner.db.user_id = int(user_id)
+        owner.load()
+        owner.db.view  = read
+        owner.db.edit  = write
+        owner.db.share = share
+
+        owner.save()
+
+        return owner
 
 class Scenario(GenericResource):
     """
@@ -678,6 +672,19 @@ class Network(GenericResource):
 
         return scenarios
 
+    def set_ownership(self, user_id, read='Y', write='Y', share='Y'):
+        owner = NetworkOwner()
+        owner.db.network_id = self.db.network_id
+        owner.db.user_id = int(user_id)
+        owner.load()
+        owner.db.view  = read
+        owner.db.edit  = write
+        owner.db.share = share
+
+        owner.save()
+
+        return owner
+
     def check_ownership(self, user_id):
 
         sql = """
@@ -686,10 +693,9 @@ class Network(GenericResource):
                 o.view,
                 o.share
             from
-                tOwner    o
+                tNetworkOwner    o
             where
-                o.ref_key = 'NETWORK'
-            and o.ref_id  = %(network_id)s 
+            o.network_id  = %(network_id)s 
             and o.user_id = %(user_id)s
         """ % {
             'network_id' : self.db.network_id,
@@ -1406,24 +1412,13 @@ class Dataset(IfaceBase):
             self.load()
 
     def set_ownership(self, user_id, read='Y', write='Y', share='Y'):
-        """
-            Add 'exceptions' to a locked dataset.
-            If a dataset is locked nobody except the owner can get it
-            from the server. Exceptions to this rule are added by 'ownership.'
-        """
-
-        if self.db.locked == 'N':
-            raise OwnershipError("Cannot set ownership. Dataset not locked")
-
-        owner = Owner()
-        owner.db.ref_key = 'DATASET'
-
-        owner.db.ref_id  = self.db.dataset_id
+        owner = DatasetOwner()
+        owner.db.dataset_id = self.db.dataset_id
         owner.db.user_id = int(user_id)
         owner.load()
-        owner.db.view    = read
-        owner.db.edit    = write
-        owner.db.share   = share
+        owner.db.view  = read
+        owner.db.edit  = write
+        owner.db.share = share
 
         owner.save()
 
@@ -1438,10 +1433,9 @@ class Dataset(IfaceBase):
             select
                 user_id
             from
-                tOwner
+                tDatasetOwner
             where
-                ref_key = 'DATASET'
-            and ref_id  = %s
+            dataset_id  = %s
             and view    = 'Y'
             and user_id = %s
         """%(self.db.dataset_id, user_id)
@@ -1685,6 +1679,34 @@ class Dataset(IfaceBase):
 
         return dataset_scenarios
 
+    def set_ts_value(self, time, value):
+        """
+            Adds a single timeseries value to the timeseries.
+            This consists of a timestamp and a value
+        """
+
+        for ts in self.timeseriesdatas:
+            if ts.db.data_id == self.db.data_id and ts.db.ts_time == time:
+                ts.db.ts_value = value
+                return
+        #else:
+        ts_val = TimeSeriesData()
+        ts_val.db.dataset_id = self.db.dataset_id
+        ts_val.db.ts_time = time
+        ts_val.db.ts_value = value
+
+        self.timeseriesdatas.append(ts_val)
+
+    def set_ts_values(self, values):
+        """
+            Adds multiple timeseries values to a timeseries.
+            This is takes a list of tuples as an argument, as follows:
+            [(time_1, value_1), (time_2, value_2), ...(time_n, value_n)]
+        """
+
+        for time, value in values:
+            self.set_ts_value(time, value)
+
 class DatasetGroup(IfaceBase):
     """
         Groups data together to make it easier to find
@@ -1859,7 +1881,7 @@ class TimeSeriesData(IfaceBase):
         Non-equally spaced time series data
         In other words: a value and a timestamp.
     """
-    def __init__(self, timeseries=None, data_id = None):
+    def __init__(self, dataset=None, dataset_id = None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.data_id = data_id
@@ -2314,19 +2336,42 @@ class RolePerm(IfaceBase):
         if perm_id is not None and role_id is not None:
             self.load()
 
-class Owner(IfaceBase):
+class DatasetOwner(IfaceBase):
     """
        Ownership for a project.
     """
-    def __init__(self, user_id = None, ref_key = None, ref_id = None):
+    def __init__(self, user_id = None, dataset_id = None):
         IfaceBase.__init__(self, None, self.__class__.__name__)
 
         self.db.user_id = user_id
-        self.db.ref_key = ref_key
-        self.db.ref_id  = ref_id
-        if user_id is not None and ref_key is not None and ref_id is not None:
+        self.db.dataset_id = dataset_id
+        if user_id is not None and dataset_id is not None:
             self.load()
 
+class NetworkOwner(IfaceBase):
+    """
+       Ownership for a network.
+    """
+    def __init__(self, user_id = None, network_id = None):
+        IfaceBase.__init__(self, None, self.__class__.__name__)
+
+        self.db.user_id = user_id
+        self.db.network_id  = network_id
+        if user_id is not None and network_id is not None:
+            self.load()
+
+
+class ProjectOwner(IfaceBase):
+    """
+       Ownership for a project.
+    """
+    def __init__(self, user_id = None, project_id = None):
+        IfaceBase.__init__(self, None, self.__class__.__name__)
+
+        self.db.user_id = user_id
+        self.db.project_id  = project_id
+        if user_id is not None and project_id is not None:
+            self.load()
 db_hierarchy = dict(
     project  = dict(
         obj   = Project,
@@ -2533,10 +2578,23 @@ db_hierarchy = dict(
         table_name = 'tRolePerm',
         pk     = ['perm_id', 'role_id']
     ),
-    owner  = dict(
-        obj   = Owner,
+    datasetowner  = dict(
+        obj   = DatasetOwner,
         parent = None,
-        table_name = 'tOwner',
+        table_name = 'tDatasetOwner',
+        pk     = ['user_id', 'dataset_id']
+    ),
+    projectowner  = dict(
+        obj   = ProjectOwner,
+        parent = None,
+        table_name = 'tProjectOwner',
         pk     = ['user_id', 'project_id']
     ),
+    networkowner  = dict(
+        obj   = NetworkOwner,
+        parent = None,
+        table_name = 'tNetworkOwner',
+        pk     = ['user_id', 'network_id']
+    ),
+
 )

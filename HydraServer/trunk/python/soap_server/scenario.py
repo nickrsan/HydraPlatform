@@ -19,8 +19,7 @@ from spyne.decorator import rpc
 from hydra_complexmodels import Scenario,\
         ResourceScenario,\
         Dataset,\
-        ScenarioDiff,\
-        get_as_complexmodel
+        ScenarioDiff
 
 from lib import scenario
 from hydra_base import HydraService
@@ -47,7 +46,7 @@ class ScenarioService(HydraService):
         """
         new_scen = scenario.add_scenario(network_id, scen, **ctx.in_header.__dict__)
 
-        return get_as_complexmodel(ctx, new_scen)
+        return Scenario(new_scen)
 
     @rpc(Scenario, _returns=Scenario)
     def update_scenario(ctx, scen):
@@ -57,7 +56,7 @@ class ScenarioService(HydraService):
             about negative IDS
         """
         updated_scen = scenario.update_scenario(scen, **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, updated_scen)
+        return Scenario(updated_scen)
 
     @rpc(Integer, _returns=Unicode)
     def delete_scenario(ctx, scenario_id):
@@ -75,7 +74,7 @@ class ScenarioService(HydraService):
 
         cloned_scen = scenario.clone_scenario(scenario_id, **ctx.in_header.__dict__)
 
-        return get_as_complexmodel(ctx, cloned_scen)
+        return Scenario(cloned_scen)
 
     @rpc(Integer, Integer, _returns=ScenarioDiff)
     def compare_scenarios(ctx, scenario_id_1, scenario_id_2):
@@ -106,7 +105,7 @@ class ScenarioService(HydraService):
         res = scenario.update_resourcedata(scenario_id,
                                            resource_scenario,
                                            **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, res)
+        return ResourceScenario(res)
 
     @rpc(Integer, ResourceScenario, _returns=Unicode)
     def delete_resourcedata(ctx,scenario_id, resource_scenario):
@@ -125,7 +124,7 @@ class ScenarioService(HydraService):
             Get a single dataset, by ID
         """
         dataset_i = scenario.get_dataset(dataset_id, **ctx.in_header.__dict__)
-        return get_as_complexmodel(ctx, dataset_i)
+        return Dataset(dataset_i)
 
     @rpc(Integer, Integer, Dataset, _returns=ResourceScenario)
     def add_data_to_attribute(ctx, scenario_id, resource_attr_id, dataset):
@@ -136,7 +135,7 @@ class ScenarioService(HydraService):
                                                   resource_attr_id,
                                                   dataset,
                                                   **ctx.in_header.__dict__)
-        x = get_as_complexmodel(ctx,new_data)
+        x = Dataset(new_data)
         return x
 
     @rpc(Integer, _returns=SpyneArray(Dataset))

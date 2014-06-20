@@ -17,11 +17,13 @@ from spyne.model.primitive import Mandatory, String
 from spyne.error import Fault
 from spyne.model.complex import ComplexModel
 from spyne.decorator import srpc, rpc
-from db import HydraIface
 from hydra_complexmodels import LoginResponse
 import logging
 from HydraLib.HydraException import HydraError
-
+from db.HydraAlchemy import User, Role, RoleUser
+from db import DBSession
+from sqlalchemy.orm.exc import NoResultFound
+import transaction
 import datetime
 
 import bcrypt
@@ -31,44 +33,35 @@ from spyne.service import ServiceBase
 
 log = logging.getLogger(__name__)
 _session_db = set()
-_user_map   = {}
 
 def get_session_db():
     return _session_db
 
-def get_user_id(username):
-    return _user_map.get(username)
-
 def make_root_user():
-    user = HydraIface.User()
-    user.db.username = 'root'
-    user.db.password =  bcrypt.hashpw('', bcrypt.gensalt())
-    user.db.display_name = 'Root user'
 
-    if user.get_user_id() is None:
-        user.save()
-        user.commit()
-    else:
-        log.info("Root user exists.")
+    try:
+        user = DBSession.query(User).filter(User.username=='root').one()
+    except NoResultFound:
+        user = User(username='root',
+                    password=bcrypt.hashpw('', bcrypt.gensalt()),
+                    display_name='Root User')
+        DBSession.add(user)
 
-    sql = """
-        select
-            role_id
-        from
-            tRole
-        where
-            role_code = 'admin'
-    """
-    rs = HydraIface.execute(sql)
-    if len(rs) == 0:
+    try:
+        role = DBSession.query(Role).filter(Role.role_code=='admin').one()
+    except NoResultFound:
         raise HydraError("Admin role not found.")
 
-    role_id = rs[0].role_id
-    userrole = HydraIface.RoleUser(role_id=role_id,user_id=user.db.user_id) 
-    if not userrole.load():
-        userrole.save()
-    userrole.commit()
-
+    try:
+        userrole = DBSession.query(RoleUser).filter(RoleUser.role_id==role.role_id,
+                                                   RoleUser.user_id==user.user_id).one()
+    except NoResultFound:
+        userrole = RoleUser(role_id=role.role_id,user_id=user.user_id) 
+        user.roleusers.append(userrole)
+        DBSession.add(userrole)
+    DBSession.flush()
+    transaction.commit()
+    
 class RequestHeader(ComplexModel):
     __namespace__ = 'hydra.base'
     session_id    = Mandatory.String
@@ -133,32 +126,25 @@ class AuthenticationService(ServiceBase):
     @srpc(Mandatory.String, String, _returns=LoginResponse,
                                                    _throws=AuthenticationError)
     def login(username, password):
-        user_i = HydraIface.User()
-        user_i.db.username = username
-        if _user_map.get(username) is None:
-            user_id = user_i.get_user_id()
-            if user_id is None:
-                raise AuthenticationError(username)
-            _user_map[username] = user_id
-        else:
-            user_id = _user_map[username]
+        try:
+            user_i = DBSession.query(User).filter(User.username==username).one()
+        except NoResultFound:
+           raise AuthenticationError(username)
 
-        user_i.db.user_id = user_id
-        user_i.load()
-
-        if bcrypt.hashpw(password, user_i.db.password) == user_i.db.password:
+        if bcrypt.hashpw(password, user_i.password) == user_i.password:
             session_id = (username, '%x' % random.randint(1<<124, (1<<128)-1))
             _session_db.add(session_id)
         else:
            raise AuthenticationError(username)
 
-        user_i.db.last_login = datetime.datetime.now()
-        user_i.save()
+        user_i.last_login = datetime.datetime.now()
 
         loginresponse = LoginResponse()
         loginresponse.session_id = session_id[1]
-        loginresponse.user_id    = user_i.db.user_id
+        loginresponse.user_id    = user_i.user_id
 
+        DBSession.flush()
+        
         return loginresponse 
 
 

@@ -45,8 +45,9 @@ class FixNamespace(MessagePlugin):
             self.fix_ns(e)
 
 def connect():
-    port = config.getint('hydra_server', 'port', 12345)
-    url = 'http://localhost:%s?wsdl' % port
+    port = config.getint('hydra_server', 'port')
+    domain = config.get('hydra_server', 'domain')
+    url = 'http://%s:%s?wsdl' % (domain, port)
     client = Client(url, plugins=[FixNamespace()])
 
     client.add_prefix('hyd', 'soap_server.hydra_complexmodels')
@@ -491,13 +492,14 @@ class SoapServerTest(unittest.TestCase):
         #log.debug(network)
         start = datetime.datetime.now()
         log.info("Creating network...")
-        response_network = self.client.service.add_network(network)
+        response_network_summary = self.client.service.add_network(network)
+        response_net = self.client.service.get_network(response_network_summary.id)
 
-        self.check_network(network, response_network)
+        self.check_network(network, response_net)
      
         log.info("Network Creation took: %s"%(datetime.datetime.now()-start))
 
-        return response_network
+        return response_net
 
     def check_network(self, request_net, response_net):
 
