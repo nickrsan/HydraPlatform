@@ -16,7 +16,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from spyne.model.primitive import String, Boolean, Decimal, Integer
+from spyne.model.primitive import Unicode, Boolean, Decimal, Integer
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from spyne.util.dictdoc import get_object_as_dict
@@ -34,7 +34,7 @@ class UnitService(HydraService):
     """
     """
 
-    @rpc(String, _returns=Boolean)
+    @rpc(Unicode, _returns=Boolean)
     def add_dimension(ctx, dimension):
         """Add a physical dimensions (such as ``Volume`` or ``Speed``) to the
         servers list of dimensions. If the dimension already exists, nothing is
@@ -43,7 +43,7 @@ class UnitService(HydraService):
         result = units.add_dimension(dimension, **ctx.in_header.__dict__)
         return result
 
-    @rpc(String, _returns=Boolean)
+    @rpc(Unicode, _returns=Boolean)
     def delete_dimension(ctx, dimension):
         """Delete a physical dimension from the list of dimensions. Please note
         that deleting works only for dimensions listed in the custom file.
@@ -97,7 +97,7 @@ class UnitService(HydraService):
         return result
 
     @rpc(Decimal(min_occurs="1", max_occurs="unbounded"),
-         String, String,
+         Unicode, Unicode,
          _returns=Decimal(min_occurs="1", max_occurs="unbounded"))
     def convert_units(ctx, values, unit1, unit2):
         """Convert a value from one unit to another one.
@@ -110,14 +110,14 @@ class UnitService(HydraService):
         """
         return units.convert_units(values, unit1, unit2, **ctx.in_header.__dict__)
 
-    @rpc(Integer, String, _returns=Integer)
+    @rpc(Integer, Unicode, _returns=Integer)
     def convert_dataset(ctx, dataset_id, to_unit):
         """Convert a whole dataset (specified by 'dataset_id' to new unit
         ('to_unit').
         """
         return units.convert_dataset(dataset_id, to_unit, **ctx.in_header.__dict__)
 
-    @rpc(String, _returns=String)
+    @rpc(Unicode, _returns=Unicode)
     def get_dimension(ctx, unit1):
         """Get the corresponding physical dimension for a given unit.
 
@@ -131,21 +131,21 @@ class UnitService(HydraService):
 
         return dim
 
-    @rpc(_returns=SpyneArray(String))
+    @rpc(_returns=SpyneArray(Unicode))
     def get_dimensions(ctx):
         """Get a list of all physical dimensions available on the server.
         """
         dim_list = units.get_dimensions(**ctx.in_header.__dict__)
         return dim_list
 
-    @rpc(String, _returns=SpyneArray(Unit))
+    @rpc(Unicode, _returns=SpyneArray(Unit))
     def get_units(ctx, dimension):
         """Get a list of all units corresponding to a physical dimension.
         """
         unit_list = units.get_units(dimension, **ctx.in_header.__dict__)
         return unit_list
 
-    @rpc(String, String, _returns=Boolean)
+    @rpc(Unicode, Unicode, _returns=Boolean)
     def check_consistency(ctx, unit, dimension):
         """Check if a given units corresponds to a physical dimension.
         """

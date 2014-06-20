@@ -54,6 +54,8 @@ Option                 Short  Parameter Description
                                         group members.
 ``--template``         ``-m`` TEMPLATE  XML file defining the types for the
                                         network. Required if types are set.
+``--rules``            ``-l`` RULES     File(s) containing rules or constraints
+                                        as mathematical expressions.
 ``--timezone``         ``-z`` TIMEZONE  Specify a timezone as a string
                                         following the Area/Loctation pattern
                                         (e.g.  Europe/London). This timezone
@@ -178,8 +180,8 @@ from suds import WebFault
 import numpy
 
 from lxml import etree
-
-import re
+import requests
+import json
 log = logging.getLogger(__name__)
 
 
@@ -219,7 +221,11 @@ class ImportCSV(object):
         self.grouptype_dict = dict()
         self.networktype = ''
 
-        self.cli = PluginLib.connect(url=url)
+        self.user_id=None
+        self.session_id=None
+        self.username=None
+
+        self.login()
         self.node_id  = PluginLib.temp_ids()
         self.link_id  = PluginLib.temp_ids()
         self.group_id = PluginLib.temp_ids()
@@ -295,7 +301,7 @@ class ImportCSV(object):
             try:
                 ID = int(ID)
                 try:
-                    self.Project = self.cli.service.get_project(ID)
+                    self.Project = self.call('get_project', {'project_id':ID})
                     log.info('Loading existing project (ID=%s)' % ID)
                     return
                 except WebFault:
@@ -306,23 +312,59 @@ class ImportCSV(object):
                 self.warnings.append(
                     'Project ID not valid. Creating new project')
 
-        self.Project = self.cli.factory.create('hyd:Project')
-        self.Project.name = "CSV import at %s" % (datetime.now())
-        self.Project.description = \
+        self.Project = dict( 
+            name = "CSV import at %s" % (datetime.now()),
+            description = \
             "Project created by the %s plug-in, %s." % \
-            (self.__class__.__name__, datetime.now())
-        self.Project = self.cli.service.add_project(self.Project)
+                (self.__class__.__name__, datetime.now()),
+            status = 'A',
+        )
+        self.Project = self.call('add_project', {'project':self.Project})
+
+    def login(self):
+        user = config.get('hydra_client', 'user')
+        passwd = config.get('hydra_client', 'password')
+        login_params = {'username':user, 'password':passwd}
+
+        resp = self.call('login', login_params)
+        #set variables for use in request headers
+        self.session_id = resp['session_id']
+        self.user_id    = resp['user_id']
+        self.username   = user
+
+    def call(self, func, args):
+        log.info("Calling: %s"%(func))
+        port = config.getint('hydra_server', 'port', 12345)
+        domain = config.get('hydra_server', 'domain', '127.0.0.1')
+        url = "http://%s:%s/json"%(domain, port)
+        call = {func:args}
+        headers = {
+                    'Content-Type': 'application/json',       
+                    'session_id':self.session_id,
+                    'user_id':self.user_id,
+                    'username':self.username
+                  }
+        r = requests.post(url, data=json.dumps(call), headers=headers)
+        if not r.ok:
+            try:
+                resp = json.loads(r.content)
+                err = "%s:%s"%(resp['faultcode'], resp['faultstring'])
+            except:
+                err = r.content
+            raise HydraPluginError(err)
+        return json.loads(r.content) 
 
     def create_scenario(self, name=None):
-        self.Scenario = self.cli.factory.create('hyd:Scenario')
+        self.Scenario = dict() 
         if name is not None:
-            self.Scenario.name = name
+            self.Scenario['name'] = name
         else:
-            self.Scenario.name = 'CSV import'
+            self.Scenario['name'] = 'CSV import'
 
-        self.Scenario.description = \
+        self.Scenario['description']= \
             'Default scenario created by the CSV import plug-in.'
-        self.Scenario.id = -1
+        self.Scenario['id'] = -1
+        self.Scenario['resourcescenarios'] = []
 
     def create_network(self, file=None, network_id=None):
 
@@ -369,54 +411,47 @@ class ImportCSV(object):
                 # Check if network exists on the server.
                 try:
                     self.Network = \
-                        self.cli.service.get_network(network_id)
+                            self.call('get_network', {'network_id':data[field_idx['id']]})
                     # Assign name and description in case anything has changed
-                    self.Network.name = data[field_idx['name']].strip()
-                    self.Network.description = \
+                    self.Network['name'] = data[field_idx['name']].strip()
+                    self.Network['description'] = \
                         data[field_idx['description']].strip()
                     self.update_network_flag = True
                     log.info('Loading existing network (ID=%s)' % network_id)
                     # load existing nodes
-                    if self.Network.nodes is not None:
-                        for node in self.Network.nodes.Node:
-                            self.Nodes.update({node.name: node})
+                    for node in self.Network['nodes']:
+                        self.Nodes.update({node['name']: node})
                     # load existing links
-                    if self.Network.links is not None:
-                        for link in self.Network.links.Link:
-                            self.Links.update({link.name: link})
+                    for link in self.Network['links']:
+                        self.Links.update({link['name']: link})
                     # load existing groups
-                    if self.Network.resourcegroups is not None:
-                        for group in self.Network.resourcegroups.ResourceGroup:
-                            self.Groups.update({group.name: group})
+                    for group in self.Network['resourcegroups']:
+                        self.Groups.update({group['name']: group})
 
                     # Nodes and links are now deleted from the network, they
                     # will be added later...
-                    self.Network.nodes = \
-                        self.cli.factory.create('hyd:NodeArray')
-                    self.Network.links = \
-                        self.cli.factory.create('hyd:LinkArray')
-                    self.Network.resourcegroups = \
-                        self.cli.factory.create('hyd:ResourceGroupArray')
+                    self.Network['nodes']  = []
+                    self.Network['links']  = [] 
+                    self.Network['resourcegroups'] = [] 
                     # The scenario loaded with the network will be deleted as
                     # well, we create a new one.
-                    self.Network.scenarios = \
-                        self.cli.factory.create('hyd:ScenarioArray')
-                    self.Network = dict(self.Network)
+                    self.Network['scenarios'] = []
                 except WebFault:
-                    raise HydraPluginError('Network %s not found. Creating new network.'%(network_id))
+                    log.info('Network ID not found. Creating new network.')
+                    self.warnings.append('Network ID not found. Creating new network.')
 
             else:
                 # Create a new network
-                self.Network = dict(
-                    project_id = self.Project.id,
+                self.Network = dict( 
+                    project_id = self.Project['id'],
                     name = data[field_idx['name']].strip(),
                     description = \
                     data[field_idx['description']].strip(),
-                    nodes = self.cli.factory.create('hyd:NodeArray'),
-                    links = self.cli.factory.create('hyd:LinkArray'),
-                    scenarios = self.cli.factory.create('hyd:ScenarioArray'),
-                    resourcegroups = self.cli.factory.create('hyd:ResourceGroupArray'),
-                    attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
+                    nodes = [], 
+                    links = [],
+                    scenarios = [],
+                    resourcegroups = [],
+                    attributes = [],
                 )
 
             # Everything that is not name or description is an attribute
@@ -432,16 +467,16 @@ class ImportCSV(object):
         else:
             # Create a new network
             self.Network = dict(
-                project_id = self.Project.id,
+                project_id = self.Project['id'],
                 name = "CSV import",
                 description = \
                 "Network created by the %s plug-in, %s." % \
                 (self.__class__.__name__, datetime.now()),
-                nodes = self.cli.factory.create('hyd:NodeArray'),
-                links = self.cli.factory.create('hyd:LinkArray'),
-                scenarios = self.cli.factory.create('hyd:ScenarioArray'),
-                resourcegroups = self.cli.factory.create('hyd:ResourceGroupArray'),
-                attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
+                nodes = [],
+                links = [],
+                scenarios = [],
+                resourcegroups = [],
+                attributes = [],
             )
 
     def read_metadata(self, filename):
@@ -555,10 +590,10 @@ class ImportCSV(object):
                     id = self.node_id.next(),
                     name = nodename,
                     description = linedata[field_idx['description']].strip(),
-                    attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
+                    attributes = [],
                 )
                 try:
-                    node['x'] = float(linedata[field_idx['x']])
+                    node['x'] = str(linedata[field_idx['x']])
                 except ValueError:
                     node['x'] = 0
                     log.info('X coordinate of node %s is not a number.'
@@ -566,7 +601,7 @@ class ImportCSV(object):
                     self.warnings.append('X coordinate of node %s is not a number.'
                                          % node['name'])
                 try:
-                    node['y'] = float(linedata[field_idx['y']])
+                    node['y'] = str(linedata[field_idx['y']])
                 except ValueError:
                     node['y'] = 0
                     log.info('Y coordinate of node %s is not a number.'
@@ -644,7 +679,7 @@ class ImportCSV(object):
                     id = self.link_id.next(),
                     name = linkname,
                     description = linedata[field_idx['description']].strip(),
-                    attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
+                    attributes = [], 
                 )
 
                 try:
@@ -740,7 +775,7 @@ class ImportCSV(object):
                     id = self.group_id.next(),
                     name = group_name,
                     description = group_data[field_idx['description']].strip(),
-                    attributes = self.cli.factory.create('hyd:ResourceAttrArray'),
+                    attributes = [],
                 )
 
                 if field_idx['type'] is not None:
@@ -786,7 +821,7 @@ class ImportCSV(object):
                 'GROUP': self.Groups,
             }
 
-        items = self.cli.factory.create('hyd:ResourceGroupItemArray')
+        items = []
 
         for line in data:
 
@@ -829,19 +864,20 @@ class ImportCSV(object):
                 ref_id   = member['id'],
                 ref_key  = member_type,
             )
-            items.ResourceGroupItem.append(item)
+            items.append(item)
 
-        self.Scenario.resourcegroupitems = items
+        self.Scenario['resourcegroupitems'] = items
 
     def create_attribute(self, name, unit=None):
         """
             Create attribute locally. It will get added in bulk later.
         """
         try:
-            attribute = self.cli.factory.create('hyd:Attr')
-            attribute.name = name.strip()
+            attribute = dict(
+                name = name.strip(),
+            )
             if unit is not None and len(unit.strip()) > 0:
-                attribute.dimen = self.cli.service.get_dimension(unit.strip())
+                attribute['dimen'] = self.call('get_dimension', {'unit1':unit.strip()})
         except Exception,e:
             raise HydraPluginError("Invalid attribute %s %s: error was: %s"%(name,unit,e))
 
@@ -852,15 +888,17 @@ class ImportCSV(object):
         creating the attributes, resource attributes and a scenario which holds
         the data.'''
 
-        attributes = self.cli.factory.create('hyd:AttrArray')
+        attributes = []
 
         # Collect existing resource attributes:
         resource_attrs = dict()
 
         if resource['attributes'] is None:
             return resource
+        else:
+            resource['attributes'] = []
 
-        for res_attr in resource['attributes'].ResourceAttr:
+        for res_attr in resource['attributes']:
             resource_attrs.update({res_attr.attr_id: res_attr})
 
         for i in attrs.keys():
@@ -873,32 +911,34 @@ class ImportCSV(object):
                 else:
                     attribute = self.create_attribute(attrs[i])
                 self.Attributes.update({attrs[i]: attribute})
-            attributes.Attr.append(attribute)
+            attributes.append(attribute)
 
         # Add all attributes. If they exist already, we retrieve the real id.
         # Also, we add the attributes only once (that's why we use the
         # add_attrs flag).
         if self.add_attrs:
-            attributes = self.cli.service.add_attributes(attributes)
+            attributes = self.call('add_attributes', {'attrs':attributes})
             self.add_attrs = False
-            for attr in attributes.Attr:
-                self.Attributes.update({attr.name: attr})
+            for attr in attributes:
+                self.Attributes.update({attr['name']: attr})
 
         # Add data to each attribute
         for i in attrs.keys():
             attr = self.Attributes[attrs[i]]
             # Attribute might already exist for resource, use it if it does
-            if attr.id in resource_attrs.keys():
-                res_attr = dict(resource_attrs[attr.id])
+            if attr['id'] in resource_attrs.keys():
+                res_attr = resource_attrs[attr.id]
             else:
-                res_attr = dict(
+                res_attr = dict( 
                     id = self.attr_id.next(),
-                    attr_id = attr.id,
+                    attr_id = attr['id'],
                     attr_is_var = 'N',
                 )
 
             # create dataset and assign to attribute (if not empty)
             if len(data[i].strip()) > 0:
+
+                resource['attributes'].append(res_attr)
 
                 if data[i].strip() in ('NULL',
                                        'I AM NOT A NUMBER! I AM A FREE MAN!'):
@@ -914,7 +954,7 @@ class ImportCSV(object):
 
                     if units is not None:
                         if units[i] is not None and len(units[i].strip()) > 0:
-                            dimension = attr.dimen
+                            dimension = attr['dimen']
                         else:
                             dimension = None
 
@@ -935,140 +975,91 @@ class ImportCSV(object):
                                                      )
 
                     if dataset is not None:
-                        self.Scenario.resourcescenarios.ResourceScenario.append(dataset)
+                        self.Scenario['resourcescenarios'].append(dataset)
 
-                resource_attrs.update({res_attr['attr_id']: res_attr})
-
-        resource['attributes'].ResourceAttr = resource_attrs.values()
+        #resource.attributes = res_attr_array
 
         return resource
 
-    def convert_to_complexmodel(self, group):
-
-            regex = re.compile('[\[\]]')
-
-            constraint_grp = self.cli.factory.create('hyd:ConstraintGroup')
-
-            op = group[1]
-            constraint_grp.op = op
-
-            lhs = group[0]
-            rhs = group[2]
-
-            for grp in (lhs, rhs):
-                if isinstance(grp, list):
-                    grp_cm = self.convert_to_complexmodel(grp)
-                    constraint_grp.constraintgroups.ConstraintGroup.append(grp_cm)
-                else:
-
-                    constraint_item = self.cli.factory.create('hyd:ConstraintItem')
-                    #Check to see if the item  is a constant numeric value
-                    if grp.find('[') < 0:
-                        try:
-                            eval(grp)
-                            constraint_item.constant = grp
-                        except:
-                            raise Exception("Expected a constant value. Got: %s"%grp)
-                    else:
-                        grp_parts = regex.split(grp)
-                        item_type = grp_parts[0]
-                        item_name = grp_parts[1]
-                        item_attr = grp_parts[3]
-
-                        if item_type == 'NODE':
-                            n = self.Nodes.get(item_name)
-
-                            if n is None:
-                                raise Exception('Node %s not found!'%(item_name))
-
-                            for ra in n.attributes.ResourceAttr:
-
-                                attr = self.Attributes.get(item_attr)
-                                if attr is None:
-                                    raise Exception('Attr %s not found!'%(item_attr))
-
-                                if ra.attr_id == attr.id:
-                                    constraint_item.resource_attr_id = ra.id
-
-                    constraint_grp.constraintitems.ConstraintItem.append(constraint_item)
-
-            return constraint_grp
-
-
-    def parse_constraint_group(self, group_str):
-        if group_str[0] == '(' and group_str[-1] == ')':
-            group_str = group_str[1:-1]
-
-        grp = [None, None, None]
-
-        regex = re.compile('[\+\-\*\/]')
-
-        eq = regex.split(group_str)
-
-        lhs = None
-        if group_str.startswith('('):
-            lhs = self.get_group(group_str)
-            grp[0] = self.parse_constraint_group(self.get_group(group_str))
-        else:
-            lhs = eq[0].strip()
-            grp[0] = lhs
-
-        group_str = group_str.replace(lhs, '', 1)
-
-        op = regex.findall(group_str)[0]
-
-        grp[1] = op
-
-        group_str = group_str.replace(op, '').strip()
-
-        if group_str.startswith('('):
-            grp[2] = self.parse_constraint_group(self.get_group(group_str))
-        else:
-            grp[2] = group_str.strip()
-
-        return grp
-
-    def get_group(self, group_str):
-        #When this count equals 0, we have reached
-        #the end of the group,
-        count = 0
-
-        for i, c in enumerate(group_str):
-            #found a sub-group, add 1 to count
-            if c == '(':
-                count = count + 1
-            elif c == ')':
-                #found the end of a group.
-                count = count - 1
-                #is the end of a sub-group or not?
-                if count == 0:
-                    #not, return the group.
-                    return group_str[0:i+1].strip()
-
-        return group_str
-
-    def parse_constraint_item(self, item_str):
-        return item_str
-
     def set_resource_types(self, template_file):
-
         log.info("Setting resource types based on %s." % template_file)
         with open(template_file) as f:
             xml_template = f.read()
 
-        try:
-            warnings = PluginLib.set_resource_types(self.cli, xml_template,
-                                         self.NetworkSummary,
-                                         self.nodetype_dict,
-                                         self.linktype_dict,
-                                         self.grouptype_dict,
-                                         self.networktype)
-            self.warnings.extend(warnings)
-        except KeyError as e:
-            raise HydraPluginError("Type '%s' not found in template."
-                                   % e.message)
+        template = self.call('upload_template_xml', {'template_xml':xml_template})
 
-        self.message += ' Assigned node types based on %s.' % template_file
+        type_ids = dict()
+        warnings = []
+
+        for type_name in self.nodetype_dict.keys():
+            for tmpltype in template.get('types', []):
+                if tmpltype['name'] == type_name:
+                    type_ids.update({tmpltype['name']: tmpltype['id']})
+                    break
+
+        for type_name in self.linktype_dict.keys():
+            for tmpltype in template.get('types', []):
+                if tmpltype['name'] == type_name:
+                    type_ids.update({tmpltype['name']: tmpltype['id']})
+                    break
+
+        for type_name in self.grouptype_dict.keys():
+            for tmpltype in template.get('types', []):
+                if tmpltype['name'] == type_name:
+                    type_ids.update({tmpltype['name']: tmpltype['id']})
+                    break
+
+        for tmpltype in template.get('types', []):
+            if tmpltype['name'] == self.networktype:
+                type_ids.update({tmpltype['name']: tmpltype['id']})
+                break
+
+        args = []
+        if type_ids[self.networktype]:
+            args.append(dict(
+                ref_key = 'NETWORK',
+                ref_id  = self.NetworkSummary['id'],
+                type_id = type_ids[self.networktype],
+            ))
+
+        if self.NetworkSummary.get('nodes', []):
+            for node in self.NetworkSummary['nodes']:
+                for typename, node_name_list in self.nodetype_dict.items():
+                    if type_ids[typename] and node['name'] in node_name_list:
+                        args.append(dict(
+                            ref_key = 'NODE',
+                            ref_id  = node['id'],
+                            type_id = type_ids[typename],
+                        ))
+        else:
+            warnings.append("No nodes found when setting template types")
+
+        if self.NetworkSummary.get('links', []):
+            for link in self.NetworkSummary['links']:
+                for typename, link_name_list in self.linktype_dict.items():
+                    if type_ids[typename] and link['name'] in link_name_list:
+                        args.append(dict(
+                            ref_key = 'LINK',
+                            ref_id  = link['id'],
+                            type_id = type_ids[typename],
+                        ))
+        else:
+           warnings.append("No links found when setting template types")
+        
+        if self.NetworkSummary.get('resourcegroups'):
+            for group in self.NetworkSummary['resourcegroups']:
+                for typename, group_name_list in self.grouptype_dict.items():
+                    if type_ids[typename] and group['name'] in group_name_list:
+                        args.append(dict(
+                            ref_key = 'GROUP',
+                            ref_id  = group['id'],
+                            type_id = type_ids[typename],
+                        ))
+        else:
+           warnings.append("No resourcegroups found when setting template types")
+        self.call('assign_types_to_resources', {'resource_types':args})
+        return warnings
+
 
     def create_dataset(self, value, resource_attr, unit, dimension, resource_name, metadata):
         resourcescenario = dict()
@@ -1164,14 +1155,16 @@ class ImportCSV(object):
         if unit is not None:
             dataset['dimension'] = dimension
 
+        dataset['name'] = "Import CSV data"
+
         resourcescenario['value'] = dataset
         
-        m = self.cli.factory.create("hyd:MetadataArray")
+        m = []
         if metadata:
             for k, v in metadata.items():
-                m.Metadata.append(dict(name=k,value=v))
+                m.append(dict(name=k,value=v))
         if arr_struct:
-            m.Metadata.append(dict(name='data_struct',value=arr_struct))
+            m.append(dict(name='data_struct',value=arr_struct))
 
         dataset['metadata'] = m
 
@@ -1179,7 +1172,7 @@ class ImportCSV(object):
 
     def create_scalar(self, value):
         scalar = dict(
-            param_value = float(value)
+            param_value = str(value)
         )
         return scalar
 
@@ -1220,7 +1213,7 @@ class ImportCSV(object):
                 else:
                     ts_val_1d = []
                     for i in range(value_length):
-                        ts_val_1d.append(float(dataset[i + 2].strip()))
+                        ts_val_1d.append(str(dataset[i + 2].strip()))
 
                     ts_arr = numpy.array(ts_val_1d)
                     ts_arr = numpy.reshape(ts_arr, array_shape)
@@ -1267,41 +1260,36 @@ class ImportCSV(object):
             return True
 
     def commit(self):
-
-        #if len(self.warnings) > 0:
-        #    raise HydraPluginError("Errors were found")
-
         log.info("Committing Network")
         for node in self.Nodes.values():
-            self.Network['nodes'].Node.append(node)
+            self.Network['nodes'].append(node)
         for link in self.Links.values():
-            self.Network['links'].Link.append(link)
+            self.Network['links'].append(link)
         for group in self.Groups.values():
-            self.Network['resourcegroups'].ResourceGroup.append(group)
-        self.Network['scenarios'].Scenario.append(self.Scenario)
+            self.Network['resourcegroups'].append(group)
+        self.Network['scenarios'].append(self.Scenario)
         log.info("Network created for sending")
 
         if self.update_network_flag:
-            log.info('Updating network (ID=%s)' % self.Network['id'])
-            self.NetworkSummary = self.cli.service.update_network(self.Network)
-            log.info("Network  %s updated", self.NetworkSummary.id)
+            self.Network = self.call('update_network', {'network':self.Network})
+            log.info("Network %s updated.", self.Network['id'])
         else:
             log.info("Adding Network")
-            self.NetworkSummary = self.cli.service.add_network(self.Network)
+            self.NetworkSummary = self.call('add_network', {'net':self.Network})
             log.info("Network created with %s nodes and %s links. Network ID is %s",
-                     len(self.NetworkSummary.nodes.Node), 
-                     len(self.NetworkSummary.links.Link),
-                     self.NetworkSummary.id)
+                     len(self.NetworkSummary['nodes']), 
+                     len(self.NetworkSummary['links']),
+                     self.NetworkSummary['id'])
 
         self.message = 'Data import was successful.'
 
     def return_xml(self):
         """This is a fist version of a possible XML output.
         """
-        scen_ids = [s.id for s in self.NetworkSummary.scenario_ids.integer]
+        scen_ids = [s['id'] for s in self.NetworkSummary['scenario_ids']]
 
         xml_response = PluginLib.create_xml_response('ImportCSV',
-                                                     self.Network.id,
+                                                     self.Network['id'],
                                                      scen_ids)
 
         print xml_response
@@ -1382,6 +1370,9 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-m', '--template',
                         help='''Template XML file, needed if node and link
                         types are specified,''')
+    parser.add_argument('-r', '--rules', nargs='+',
+                        help='''File(s) containing rules or constraints as
+                        mathematical expressions.''')
     parser.add_argument('-z', '--timezone',
                         help='''Specify a timezone as a string following the
                         Area/Location pattern (e.g. Europe/London). This
@@ -1450,10 +1441,14 @@ if __name__ == '__main__':
                 for groupmemberfile in args.groupmembers:
                     csv.read_group_members(groupmemberfile)
 
+            if args.rules is not None:
+                for constraintfile in args.rules:
+                    csv.read_constraints(constraintfile)
+
             csv.commit()
-            if csv.NetworkSummary.scenario_ids:
-                scen_ids = csv.NetworkSummary.scenario_ids.integer
-            network_id = csv.NetworkSummary.id
+            if csv.NetworkSummary['scenario_ids']:
+                scen_ids = [s['id'] for s in csv.NetworkSummary['scenario_ids']]
+            network_id = csv.NetworkSummary['id']
 
             if args.template is not None:
                 csv.set_resource_types(args.template)

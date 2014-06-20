@@ -54,7 +54,8 @@ from soap_server.hydra_base import AuthenticationService,\
     get_session_db,\
     AuthenticationError,\
     ObjectNotFoundError,\
-    HydraServiceError
+    HydraServiceError,\
+    HydraDocument
 from soap_server.sharing import SharingService
 from spyne.util.wsgi_wrapper import WsgiMounter
 
@@ -157,7 +158,7 @@ class HydraServer():
     def __init__(self):
 
         logging.getLogger('spyne').setLevel(logging.INFO)
- #       logging.getLogger('sqlalchemy').setLevel(logging.INFO)
+        logging.getLogger('sqlalchemy').setLevel(logging.INFO)
         util.create_default_users_and_perms()
         util.create_default_net()
         make_root_user()
@@ -168,21 +169,15 @@ class HydraServer():
                     in_protocol=Soap11(validator='lxml'),
                     out_protocol=Soap11()
                 )
-        #wsgi_application = WsgiApplication(app)
-        #wsgi_application.max_content_length = 100 * 0x100000 # 10 MB
-
-        return app #wsgi_application 
+        return app
 
     def create_json_application(self):
 
         app = HydraSoapApplication(applications, tns='hydra.base',
-                    in_protocol=JsonDocument(validator='soft'),
+                    in_protocol=HydraDocument(validator='soft'),
                     out_protocol=JsonDocument()
                 )
-        #wsgi_application = WsgiApplication(app)
-        #wsgi_application.max_content_length = 100 * 0x100000 # 10 MB
-
-        return app #wsgi_application 
+        return app
 
     def run_server(self):
 
@@ -204,13 +199,13 @@ s = HydraServer()
 soap_application = s.create_soap_application()
 json_application = s.create_json_application()
 
-json = Application(applications, tns='hydra.base',
-            in_protocol=JsonDocument(), out_protocol=JsonDocument())
-
 root = WsgiMounter({
     'soap': soap_application,
     'json': json_application,
 })
+
+for server in root.mounts.values():
+    server.max_content_length = 100 * 0x100000 # 10 MB
 
 #To kill this process, use this command:
 #ps -ef | grep 'server.py' | grep 'python' | awk '{print $2}' | xargs kill

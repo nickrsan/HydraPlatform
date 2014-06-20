@@ -20,7 +20,7 @@ from hydra_complexmodels import Project,\
 ProjectSummary,\
 Network
 from hydra_base import HydraService
-from lib import project
+from lib import project as project_lib
 
 class ProjectService(HydraService):
     """
@@ -28,23 +28,23 @@ class ProjectService(HydraService):
     """
 
     @rpc(Project, _returns=Project)
-    def add_project(ctx, proj):
+    def add_project(ctx, project):
         """
             Add a new project
             returns a project complexmodel
         """
 
-        proj = project.add_project(proj, **ctx.in_header.__dict__) 
-        ret_proj = Project(proj)
+        new_proj = project_lib.add_project(project, **ctx.in_header.__dict__) 
+        ret_proj = Project(new_proj)
         return ret_proj
 
     @rpc(Project, _returns=Project)
-    def update_project(ctx, proj):
+    def update_project(ctx, project):
         """
             Update a project
             returns a project complexmodel
         """
-        proj_i = project.update_project( proj,  **ctx.in_header.__dict__) 
+        proj_i = project_lib.update_project(project,  **ctx.in_header.__dict__) 
 
         return Project(proj_i)
 
@@ -54,7 +54,7 @@ class ProjectService(HydraService):
         """
             get a project complexmodel
         """
-        proj_dict = project.get_project(project_id,  **ctx.in_header.__dict__) 
+        proj_dict = project_lib.get_project(project_id,  **ctx.in_header.__dict__) 
 
         return Project(proj_dict)
  
@@ -65,7 +65,7 @@ class ProjectService(HydraService):
         """
         if user_id is None:
             user_id = ctx.in_header.user_id
-        project_dicts = project.get_projects(user_id,  **ctx.in_header.__dict__)
+        project_dicts = project_lib.get_projects(user_id,  **ctx.in_header.__dict__)
         projects = [Project(p) for p in project_dicts]
         return projects
 
@@ -75,7 +75,7 @@ class ProjectService(HydraService):
         """
             Set the status of a project to 'X'
         """
-        project.delete_project(project_id,  **ctx.in_header.__dict__)
+        project_lib.delete_project(project_id,  **ctx.in_header.__dict__)
         return 'OK' 
 
     @rpc(Integer, Unicode(pattern="[YN]", default='Y'), _returns=SpyneArray(Network))
@@ -84,7 +84,7 @@ class ProjectService(HydraService):
             Get all networks in a project
             Returns an array of network objects.
         """
-        net_dicts = project.get_networks(project_id, include_data, **ctx.in_header.__dict__)
+        net_dicts = project_lib.get_networks(project_id, include_data, **ctx.in_header.__dict__)
         networks = [Network(n) for n in net_dicts]
         return networks
 

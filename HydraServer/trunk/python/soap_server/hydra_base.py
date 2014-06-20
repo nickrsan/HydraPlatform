@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from spyne.model.primitive import Mandatory, String
+from spyne.model.primitive import Mandatory, String, Unicode
 from spyne.error import Fault
 from spyne.model.complex import ComplexModel
 from spyne.decorator import srpc, rpc
@@ -21,7 +21,7 @@ from hydra_complexmodels import LoginResponse
 import logging
 from db.util import login_user
 from HydraLib.HydraException import HydraError
-
+from spyne.protocol.json import JsonDocument
 
 from spyne.service import ServiceBase
 
@@ -30,6 +30,33 @@ _session_db = set()
 
 def get_session_db():
     return _session_db
+
+
+class HydraDocument(JsonDocument):
+    """An implementation of the json protocol
+       with request headers working"""
+
+    def create_in_document(self, ctx, in_string_encoding=None):
+        super(HydraDocument, self).create_in_document(ctx, in_string_encoding)
+
+    def decompose_incoming_envelope(self, ctx, message=JsonDocument.REQUEST):
+        super(HydraDocument, self).decompose_incoming_envelope(ctx, message)
+        req = ctx.transport.req
+
+        ctx.in_header_doc = {}
+        for r in req.keys():
+            if r.find('HTTP') == 0:
+                key = r[5:].lower()
+                val = [req[r].lower()]
+                ctx.in_header_doc[key] = val
+
+    def deserialize(self, ctx, message):
+        super(HydraDocument, self).deserialize(ctx, message)
+        if ctx.descriptor.in_header:
+            in_header_class = ctx.descriptor.in_header[0]
+            ctx.in_header = in_header_class
+            for k, v in ctx.in_header_doc.items():
+                setattr(ctx.in_header, k, v[0])
 
 class RequestHeader(ComplexModel):
     __namespace__ = 'hydra.base'
@@ -92,7 +119,7 @@ class LogoutService(HydraService):
 class AuthenticationService(ServiceBase):
     __tns__      = 'hydra.base'
 
-    @srpc(Mandatory.String, String, _returns=LoginResponse,
+    @srpc(Mandatory.Unicode, Unicode, _returns=LoginResponse,
                                                    _throws=AuthenticationError)
     def login(username, password):
         try:

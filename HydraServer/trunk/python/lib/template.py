@@ -175,6 +175,7 @@ def upload_template_xml(template_xml,**kwargs):
     for resource in types.findall('resource'):
         type_name = resource.find('name').text
         #check if the type is already in the DB. If not, create a new one.
+        type_is_new = False
         if type_name in existing_types:
             type_id = type_name_map[type_name]
             type_i = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).one()
@@ -183,6 +184,7 @@ def upload_template_xml(template_xml,**kwargs):
             type_i = TemplateType()
             type_i.type_name = resource.find('name').text
             tmpl_i.templatetypes.append(type_i)
+            type_is_new = True
 
         if resource.find('alias') is not None:
             type_i.alias = resource.find('alias').text
@@ -198,10 +200,11 @@ def upload_template_xml(template_xml,**kwargs):
         
         #delete any TypeAttrs which are in the DB but not in the XML file
         existing_attrs = []
-        for r in tmpl_i.templatetypes:
-            if r.type_name == type_name:
-                for attr in r.typeattrs:
-                    existing_attrs.append(attr.attr.attr_name)
+        if not type_is_new:
+            for r in tmpl_i.templatetypes:
+                if r.type_name == type_name:
+                    for typeattr in r.typeattrs:
+                        existing_attrs.append(typeattr.attr.attr_name)
 
         existing_attrs = set(existing_attrs)
 

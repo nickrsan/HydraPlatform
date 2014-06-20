@@ -14,6 +14,8 @@
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
 from spyne.model.primitive import Integer, Unicode
+from HydraLib.HydraException import HydraError
+from spyne.model.primitive import Integer, Boolean, Unicode, AnyDict
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Scenario,\
@@ -21,6 +23,7 @@ from hydra_complexmodels import Scenario,\
         Dataset,\
         ScenarioDiff
 
+import logging
 from lib import scenario
 from hydra_base import HydraService
 

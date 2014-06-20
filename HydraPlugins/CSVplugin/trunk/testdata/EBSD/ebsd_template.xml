@@ -120,6 +120,65 @@
         </resource>
         <resource>
             <type>NODE</type>
+            <name>Inter-company transfer</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>circle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>grey</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>Zone generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>existing surface water</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>circle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>grey</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>Zone generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+
+        <resource>
+            <type>NODE</type>
             <name>Leakage</name>
 			<layout>
 				<item>
@@ -1418,6 +1477,508 @@
                 <is_var>N</is_var>
             </attribute>
         </resource>
+        <resource>
+            <type>NODE</type>
+            <name>EFF</name>		
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>EGW</name>		
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>NGW</name>		
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>DES</name>		
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>NSW</name>		
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>NSW</name>		
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>ASR</name>		
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>ESW</name>		
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>WEF</name>		
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>LEA</name>		
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>MET</name>		
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>RNC</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>triangle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>green</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>RTR</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>triangle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>green</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+        <resource>
+            <type>NODE</type>
+            <name>RES</name>
+			<layout>
+				<item>
+					<name>symbol</name>
+					<value>triangle</value>
+				</item>
+				<item>
+					<name>colour</name>
+					<value>green</value>
+				</item>
+			</layout>			
+            <attribute>
+                <name>WRSE-Ref</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Zone generic</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Company</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>WRZ</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Earliest Start Year</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Year activated</name>
+                <dimension/>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Asset life</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>DO</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Demand+THR flow</name>
+                <dimension>Volumetric flow rate</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>N</is_var>
+            </attribute>
+			<attribute>
+                <name>Financial cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Financial vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>EnvSoc vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+			<attribute>
+                <name>Carbon cost spent</name>
+                <dimension>Specific cost (time)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex spent</name>
+                <dimension>Unit price (volume)</dimension>
+                <is_var>Y</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon const</name>
+                <dimension>Mass</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon fopex</name>
+                <dimension>Mass flow rate</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Carbon vopex</name>
+                <dimension>Density</dimension>
+                <is_var>N</is_var>
+            </attribute>
+            <attribute>
+                <name>Ratchet</name>
+                <dimension/>
+                <is_var>N</is_var>
+            </attribute>
+        </resource>
+
 		<resource>
             <type>NODE</type>
             <name>Reservoir</name>

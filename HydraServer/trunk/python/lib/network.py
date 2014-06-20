@@ -167,9 +167,11 @@ def _bulk_add_resource_attrs(network_id, ref_key, resources, resource_name_map):
     elif ref_key == 'GROUP':
         res_qry = res_qry.join(ResourceGroup).filter(ResourceGroup.network_id==network_id)
     elif ref_key == 'LINK':
-        res_qry.join(Link).filter(Link.network_id==network_id)
-
+        res_qry = res_qry.join(Link).filter(Link.network_id==network_id)
+    
     real_resource_attrs = res_qry.all()
+    logging.info("retrieved %s entries in %s"%(len(real_resource_attrs), datetime.datetime.now() - start_time))
+
     resource_attr_dict = {}
     for resource_attr in real_resource_attrs:
         if ref_key == 'NODE':
@@ -179,6 +181,8 @@ def _bulk_add_resource_attrs(network_id, ref_key, resources, resource_name_map):
         elif ref_key == 'LINK':
             ref_id = resource_attr.link_id
         resource_attr_dict[(ref_id, resource_attr.attr_id)] = resource_attr
+    
+    logging.info("Processing Query results took %s"%(datetime.datetime.now() - start_time))
     
 
     resource_attrs = {}

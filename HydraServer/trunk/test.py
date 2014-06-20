@@ -31,6 +31,8 @@ import SOAPpy
 from pysimplesoap.client import SoapClient
 import osa
 from HydraLib import PluginLib
+import requests
+import json
 
 class SoapTest(unittest.TestCase):
     def test_SOAPpy(self):
@@ -73,11 +75,26 @@ class SoapTest(unittest.TestCase):
 
     def test_SUDS(self):
         client = PluginLib.connect()
-        net = client.service.get_network(network_id=2)
+        #net = client.service.get_network(network_id=2)
         #sd = client.service.get_scenario_data(2)
-       # node_data = client.service.get_node_data(597, 2)
+        node_data = client.service.get_node_data(597, 28)
+        print node_data
         networks = client.service.get_networks(2)
-        print(len(networks))
+        print(networks[0])
+    
+    def test_JSON(self):
+        user = config.get('hydra_client', 'user')
+        passwd = config.get('hydra_client', 'password')
+        login_params = {'login':{'username':user, 'password':passwd}}
+        r = requests.get('http://localhost:12346', data=json.dumps(login_params))
+        r_dict = json.loads(r.content)
+        headers = { 'content-type': 'application/json' , 'username':'root',
+                   'user_id':r_dict['user_id'], 'session_id':r_dict['session_id']}
+        network_call = {'get_network':{'network_id':2, 'include_data':'Y', 'scenario_id':None}}
+        r = requests.get('http://localhost:12346', data=json.dumps(network_call), headers=headers)
+        net = json.loads(r.content)
+        import pudb; pudb.set_trace()
+
 def run():
 
     unittest.main()
