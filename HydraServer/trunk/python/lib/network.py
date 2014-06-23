@@ -24,7 +24,7 @@ from util.permissions import check_perm
 import template
 from db.model import Project, Network, Scenario, Node, Link, ResourceGroup,\
         ResourceAttr, ResourceType, ResourceGroupItem, Dataset, DatasetOwner,\
-        ResourceScenario, TemplateType
+        ResourceScenario, TemplateType, TypeAttr
 from sqlalchemy.orm import noload, joinedload, joinedload_all
 from db import DBSession
 from sqlalchemy import func, and_
@@ -456,24 +456,109 @@ def add_network(network,**kwargs):
 
     return net_i
 
+def _get_all_resource_attributes(network_id, template_id=None):
+    """
+        Get all the attributes for the nodes, links and groups of a network.
+        Return these attributes as a dictionary, keyed on type (NODE, LINK, GROUP)
+        then by ID of the node or link.
+    """
+    all_node_attribute_qry = DBSession.query(ResourceAttr).join(Node).filter(Node.network_id==network_id)
 
-def get_network(network_id, include_data='N', scenario_ids=None,**kwargs):
+    all_link_attribute_qry = DBSession.query(ResourceAttr).join(Link).filter(Link.network_id==network_id)
+
+    all_group_attribute_qry = DBSession.query(ResourceAttr).join(ResourceGroup).filter(ResourceGroup.network_id==network_id)
+    #Filter the group attributes by template
+    if template_id is not None:
+        all_node_attribute_qry = all_node_attribute_qry.join(ResourceType).join(TemplateType).join(TypeAttr).filter(TemplateType.template_id==template_id).filter(ResourceAttr.attr_id==TypeAttr.attr_id)
+        all_link_attribute_qry = all_link_attribute_qry.join(ResourceType).join(TemplateType).join(TypeAttr).filter(TemplateType.template_id==template_id).filter(ResourceAttr.attr_id==TypeAttr.attr_id)
+        all_group_attribute_qry = all_group_attribute_qry.join(ResourceType).join(TemplateType).join(TypeAttr).filter(TemplateType.template_id==template_id).filter(ResourceAttr.attr_id==TypeAttr.attr_id)
+
+    logging.info("Getting node attributes")
+    all_node_attributes = all_node_attribute_qry.all()
+    logging.info("Getting link attributes")
+    all_link_attributes = all_link_attribute_qry.all()
+    logging.info("Getting group attributes")
+    all_group_attributes = all_group_attribute_qry.all()
+
+    logging.info("Attributes retrieved. Processing results...")
+    node_attr_dict = dict()
+    for node_attr in all_node_attributes:
+        if node_attr.node_id in node_attr_dict.keys():
+            node_attr_dict[node_attr.node_id].append(node_attr)
+        else:
+            node_attr_dict[node_attr.node_id] = [node_attr]
+
+    link_attr_dict = dict()
+    for link_attr in all_link_attributes:
+        if link_attr.link_id in link_attr_dict.keys():
+            link_attr_dict[link_attr.link_id].append(link_attr)
+        else:
+            link_attr_dict[link_attr.link_id] = [link_attr]
+
+    group_attr_dict = dict()
+    for group_attr in all_group_attributes:
+        if group_attr.group_id in group_attr_dict.keys():
+            group_attr_dict[group_attr.group_id].append(group_attr)
+        else:
+            group_attr_dict[group_attr.group_id] = [group_attr]
+
+    all_attributes = {
+        'NODE' : node_attr_dict,
+        'LINK' : link_attr_dict,
+        'GROUP': group_attr_dict,
+    }
+
+    return all_attributes
+
+def get_network(network_id, include_data='N', scenario_ids=None, template_id=None, **kwargs):
     """
         Return a whole network as a dictionary.
+        network_id: ID of the network to retrieve
+        include_data: 'Y' or 'N'. Indicate whether scenario data is to be returned.
+                      This has a significant speed impact as retrieving large amounts
+                      of data can be expensive.
+        scenario_ids: list of IDS to be returned. Used if a network has multiple
+                      scenarios but you only want one returned. Using this filter
+                      will speed up this function call.
+        template_id:  Return the network with only attributes associated with this 
+                      template on the network, groups, nodes and links.
     """
     log.debug("getting network %s"%network_id)
     user_id = kwargs.get('user_id')
     try:
         log.debug("Querying Network %s", network_id)
         net_i = DBSession.query(Network).filter(Network.network_id == network_id).\
-        options(noload('scenarios')).options(noload('nodes')).options(noload('links')).options(joinedload_all('types.templatetype.template')).one()
+        options(noload('scenarios')).options(noload('nodes')).options(noload('links')).options(noload('resourcegroups')).options(joinedload_all('types.templatetype.template')).one()
         net_i.attributes
+
+        #Define the basic resource queries
         log.debug("Nodes...") 
-        net_i.nodes = DBSession.query(Node).filter(Node.network_id==network_id).options(joinedload_all('attributes')).options(joinedload_all('types.templatetype.template')).all()
+        node_qry = DBSession.query(Node).filter(Node.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template'))
+
         log.debug("Links...") 
-        net_i.links = DBSession.query(Link).filter(Link.network_id==network_id).options(joinedload_all('attributes')).options(joinedload_all('types.templatetype.template')).all()
+        link_qry = DBSession.query(Link).filter(Link.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template'))
+
         log.debug("Groups...") 
-        net_i.resourcegroups = DBSession.query(ResourceGroup).filter(ResourceGroup.network_id==network_id).options(joinedload_all('attributes')).options(joinedload_all('types.templatetype.template')).all()
+        group_qry = DBSession.query(ResourceGroup).filter(ResourceGroup.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template'))
+        #Perform any required filtering on the resources
+        if template_id is not None:
+            node_qry = node_qry.join(ResourceType).join(TemplateType).filter(TemplateType.template_id==template_id)
+            link_qry = link_qry.join(ResourceType).join(TemplateType).filter(TemplateType.template_id==template_id)
+            group_qry = group_qry.join(ResourceType).join(TemplateType).filter(TemplateType.template_id==template_id)
+
+        net_i.links = link_qry.all()
+        net_i.nodes = node_qry.all()
+        net_i.resourcegroups = group_qry.all()
+
+        all_attributes = _get_all_resource_attributes(network_id, template_id)
+
+        for node in net_i.nodes:
+            node.attributes = all_attributes['NODE'].get(node.node_id, [])
+        for link in net_i.links:
+            link.attributes = all_attributes['LINK'].get(link.link_id, [])
+        for group in net_i.resourcegroups:
+            group.attributes = all_attributes['GROUP'].get(group.group_id, [])
+
         log.debug("Network Retrieved")
          
         scen_qry = DBSession.query(Scenario).filter(Scenario.network_id == net_i.network_id).options(joinedload(Scenario.resourcescenarios)).options(noload('resourcescenarios.dataset')).options(joinedload('resourcegroupitems'))

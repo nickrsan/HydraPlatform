@@ -54,14 +54,17 @@ class NetworkService(HydraService):
 
     @rpc(Integer,
          Unicode(pattern="[YN]", default='Y'),
+         Integer(),
          Integer(min_occurs="0", max_occurs="unbounded"),
-         Integer(min_occurs="0", max_occurs="1", default=None),
          _returns=Network)
-    def get_network(ctx, network_id, include_data, scenario_ids):
+    def get_network(ctx, network_id, include_data, template_id, scenario_ids):
         """
             Return a whole network as a complex model.
         """
-        net  = network.get_network(network_id, include_data, scenario_ids,
+        net  = network.get_network(network_id,
+                                   include_data,
+                                   scenario_ids,
+                                   template_id,
                                    **ctx.in_header.__dict__)
         ret_net = Network(net)
         return ret_net

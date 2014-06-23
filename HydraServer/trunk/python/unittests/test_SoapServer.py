@@ -196,7 +196,7 @@ class SoapServerTest(unittest.TestCase):
 
         for t in new_template.types.TemplateType[1].typeattrs.TypeAttr:
             assert t.attr_id in (link_attr_1.id, link_attr_2.id);
-            "Node types were not added correctly!"
+            "Link types were not added correctly!"
 
         return new_template
 
@@ -388,7 +388,17 @@ class SoapServerTest(unittest.TestCase):
                 ra_index = ra_index + 1
                 
                 link['attributes'].ResourceAttr = [link_ra1, link_ra2] 
-                
+                if link['id'] % 2 == 0: 
+                    type_summary_arr = self.client.factory.create('hyd:TypeSummaryArray')
+                    type_summary = self.client.factory.create('hyd:TypeSummary')
+                    type_summary.id = template.id
+                    type_summary.name = template.name
+                    type_summary.id = template.types.TemplateType[1].id
+                    type_summary.name = template.types.TemplateType[1].name
+
+                    type_summary_arr.TypeSummary.append(type_summary)
+
+                    link['types'] = type_summary_arr
                 links.append(link)
 
             prev_node = node 

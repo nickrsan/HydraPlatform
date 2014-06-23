@@ -24,6 +24,52 @@ log = logging.getLogger(__name__)
 
 class NetworkTest(test_SoapServer.SoapServerTest):
 
+    def test_get_network_with_template(self):
+        """
+            Test for the potentially likely case of creating a network with two
+            scenarios, then querying for the network without data to identify
+            the scenarios, then querying for the network with data but in only
+            a select few scenarios.
+        """
+        net = self.create_network_with_data()
+        logging.info("%s nodes before"%(len(net.nodes.Node)))
+        #All the nodes are in this template, so return them all
+        assert len(net.nodes.Node) == 10
+        #The type has only 2 attributes, so these are the only
+        #ones which should be returned.
+        for n in net.nodes.Node:
+            assert len(n.attributes.ResourceAttr) == 5
+        #only 4 of the links in the network have a type, so only these
+        #4 should be returned.
+        logging.info("%s links before"%(len(net.links.Link)))
+        assert len(net.links.Link) == 9
+        #of the 4 links returned, ensure the two attributes are on each one.
+        for l in net.links.Link:
+            if l.types is not None:
+                assert len(l.attributes.ResourceAttr) == 4
+            else:
+                assert len(l.attributes.ResourceAttr) == 2
+        assert len(net.resourcegroups.ResourceGroup) == 1
+        
+        template_id = net.nodes.Node[0].types.TypeSummary[0].template_id
+
+        filtered_net = self.client.service.get_network(net.id, 'N', template_id=template_id)
+        logging.info("%s nodes after"%(len(filtered_net.nodes.Node)))
+        #All the nodes are in this template, so return them all
+        assert len(filtered_net.nodes.Node) == 10
+        #The type has only 2 attributes, so these are the only
+        #ones which should be returned.
+        for n in filtered_net.nodes.Node:
+            assert len(n.attributes.ResourceAttr) == 2
+        #only 4 of the links in the network have a type, so only these
+        #4 should be returned.
+        logging.info("%s links after"%(len(filtered_net.links.Link)))
+        assert len(filtered_net.links.Link) == 4
+        #of the 4 links returned, ensure the two attributes are on each one.
+        for l in filtered_net.links.Link:
+            assert len(l.attributes.ResourceAttr) == 2
+        assert filtered_net.resourcegroups is None
+
     def test_get_network(self):
         """
             Test for the potentially likely case of creating a network with two
