@@ -27,6 +27,7 @@ log = logging.getLogger(__name__)
 from lxml import objectify
 from lxml import etree
 from lxml.etree import XMLParser
+import sys
 
 class FixNamespace(MessagePlugin):
     """Hopefully a temporary fix for an unresolved namespace issue.
@@ -40,7 +41,6 @@ class FixNamespace(MessagePlugin):
 
         for e in element.getChildren():
             self.fix_ns(e)
-
 
 class HydraResource(object):
     """A prototype for Hydra resources. It supports attributes and groups
@@ -790,3 +790,12 @@ def create_dict(arr_data):
                 arr['array'].append(val)
     return arr
 
+def write_progress(x, y):
+    msg = "!!Progress %s/%s"%(x, y)
+    #sys.stdout.write(msg)
+    print msg
+
+def write_output(text):
+    msg = "!!Output %s"%(text,)
+    print msg
+    #sys.stdout.write(msg)

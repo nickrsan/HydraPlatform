@@ -79,7 +79,11 @@ class PluginsTest(test_SoapServer.SoapServerTest):
         stream = Popen('cd ../../../../HydraPlugins/CSVplugin/trunk/testdata/hydro-econ/; ./import_data.sh', shell=True, stdout=PIPE)
         stream.wait()
         result_text = stream.stdout.readlines()
-        result = ''.join(result_text[1:])
+        xml_start = 1
+        for i, r in enumerate(result_text):
+            if r.find('<plugin_result>') == 0:
+                xml_start = i
+        result = ''.join(result_text[xml_start:])
         tree = etree.XML(result)
         print result
         assert tree.find('errors').getchildren() == []
@@ -97,7 +101,11 @@ class PluginsTest(test_SoapServer.SoapServerTest):
         stream = Popen('python ../../../../HydraPlugins/CSVplugin/trunk/ImportCSV.py -t %s -n %s -l %s -x'%(network_file, nodes_file, links_file), shell=True, stdout=PIPE)
         stream.wait()
         updated_result_text = stream.stdout.readlines()
-        updated_result = ''.join(updated_result_text)
+        xml_start = 1
+        for i, r in enumerate(updated_result_text):
+            if r.find('<plugin_result>') == 0:
+                xml_start = i
+                updated_result = ''.join(updated_result_text[xml_start:])
         print updated_result
         updated_tree = etree.XML(updated_result)
         assert updated_tree.find('errors').getchildren() == []

@@ -172,6 +172,7 @@ from datetime import datetime
 import pytz
 
 from HydraLib import PluginLib
+from HydraLib.PluginLib import write_progress, write_output
 from HydraLib import config
 
 from HydraLib.HydraException import HydraPluginError
@@ -234,6 +235,8 @@ class ImportCSV(object):
         self.warnings = []
         self.message = ''
         self.files = []
+
+        self.num_steps = 6
 
     def get_file_data(self, file):
         """
@@ -1419,37 +1422,43 @@ if __name__ == '__main__':
             csv.create_project(ID=args.project)
             csv.create_scenario(name=args.scenario)
             csv.create_network(file=args.network, network_id=args.network_id)
-
+            
+            write_progress(1,csv.num_steps) 
             for nodefile in args.nodes:
-                log.info("Reading Nodes")
+                write_output("Reading Node file %s" % nodefile)
                 csv.read_nodes(nodefile)
 
+            write_progress(2,csv.num_steps) 
             if args.links is not None:
-                log.info("Reading Links")
                 for linkfile in args.links:
+                    write_output("Reading Link file %s" % linkfile)
                     csv.read_links(linkfile)
 
+            write_progress(3,csv.num_steps) 
             if args.groups is not None:
                 for groupfile in args.groups:
+                    write_output("Reading Group file %s"% groupfile)
                     csv.read_groups(groupfile)
 
+            write_progress(4,csv.num_steps) 
             if args.groupmembers is not None:
+                write_output("Reading Group Members")
                 if args.groups is None:
                     raise HydraPluginError("Cannot specify a group member "
                                            "file without a matching group file.")
                 for groupmemberfile in args.groupmembers:
                     csv.read_group_members(groupmemberfile)
 
-            if args.rules is not None:
-                for constraintfile in args.rules:
-                    csv.read_constraints(constraintfile)
-
+            write_progress(5,csv.num_steps) 
+            write_output("Saving network")
             csv.commit()
             if csv.NetworkSummary['scenarios']:
                 scen_ids = [s['id'] for s in csv.NetworkSummary['scenarios']]
 
             network_id = csv.NetworkSummary['id']
 
+            write_progress(6,csv.num_steps)
+            write_output("Saving types")
             if args.template is not None:
                 csv.set_resource_types(args.template)
 
