@@ -598,15 +598,15 @@ class Node(Resource):
         self.name = parent.node_name
         self.x = parent.node_x
         self.y = parent.node_y
+        self.descriptiron = parent.node_description
+        if parent.node_layout is not None:
+            self.layout    = eval(parent.node_layout)
+        else:
+            self.layout = {}
+        self.status = parent.status
         if summary is False:
-            self.descriptiron = parent.node_description
-            if parent.node_layout is not None:
-                self.layout    = eval(parent.node_layout)
-            else:
-                self.layout = {}
-            self.status = parent.status
             self.attributes = [ResourceAttr(a) for a in parent.attributes]
-            self.types = [TypeSummary(t.templatetype) for t in parent.types]
+        self.types = [TypeSummary(t.templatetype) for t in parent.types]
 
 
 
@@ -634,16 +634,17 @@ class Link(Resource):
         self.name = parent.link_name
         self.node_1_id = parent.node_1_id
         self.node_2_id = parent.node_2_id
+        self.descriptiron = parent.link_description
+        if parent.link_layout is not None:
+            self.layout    = eval(parent.link_layout)
+        else:
+            self.layout = {}
+        self.status    = parent.status
         if summary is False:
-            self.descriptiron = parent.link_description
-            if parent.link_layout is not None:
-                self.layout    = eval(parent.link_layout)
-            else:
-                self.layout = {}
-            self.status    = parent.status
+
 
             self.attributes = [ResourceAttr(a) for a in parent.attributes]
-            self.types = [TypeSummary(t.templatetype) for t in parent.types]
+        self.types = [TypeSummary(t.templatetype) for t in parent.types]
 
 class ResourceScenario(Resource):
     _type_info = [
@@ -725,7 +726,7 @@ class Scenario(Resource):
         ('resourcegroupitems',   SpyneArray(ResourceGroupItem, default=[])),
     ]
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, summary=False):
         super(Scenario, self).__init__(parent)
 
         if parent is None:
@@ -739,9 +740,9 @@ class Scenario(Resource):
         self.start_time = get_timestamp(parent.start_time)
         self.end_time = get_timestamp(parent.end_time)
         self.time_step = parent.time_step
-
-        self.resourcescenarios = [ResourceScenario(rs) for rs in parent.resourcescenarios]
-        self.resourcegroupitems = [ResourceGroupItem(rgi) for rgi in parent.resourcegroupitems]
+        if summary is False:
+            self.resourcescenarios = [ResourceScenario(rs) for rs in parent.resourcescenarios]
+            self.resourcegroupitems = [ResourceGroupItem(rgi) for rgi in parent.resourcegroupitems]
 
 class ResourceGroupDiff(HydraComplexModel):
     _type_info = [
@@ -809,7 +810,7 @@ class Network(Resource):
         ('types',               SpyneArray(TypeSummary, default=[])),
     ]
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, summary=False):
         super(Network, self).__init__(parent)
 
         if parent is None:
@@ -837,8 +838,10 @@ class NetworkSummary(ComplexModel):
         ('project_id',          Integer(default=None)),
         ('id',                  Integer(default=None)),
         ('name',                Unicode(default=None)),
+        ('created_by',          Integer(default=None)),
+        ('cr_date',             Unicode(default=None)),
         ('description',         Unicode(default=None)),
-        ('scenario_ids',        SpyneArray(Integer, default=None)),
+        ('scenarios',           SpyneArray(Scenario, default=None)),
         ('links',               SpyneArray(Link, default=None)),
         ('nodes',               SpyneArray(Node, default=None)),
         ('resourcegroups',      SpyneArray(ResourceGroup, default=None)),
@@ -857,9 +860,9 @@ class NetworkSummary(ComplexModel):
         self.id         = parent.network_id
         self.name       = parent.network_name
         self.description = parent.network_description
-        self.scenario_ids = []
-        for s in parent.scenarios:
-            self.scenario_ids.append(s.scenario_id)
+        self.created_by  = parent.created_by
+        self.cr_date     = str(parent.cr_date)
+        self.scenarios = [Scenario(s, True) for s in parent.scenarios]
         self.links = [Link(l, True) for l in parent.links]
         self.nodes = [Node(n, True) for n in parent.nodes]
         self.resourcegroups = [ResourceGroup(g, True) for g in parent.resourcegroups]

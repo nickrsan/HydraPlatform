@@ -38,7 +38,7 @@ class DataGroupTest(test_SoapServer.SoapServerTest):
         
         network = self.create_network_with_data(ret_full_net = False)
 
-        scenario_id = network.scenario_ids.integer[0]
+        scenario_id = network.scenarios.Scenario[0].id
         
         scenario_data = self.client.service.get_scenario_data(scenario_id)
 

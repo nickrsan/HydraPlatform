@@ -1285,7 +1285,7 @@ class ImportCSV(object):
     def return_xml(self):
         """This is a fist version of a possible XML output.
         """
-        scen_ids = [s['id'] for s in self.NetworkSummary['scenario_ids']]
+        scen_ids = [s['id'] for s in self.NetworkSummary['scenarios']]
 
         xml_response = PluginLib.create_xml_response('ImportCSV',
                                                      self.Network['id'],
@@ -1445,8 +1445,9 @@ if __name__ == '__main__':
                     csv.read_constraints(constraintfile)
 
             csv.commit()
-            if csv.NetworkSummary['scenario_ids']:
-                scen_ids = csv.NetworkSummary['scenario_ids']
+            if csv.NetworkSummary['scenarios']:
+                scen_ids = [s['id'] for s in csv.NetworkSummary['scenarios']]
+
             network_id = csv.NetworkSummary['id']
 
             if args.template is not None:
