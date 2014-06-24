@@ -46,8 +46,6 @@ def init(level=None):
 
     config_file = os.path.expanduser(config.get('logging_conf', 'log_config_path'))
     
-    print config_file
-
     logging.config.fileConfig(config_file)
 
 def shutdown():

@@ -87,8 +87,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         for s in full_network.scenarios.Scenario:
             assert s.resourcescenarios is None
         
-        partial_network = self.client.service.get_network(new_scenario.network_id, 'Y', [scenario_id])
-        log.debug(partial_network)
+        partial_network = self.client.service.get_network(new_scenario.network_id, 'Y', None, [scenario_id])
 
         assert len(partial_network.scenarios.Scenario) == 1
         assert len(full_network.scenarios.Scenario)    == 2

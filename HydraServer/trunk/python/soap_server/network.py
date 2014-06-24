@@ -21,8 +21,7 @@ from hydra_complexmodels import Network,\
     Link,\
     Scenario,\
     ResourceGroup,\
-    NetworkExtents,\
-    NetworkSummary
+    NetworkExtents
 from lib import network
 from hydra_base import HydraService
 
@@ -31,7 +30,7 @@ class NetworkService(HydraService):
         The network SOAP service.
     """
 
-    @rpc(Network, _returns=NetworkSummary)
+    @rpc(Network, _returns=Network)
     def add_network(ctx, net):
         """
         Takes an entire network complex model and saves it to the DB.  This
@@ -49,7 +48,7 @@ class NetworkService(HydraService):
 
         """
         net = network.add_network(net, **ctx.in_header.__dict__)
-        ret_net = NetworkSummary(net)
+        ret_net = Network(net, summary=True)
         return ret_net
 
     @rpc(Integer,
@@ -89,13 +88,13 @@ class NetworkService(HydraService):
 
         return net_exists
 
-    @rpc(Network, _returns=NetworkSummary)
+    @rpc(Network, _returns=Network)
     def update_network(ctx, net):
         """
             Update an entire network
         """
         net = network.update_network(net, **ctx.in_header.__dict__)
-        return NetworkSummary(net)
+        return Network(net, summary=True)
 
     @rpc(Integer, _returns=Node)
     def get_node(ctx, node_id):

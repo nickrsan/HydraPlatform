@@ -20,6 +20,8 @@ import test_SoapServer
 import datetime
 from lxml import etree
 from HydraLib import config
+import logging
+log = logging.getLogger(__name__)
 
 class TemplatesTest(test_SoapServer.SoapServerTest):
 
@@ -545,8 +547,10 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         template = self.get_template()
        
         #Test the links as it's easier
+        empty_links = []
         for l in network.links.Link:
-            assert l.types is None
+            if l.types is None:
+                empty_links.append(l.id)
 
         for n in network.nodes.Node:
             assert len(n.types.TypeSummary) == 1
@@ -558,36 +562,10 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         network = self.client.service.get_network(network.id)
         
         for l in network.links.Link:
-            assert l.types is not None
-            assert len(n.types.TypeSummary) == 1
-            assert l.types.TypeSummary[0].name == 'Test type 2'
-
-        for n in network.nodes.Node:
-            assert len(n.types.TypeSummary) == 2
-            for t in n.types.TypeSummary:
-                assert t.name == 'Test type 1'
-
-    def test_apply_template_to_network(self):
-        network = self.create_network_with_data()
-        template = self.get_template()
-       
-        #Test the links as it's easier
-        for l in network.links.Link:
-            assert l.types is None
-
-        for n in network.nodes.Node:
-            assert len(n.types.TypeSummary) == 1
-            assert n.types.TypeSummary[0].name == 'Test type 1'
-
-        self.client.service.apply_template_to_network(template.id,
-                                                             network.id)
-
-        network = self.client.service.get_network(network.id)
-        
-        for l in network.links.Link:
-            assert l.types is not None
-            assert len(n.types.TypeSummary) == 1
-            assert l.types.TypeSummary[0].name == 'Test type 2'
+            if l.id in empty_links:
+                assert l.types is not None
+                assert len(n.types.TypeSummary) == 1
+                assert l.types.TypeSummary[0].name == 'Test type 2'
 
         for n in network.nodes.Node:
             assert len(n.types.TypeSummary) == 2

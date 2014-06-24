@@ -19,6 +19,8 @@
 import test_SoapServer
 from lxml import etree
 from subprocess import Popen, PIPE
+import logging
+log = logging.getLogger(__name__)
 
 class PluginsTest(test_SoapServer.SoapServerTest):
 

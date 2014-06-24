@@ -703,13 +703,14 @@ class ResourceGroup(HydraComplexModel):
 
         self.name        = parent.group_name
         self.id          = parent.group_id
+        self.description = parent.group_description
+        self.status      = parent.status
+        self.network_id  = parent.network_id
+
+        self.types       = [TypeSummary(t.templatetype) for t in self.types]
 
         if summary is False:
-            self.description = parent.group_description
-            self.status      = parent.status
-            self.network_id  = parent.network_id
             self.attributes  = [ResourceAttr(a) for a in parent.attributes]
-            self.types       = [TypeSummary(t.templatetype) for t in self.types]
 
 class Scenario(Resource):
     _type_info = [
@@ -826,46 +827,14 @@ class Network(Resource):
         else:
             self.layout = {}
         self.status      = parent.status
-        self.attributes  = [ResourceAttr(ra) for ra in parent.attributes]
-        self.scenarios   = [Scenario(s) for s in parent.scenarios]
-        self.nodes       = [Node(n) for n in parent.nodes]
-        self.links       = [Link(l) for l in parent.links]
-        self.resourcegroups = [ResourceGroup(rg) for rg in parent.resourcegroups]
+        self.scenarios   = [Scenario(s, summary) for s in parent.scenarios]
+        self.nodes       = [Node(n, summary) for n in parent.nodes]
+        self.links       = [Link(l, summary) for l in parent.links]
+        self.resourcegroups = [ResourceGroup(rg, summary) for rg in parent.resourcegroups]
         self.types          = [TypeSummary(t.templatetype) for t in parent.types]
 
-class NetworkSummary(ComplexModel):
-    _type_info = [
-        ('project_id',          Integer(default=None)),
-        ('id',                  Integer(default=None)),
-        ('name',                Unicode(default=None)),
-        ('created_by',          Integer(default=None)),
-        ('cr_date',             Unicode(default=None)),
-        ('description',         Unicode(default=None)),
-        ('scenarios',           SpyneArray(Scenario, default=None)),
-        ('links',               SpyneArray(Link, default=None)),
-        ('nodes',               SpyneArray(Node, default=None)),
-        ('resourcegroups',      SpyneArray(ResourceGroup, default=None)),
-    ]
-
-    def __init__(self, parent=None):
-        """
-            Takes a network object and creates a very simplified summary from it.
-        """
-        super(NetworkSummary, self).__init__()
-
-        if parent is None:
-            return
-
-        self.project_id = parent.project_id
-        self.id         = parent.network_id
-        self.name       = parent.network_name
-        self.description = parent.network_description
-        self.created_by  = parent.created_by
-        self.cr_date     = str(parent.cr_date)
-        self.scenarios = [Scenario(s, True) for s in parent.scenarios]
-        self.links = [Link(l, True) for l in parent.links]
-        self.nodes = [Node(n, True) for n in parent.nodes]
-        self.resourcegroups = [ResourceGroup(g, True) for g in parent.resourcegroups]
+        if summary is False:
+            self.attributes  = [ResourceAttr(ra) for ra in parent.attributes]
 
 class NetworkExtents(Resource):
     _type_info = [
