@@ -95,12 +95,12 @@ def login_user(username, password):
        raise HydraError(username)
 
     if bcrypt.hashpw(password, user_i.password) == user_i.password:
-        session_info = (username, '%x' % random.randint(1<<124, (1<<128)-1))
+        session_id = '%x' % random.randint(1<<124, (1<<128)-1)
     else:
        raise HydraError(username)
 
     user_i.last_login = datetime.datetime.now()
-    return user_i.user_id, session_info
+    return user_i.user_id, session_id
 
 
 def create_default_net():

@@ -6,6 +6,8 @@
                 <xs:element name="plugin_dir" type="xs:string"/>
                 <xs:element name="plugin_description" type="xs:string"/>
                 <xs:element name="plugin_epilog" type="xs:string"/>
+                <xs:element name="smallicon" type="xs:string"/>
+                <xs:element name="largeicon" type="xs:string"/>
                 <xs:element name="mandatory_args">
                     <xs:complexType>
                         <xs:sequence>

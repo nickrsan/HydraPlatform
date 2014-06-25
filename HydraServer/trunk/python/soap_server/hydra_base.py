@@ -26,11 +26,10 @@ from spyne.protocol.json import JsonDocument
 from spyne.service import ServiceBase
 
 log = logging.getLogger(__name__)
-_session_db = set()
+_session_db = dict()
 
 def get_session_db():
     return _session_db
-
 
 class HydraDocument(JsonDocument):
     """An implementation of the json protocol
@@ -61,8 +60,8 @@ class HydraDocument(JsonDocument):
 class RequestHeader(ComplexModel):
     __namespace__ = 'hydra.base'
     session_id    = Mandatory.String
-    username      = Mandatory.String
-    user_id       = Mandatory.String
+    username      = String
+    user_id       = String
 
 class HydraService(ServiceBase):
     __tns__ = 'hydra.base'
@@ -113,7 +112,7 @@ class LogoutService(HydraService):
     @rpc(Mandatory.String, Mandatory.String, _returns=String,
                                                     _throws=AuthenticationError)
     def logout(ctx, username):
-        _session_db.remove((ctx.in_header.username, ctx.in_header.session_id))
+        del(_session_db[ctx.in_header.session_id])
         return "OK"
 
 class AuthenticationService(ServiceBase):
@@ -123,13 +122,13 @@ class AuthenticationService(ServiceBase):
                                                    _throws=AuthenticationError)
     def login(username, password):
         try:
-            user_id, session_info = login_user(username, password)
+            user_id, session_id = login_user(username, password)
         except HydraError, e:
             raise AuthenticationError(e)
        
-        _session_db.add(session_info)
+        _session_db[session_id] = (user_id, username)
         loginresponse = LoginResponse()
-        loginresponse.session_id = session_info[1]
+        loginresponse.session_id = session_id
         loginresponse.user_id    = user_id
 
         return loginresponse 

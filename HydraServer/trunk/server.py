@@ -99,8 +99,13 @@ def _on_method_call(ctx):
         raise ArgumentError("RequestHeader is null")
     if ctx.in_header is None:
         raise AuthenticationError("No headers!")
-    if not (ctx.in_header.username, ctx.in_header.session_id) in get_session_db():
-        raise AuthenticationError(ctx.in_object.username)
+    session_db = get_session_db()
+    sess_info  = session_db.get(ctx.in_header.session_id)
+    if sess_info is None:
+        raise Fault("No Session")
+
+    ctx.in_header.user_id  = sess_info[0]
+    ctx.in_header.username = sess_info[1]
 
 def _on_method_context_closed(ctx):
     commit_transaction()
@@ -117,8 +122,6 @@ class HydraSoapApplication(Application):
     """
     def __init__(self, services, tns, name=None,
                                          in_protocol=None, out_protocol=None):
-
-#        super(HydraSoapApplication, self).__init__(services, tns)
 
         Application.__init__(self, services, tns, name, in_protocol,
                                                                  out_protocol)

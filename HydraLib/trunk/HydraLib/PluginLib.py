@@ -405,6 +405,8 @@ def connect(**kwargs):
     if url is None:
         url = config.get('hydra_server', 'url')
 
+    session_id = kwargs.get('session_id')
+
     retxml = kwargs.get('retxml', False)
 
     logging.getLogger('suds').setLevel(logging.ERROR)
@@ -412,19 +414,21 @@ def connect(**kwargs):
     #logging.getLogger('suds.metrics').setLevel(logging.INFO)
 
     # Connect
-    user = config.get('hydra_client', 'user')
-    passwd = config.get('hydra_client', 'password')
     logging.info("Connecting to : %s",url)
     cli = Client(url, timeout=3600, plugins=[FixNamespace()], retxml=retxml)
     cache = cli.options.cache
     cache.setduration(days=10)
-    login_response = cli.service.login(user, passwd)
-    user_id = login_response.user_id
-    session_id = login_response.session_id
+
     token = cli.factory.create('RequestHeader')
+    if session_id is None:
+        user = config.get('hydra_client', 'user')
+        passwd = config.get('hydra_client', 'password')
+        login_response = cli.service.login(user, passwd)
+        token.user_id  = login_response.user_id
+        session_id     = login_response.session_id
+        token.username = user
+
     token.session_id = session_id
-    token.username = user
-    token.user_id = user_id
     cli.set_options(soapheaders=token)
     cli.add_prefix('hyd', 'soap_server.hydra_complexmodels')
 
