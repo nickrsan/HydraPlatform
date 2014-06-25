@@ -101,7 +101,14 @@ Written by Philipp Meier philipp@diemeiers.ch
             <help>One XML containing the template appropriate 
                 to the network bing imported.</help>
         </arg>
-
+        <arg>
+            <name>session_id</name>
+            <switch>-c</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>Specify the session ID for the connection. If not specified,
+            the plugin will try to connect based on the credentials it finds in config</help>
+        </arg>
     </non_mandatory_args> 
     <switches>
         <arg>
