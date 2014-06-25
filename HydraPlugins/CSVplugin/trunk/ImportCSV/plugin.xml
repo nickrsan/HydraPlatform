@@ -1,6 +1,6 @@
 <plugin_info>
     <plugin_name>Import CSV Plugin</plugin_name>
-    <plugin_dir>ImportCSV/trunk/ImportCSV.py</plugin_dir>
+    <plugin_dir>ImportCSV.exe</plugin_dir>
     <plugin_description>Import a network saved in a set of CSV files into Hydra.
     <smallicon>icon.png</smallicon>
     <largeicon>icon.png</largeicon>

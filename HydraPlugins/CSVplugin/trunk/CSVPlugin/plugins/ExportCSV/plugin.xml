@@ -1,6 +1,6 @@
 <plugin_info>
     <plugin_name>Export CSV Plugin</plugin_name>
-    <plugin_dir>ExportCSV/trunk/ExportCSV.py</plugin_dir>
+    <plugin_dir>ExportCSV.exe</plugin_dir>
     <plugin_description>Export a network saved in Hydra to a set of CSV files.
     <smallicon>icon.png</smallicon>
     <largeicon>icon.png</largeicon>
