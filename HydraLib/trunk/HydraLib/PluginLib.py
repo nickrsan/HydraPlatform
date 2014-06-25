@@ -791,11 +791,17 @@ def create_dict(arr_data):
     return arr
 
 def write_progress(x, y):
+    """
+        Format and print a progress message to stdout so that 
+        a UI or other can pick it up and use it.
+    """
     msg = "!!Progress %s/%s"%(x, y)
-    #sys.stdout.write(msg)
     print msg
 
 def write_output(text):
+    """
+        Format and print a freeform message to stdout so that
+        the UI or other can pick it up and use it
+    """
     msg = "!!Output %s"%(text,)
     print msg
-    #sys.stdout.write(msg)

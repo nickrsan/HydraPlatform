@@ -548,16 +548,7 @@ class ImportCSV(object):
         keys  = node_data[0].split(',')
         self.check_header(file, keys)
         units = node_data[1].split(',')
-        
-        dataset_names = []
-        if len(node_data) > 2:
-            dataset_name_line = node_data[2].split(',')
-            if dataset_name_line[0].lower() == 'dataset name' or\
-               dataset_name_line[0].lower() == 'dataset_name':
-               dataset_names = [name for name in dataset_name_line[1:]]
-               data  = node_data[3:-1]
-            else:
-                data = node_data[2:-1]
+        data = node_data[2:-1]
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -1139,8 +1130,8 @@ class ImportCSV(object):
                         return None
                     else:
                         if self.is_timeseries(filedata):
-                            dataset['type'] = 'timeseries'
-                            ts = self.create_timeseries(filedata)
+                            ts_type, ts = self.create_timeseries(filedata)
+                            dataset['type'] = ts_type 
                             dataset['value'] = ts
                         else:
                             dataset['type'] = 'array'
@@ -1192,7 +1183,11 @@ class ImportCSV(object):
             seasonal = True
 
         ts_values = []
-
+        start_time = None
+        freq       = None
+        prev_time  = None
+        eq_val     = []
+        is_eq_spaced = True
         timedata = data.split('\n')
         for line in timedata:
             if line != '':
@@ -1221,13 +1216,35 @@ class ImportCSV(object):
                     ts_arr = numpy.reshape(ts_arr, array_shape)
                     ts_value = PluginLib.create_dict(ts_arr)
 
+                #Check for whether timeseries is equally spaced.
+                if is_eq_spaced:
+                    eq_val.append(ts_value)
+                    if start_time is None:
+                        start_time = tstime
+                    else:
+                        #Get the time diff as the second time minus the first
+                        if freq is None:
+                            freq = tstime - start_time
+                        else:
+                            #Keep checking on each timestamp whether the spaces between
+                            #times is equal.
+                            if (tstime - prev_time) != freq:
+                                is_eq_spaced = False
+                    prev_time = tstime
+
                 ts_values.append({'ts_time': ts_time,
                                   'ts_value': ts_value,
                                   })
+        if is_eq_spaced:
+            ts_type = 'eqtimeseries'
+            timeseries = {'frequency': freq.total_seconds(),
+                          'start_time':PluginLib.date_to_string(start_time, seasonal=seasonal),
+                          'arr_data':str(eq_val)}
+        else:
+            ts_type = 'timeseries'
+            timeseries = {'ts_values': ts_values}
 
-        timeseries = {'ts_values': ts_values}
-
-        return timeseries
+        return ts_type, timeseries
 
     def create_array(self, data):
         #Split the line into a list
