@@ -45,8 +45,36 @@ def init(level=None):
  #   logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s\033[0m', level=level)
 
     config_file = os.path.expanduser(config.get('logging_conf', 'log_config_path'))
-    
-    logging.config.fileConfig(config_file)
+
+    #check the config file exists...
+    if os.path.isfile(config_file):
+        logging.config.fileConfig(config_file)
+    else:
+        logging.critical("No logging config file found!")
+        logging_conf_dict = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'hydraFormatter': {
+                'format': '%(asctime)s - %(levelname)s - %(message)s'
+            },
+        },
+        'handlers': {
+            'default': {
+                'level':'DEBUG',
+                'class':'HydraLib.hydra_logging.ColorizingStreamHandler',
+                'formatter' : 'hydraFormatter',
+            },
+        },
+        'loggers': {
+            '': {
+                'handlers': ['default'],
+                'level': 'INFO',
+                'propagate': True
+            },
+        }
+        }
+        logging.config.dictConfig(logging_conf_dict)
 
 def shutdown():
 	logging.shutdown()
