@@ -44,13 +44,23 @@ def init(level=None):
 
  #   logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s\033[0m', level=level)
 
-    config_file = os.path.expanduser(config.get('logging_conf', 'log_config_path'))
+    use_default = False
+    try:
+        config_file = os.path.expanduser(config.get('logging_conf', 'log_config_path'))
+        #check the config file exists...
+        if os.path.isfile(config_file):
+            logging.config.fileConfig(config_file)
+            use_default=False
+        else:
+            logging.critical("No logging config file found!")
+            use_default = True
+    except Exception, e:
+        logging.critical("Error finding logging conf file: %s", e)
+        use_default = True
+    
 
-    #check the config file exists...
-    if os.path.isfile(config_file):
-        logging.config.fileConfig(config_file)
-    else:
-        logging.critical("No logging config file found!")
+
+    if use_default is True:
         logging_conf_dict = {
         'version': 1,
         'disable_existing_loggers': False,
