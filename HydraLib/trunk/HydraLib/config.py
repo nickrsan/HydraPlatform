@@ -70,8 +70,7 @@ def load_config():
         hydra_base = os.environ.get('HYDRA_BASE_DIR', '~/svn/HYDRA')
     config.set('DEFAULT', 'hydra_base_dir', os.path.expanduser(hydra_base))
 
-
-    if os.path == 'nt':
+    if os.name == 'nt':
         import winpaths
         common_app_data = winpaths.get_common_appdata()
         config.set('DEFAULT', 'common_app_data_folder', common_app_data)

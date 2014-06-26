@@ -190,8 +190,6 @@ class HydraServer():
         spyne.const.xml_ns.DEFAULT_NS = 'soap_server.hydra_complexmodels'
         cp_wsgi_application = CherryPyWSGIServer((domain,port), root, numthreads=1)
 
-        log.critical(config.get('DEFAULT', 'common_app_data_folder'))
-
         log.info("listening to http://%s:%s", domain, port)
         log.info("wsdl is at: http://%s:%s/?wsdl", domain, port)
         try:
