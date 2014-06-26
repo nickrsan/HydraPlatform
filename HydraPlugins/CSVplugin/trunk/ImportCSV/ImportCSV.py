@@ -158,8 +158,9 @@ Building a windows executable
  - Use pyinstaller (pip install pyisntaller) to build a windows executable.
  - cd to the $PATH_TO_HYDRA/HydraPlugins/CSVPlugin/trunk
  - pyinstaller -F ImportCSV.py
+ or if you want more compression (a smaller exe), install upx
+ - pyinstaller -F --upx-dir=/path/to/upx/dir ExportCSV.py
  - An executable file will appear in the dist folder
-
 
 API docs
 ~~~~~~~~
