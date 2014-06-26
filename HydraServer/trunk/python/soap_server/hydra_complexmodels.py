@@ -646,6 +646,7 @@ class Link(Resource):
             self.attributes = [ResourceAttr(a) for a in parent.attributes]
         self.types = [TypeSummary(t.templatetype) for t in parent.types]
 
+
 class ResourceScenario(Resource):
     _type_info = [
         ('resource_attr_id', Integer(default=None)),
@@ -661,6 +662,16 @@ class ResourceScenario(Resource):
         self.attr_id          = parent.resourceattr.attr_id
 
         self.value = Dataset(parent.dataset)
+
+class AttributeData(HydraComplexModel):
+    """
+        A class which is returned by the server when a request is made
+        for the data associated with an attribute.
+    """
+    _type_info = [
+        ('resourceattrs', SpyneArray(ResourceAttr)),
+        ('resourcescenarios', SpyneArray(ResourceScenario)),
+    ]
 
 class ResourceGroupItem(HydraComplexModel):
     _type_info = [

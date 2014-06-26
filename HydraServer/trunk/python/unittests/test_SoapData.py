@@ -19,7 +19,7 @@
 import test_SoapServer
 import datetime
 import logging
-
+log = logging.getLogger(__name__)
 class DataGroupTest(test_SoapServer.SoapServerTest):
 
     def test_get_groups_like_name(self):
@@ -370,6 +370,30 @@ class RetrievalTest(test_SoapServer.SoapServerTest):
         link_data = self.client.service.get_link_data(link_id, scenario_id)
         assert len(link_data) > 0
 
+    def test_get_node_attribute_data(self):
+        net = self.create_network_with_data()
+        nodes = net.nodes.Node
+        nodearray = self.client.factory.create('integerArray')
+        nodearray.integer = [n.id for n in nodes]
+        attrarray = self.client.factory.create('integerArray')
+        attrarray.integer = [nodes[0].attributes.ResourceAttr[0].attr_id]
+
+        attr_data = self.client.service.get_node_attribute_data(nodearray, attrarray)
+        #Check something has been returned 
+        assert attr_data.resourceattrs is not None
+        assert attr_data.resourcescenarios is not None
+
+        res_attrs = attr_data.resourceattrs.ResourceAttr
+        res_scenarios = attr_data.resourcescenarios.ResourceScenario
+        #Check the correct number of things have been returned
+        #10 nodes, 1 attr per node = 10 resourceattrs
+        #10 resourceattrs, 1 scenario = 10 resource scenarios
+        assert len(res_attrs) == 10
+        assert len(res_scenarios) == 10
+
+        ra_ids = [r.id for r in res_attrs]
+        for rs in res_scenarios:
+            assert rs.resource_attr_id in ra_ids
 
 if __name__ == '__main__':
     test_SoapServer.run()

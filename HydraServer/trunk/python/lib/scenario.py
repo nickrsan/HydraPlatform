@@ -17,7 +17,15 @@ import logging
 from HydraLib.HydraException import HydraError, PermissionError, ResourceNotFoundError
 from HydraLib import units
 from db import DBSession
-from db.model import Scenario, ResourceGroupItem, ResourceScenario, TypeAttr, ResourceAttr, NetworkOwner, Dataset
+from db.model import Scenario,\
+        ResourceGroupItem,\
+        ResourceScenario,\
+        TypeAttr,\
+        ResourceAttr,\
+        NetworkOwner,\
+        Dataset,\
+        Node,\
+        Attr
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload_all
@@ -585,7 +593,38 @@ def get_scenario_data(scenario_id,**kwargs):
     log.info("Retrieved %s datasets", len(scenario_data))
     return scenario_data
 
+def get_attribute_data(attr_ids, node_ids, **kwargs):
+    """
+        For a given attribute or set of attributes, return  all the resources and
+        resource scenarios in the network
+    """
+    node_attrs = DBSession.query(ResourceAttr).\
+                                            options(joinedload_all('attr')).\
+                                            filter(ResourceAttr.node_id.in_(node_ids), 
+                                            ResourceAttr.attr_id.in_(attr_ids)).all()
 
+    ra_ids = []
+    for ra in node_attrs:
+        ra_ids.append(ra.resource_attr_id)
+
+
+    resource_scenarios = DBSession.query(ResourceScenario).filter(ResourceScenario.resource_attr_id.in_(ra_ids)).options(joinedload_all('dataset.metadata', 'dataset.timeseriesdata')).order_by(ResourceScenario.scenario_id).all()
+
+
+    for rs in resource_scenarios:
+       if rs.dataset.locked == 'Y':
+           try:
+                rs.dataset.check_read_permission(kwargs.get('user_id'))
+           except:
+               rs.dataset.value      = None
+               rs.dataset.frequency  = None
+               rs.dataset.start_time = None
+               if rs.dataset.data_type == 'timeseries':
+                   rs.datset.timeseriesdata = []
+       DBSession.expunge(rs)
+
+    return node_attrs, resource_scenarios
+    
 def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
     """
         Get all the resource scenarios for a given resource 

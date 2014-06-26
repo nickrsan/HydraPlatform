@@ -14,16 +14,17 @@
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
 from spyne.model.primitive import Integer, Unicode
-from HydraLib.HydraException import HydraError
-from spyne.model.primitive import Integer, Boolean, Unicode, AnyDict
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Scenario,\
         ResourceScenario,\
         Dataset,\
+        ResourceAttr,\
+        AttributeData,\
         ScenarioDiff
 
 import logging
+log = logging.getLogger(__name__)
 from lib import scenario
 from hydra_base import HydraService
 
@@ -209,3 +210,27 @@ class ScenarioService(HydraService):
         
         ret_data = [ResourceScenario(rs) for rs in group_data]
         return ret_data
+
+    @rpc(SpyneArray(Integer), SpyneArray(Integer), _returns=AttributeData)
+    def get_node_attribute_data(ctx, node_ids, attr_ids):
+        """
+            Get the data for multiple attributes on multiple nodes
+            across multiple scenarios.
+            @returns a list of AttributeData objects, which consist of a list
+            of ResourceAttribute objects and a list of corresponding
+            ResourceScenario objects.
+        """
+
+        node_attrs, resource_scenarios = scenario.get_attribute_data(attr_ids,
+                                                                     node_ids,
+                                                                    **ctx.in_header.__dict__)
+
+        node_ras = [ResourceAttr(na) for na in node_attrs]
+        node_rs  = [ResourceScenario(rs) for rs in resource_scenarios]
+
+        ret_obj = AttributeData()
+        ret_obj.resourceattrs = node_ras
+        ret_obj.resourcescenarios = node_rs
+
+        return ret_obj
+
