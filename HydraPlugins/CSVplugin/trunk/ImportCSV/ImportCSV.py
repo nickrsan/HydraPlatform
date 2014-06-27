@@ -1482,10 +1482,10 @@ if __name__ == '__main__':
 
             network_id = csv.NetworkSummary['id']
 
-            write_progress(6,csv.num_steps)
             write_output("Saving types")
             if args.template is not None:
                 csv.set_resource_types(args.template)
+            write_progress(6,csv.num_steps)
 
         else:
             log.info('No nodes found. Nothing imported.')

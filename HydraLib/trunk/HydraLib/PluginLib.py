@@ -612,7 +612,7 @@ def create_xml_response(plugin_name, network_id, scenario_ids,
     </files>
 </plugin_result>"""
 
-    scenario_string = "<scenario>%s</scenario>"
+    scenario_string = "<scenario_id>%s</scenario_id>"
     error_string = "<error>%s</error>"
     warning_string = "<warning>%s</warning>"
     file_string = "<file>%s<file>"
