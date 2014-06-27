@@ -58,6 +58,13 @@ def load_config():
     for ini_file in localfiles:
         config.read(ini_file)
 
+    if os.name == 'nt':
+        import winpaths
+        common_app_data = winpaths.get_common_appdata()
+        config.set('DEFAULT', 'common_app_data_folder', common_app_data)
+    else:
+        config.set('DEFAULT', 'common_app_data_folder', '')
+
     try:
         home_dir = config.get('DEFAULT', 'home_dir')
     except:
@@ -69,13 +76,6 @@ def load_config():
     except:
         hydra_base = os.environ.get('HYDRA_BASE_DIR', '~/svn/HYDRA')
     config.set('DEFAULT', 'hydra_base_dir', os.path.expanduser(hydra_base))
-
-    if os.name == 'nt':
-        import winpaths
-        common_app_data = winpaths.get_common_appdata()
-        config.set('DEFAULT', 'common_app_data_folder', common_app_data)
-    else:
-        config.set('DEFAULT', 'common_app_data_folder', '')
 
 
     CONFIG = config

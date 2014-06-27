@@ -67,7 +67,7 @@ class SoapTest(unittest.TestCase):
         #sd = client.service.get_scenario_data(2)
         #node_data = client.service.get_node_data(597, 28)
        # print node_data
-        networks = client.service.get_networks(119)
+        networks = client.service.get_networks(119, 'N')
         print(networks[0])
     
     def test_JSON(self):
@@ -78,10 +78,9 @@ class SoapTest(unittest.TestCase):
         r_dict = json.loads(r.content)
         headers = { 'content-type': 'application/json' , 'username':'root',
                    'user_id':r_dict['user_id'], 'session_id':r_dict['session_id']}
-        network_call = {'get_network':{'network_id':2, 'include_data':'Y', 'scenario_id':None}}
-        r = requests.get('http://localhost:8080/json', data=json.dumps(network_call), headers=headers)
+        network_call = {'get_network':{'network_id':117, 'include_data':'Y', 'scenario_id':None}}
+        r = requests.get('http://localhost:12346', data=json.dumps(network_call), headers=headers)
         net = json.loads(r.content)
-        import pudb; pudb.set_trace()
 
 def run():
 
