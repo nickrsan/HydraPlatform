@@ -338,7 +338,7 @@ class ImportCSV(object):
 
     def call(self, func, args):
         log.info("Calling: %s"%(func))
-        port = config.getint('hydra_server', 'port', 12345)
+        port = config.getint('hydra_server', 'port', 8080)
         domain = config.get('hydra_server', 'domain', '127.0.0.1')
         url = "http://%s:%s/json"%(domain, port)
         call = {func:args}
