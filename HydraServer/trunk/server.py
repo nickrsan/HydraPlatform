@@ -186,7 +186,7 @@ class HydraServer():
         
         logging.info("home_dir %s",config.get('DEFAULT', 'home_dir'))
         logging.info("hydra_base_dir %s",config.get('DEFAULT', 'hydra_base_dir'))
-        logging.info("common_app_data %s",config.get('DEFAULT', 'common_app_data'))
+        logging.info("common_app_data_folder %s",config.get('DEFAULT', 'common_app_data_folder'))
         logging.info("sqlite url %s",config.get('hydra_server', 'url'))
         logging.info("layout_xsd_path %s",config.get('hydra_server', 'layout_xsd_path'))
         logging.info("default_directory %s",config.get('plugin', 'default_directory'))
