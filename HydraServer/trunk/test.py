@@ -29,7 +29,6 @@ from HydraLib import config
 from SOAPpy import WSDL
 import SOAPpy
 from pysimplesoap.client import SoapClient
-import osa
 from HydraLib import PluginLib
 import requests
 import json
@@ -62,36 +61,25 @@ class SoapTest(unittest.TestCase):
         import pudb; pudb.set_trace()
         net = client.get_network(107)
 
-    def test_OSA(self):
-        url = config.get('hydra_client', 'url')
-        print "Connecting to %s"%url
-        cl = osa.Client(url)
-        response = cl.service_1.login(username="root",password="")
-        req_header = cl.types.RequestHeader()
-        req_header.session_id = response.session_id
-        req_header.username = 'root'
-        req_header.user_id = 1
-        import pudb; pudb.set_trace()
-
     def test_SUDS(self):
         client = PluginLib.connect()
         #net = client.service.get_network(network_id=2)
         #sd = client.service.get_scenario_data(2)
-        node_data = client.service.get_node_data(597, 28)
-        print node_data
-        networks = client.service.get_networks(2)
+        #node_data = client.service.get_node_data(597, 28)
+       # print node_data
+        networks = client.service.get_networks(119)
         print(networks[0])
     
     def test_JSON(self):
         user = config.get('hydra_client', 'user')
         passwd = config.get('hydra_client', 'password')
         login_params = {'login':{'username':user, 'password':passwd}}
-        r = requests.get('http://localhost:12346', data=json.dumps(login_params))
+        r = requests.get('http://127.0.0.1:8080/json', data=json.dumps(login_params))
         r_dict = json.loads(r.content)
         headers = { 'content-type': 'application/json' , 'username':'root',
                    'user_id':r_dict['user_id'], 'session_id':r_dict['session_id']}
         network_call = {'get_network':{'network_id':2, 'include_data':'Y', 'scenario_id':None}}
-        r = requests.get('http://localhost:12346', data=json.dumps(network_call), headers=headers)
+        r = requests.get('http://localhost:8080/json', data=json.dumps(network_call), headers=headers)
         net = json.loads(r.content)
         import pudb; pudb.set_trace()
 
