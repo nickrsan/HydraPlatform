@@ -191,7 +191,10 @@ class ImportCSV(object):
     """
     """
 
-    def __init__(self, url=None):
+    def __init__(self, url=None, session_id=None):
+
+        self.url = url
+
         self.Project  = None
         self.Network  = None
         self.NetworkSummary  = None
@@ -222,12 +225,14 @@ class ImportCSV(object):
         self.linktype_dict = dict()
         self.grouptype_dict = dict()
         self.networktype = ''
-
-        self.user_id=None
+        
         self.session_id=None
-        self.username=None
+        if session_id is not None:
+            logging.info("Using existing session %s", session_id)
+            self.session_id=session_id
+        else:
+            self.login()
 
-        self.login()
         self.node_id  = PluginLib.temp_ids()
         self.link_id  = PluginLib.temp_ids()
         self.group_id = PluginLib.temp_ids()
@@ -333,22 +338,21 @@ class ImportCSV(object):
         resp = self.call('login', login_params)
         #set variables for use in request headers
         self.session_id = resp['session_id']
-        self.user_id    = resp['user_id']
-        self.username   = user
+        logging.info("Session ID=%s", self.session_id)
 
     def call(self, func, args):
         log.info("Calling: %s"%(func))
-        port = config.getint('hydra_server', 'port', 8080)
-        domain = config.get('hydra_server', 'domain', '127.0.0.1')
-        url = "http://%s:%s/json"%(domain, port)
+        if self.url is None:
+            port = config.getint('hydra_server', 'port', 8080)
+            domain = config.get('hydra_server', 'domain', '127.0.0.1')
+            self.url = "http://%s:%s/json"%(domain, port)
+            logging.info("Setting URL %s", self.url)
         call = {func:args}
         headers = {
                     'Content-Type': 'application/json',       
                     'session_id':self.session_id,
-                    'user_id':self.user_id,
-                    'username':self.username
                   }
-        r = requests.post(url, data=json.dumps(call), headers=headers)
+        r = requests.post(self.url, data=json.dumps(call), headers=headers)
         if not r.ok:
             try:
                 resp = json.loads(r.content)
@@ -1407,13 +1411,16 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
+    parser.add_argument('-c', '--session_id',
+                        help='''Session ID. If this does not exist, a login will be
+                        attempted based on details in config.''')
     return parser
 
 
 if __name__ == '__main__':
     parser = commandline_parser()
     args = parser.parse_args()
-    csv = ImportCSV(url=args.server_url)
+    csv = ImportCSV(url=args.server_url, session_id=args.session_id)
 
     network_id = None
     scen_ids = []

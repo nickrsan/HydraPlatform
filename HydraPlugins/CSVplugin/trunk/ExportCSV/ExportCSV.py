@@ -86,8 +86,8 @@ class ExportCSV(object):
     Scenario = None
     timezone = pytz.utc
 
-    def __init__(self, url=None):
-        self.client = PluginLib.connect(url=url)
+    def __init__(self, url=None, session_id=None):
+        self.client = PluginLib.connect(url=url, session_id=session_id)
 
         all_attributes = self.client.service.get_attributes()
         self.attributes = {}
@@ -642,13 +642,16 @@ Written by Stephen Knox <s.knox@ucl.ac.uk>
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
+    parser.add_argument('-c', '--session_id',
+                        help='''Session ID. If this does not exist, a login will be
+                        attempted based on details in config.''')
     return parser
 
 
 if __name__ == '__main__':
     parser = commandline_parser()
     args = parser.parse_args()
-    csv = ExportCSV(url=args.server_url)
+    csv = ExportCSV(url=args.server_url, session_id=args.session_id)
 
     if args.timezone is not None:
         csv.timezone = pytz.timezone(args.timezone)
