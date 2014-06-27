@@ -85,6 +85,6 @@ class ProjectService(HydraService):
             Returns an array of network objects.
         """
         net_dicts = project_lib.get_networks(project_id, include_data, **ctx.in_header.__dict__)
-        networks = [Network(n) for n in net_dicts]
+        networks = [Network(n, summary=True) for n in net_dicts]
         return networks
 
