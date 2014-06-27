@@ -183,6 +183,18 @@ class HydraServer():
         return app
 
     def run_server(self):
+        
+        logging.info("home_dir %s",config.get('DEFAULT', 'home_dir'))
+        logging.info("hydra_base_dir %s",config.get('DEFAULT', 'hydra_base_dir'))
+        logging.info("common_app_data %s",config.get('DEFAULT', 'common_app_data'))
+        logging.info("sqlite url %s",config.get('hydra_server', 'url'))
+        logging.info("layout_xsd_path %s",config.get('hydra_server', 'layout_xsd_path'))
+        logging.info("default_directory %s",config.get('plugin', 'default_directory'))
+        logging.info("result_file %s",config.get('plugin', 'result_file'))
+        logging.info("plugin_xsd_path %s",config.get('plugin', 'plugin_xsd_path'))
+        logging.info("log_config_path %s",config.get('logging_conf', 'log_config_path'))
+        
+
 
         port = config.getint('hydra_server', 'port', 12345)
         domain = config.get('hydra_server', 'domain', '127.0.0.1')

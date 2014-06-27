@@ -508,9 +508,10 @@ def _get_all_resource_attributes(network_id, template_id=None):
         'GROUP': group_attr_dict,
     }
 
+    logging.info("Attributes processed.")
     return all_attributes
 
-def get_network(network_id, include_data='N', scenario_ids=None, template_id=None, **kwargs):
+def get_network(network_id, summary=False, include_data='N', scenario_ids=None, template_id=None, **kwargs):
     """
         Return a whole network as a dictionary.
         network_id: ID of the network to retrieve
@@ -532,13 +533,10 @@ def get_network(network_id, include_data='N', scenario_ids=None, template_id=Non
         net_i.attributes
 
         #Define the basic resource queries
-        log.debug("Nodes...") 
         node_qry = DBSession.query(Node).filter(Node.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template'))
 
-        log.debug("Links...") 
         link_qry = DBSession.query(Link).filter(Link.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template'))
 
-        log.debug("Groups...") 
         group_qry = DBSession.query(ResourceGroup).filter(ResourceGroup.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template'))
         #Perform any required filtering on the resources
         if template_id is not None:
@@ -546,18 +544,26 @@ def get_network(network_id, include_data='N', scenario_ids=None, template_id=Non
             link_qry = link_qry.join(ResourceType).join(TemplateType).filter(TemplateType.template_id==template_id)
             group_qry = group_qry.join(ResourceType).join(TemplateType).filter(TemplateType.template_id==template_id)
 
-        net_i.links = link_qry.all()
+        log.debug("Nodes...") 
         net_i.nodes = node_qry.all()
+        log.debug("Links...") 
+        net_i.links = link_qry.all()
+        log.debug("Groups...") 
         net_i.resourcegroups = group_qry.all()
-
-        all_attributes = _get_all_resource_attributes(network_id, template_id)
-
-        for node in net_i.nodes:
-            node.attributes = all_attributes['NODE'].get(node.node_id, [])
-        for link in net_i.links:
-            link.attributes = all_attributes['LINK'].get(link.link_id, [])
-        for group in net_i.resourcegroups:
-            group.attributes = all_attributes['GROUP'].get(group.group_id, [])
+        
+        if summary is False:
+            log.debug("Attributes...") 
+            all_attributes = _get_all_resource_attributes(network_id, template_id)
+            log.debug("Setting attributes")
+            for node in net_i.nodes:
+                node.attributes = all_attributes['NODE'].get(node.node_id, [])
+            log.info("Node attributes set")
+            for link in net_i.links:
+                link.attributes = all_attributes['LINK'].get(link.link_id, [])
+            log.info("Link attributes set")
+            for group in net_i.resourcegroups:
+                group.attributes = all_attributes['GROUP'].get(group.group_id, [])
+            log.info("Group attributes set")
 
         log.debug("Network Retrieved")
          
@@ -581,7 +587,7 @@ def get_network(network_id, include_data='N', scenario_ids=None, template_id=Non
     
     scenario_ids = [s.scenario_id for s in net_i.scenarios]
 
-    if include_data == 'N':
+    if include_data == 'N' or summary is True:
         return net_i
     log.debug("Getting datasets")
     if len(scenario_ids) > 0:
