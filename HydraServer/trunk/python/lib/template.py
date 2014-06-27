@@ -71,6 +71,10 @@ def parse_attribute(attribute):
         attr         = Attr()
         attr.attr_dimen = attribute.find('dimension').text
         attr.attr_name  = attribute.find('name').text
+
+        log.info("Attribute not found, creating new attribute: name:%s, dimen:%s",
+                    attr.attr_name, attr.attr_dimen)
+
         DBSession.add(attr)
     if attr.attr_dimen != dimension:
         raise HydraError(
@@ -91,6 +95,7 @@ def parse_typeattr(type_i, attribute):
                                                       TypeAttr.attr_id==attr.attr_id).one()
     except NoResultFound:
         typeattr_i = TypeAttr()
+        log.info("Creating type attr: type_id=%s, attr_id=%s", type_i.type_id, attr.attr_id)
         typeattr_i.type_id=type_i.type_id
         typeattr_i.attr_id=attr.attr_id
         type_i.typeattrs.append(typeattr_i)
@@ -149,7 +154,9 @@ def upload_template_xml(template_xml,**kwargs):
 
         tmpl_i = DBSession.query(Template).filter(Template.template_name==template_name).one()
         tmpl_i.layout = template_layout
+        log.info("Existing template found. name=%s", template_name)
     except NoResultFound:
+        log.info("Template not found. Creating new one. name=%s", template_name)
         tmpl_i = Template(template_name=template_name, layout=template_layout)
         DBSession.add(tmpl_i)
 
@@ -172,6 +179,7 @@ def upload_template_xml(template_xml,**kwargs):
         type_id = type_name_map[type_to_delete]
         try:
             type_i = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).one()
+            log.info("Deleting type %s", type_i.type_name)
             DBSession.delete(type_i)
         except NoResultFound:
             pass
@@ -186,8 +194,9 @@ def upload_template_xml(template_xml,**kwargs):
             type_i = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).one()
             
         else:
+            log.info("Type %s not found, creating new one.", type_name)
             type_i = TemplateType()
-            type_i.type_name = resource.find('name').text
+            type_i.type_name = type_name 
             tmpl_i.templatetypes.append(type_i)
             type_is_new = True
 
@@ -219,15 +228,14 @@ def upload_template_xml(template_xml,**kwargs):
         template_attrs = set([r.find('name').text for r in resource.findall('attribute')])
 
         attrs_to_delete = existing_attrs - template_attrs
-
         for attr_to_delete in attrs_to_delete:
             attr_id, type_id = attr_name_map[attr_to_delete]
             try:
                 attr_i = DBSession.query(TypeAttr).filter(TypeAttr.attr_id==attr_id, TypeAttr.type_id==type_id).one()
                 DBSession.delete(attr_i)
-                logging.info("Attr %s in type %s deleted",attr_id, type_id)
+                log.info("Attr %s in type %s deleted",attr_i.attr.attr_name, attr_i.templatetype.type_name)
             except NoResultFound:
-                logging.debug("Attr %s not found in type %s"%(attr_id, type_id))
+                log.debug("Attr %s not found in type %s"%(attr_id, type_id))
                 continue
 
         #Add or update type typeattrs

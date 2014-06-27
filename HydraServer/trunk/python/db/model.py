@@ -254,7 +254,7 @@ class DatasetGroupItem(Base):
     group_id = Column(Integer(), ForeignKey('tDatasetGroup.group_id'), primary_key=True, nullable=False)
     dataset_id = Column(Integer(), ForeignKey('tDataset.dataset_id'), primary_key=True, nullable=False)
     
-    group = relationship('DatasetGroup', backref=backref("items", order_by=dataset_id))
+    group = relationship('DatasetGroup', backref=backref("items", order_by=dataset_id, cascade="all, delete-orphan"))
     dataset = relationship('Dataset', backref=backref("groupitems", order_by=dataset_id))
 
 
@@ -266,7 +266,7 @@ class TimeSeriesData(Base):
     ts_time = Column(String(), primary_key=True, nullable=False)
     ts_value = Column(LargeBinary(),  nullable=False)
     
-    timeseries = relationship('Dataset', backref=backref("timeseriesdata", order_by=dataset_id))
+    timeseries = relationship('Dataset', backref=backref("timeseriesdata", order_by=dataset_id, cascade="all, delete-orphan"))
 
 class Metadata(Base):
 
@@ -276,7 +276,7 @@ class Metadata(Base):
     metadata_name = Column(String(45), primary_key=True, nullable=False)
     metadata_val = Column(LargeBinary(),  nullable=False)
     
-    dataset = relationship('Dataset', backref=backref("metadata", order_by=dataset_id))
+    dataset = relationship('Dataset', backref=backref("metadata", order_by=dataset_id, cascade="all, delete-orphan"))
 
 
 
@@ -322,21 +322,21 @@ class TemplateType(Base):
     alias = Column(String(100))
     layout = Column(Text(1000))
     
-    template = relationship('Template', backref=backref("templatetypes", order_by=type_id))
+    template = relationship('Template', backref=backref("templatetypes", order_by=type_id, cascade="all, delete-orphan"))
     
 class TypeAttr(Base):
 
     __tablename__='tTypeAttr'
 
     attr_id = Column(Integer(), ForeignKey('tAttr.attr_id'), primary_key=True, nullable=False)
-    type_id = Column(Integer(), ForeignKey('tTemplateType.type_id'), primary_key=True, nullable=False)
+    type_id = Column(Integer(), ForeignKey('tTemplateType.type_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     default_dataset_id = Column(Integer(), ForeignKey('tDataset.dataset_id'))
     attr_is_var = Column(String(1), server_default=text(u"'N'"))
     data_type = Column(String(45))
     dimension = Column(String(45))
     
     attr = relationship('Attr')
-    templatetype = relationship('TemplateType', backref=backref("typeattrs", order_by=attr_id))
+    templatetype = relationship('TemplateType',  backref=backref("typeattrs", order_by=attr_id, cascade="all, delete-orphan"))
     default_dataset = relationship('Dataset')
     
 
@@ -355,11 +355,11 @@ class ResourceAttr(Base):
     attr_is_var = Column(String(1),  nullable=False, server_default=text(u"'N'"))
     
     attr = relationship('Attr')
-    project = relationship('Project', backref=backref('attributes', uselist=True), uselist=False)
-    network = relationship('Network', backref=backref('attributes', uselist=True), uselist=False)
-    node = relationship('Node', backref=backref('attributes', uselist=True), uselist=False)
-    link = relationship('Link', backref=backref('attributes', uselist=True), uselist=False)
-    resourcegroup = relationship('ResourceGroup', backref=backref('attributes', uselist=True), uselist=False)
+    project = relationship('Project', backref=backref('attributes', uselist=True, cascade="all, delete-orphan"), uselist=False)
+    network = relationship('Network', backref=backref('attributes', uselist=True, cascade="all, delete-orphan"), uselist=False)
+    node = relationship('Node', backref=backref('attributes', uselist=True, cascade="all, delete-orphan"), uselist=False)
+    link = relationship('Link', backref=backref('attributes', uselist=True, cascade="all, delete-orphan"), uselist=False)
+    resourcegroup = relationship('ResourceGroup', backref=backref('attributes', uselist=True, cascade="all, delete-orphan"), uselist=False)
 
 
     def get_resource(self):
@@ -402,10 +402,10 @@ class ResourceType(Base):
     
     templatetype = relationship('TemplateType')
 
-    network = relationship('Network', backref=backref('types', uselist=True), uselist=False)
-    node = relationship('Node', backref=backref('types', uselist=True), uselist=False)
-    link = relationship('Link', backref=backref('types', uselist=True), uselist=False)
-    resourcegroup = relationship('ResourceGroup', backref=backref('types', uselist=True), uselist=False)
+    network = relationship('Network', backref=backref('types', uselist=True, cascade="all, delete-orphan"), uselist=False)
+    node = relationship('Node', backref=backref('types', uselist=True, cascade="all, delete-orphan"), uselist=False)
+    link = relationship('Link', backref=backref('types', uselist=True, cascade="all, delete-orphan"), uselist=False)
+    resourcegroup = relationship('ResourceGroup', backref=backref('types', uselist=True, cascade="all, delete-orphan"), uselist=False)
 
     def get_resource(self):
         ref_key = self.ref_key
@@ -545,7 +545,7 @@ class Network(Base):
     projection = Column(String(1000))
     created_by = Column(Integer(), ForeignKey('tUser.user_id'))
     
-    project = relationship('Project', backref=backref("networks", order_by=network_id))
+    project = relationship('Project', backref=backref("networks", order_by=network_id, cascade="all, delete-orphan"))
 
     def add_attribute(self, attr_id, attr_is_var='N'):
         attr = ResourceAttr()
@@ -689,7 +689,7 @@ class Link(Base):
     link_layout = Column(Text(1000))
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
    
-    network = relationship('Network', backref=backref("links", order_by=network_id), lazy='joined')
+    network = relationship('Network', backref=backref("links", order_by=network_id, cascade="all, delete-orphan"), lazy='joined')
     node_a = relationship('Node', foreign_keys=[node_1_id], backref=backref("links_to", order_by=link_id))
     node_b = relationship('Node', foreign_keys=[node_2_id], backref=backref("links_from", order_by=link_id))
 
@@ -718,7 +718,7 @@ class Node(Base):
     node_layout = Column(Text(1000))
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
     
-    network = relationship('Network', backref=backref("nodes", order_by=network_id), lazy='joined')
+    network = relationship('Network', backref=backref("nodes", order_by=network_id, cascade="all, delete-orphan"), lazy='joined')
 
     def add_attribute(self, attr_id, attr_is_var='N'):
         attr = ResourceAttr()
@@ -742,7 +742,7 @@ class ResourceGroup(Base):
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
     network_id = Column(Integer(), ForeignKey('tNetwork.network_id'),  nullable=False)
     
-    network = relationship('Network', backref=backref("resourcegroups", order_by=group_id), lazy='joined')
+    network = relationship('Network', backref=backref("resourcegroups", order_by=group_id, cascade="all, delete-orphan"), lazy='joined')
     
     def add_attribute(self, attr_id, attr_is_var='N'):
         attr = ResourceAttr()
@@ -769,7 +769,7 @@ class ResourceGroupItem(Base):
     scenario_id = Column(Integer(), ForeignKey('tScenario.scenario_id'),  nullable=False)
     
     group = relationship('ResourceGroup', foreign_keys=[group_id], backref=backref("items", order_by=group_id))
-    scenario = relationship('Scenario', backref=backref("resourcegroupitems", order_by=item_id))
+    scenario = relationship('Scenario', backref=backref("resourcegroupitems", order_by=item_id, cascade="all, delete-orphan"))
 
     node = relationship('Node')
     link = relationship('Link')
@@ -803,7 +803,7 @@ class ResourceScenario(Base):
     resource_attr_id = Column(Integer(), ForeignKey('tResourceAttr.resource_attr_id'), primary_key=True, nullable=False)
     
     dataset      = relationship('Dataset', backref=backref("resourcescenarios", order_by=dataset_id))
-    scenario     = relationship('Scenario', backref=backref("resourcescenarios", order_by=resource_attr_id, lazy='joined'))
+    scenario     = relationship('Scenario', backref=backref("resourcescenarios", order_by=resource_attr_id, lazy='joined', cascade="all, delete-orphan"))
     resourceattr = relationship('ResourceAttr', lazy='joined')
 
 
