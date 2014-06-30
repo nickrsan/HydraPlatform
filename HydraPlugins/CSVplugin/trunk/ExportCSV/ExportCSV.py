@@ -75,7 +75,7 @@ from HydraLib import PluginLib
 from HydraLib.HydraException import HydraPluginError
 from HydraLib.PluginLib import write_progress, write_output, validate_plugin_xml
 
-import numpy
+from numpy import array
 import os, sys
 log = logging.getLogger(__name__)
 
@@ -513,7 +513,7 @@ class ExportCSV(object):
 
                     arr_val = PluginLib.parse_suds_array(value)
 
-                    np_val = numpy.array(eval(repr(arr_val)))
+                    np_val = array(eval(repr(arr_val)))
                     shape = np_val.shape
                     n = 1
                     shape_str = []
@@ -560,7 +560,7 @@ class ExportCSV(object):
 
                         except:
                             ts_val = PluginLib.parse_suds_array(ts_val)
-                            np_val = numpy.array(ts_val)
+                            np_val = array(ts_val)
                             shape = np_val.shape
                             n = 1
                             shape_str = []
@@ -585,7 +585,7 @@ class ExportCSV(object):
                         arr_file      = open(file_loc, 'a')
                     else:
                         arr_file      = open(file_loc, 'w')
-                    np_val = numpy.array(ts_val)
+                    np_val = array(ts_val)
                     shape = np_val.shape
                     n = 1
                     shape_str = []

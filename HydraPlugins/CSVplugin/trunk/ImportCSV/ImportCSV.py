@@ -179,7 +179,7 @@ from HydraLib import config
 from HydraLib.HydraException import HydraPluginError
 
 from suds import WebFault
-import numpy
+from numpy import array, reshape
 
 from lxml import etree
 import requests
@@ -1219,8 +1219,8 @@ class ImportCSV(object):
                     for i in range(value_length):
                         ts_val_1d.append(str(dataset[i + 2].strip()))
 
-                    ts_arr = numpy.array(ts_val_1d)
-                    ts_arr = numpy.reshape(ts_arr, array_shape)
+                    ts_arr = array(ts_val_1d)
+                    ts_arr = reshape(ts_arr, array_shape)
                     ts_value = PluginLib.create_dict(ts_arr)
 
                 #Check for whether timeseries is equally spaced.
@@ -1268,11 +1268,11 @@ class ImportCSV(object):
             array_shape = (len(dataset),)
 
         #Reshape the array back to its correct dimensions
-        array = numpy.array(dataset)
-        array = numpy.reshape(array, array_shape)
+        arr = array(dataset)
+        arr = reshape(arr, array_shape)
 
         arr = dict(
-            arr_data = PluginLib.create_dict(array)
+            arr_data = PluginLib.create_dict(arr)
         )
 
         return arr
@@ -1426,7 +1426,7 @@ if __name__ == '__main__':
 
     network_id = None
     scen_ids = []
-
+    errors = []
     try:
         
         validate_plugin_xml(os.path.join(__location__, 'plugin.xml'))
