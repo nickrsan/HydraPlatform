@@ -1,4 +1,4 @@
-pyinstaller -F --upx-dir=..\..\..\upx ImportCSV.py
-copy dist\ImportCSV.exe ..\CSVPlugin\plugins\ImportCSV\ImportCSV.exe
+pyinstaller --upx-dir=../../../upx ImportCSV.spec
+copy dist\ImportCSV\* ..\CSVPlugin\plugins\ImportCSV\
 copy plugin.xml ..\CSVPlugin\plugins\ImportCSV\plugin.xml
 PAUSE

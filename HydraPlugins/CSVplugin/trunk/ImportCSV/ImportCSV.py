@@ -1494,7 +1494,7 @@ if __name__ == '__main__':
         else:
             log.info('No nodes found. Nothing imported.')
 
-
+	errors = []
     except HydraPluginError as e:
         errors = [e.message]
 
