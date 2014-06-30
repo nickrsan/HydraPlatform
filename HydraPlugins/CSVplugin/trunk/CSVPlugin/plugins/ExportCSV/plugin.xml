@@ -2,13 +2,13 @@
     <plugin_name>Export CSV Plugin</plugin_name>
     <plugin_dir>ExportCSV.exe</plugin_dir>
     <plugin_description>Export a network saved in Hydra to a set of CSV files.</plugin_description>
-    <smallicon>icon.png</smallicon>
-    <largeicon>icon.png</largeicon>
     <plugin_epilog>
         Written by Philipp Meier philipp@diemeiers.ch
         (c) Copyright 2013, University College London.
         For more information visit www.hydra-network.com
     </plugin_epilog>
+    <smallicon>icon.png</smallicon>
+    <largeicon>icon.png</largeicon>
     <mandatory_args>
         <arg>
             <name>network</name>
