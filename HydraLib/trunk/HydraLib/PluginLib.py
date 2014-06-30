@@ -28,6 +28,7 @@ from lxml import objectify
 from lxml import etree
 from lxml.etree import XMLParser
 import sys
+from HydraException import HydraPluginError
 
 class FixNamespace(MessagePlugin):
     """Hopefully a temporary fix for an unresolved namespace issue.
@@ -809,3 +810,30 @@ def write_output(text):
     """
     msg = "!!Output %s"%(text,)
     print msg
+
+
+def validate_plugin_xml(plugin_xml_file_path):
+    log.info('Validating plugin xml file (%s).' % plugin_xml_file_path)
+   
+    try:
+        with open(plugin_xml_file_path) as f:
+            plugin_xml = f.read()
+    except:
+        raise HydraPluginError("Couldn't find plugin.xml.")
+   
+    try:
+        plugin_xsd_path = os.path.expanduser(config.get('plugin', 'plugin_xsd_path'))
+        print plugin_xsd_path 
+        xmlschema_doc = etree.parse(plugin_xsd_path)
+        xmlschema = etree.XMLSchema(xmlschema_doc)
+        xml_tree = etree.fromstring(plugin_xml)
+    except:
+        raise HydraPluginError("Couldn't find xsd to validate plugin.xml! Please check config.")
+
+    try:
+        xmlschema.assertValid(xml_tree)
+    except etree.DocumentInvalid as e:
+        raise HydraPluginError('Plugin validation failed: ' + e.message)
+
+    log.info("Plugin XML OK")
+

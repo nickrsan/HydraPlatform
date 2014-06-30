@@ -73,10 +73,13 @@ import pytz
 
 from HydraLib import PluginLib
 from HydraLib.HydraException import HydraPluginError
+from HydraLib.PluginLib import write_progress, write_output, validate_plugin_xml
 
 import numpy
-import os
+import os, sys
 log = logging.getLogger(__name__)
+
+__location__ = os.path.split(sys.argv[0])[0]
 
 class ExportCSV(object):
     """
@@ -87,6 +90,11 @@ class ExportCSV(object):
     timezone = pytz.utc
 
     def __init__(self, url=None, session_id=None):
+
+        self.errors = []
+        self.warnings = []
+        self.files    = []
+
         self.client = PluginLib.connect(url=url, session_id=session_id)
 
         all_attributes = self.client.service.get_attributes()
@@ -103,15 +111,19 @@ class ExportCSV(object):
         if network_id is not None:
             #The network ID can be specified to get the network...
             try:
-                network_id = int(network_id)
-                network = csv.client.service.get_network(network_id)
-            except ValueError:
-                #...or the network name can be specified, but with the project ID.
-                project_id = project_id
-                network_name = network
-                network = csv.client.service.get_network_by_name(project_id, network_name)
+                try:
+                    network_id = int(network_id)
+                    network = csv.client.service.get_network(network_id)
+                except Exception:
+                    #...or the network name can be specified, but with the project ID.
+                    project_id = project_id
+                    network_name = network
+                    network = csv.client.service.get_network_by_name(project_id, network_name)
+            except:
+                raise HydraPluginError("A network %s not found."%network_id)
+
         else:
-            raise Exception("A network ID must be specified!")
+            raise HydraPluginError("A network ID must be specified!")
 
         network_dir = "network_%s"%(network.id)
 
@@ -130,7 +142,7 @@ class ExportCSV(object):
         network.network_dir = network_dir
 
         if network.scenarios is None:
-            raise Exception("Network %s has no scenarios!"%(network))
+            raise HydraPluginError("Network %s has no scenarios!"%(network))
 
         if scenario_id is not None:
             for scenario in network.scenarios.Scenario:
@@ -139,13 +151,13 @@ class ExportCSV(object):
                     csv.export_network(network, scenario)
                     break
             else:
-                raise Exception("No scenario with ID %s found"%(args.scenario))
+                raise HydraPluginError("No scenario with ID %s found"%(args.scenario))
         else:
             log.info("No Scenario specified, exporting them all!")
             for scenario in network.scenarios.Scenario:
                 log.info("Exporting Scenario %s"%(scenario.name))
                 csv.export_network(network, scenario)
-
+        csv.files.append(network_dir)
     def export_network(self, network, scenario):
         log.info("\n************NETWORK****************")
         scenario.target_dir = os.path.join(network.network_dir, scenario.name.replace(' ', '_'))
@@ -598,7 +610,7 @@ class ExportCSV(object):
                 return (str(value), metadata)
 
         return ('', '')
-        #raise Exception("Value not found in scenario %s for resource attr: %s"%(scenario.id, r_attr_id))
+
     def get_metadata_string(self,metadata_list):
         if metadata_list is None or len(metadata_list) == 0:
             return ''
@@ -652,10 +664,25 @@ if __name__ == '__main__':
     parser = commandline_parser()
     args = parser.parse_args()
     csv = ExportCSV(url=args.server_url, session_id=args.session_id)
+    try:      
+        
+        validate_plugin_xml(os.path.join(__location__, 'plugin.xml'))
 
-    if args.timezone is not None:
-        csv.timezone = pytz.timezone(args.timezone)
 
-    csv.export(args.project, args.network, args.scenario)
+        if args.timezone is not None:
+            csv.timezone = pytz.timezone(args.timezone)
+    
+            csv.export(args.project, args.network, args.scenario)
+        message = "Export complete"
+    except Exception, e:
+        message = "An error has occurred"
+        csv.errors = [e.message]
 
-    log.info("Export Complete.")
+    xml_response = PluginLib.create_xml_response('ExportCSV',
+                                                 args.network,
+                                                 [],
+                                                 csv.errors,
+                                                 csv.warnings,
+                                                 message,
+                                                 csv.files)
+    print xml_response

@@ -168,12 +168,12 @@ API docs
 
 import argparse as ap
 import logging
-import os
+import os, sys
 from datetime import datetime
 import pytz
 
 from HydraLib import PluginLib
-from HydraLib.PluginLib import write_progress, write_output
+from HydraLib.PluginLib import write_progress, write_output, validate_plugin_xml
 from HydraLib import config
 
 from HydraLib.HydraException import HydraPluginError
@@ -183,9 +183,11 @@ import numpy
 
 from lxml import etree
 import requests
+
 import json
 log = logging.getLogger(__name__)
 
+__location__ = os.path.split(sys.argv[0])[0]
 
 class ImportCSV(object):
     """
@@ -1426,6 +1428,8 @@ if __name__ == '__main__':
     scen_ids = []
 
     try:
+        
+        validate_plugin_xml(os.path.join(__location__, 'plugin.xml'))
 
         if args.expand_filenames:
             csv.expand_filenames = True
@@ -1490,7 +1494,6 @@ if __name__ == '__main__':
         else:
             log.info('No nodes found. Nothing imported.')
 
-        errors = []
 
     except HydraPluginError as e:
         errors = [e.message]
