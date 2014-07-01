@@ -376,6 +376,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def test_get_templates(self):
         templates = self.client.service.get_templates()
+        for t in templates.Template:
+            for typ in t.types.TemplateType:
+                assert typ.resource_type is not None
         assert len(templates) > 0, "Templates were not retrieved!"
 
 
