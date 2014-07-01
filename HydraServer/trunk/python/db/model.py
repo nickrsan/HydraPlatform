@@ -877,7 +877,7 @@ class ProjectOwner(Base):
     share = Column(String(1),  nullable=False)
     
     user = relationship('User')
-    project = relationship('Project', backref=backref('owners', order_by=user_id, uselist=True))
+    project = relationship('Project', backref=backref('owners', order_by=user_id, uselist=True, cascade="all, delete-orphan"))
 
 class NetworkOwner(Base):
 
@@ -891,7 +891,7 @@ class NetworkOwner(Base):
     share = Column(String(1),  nullable=False)
     
     user = relationship('User')
-    network = relationship('Network', backref=backref('owners', order_by=user_id, uselist=True))
+    network = relationship('Network', backref=backref('owners', order_by=user_id, uselist=True, cascade="all, delete-orphan"))
 
 class DatasetOwner(Base):
 
@@ -905,7 +905,7 @@ class DatasetOwner(Base):
     share = Column(String(1),  nullable=False)
     
     user = relationship('User')
-    dataset = relationship('Dataset', backref=backref('owners', order_by=user_id, uselist=True))
+    dataset = relationship('Dataset', backref=backref('owners', order_by=user_id, uselist=True, cascade="all, delete-orphan"))
 
 class Perm(Base):
 

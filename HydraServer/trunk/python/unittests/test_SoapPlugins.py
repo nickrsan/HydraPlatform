@@ -106,6 +106,7 @@ class PluginsTest(test_SoapServer.SoapServerTest):
             if r.find('<plugin_result>') == 0:
                 xml_start = i
                 updated_result = ''.join(updated_result_text[xml_start:])
+                break
         print updated_result
         updated_tree = etree.XML(updated_result)
         assert updated_tree.find('errors').getchildren() == []

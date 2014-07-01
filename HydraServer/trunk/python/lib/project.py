@@ -125,6 +125,17 @@ def get_projects(uid,**kwargs):
     return projects
 
 
+def set_project_status(project_id, status, **kwargs):
+    """
+        Set the status of a project to 'X'
+    """
+    user_id = kwargs.get('user_id') 
+    #check_perm(user_id, 'delete_project')
+    project = _get_project(project_id)
+    project.check_write_permission(user_id)
+    project.status = status
+    DBSession.flush()
+
 def delete_project(project_id,**kwargs):
     """
         Set the status of a project to 'X'
@@ -133,7 +144,7 @@ def delete_project(project_id,**kwargs):
     #check_perm(user_id, 'delete_project')
     project = _get_project(project_id)
     project.check_write_permission(user_id)
-    project.status = 'X'
+    DBSession.delete(project)
     DBSession.flush()
 
 def get_networks(project_id, include_data='N', **kwargs):

@@ -672,7 +672,7 @@ if __name__ == '__main__':
         if args.timezone is not None:
             csv.timezone = pytz.timezone(args.timezone)
     
-            csv.export(args.project, args.network, args.scenario)
+        csv.export(args.project, args.network, args.scenario)
         message = "Export complete"
     except Exception, e:
         message = "An error has occurred"

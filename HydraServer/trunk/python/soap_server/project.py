@@ -14,7 +14,7 @@
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
 from spyne.decorator import rpc
-from spyne.model.primitive import Integer, String, Unicode 
+from spyne.model.primitive import Integer, Unicode 
 from spyne.model.complex import Array as SpyneArray
 from hydra_complexmodels import Project,\
 ProjectSummary,\
@@ -70,8 +70,16 @@ class ProjectService(HydraService):
         return projects
 
 
-    @rpc(Integer, _returns=String)
+    @rpc(Integer, _returns=Unicode)
     def delete_project(ctx, project_id):
+        """
+            Set the status of a project to 'X'
+        """
+        project_lib.set_project_status(project_id, 'X',  **ctx.in_header.__dict__)
+        return 'OK' 
+
+    @rpc(Integer, _returns=Unicode)
+    def purge_project(ctx, project_id):
         """
             Set the status of a project to 'X'
         """

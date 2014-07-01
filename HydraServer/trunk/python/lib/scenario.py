@@ -608,7 +608,7 @@ def get_attribute_data(attr_ids, node_ids, **kwargs):
         ra_ids.append(ra.resource_attr_id)
 
 
-    resource_scenarios = DBSession.query(ResourceScenario).filter(ResourceScenario.resource_attr_id.in_(ra_ids)).options(joinedload_all('dataset.metadata', 'dataset.timeseriesdata')).order_by(ResourceScenario.scenario_id).all()
+    resource_scenarios = DBSession.query(ResourceScenario).filter(ResourceScenario.resource_attr_id.in_(ra_ids)).options(joinedload_all('dataset.metadata')).options(joinedload_all('dataset.timeseriesdata')).order_by(ResourceScenario.scenario_id).all()
 
 
     for rs in resource_scenarios:

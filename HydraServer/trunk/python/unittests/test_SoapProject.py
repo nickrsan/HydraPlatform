@@ -20,6 +20,7 @@ import test_SoapServer
 import datetime
 import copy
 import logging
+import suds
 log = logging.getLogger(__name__)
 
 class ProjectTest(test_SoapServer.SoapServerTest):
@@ -132,6 +133,17 @@ class ProjectTest(test_SoapServer.SoapServerTest):
         assert proj.status == 'X', \
             'Deleting project did not work correctly.'
 
+    def test_purge(self):
+        net = self.create_network_with_data()
+
+        project_id = net.project_id
+        log.info("Deleting project %s", project_id)
+        res = self.client.service.purge_project(project_id)
+
+        assert res == 'OK'
+        log.info("Trying to get project %s. Should fail.",project_id)
+        self.assertRaises(suds.WebFault, self.client.service.get_project, project_id)
+
     def test_get_projects(self):
         
         project = self.client.factory.create('hyd:Project')
@@ -156,7 +168,6 @@ class ProjectTest(test_SoapServer.SoapServerTest):
         test_net = nets[0][0]
         assert test_net.scenarios is not None
         test_scenario = test_net.scenarios.Scenario[0]
-        assert len(test_scenario.resourcescenarios.ResourceScenario) > 0
         assert len(test_net.nodes.Node) > 0
         assert len(test_net.links.Link) > 0
 
