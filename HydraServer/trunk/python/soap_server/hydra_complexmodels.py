@@ -359,7 +359,6 @@ class EqTimeSeries(HydraComplexModel):
         ('start_time', DateTime),
         ('frequency', Decimal),
         ('arr_data',  AnyDict),
-    ]
 
     def __init__(self, start_time=None, frequency=None, val=None):
         super(EqTimeSeries, self).__init__()
@@ -515,6 +514,7 @@ class TemplateType(HydraComplexModel):
         self.id        = parent.type_id
         self.name      = parent.type_name
         self.alias     = parent.alias
+        self.resource_type = parent.resource_type
         if parent.layout is not None:
             self.layout    = eval(parent.layout)
         else:
