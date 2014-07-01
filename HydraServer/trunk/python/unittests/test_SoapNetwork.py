@@ -24,6 +24,30 @@ log = logging.getLogger(__name__)
 
 class NetworkTest(test_SoapServer.SoapServerTest):
 
+    def test_get_resources_of_type(self):
+        """
+            Test for the retrieval of all the resources of a specified
+            type within a network.
+        """
+
+        net = self.create_network_with_data()
+        link_ids = []
+        type_id = None
+        for l in net.links.Link:
+            if l.types:
+                if type_id is None:
+                    type_id = l.types.TypeSummary[0].id
+                link_ids.append(l.id)
+
+        resources_of_type = self.client.service.get_resources_of_type(net.id, type_id)
+
+        assert len(resources_of_type[0]) == 4 
+
+        for r in resources_of_type[0]:
+            assert r.ref_key == 'LINK'
+            assert r.id in link_ids
+
+
     def test_get_network_with_template(self):
         """
             Test for the potentially likely case of creating a network with two

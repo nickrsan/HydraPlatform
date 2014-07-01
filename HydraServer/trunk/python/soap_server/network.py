@@ -21,7 +21,9 @@ from hydra_complexmodels import Network,\
     Link,\
     Scenario,\
     ResourceGroup,\
-    NetworkExtents
+    NetworkExtents,\
+    ResourceSummary,\
+    Resource
 from lib import network
 from hydra_base import HydraService
 
@@ -318,3 +320,25 @@ class NetworkService(HydraService):
             Check for the presence of orphan nodes in a network.
         """
         return network.validate_network_topology(network_id, **ctx.in_header.__dict__)
+
+    @rpc(Integer, Integer, _returns=SpyneArray(ResourceSummary))
+    def get_resources_of_type(ctx, network_id, type_id):
+        """
+            Return a list of Nodes, Links or ResourceGroups
+            which have the specified type.
+            @returns list of ResourceSummary objects.
+            These objects contain the attributes common to all resources, namely:
+            type, id, name, description, attribues and types.
+        """
+
+        nodes, links, groups = network.get_resources_of_type(network_id, type_id, **ctx.in_header.__dict__)
+        
+        resources = []
+        for n in nodes:
+            resources.append(ResourceSummary(n))
+        for l in links:
+            resources.append(ResourceSummary(l))
+        for g in groups:
+            resources.append(ResourceSummary(g))
+
+        return resources

@@ -1147,3 +1147,16 @@ def validate_network_topology(network_id,**kwargs):
     isolated_nodes = nodes - link_nodes
 
     return isolated_nodes
+
+def get_resources_of_type(network_id, type_id, **kwargs):
+    """
+        Return the Nodes, Links and ResourceGroups which 
+        have the type specified.
+    """
+
+    nodes_with_type = DBSession.query(Node).join(ResourceType).filter(Node.network_id==network_id, ResourceType.type_id==type_id).all()
+    links_with_type = DBSession.query(Link).join(ResourceType).filter(Link.network_id==network_id, ResourceType.type_id==type_id).all()
+    groups_with_type = DBSession.query(ResourceGroup).join(ResourceType).filter(ResourceGroup.network_id==network_id, ResourceType.type_id==type_id).all()
+
+    return nodes_with_type, links_with_type, groups_with_type
+

@@ -574,6 +574,40 @@ class TypeSummary(HydraComplexModel):
 class Resource(HydraComplexModel):
     pass
 
+class ResourceSummary(HydraComplexModel):
+    _type_info = [
+        ('ref_key', Unicode(default=None)),
+        ('id',  Integer(default=None)),
+        ('name',        Unicode(default=None)),
+        ('description', Unicode(min_occurs=1, default="")),
+        ('attributes',  SpyneArray(ResourceAttr, default=[])),
+        ('types',       SpyneArray(TypeSummary, default=[])),
+    ]
+
+    def __init__(self, parent=None):
+        super(ResourceSummary, self).__init__()
+
+        if parent is None:
+            parent
+        if hasattr(parent, 'node_id'):
+            self.ref_key = 'NODE'
+            self.id   = parent.node_id
+            self.name = parent.node_name
+            self.description = parent.node_description
+        elif hasattr(parent, 'link_id'):
+            self.ref_key = 'LINK'
+            self.id   = parent.link_id
+            self.name = parent.link_name
+            self.description = parent.link_description
+        elif hasattr(parent, 'group_id'):
+            self.ref_key = 'GROUP'
+            self.id   = parent.group_id
+            self.name = parent.group_name
+            self.description = parent.group_description
+
+        self.attributes = [ResourceAttr(ra) for ra in parent.attributes]
+        self.types = [TypeSummary(t.templatetype) for t in parent.types]
+
 class Node(Resource):
     _type_info = [
         ('id',          Integer(default=None)),
