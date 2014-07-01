@@ -359,7 +359,7 @@ class EqTimeSeries(HydraComplexModel):
         ('start_time', DateTime),
         ('frequency', Decimal),
         ('arr_data',  AnyDict),
-
+    ]
     def __init__(self, start_time=None, frequency=None, val=None):
         super(EqTimeSeries, self).__init__()
         if  val is None:
