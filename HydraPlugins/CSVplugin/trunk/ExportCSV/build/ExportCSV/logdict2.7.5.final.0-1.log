@@ -772,7 +772,7 @@ pytz.io: None -> None
 pytz.pprint: None -> None
 pytz.cStringIO: None -> None
 HydraLib.hydra_logging: None -> <PyModule 'HydraLib.hydra_logging' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\hydra_logging.pyc imports=[('logging.config', 0, 0, -1), ('ctypes', 0, 0, -1), ('re', 1, 1, -1), ('os', 0, 0, -1), ('logging', 0, 0, -1), ('config', 0, 0, -1)] binaries=[] datas=[]>
-HydraLib.config: None -> <PyModule 'HydraLib.config' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\config.pyc imports=[('os', 0, 0, -1), ('glob', 0, 0, -1), ('ConfigParser', 0, 0, -1), ('winpaths', 1, 1, -1)] binaries=[] datas=[]>
+HydraLib.config: None -> <PyModule 'HydraLib.config' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\config.pyc imports=[('os', 0, 0, -1), ('glob', 0, 0, -1), ('ConfigParser', 0, 0, -1), ('sys', 0, 0, -1), ('winpaths', 1, 1, -1)] binaries=[] datas=[]>
 HydraLib.logging: None -> None
 logging.config: None -> <PyModule 'logging.config' C:\Python27\lib\logging\config.pyc imports=[('tempfile', 1, 0, -1), ('re', 0, 0, -1), ('json', 1, 1, -1), ('sys', 0, 0, -1), ('types', 0, 0, -1), ('os', 0, 0, -1), ('threading', 0, 0, -1), ('struct', 0, 0, -1), ('thread', 0, 0, -1), ('SocketServer.ThreadingTCPServer', 0, 0, -1), ('logging', 0, 0, -1), ('cStringIO', 0, 0, -1), ('ConfigParser', 1, 0, -1), ('socket', 0, 0, -1), ('traceback', 0, 0, -1), ('SocketServer.StreamRequestHandler', 0, 0, -1), ('select', 1, 0, -1), ('SocketServer', 0, 0, -1), ('logging.handlers', 0, 0, -1)] binaries=[] datas=[]>
 HydraLib.ctypes: None -> None
@@ -830,6 +830,7 @@ ctypes._endian: None -> <PyModule 'ctypes._endian' C:\Python27\lib\ctypes\_endia
 ctypes.sys: None -> None
 HydraLib.glob: None -> None
 HydraLib.ConfigParser: None -> None
+HydraLib.sys: None -> None
 HydraLib.winpaths: None -> None
 winpaths: None -> <PyModule 'winpaths' C:\Python27\lib\site-packages\winpaths.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.wintypes', 0, 0, -1), ('ctypes.windll', 0, 0, -1)] binaries=[('shell32.dll', 'C:\\Windows\\system32\\shell32.dll', 'BINARY')] datas=[]>
 ctypes.wintypes: None -> <PyModule 'ctypes.wintypes' C:\Python27\lib\ctypes\wintypes.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.*', 0, 0, -1), ('ctypes._SimpleCData', 0, 0, -1)] binaries=[] datas=[]>
@@ -840,7 +841,6 @@ ctypes._SimpleCData: None -> None
 HydraLib.suds: None -> None
 suds: None -> <PkgModule 'suds' C:\Python27\lib\site-packages\suds\__init__.pyc imports=[('client', 0, 0, -1), ('os', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
 suds.client: None -> <PyModule 'suds.client' C:\Python27\lib\site-packages\suds\client.pyc imports=[('suds.builder.Builder', 0, 0, -1), ('suds.cache', 0, 0, -1), ('suds.metrics', 0, 0, -1), ('suds.servicedefinition.ServiceDefinition', 0, 0, -1), ('suds.options.Options', 0, 0, -1), ('suds.transport.Request', 0, 0, -1), ('suds.plugin.PluginContainer', 0, 0, -1), ('suds.reader.DefinitionsReader', 0, 0, -1), ('suds.wsdl', 0, 0, -1), ('suds.properties', 0, 0, -1), ('suds.transport.https.HttpAuthenticated', 0, 0, -1), ('suds.*', 0, 0, -1), ('suds.sax.parser', 0, 0, -1), ('suds.reader', 0, 0, -1), ('urlparse', 0, 0, -1), ('logging', 0, 0, -1), ('copy.deepcopy', 0, 0, -1), ('suds.sax.document', 0, 0, -1), ('suds.transport', 0, 0, -1), ('sudsobject.Object', 0, 0, -1), ('suds.sax.parser.Parser', 0, 0, -1), ('suds.builder', 0, 0, -1), ('suds.wsdl.Definitions', 0, 0, -1), ('cookielib', 0, 0, -1), ('suds.transport.TransportError', 0, 0, -1), ('copy', 0, 0, -1), ('suds.plugin', 0, 0, -1), ('suds.transport.https', 0, 0, -1), ('urlparse.urlparse', 0, 0, -1), ('logging.getLogger', 0, 0, -1), ('suds', 0, 0, -1), ('sudsobject', 0, 0, -1), ('suds.sudsobject', 0, 0, -1), ('sudsobject.Factory', 0, 0, -1), ('suds.sax.document.Document', 0, 0, -1), ('suds.properties.Unskin', 0, 0, -1), ('suds.options', 0, 0, -1), ('suds.servicedefinition', 0, 0, -1), ('suds.resolver.PathResolver', 0, 0, -1), ('suds.cache.ObjectCache', 0, 0, -1), ('cookielib.CookieJar', 0, 0, -1), ('suds.resolver', 0, 0, -1)] binaries=[] datas=[]>
-HydraLib.sys: None -> None
 HydraLib.lxml: None -> None
 lxml: None -> <PkgModule 'lxml' C:\Python27\lib\site-packages\lxml\__init__.pyc imports=[('os', 1, 0, -1)] binaries=[] datas=[]>
 lxml.objectify: None -> <ExtensionModule 'lxml.objectify' C:\Python27\lib\site-packages\lxml\objectify.pyd imports=[('lxml.etree', 0, 0, -1)] binaries=[] datas=[]>

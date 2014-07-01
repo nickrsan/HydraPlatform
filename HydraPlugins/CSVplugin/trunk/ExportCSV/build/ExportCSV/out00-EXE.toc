@@ -1,4 +1,4 @@
-('C:\\Users\\steve\\Documents\\svn\\HYDRA\\HydraPlugins\\CSVplugin\\trunk\\ExportCSV\\dist\\ExportCSV.exe',
+('C:\\Users\\steve\\Documents\\svn\\HYDRA\\HydraPlugins\\CSVplugin\\trunk\\ExportCSV\\build\\ExportCSV\\ExportCSV.exe',
  True,
  False,
  None,
@@ -6,4 +6,4 @@
  [],
  None,
  True,
- 1404140053L)
+ 1404228422L)
