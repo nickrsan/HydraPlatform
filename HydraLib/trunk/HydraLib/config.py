@@ -16,6 +16,7 @@
 import os
 import glob
 import ConfigParser
+import sys
 
 global CONFIG
 CONFIG = None
@@ -42,7 +43,7 @@ def load_config():
     #      for Windows machines.
     modulepath = os.path.dirname(os.path.abspath(__file__))
 
-    localfiles = glob.glob('*.ini')
+    localfiles = glob.glob(os.path.expanduser(os.path.split(sys.argv[0])[0]) + '/*.ini')
     userfiles = glob.glob(os.path.expanduser('~') + '/.config/hydra/*.ini')
     sysfiles = glob.glob('/etc/hydra/*.ini')
     repofiles = glob.glob(modulepath + '/../../../config/*.ini')
