@@ -13,7 +13,6 @@ exe = EXE(pyz,
           strip=None,
           upx=True,
           console=True )
-#a.binaries = [x for x in a.binaries if x[0].find('linalg') < 0]
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
