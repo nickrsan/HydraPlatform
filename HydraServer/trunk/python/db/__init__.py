@@ -26,7 +26,9 @@ log = logging.getLogger(__name__)
 from sqlalchemy.ext.declarative import declarative_base
 DeclarativeBase = declarative_base()
 
-engine = create_engine(config.get('mysqld', 'url')) 
+db_url = config.get('mysqld', 'url')
+log.info("Connecting to database: %s", db_url)
+engine = create_engine(db_url) 
 from sqlalchemy.orm import sessionmaker
 session = sessionmaker()
 
