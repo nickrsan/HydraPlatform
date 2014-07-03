@@ -514,6 +514,7 @@ class SoapServerTest(unittest.TestCase):
         start = datetime.datetime.now()
         log.info("Creating network...")
         response_network_summary = self.client.service.add_network(network)
+#        logging.warn(self.client.last_sent().str())
         log.info("Network Creation took: %s"%(datetime.datetime.now()-start))
         if ret_full_net is True:
             log.info("Fetching new network...:")
@@ -646,17 +647,11 @@ class SoapServerTest(unittest.TestCase):
         #with a resource attribute.
         #[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         arr= {'arr_data' :
-            {'array':[
                 {'array':[
                         {'item':[1.0, 2.0, 3.0]},
-                ]},
-                {'array':[
                         {'item':[4.0, 5.0, 6.0]},
-                ]},
-                {'array' : [
                         {'item':[7.0, 8.0, 9.0]},
-                ]},
-            ]} 
+                ]}
         }
         
         metadata_array = self.client.factory.create("hyd:MetadataArray")

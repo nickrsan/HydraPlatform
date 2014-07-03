@@ -19,6 +19,7 @@
 import test_SoapServer
 import datetime
 import logging
+from HydraLib.PluginLib import parse_suds_array, parse_array
 log = logging.getLogger(__name__)
 class DataGroupTest(test_SoapServer.SoapServerTest):
 
@@ -394,6 +395,61 @@ class RetrievalTest(test_SoapServer.SoapServerTest):
         ra_ids = [r.id for r in res_attrs]
         for rs in res_scenarios:
             assert rs.resource_attr_id in ra_ids
+
+
+class FormatTest(test_SoapServer.SoapServerTest):
+    def test_format_array_data(self):
+        net = self.create_network_with_data(num_nodes=2)
+        
+        scenario = net.scenarios.Scenario[0]
+        uneven_array = self.create_uneven_array()
+        rs_to_update = scenario.resourcescenarios.ResourceScenario[0]
+        rs_to_update.value = uneven_array
+        
+        self.client.service.update_network(net)
+        #logging.info(self.client.last_sent().str())
+        updated_net = self.client.service.get_network(net.id)
+
+        updated_scenario = updated_net.scenarios.Scenario[0]
+        rs_to_update = updated_scenario.resourcescenarios.ResourceScenario[0]
+
+        old_arr = parse_array(scenario.resourcescenarios.ResourceScenario[0]['value']['value']['arr_data'])
+        new_arr = parse_suds_array(updated_scenario.resourcescenarios.ResourceScenario[0].value.value.arr_data)
+        logging.info("%s == %s ?", old_arr, new_arr) 
+        assert old_arr == new_arr
+        
+    def create_uneven_array(self):
+        #A scenario attribute is a piece of data associated
+        #with a resource attribute.
+        #[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        arr= {'arr_data' :
+                {'array': [
+                        {'item':[1.0, 2.0, 3.0]},
+                        {'item':[4.0, 5.0, 6.0]},
+                        {'item':[7.0, 8.0]},
+                ]} 
+        }
+
+        
+        metadata_array = self.client.factory.create("hyd:MetadataArray")
+        metadata = self.client.factory.create("hyd:Metadata")
+        metadata.name = 'created_for'
+        metadata.value = 'Test user'
+        metadata_array.Metadata.append(metadata)
+
+        dataset = dict(
+            id=None,
+            type = 'array',
+            name = 'my array',
+            unit = 'bar',
+            dimension = 'Pressure',
+            locked = 'N',
+            value = arr,
+            metadata = metadata_array, 
+        )
+
+        return dataset 
+
 
 if __name__ == '__main__':
     test_SoapServer.run()

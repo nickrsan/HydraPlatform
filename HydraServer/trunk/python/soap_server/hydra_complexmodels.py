@@ -43,20 +43,36 @@ def get_timestamp(ordinal):
     return timestamp
 
 def create_dict(arr_data):
-    arr_data = array(arr_data)
+    if arr_data is None:
+        return None 
+    
+    numpy_arr = array(arr_data)
 
-    arr = {'array': []}
-    if arr_data.ndim == 0:
-        return {'array': []}
-    elif arr_data.ndim == 1:
-        return {'array': [{'item': list(arr_data)}]}
+    array_dict = {'array': []}
+    if numpy_arr.ndim == 1:
+        for n in numpy_arr:
+            if type(n) == list:
+                sub_numpy_arr = array(n)
+                if sub_numpy_arr.ndim == 1:
+                    array_dict['array'].append({'item': n})
+                else:
+                    array_dict['array'].append(create_dict(n))
+            else:
+                array_dict = {'array': [{'item': list(arr_data)}]}
+                break
     else:
-        for a in arr_data:
-            val = create_dict(a)
-            arr['array'].append(val)
+        for a in numpy_arr:
+            if a.ndim == 1:
+                for n in a:
+                    if type(n) == list:
+                        array_dict['array'].append(create_dict(n))
+                    else:
+                        array_dict['array'].append({'item': list(a)})
+                        break
+            else:
+                array_dict['array'].append(create_dict(a))
 
-        return arr
-
+    return array_dict
 
 class LoginResponse(ComplexModel):
     __namespace__ = 'soap_server.hydra_complexmodels'
@@ -243,7 +259,6 @@ class Dataset(HydraComplexModel):
             arr_data = data['arr_data']
             if is_soap_req:
                 arr_data = arr_data[0]
-            logging.info("Arr data: %s", arr_data)
             if type(arr_data) == dict:
                 val = self.parse_array(arr_data)
             else:
@@ -258,19 +273,30 @@ class Dataset(HydraComplexModel):
             a single value, a string or sub lists.
         """
         ret_arr = []
-        sub_arr = arr.get('array', None)
-        for val in sub_arr:
-            sub_arr = val.get('array', None)
-            if sub_arr is not None:
-                ret_arr.append(self.parse_array(val))
-                continue
+        arr_data = arr.get('array', None)
+        if arr_data is not None:
+            if len(arr_data) == 1:
+                if arr_data[0].get('item'):
+                    for v in arr_data[0].get('item'):
+                        try:
+                            ret_arr.append(float(v))
+                        except:
+                            ret_arr.append(v)
+                else:
+                    ret_arr = [self.parse_array(arr_data[0])]
+            else:
+                for sub_val in arr_data:
+                    if sub_val.get('array'):
+                        ret_arr.append(self.parse_array(sub_val))
+                    elif sub_val.get('item'):
+                        item_arr = []
+                        for v in sub_val.get('item'):
+                            try:
+                                item_arr.append(float(v))
+                            except:
+                                item_arr.append(v)
+                        ret_arr.append(item_arr)
 
-            actual_vals = val.get('item')
-            for v in actual_vals:
-                try:
-                    ret_arr.append(float(v))
-                except:
-                    ret_arr.append(v)
         return ret_arr
 
     def get_metadata_as_dict(self):
