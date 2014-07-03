@@ -546,7 +546,7 @@ __main__: <PyScript '__main__' C:\Python27\lib\site-packages\pyinstaller-2.1.1de
 HydraLib: None -> <PkgModule 'HydraLib' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\__init__.pyc imports=[('hydra_logging', 0, 0, -1), ('config', 0, 0, -1)] binaries=[] datas=[]>
 HydraLib.PluginLib: None -> <PyModule 'HydraLib.PluginLib' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\PluginLib.pyc imports=[('suds.client', 0, 0, -1), ('sys', 0, 0, -1), ('lxml.objectify', 0, 0, -1), ('config', 0, 0, -1), ('HydraException.HydraPluginError', 0, 0, -1), ('lxml.etree', 0, 0, -1), ('suds.client.Client', 0, 0, -1), ('HydraException', 0, 0, -1), ('suds.plugin', 0, 0, -1), ('lxml', 0, 0, -1), ('logging', 0, 0, -1), ('datetime', 0, 0, -1), ('os', 0, 0, -1), ('pudb', 1, 0, -1), ('suds.plugin.MessagePlugin', 0, 0, -1), ('lxml.etree.XMLParser', 0, 0, -1), ('datetime.datetime', 0, 0, -1)] binaries=[] datas=[]>
 argparse: None -> <PyModule 'argparse' C:\Python27\lib\argparse.pyc imports=[('collections', 0, 0, -1), ('re', 0, 0, -1), ('sys', 0, 0, -1), ('copy', 0, 0, -1), ('os', 0, 0, -1), ('warnings', 1, 1, -1), ('gettext.gettext', 0, 0, -1), ('textwrap', 0, 0, -1), ('gettext', 0, 0, -1), ('warnings', 1, 0, -1)] binaries=[] datas=[]>
-HydraLib.config: None -> <PyModule 'HydraLib.config' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\config.pyc imports=[('os', 0, 0, -1), ('glob', 0, 0, -1), ('ConfigParser', 0, 0, -1), ('sys', 0, 0, -1), ('winpaths', 1, 1, -1)] binaries=[] datas=[]>
+HydraLib.config: None -> <PyModule 'HydraLib.config' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\config.pyc imports=[('os', 0, 0, -1), ('winpaths', 1, 0, -1), ('glob', 0, 0, -1), ('ConfigParser', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
 suds: None -> <PkgModule 'suds' C:\Python27\lib\site-packages\suds\__init__.pyc imports=[('client', 0, 0, -1), ('os', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
 suds.WebFault: None -> None
   DEL suds.WebFault
@@ -672,11 +672,11 @@ ctypes.struct: None -> None
 ctypes.ctypes: None -> None
 ctypes._endian: None -> <PyModule 'ctypes._endian' C:\Python27\lib\ctypes\_endian.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.*', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
 ctypes.sys: None -> None
+HydraLib.winpaths: None -> None
+winpaths: None -> <PyModule 'winpaths' C:\Python27\lib\site-packages\winpaths.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.wintypes', 0, 0, -1), ('ctypes.windll', 0, 0, -1)] binaries=[('shell32.dll', 'C:\\Windows\\system32\\shell32.dll', 'BINARY')] datas=[]>
 HydraLib.glob: None -> None
 HydraLib.ConfigParser: None -> None
 HydraLib.sys: None -> None
-HydraLib.winpaths: None -> None
-winpaths: None -> <PyModule 'winpaths' C:\Python27\lib\site-packages\winpaths.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.wintypes', 0, 0, -1), ('ctypes.windll', 0, 0, -1)] binaries=[('shell32.dll', 'C:\\Windows\\system32\\shell32.dll', 'BINARY')] datas=[]>
 ctypes.wintypes: None -> <PyModule 'ctypes.wintypes' C:\Python27\lib\ctypes\wintypes.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.*', 0, 0, -1), ('ctypes._SimpleCData', 0, 0, -1)] binaries=[] datas=[]>
 ctypes.windll: None -> None
   DEL ctypes.windll
