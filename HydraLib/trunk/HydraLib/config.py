@@ -98,7 +98,6 @@ def set_windows_env_variables(config):
     config.set('DEFAULT', 'win_program_files_common', winpaths.get_program_files_common())
     config.set('DEFAULT', 'win_system', winpaths.get_system())
     config.set('DEFAULT', 'win_windows', winpaths.get_windows())
-    config.set('DEFAULT', 'win_favourites', winpaths.get_favourites())
     config.set('DEFAULT', 'win_startup', winpaths.get_startup())
     config.set('DEFAULT', 'win_recent', winpaths.get_recent())
 
