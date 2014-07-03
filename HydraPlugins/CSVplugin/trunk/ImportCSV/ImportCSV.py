@@ -255,7 +255,7 @@ class ImportCSV(object):
         if file == None:
             log.warn("No file specified")
             return None
-        self.basepath = os.path.dirname(file)
+        self.basepath = os.path.dirname(os.path.realpath(file))
         with open(file, mode='r') as csv_file:
             file_data = csv_file.read().split('\n')
             if len(file_data) == 0:
@@ -1124,7 +1124,7 @@ class ImportCSV(object):
                         #The name of the resource is how to identify the data for it.
                         #Once this the correct line(s) has been identified, remove the
                         #name from the start of the line
-                        if len(line) > 0 and line.strip().startswith(resource_name):
+                        if len(line) > 0 and line.strip().startswith("%s,"%resource_name):
                             line = line[line.find(',')+1:]
                             filedata = filedata + line + '\n'
                         else:
