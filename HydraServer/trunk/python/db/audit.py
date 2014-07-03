@@ -89,6 +89,7 @@ def create_sqlite_backup_db(audit_tables):
     metadata.create_all(db)
 
 def run():
+    db = create_engine(engine_name, echo=True)
     db = connect()
     metadata = MetaData(db)
     insp = reflection.Inspector.from_engine(db)
@@ -113,7 +114,7 @@ def run():
 def create_triggers(db, tables):
 
 
-    db = create_engine("mysql+mysqlconnector://root:@localhost/hydradb")
+    db = create_engine(engine_name)
     db.echo = True
     db.connect()
     metadata = MetaData(db)
@@ -166,7 +167,7 @@ def create_triggers(db, tables):
                                 d.*,
                                 '%(action)s',
                                 NULL,
-                                NOW()
+                                date('now')
                             FROM
                                 %(table_name)s
                                 AS d
