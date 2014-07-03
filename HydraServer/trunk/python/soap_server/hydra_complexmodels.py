@@ -632,7 +632,7 @@ class Node(Resource):
         self.name = parent.node_name
         self.x = parent.node_x
         self.y = parent.node_y
-        self.descriptiron = parent.node_description
+        self.description = parent.node_description
         if parent.node_layout is not None:
             self.layout    = eval(parent.node_layout)
         else:
@@ -668,7 +668,7 @@ class Link(Resource):
         self.name = parent.link_name
         self.node_1_id = parent.node_1_id
         self.node_2_id = parent.node_2_id
-        self.descriptiron = parent.link_description
+        self.description = parent.link_description
         if parent.link_layout is not None:
             self.layout    = eval(parent.link_layout)
         else:
