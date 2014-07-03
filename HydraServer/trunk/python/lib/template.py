@@ -43,7 +43,7 @@ def get_types_by_attr(resource, template_id=None):
         attr_ids.append(attr.attr_id)
     all_resource_attr_ids = set(attr_ids)
 
-    all_types = DBSession.query(TemplateType).options(joinedload_all('typeattrs'))
+    all_types = DBSession.query(TemplateType).options(joinedload_all('typeattrs')).filter(TemplateType.resource_type==resource.ref_key)
     if template_id is not None:
         all_types = all_types.filter(TemplateType.template_id==template_id)
 
@@ -253,6 +253,14 @@ def apply_template_to_network(template_id, network_id, **kwargs):
     net_i = DBSession.query(Network).filter(Network.network_id==network_id).one()
     #There should only ever be one matching type, but if there are more,
     #all we can do is pick the first one.
+    try: 
+        network_type_id = DBSession.query(TemplateType.type_id).filter(TemplateType.template_id==template_id,
+                                                                       TemplateType.resource_type=='NETWORK').one()
+        assign_type_to_resource(network_type_id.type_id, 'NETWORK', network_id,**kwargs)
+    except NoResultFound:
+        log.info("No network type to set.")
+        pass
+
     for node_i in net_i.nodes:
         templates = get_types_by_attr(node_i, template_id)
         if len(templates) > 0:
@@ -265,7 +273,7 @@ def apply_template_to_network(template_id, network_id, **kwargs):
     for group_i in net_i.resourcegroups:
         templates = get_types_by_attr(group_i, template_id)
         if len(templates) > 0:
-            assign_type_to_resource(templates[0].type_id, 'GROUP', group_i.resourcegroup_id,**kwargs)
+            assign_type_to_resource(templates[0].type_id, 'GROUP', group_i.group_id,**kwargs)
 
 def get_matching_resource_types(resource_type, resource_id,**kwargs):
     """
@@ -350,7 +358,7 @@ def assign_type_to_resource(type_id, resource_type, resource_id,**kwargs):
     elif resource_type == 'LINK':
         resource = DBSession.query(Link).filter(Link.link_id==resource_id).one()
     elif resource_type == 'GROUP':
-        resource = DBSession.query(ResourceGroup).filter(ResourceGroup.resourcegroup_id==resource_id).one()
+        resource = DBSession.query(ResourceGroup).filter(ResourceGroup.group_id==resource_id).one()
     res_attrs, res_type = set_resource_type(resource, type_id, **kwargs)
 
     type_i = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).one()

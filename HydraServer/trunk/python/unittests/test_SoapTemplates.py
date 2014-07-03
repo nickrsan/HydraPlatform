@@ -50,6 +50,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         link_attr_2 = self.create_attr("link_attr_2", dimension='Speed')
         node_attr_1 = self.create_attr("node_attr_1", dimension='Volume')
         node_attr_2 = self.create_attr("node_attr_2", dimension='Speed')
+        net_attr_1 = self.create_attr("net_attr_2", dimension='Speed')
 
         template = self.client.factory.create('hyd:Template')
         template.name = 'Test template @ %s'%datetime.datetime.now()
@@ -103,6 +104,17 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         types.TemplateType.append(type2)
 
+        type3 = self.client.factory.create('hyd:TemplateType')
+        type3.name = "Network Type"
+        type3.alias = "Network Type alias"
+        type3.resource_type = 'NETWORK'
+        tattrs = self.client.factory.create('hyd:TypeAttrArray')
+
+        tattr_3 = self.client.factory.create('hyd:TypeAttr')
+        tattr_3.attr_id = net_attr_1.id
+        tattrs.TypeAttr.append(tattr_1)
+        types.TemplateType.append(type3)
+      #  type3.typeattrs = tattrs
 
         template.types = types
 
@@ -563,7 +575,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
                                                              network.id)
 
         network = self.client.service.get_network(network.id)
-        
+       
+        assert len(network.types.TypeSummary) == 1
+        assert network.types.TypeSummary[0].name == 'Network Type'
         for l in network.links.Link:
             if l.id in empty_links:
                 assert l.types is not None
