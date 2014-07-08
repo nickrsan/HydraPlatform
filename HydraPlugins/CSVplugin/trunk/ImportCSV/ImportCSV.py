@@ -1221,7 +1221,7 @@ class ImportCSV(object):
 
                     ts_arr = array(ts_val_1d)
                     ts_arr = reshape(ts_arr, array_shape)
-                    ts_value = PluginLib.create_dict(ts_arr)
+                    ts_value = PluginLib.create_dict(ts_arr.tolist())
 
                 #Check for whether timeseries is equally spaced.
                 if is_eq_spaced:
@@ -1272,7 +1272,7 @@ class ImportCSV(object):
         arr = reshape(arr, array_shape)
 
         arr = dict(
-            arr_data = PluginLib.create_dict(arr)
+            arr_data = PluginLib.create_dict(arr.tolist())
         )
 
         return arr

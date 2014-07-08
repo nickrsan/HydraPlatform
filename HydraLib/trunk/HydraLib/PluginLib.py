@@ -736,7 +736,6 @@ def parse_suds_array(arr):
     """
     ret_arr = []
     if hasattr(arr, 'array'):
-        ret_arr = []
         sub_arr = arr.array
         if type(sub_arr) is list:
             for s in sub_arr:
@@ -759,41 +758,56 @@ def parse_array(arr):
     """
         Take a dictionary and turn it into an array as follows:
         {'array': ['item' : [1, 2, 3]}]} -> [1, 2, 3]
-        {'array' :
-        {'array': [ 'item' : [1, 2, 3]} ]}
-        {'array': [ 'item' : [1, 2, 3]} ]} ]} -> [[1, 2, 3], [4, 5, 6]]
+        {'array' :[
+            {'array': [ 'item' : [1, 2, 3]} ]}
+            {'array': [ 'item' : [1, 2, 3]} ]} 
+        ]} -> [[1, 2, 3], [4, 5, 6]]
     """
+    ret_arr = []
     if arr.get('array'):
-        ret_arr = []
         sub_arr = arr['array']
-        if type(sub_arr) is list:
+        if len(sub_arr) > 1:
             for s in sub_arr:
                 ret_arr.append(parse_array(s))
         else:
-            return parse_array(sub_arr)
+            return parse_array(sub_arr[0])
     elif arr.get('item'):
-        return list(arr['item'])
+        for x in arr['item']:
+            try:
+                val = float(x)
+            except:
+                val = str(x)
+            ret_arr.append(val)
+        return ret_arr
     else:
         raise ValueError("Something has gone wrong parsing an array.")
     return ret_arr
 
-def create_dict(arr_data):
-    """
-        Take a numpy array and turn it into the correct xml structure
-        of array tags and item tags.
-    """
-    arr = {'array': []}
-    if arr_data.ndim == 1:
-        arr['array'].append({'item': list(arr_data)})
+def create_dict(arr):
+    return {'array': [create_sub_dict(arr)]}
 
-    if arr_data.ndim > 1:
-        for a in arr_data:
-            if a.ndim == 1:
-                arr['array'].append(create_dict(a))
-            else:
-                val = create_dict(a)
-                arr['array'].append(val)
-    return arr
+def create_sub_dict(arr):
+    if arr is None:
+        return None 
+
+    #Either the array contains sub-arrays or values
+    vals = None
+    sub_arrays = []
+    for sub_val in arr:
+        if type(sub_val) is list:
+            sub_dict = create_sub_dict(sub_val)
+            sub_arrays.append(sub_dict)
+        else:
+            #if any of the elements of the array is NOT a list,
+            #then there are no sub arrays
+            vals = arr 
+            break
+
+    if vals:
+        return {'item': vals}
+
+    if sub_arrays:
+        return {'array': sub_arrays}
 
 def write_progress(x, y):
     """

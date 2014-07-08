@@ -19,7 +19,7 @@
 import test_SoapServer
 import datetime
 import logging
-from HydraLib.PluginLib import parse_suds_array, parse_array
+from HydraLib.PluginLib import parse_suds_array, parse_array, create_dict
 log = logging.getLogger(__name__)
 class DataGroupTest(test_SoapServer.SoapServerTest):
 
@@ -412,8 +412,10 @@ class FormatTest(test_SoapServer.SoapServerTest):
 
         updated_scenario = updated_net.scenarios.Scenario[0]
         rs_to_update = updated_scenario.resourcescenarios.ResourceScenario[0]
-
+        
+        logging.warn(scenario.resourcescenarios.ResourceScenario[0]['value']['value']['arr_data'])
         old_arr = parse_array(scenario.resourcescenarios.ResourceScenario[0]['value']['value']['arr_data'])
+        logging.warn(updated_scenario.resourcescenarios.ResourceScenario[0].value.value.arr_data)
         new_arr = parse_suds_array(updated_scenario.resourcescenarios.ResourceScenario[0].value.value.arr_data)
         logging.info("%s == %s ?", old_arr, new_arr) 
         assert old_arr == new_arr
@@ -423,13 +425,25 @@ class FormatTest(test_SoapServer.SoapServerTest):
         #with a resource attribute.
         #[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         arr= {'arr_data' :
-                {'array': [
+              {'array': [
+                    {'array':[
+                        {'array':[
                         {'item':[1.0, 2.0, 3.0]},
                         {'item':[4.0, 5.0, 6.0]},
                         {'item':[7.0, 8.0]},
-                ]} 
+                        ]}, 
+                    {'array' : [
+                        {'item':[1.0, 2.0, 3.0]},
+                        {'item':[4.0, 5.0, 6.0]},
+                        {'item':[7.0, 8.0]},
+                        ]}
+                    ]}
+              ]}
         }
 
+        same_arr = create_dict([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0]],[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0]]])
+        
+        assert arr['arr_data'] == same_arr 
         
         metadata_array = self.client.factory.create("hyd:MetadataArray")
         metadata = self.client.factory.create("hyd:Metadata")

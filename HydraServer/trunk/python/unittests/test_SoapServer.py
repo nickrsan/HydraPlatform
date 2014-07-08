@@ -22,6 +22,7 @@ import os
 
 from HydraLib import config
 from HydraLib.util import get_datetime
+from HydraLib.PluginLib import create_dict
 
 from suds.client import Client
 from suds.plugin import MessagePlugin
@@ -514,7 +515,7 @@ class SoapServerTest(unittest.TestCase):
         start = datetime.datetime.now()
         log.info("Creating network...")
         response_network_summary = self.client.service.add_network(network)
-#        logging.warn(self.client.last_sent().str())
+        #logging.warn(self.client.last_sent().str())
         log.info("Network Creation took: %s"%(datetime.datetime.now()-start))
         if ret_full_net is True:
             log.info("Fetching new network...:")
@@ -582,30 +583,11 @@ class SoapServerTest(unittest.TestCase):
     def create_timeseries(self, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-        #[[[1, 2, 3], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]]]
+        #[[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]]]
 
-        test_val_1 = {'array':[
-                        {'array':[
-                            {'array':[
-                                {'item':[1.0, 2.0, "hello"]},
-                            ]},
-                            {'array' : [
-                                {'item':[5.0, 4.0, 6.0]},
-                            ]},
-                        ]},
-                        {'array':[
-                            {'array' : [
-                                {'item':[10.0, 20.0, 30.0]},
-                            ]},
-                            {'array' : [
-                                {'item':[40.0, 50.0, 60.0]},
-                            ]},
-                        ]}
-                    ]}
+        test_val_1 = create_dict([[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]]]) 
 
-        test_val_2 = {'array' : [
-                        {'item':[1.0, 2.0, 3.0]},
-                    ]}
+        test_val_2 = create_dict([1.0, 2.0, 3.0])
 
         metadata_array = self.client.factory.create("hyd:MetadataArray")
         metadata = self.client.factory.create("hyd:Metadata")
@@ -646,13 +628,9 @@ class SoapServerTest(unittest.TestCase):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
         #[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        arr= {'arr_data' :
-                {'array':[
-                        {'item':[1.0, 2.0, 3.0]},
-                        {'item':[4.0, 5.0, 6.0]},
-                        {'item':[7.0, 8.0, 9.0]},
-                ]}
-        }
+
+        arr_data = create_dict([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
+        arr= {'arr_data' : arr_data}
         
         metadata_array = self.client.factory.create("hyd:MetadataArray")
         metadata = self.client.factory.create("hyd:Metadata")
@@ -687,10 +665,7 @@ class SoapServerTest(unittest.TestCase):
         ts_val = {
             'start_time' : datetime.datetime.now(),
             'frequency'  : 3600.0,
-            'arr_data': 
-                    {'array':[
-                            {'item':[9, 210, 11]},
-                    ]},
+            'arr_data': create_dict([9, 210, 11]),
         }
 
         dataset = dict(
@@ -711,82 +686,6 @@ class SoapServerTest(unittest.TestCase):
 
 
         return scenario_attr
-
-
-
-
-    def create_constraint(self, net, constant=5):
-        #We are trying to achieve a structure that looks like:
-        #(((A + 5) * B) - C) == 0
-        #3 groups
-        #4 items
-        #group 1 contains group 2 & item C
-        #group 2 contains group 3 & item B
-        #group 3 contains item A and item 5
-        #The best way to do this is in reverse order. Start with the inner
-        #group and work your way out.
-
-        #create all the groups & items
-        #Innermost group first (A + 5)
-        group_3 = self.client.factory.create('hyd:ConstraintGroup')
-        group_3.op = '+'
-
-        item_1 = self.client.factory.create('hyd:ConstraintItem')
-        item_1.resource_attr_id = net.nodes.Node[0].attributes.ResourceAttr[0].id
-        item_2 = self.client.factory.create('hyd:ConstraintItem')
-        item_2.constant = constant
-
-        #set the items in group 3 (aka 'A' and 5 from example above)
-        group_3_items = self.client.factory.create('hyd:ConstraintItemArray')
-        group_3_items.ConstraintItem.append(item_1)
-        group_3_items.ConstraintItem.append(item_2)
-
-        group_3.constraintitems = group_3_items
-
-        #Then the next group out (group_1 * B)
-        #Group 2 (which has both an item and a group)
-        group_2 = self.client.factory.create('hyd:ConstraintGroup')
-        group_2.op = '*'
-
-        item_3 = self.client.factory.create('hyd:ConstraintItem')
-        item_3.resource_attr_id = net.nodes.Node[0].attributes.ResourceAttr[1].id
-
-        group_2_items = self.client.factory.create('hyd:ConstraintItemArray')
-        group_2_items.ConstraintItem.append(item_3)
-
-        group_2_groups = self.client.factory.create('hyd:ConstraintGroupArray')
-        group_2_groups.ConstraintGroup.append(group_3)
-
-        group_2.constraintgroups = group_2_groups
-        group_2.constraintitems  = group_2_items
-
-        #Then the outermost group: (group_2 - C)
-        #Group 1 has  also has an item and a group
-        group_1 = self.client.factory.create('hyd:ConstraintGroup')
-        group_1.op = '-'
-
-        item_4 = self.client.factory.create('hyd:ConstraintItem')
-        item_4.resource_attr_id = net.links.Link[0].attributes.ResourceAttr[0].id
-
-
-        group_1_items = self.client.factory.create('hyd:ConstraintItemArray')
-        group_1_items.ConstraintItem.append(item_4)
-
-        group_1_groups = self.client.factory.create('hyd:ConstraintGroupArray')
-        group_1_groups.ConstraintGroup.append(group_2)
-        group_1.constraintgroups = group_1_groups
-        group_1.constraintitems = group_1_items
-
-
-        constraint = self.client.factory.create('hyd:Constraint')
-        constraint.scenario_id = net.scenarios[0][0].id
-        constraint.op = "=="
-        constraint.constant = 0
-
-        constraint.constraintgroup = group_1
-
-        test_constraint = self.client.service.add_constraint(net.scenarios[0][0].id, constraint)
-        return test_constraint
 
 def run():
     unittest.main()

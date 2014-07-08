@@ -25,7 +25,6 @@ from decimal import Decimal as Dec
 import sys
 from HydraLib.util import timestamp_to_ordinal, ordinal_to_timestamp
 import logging
-from numpy import array
 global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 #"2013-08-13T15:55:43.468886Z"
@@ -42,37 +41,34 @@ def get_timestamp(ordinal):
     timestamp = str(ordinal_to_timestamp(ordinal))
     return timestamp
 
-def create_dict(arr_data):
-    if arr_data is None:
+
+
+
+def create_dict(arr):
+    return {'array': [create_sub_dict(arr)]}
+
+def create_sub_dict(arr):
+    if arr is None:
         return None 
-    
-    numpy_arr = array(arr_data)
 
-    array_dict = {'array': []}
-    if numpy_arr.ndim == 1:
-        for n in numpy_arr:
-            if type(n) == list:
-                sub_numpy_arr = array(n)
-                if sub_numpy_arr.ndim == 1:
-                    array_dict['array'].append({'item': n})
-                else:
-                    array_dict['array'].append(create_dict(n))
-            else:
-                array_dict = {'array': [{'item': list(arr_data)}]}
-                break
-    else:
-        for a in numpy_arr:
-            if a.ndim == 1:
-                for n in a:
-                    if type(n) == list:
-                        array_dict['array'].append(create_dict(n))
-                    else:
-                        array_dict['array'].append({'item': list(a)})
-                        break
-            else:
-                array_dict['array'].append(create_dict(a))
+    #Either the array contains sub-arrays or values
+    vals = None
+    sub_arrays = []
+    for sub_val in arr:
+        if type(sub_val) is list:
+            sub_dict = create_sub_dict(sub_val)
+            sub_arrays.append(sub_dict)
+        else:
+            #if any of the elements of the array is NOT a list,
+            #then there are no sub arrays
+            vals = arr 
+            break
 
-    return array_dict
+    if vals:
+        return {'item': vals}
+
+    if sub_arrays:
+        return {'array': sub_arrays}
 
 class LoginResponse(ComplexModel):
     __namespace__ = 'soap_server.hydra_complexmodels'
@@ -283,7 +279,7 @@ class Dataset(HydraComplexModel):
                         except:
                             ret_arr.append(v)
                 else:
-                    ret_arr = [self.parse_array(arr_data[0])]
+                    ret_arr = self.parse_array(arr_data[0])
             else:
                 for sub_val in arr_data:
                     if sub_val.get('array'):
