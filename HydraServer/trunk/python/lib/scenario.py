@@ -178,20 +178,28 @@ def update_scenario(scenario,**kwargs):
     DBSession.flush()
     return scen
 
-def delete_scenario(scenario_id,**kwargs):
+def set_scenario_status(scenario_id, status, **kwargs):
     """
-        Set the status of a scenario to 'X'.
+        Set the status of a scenario.
     """
 
-    success = True
-    
     _check_can_edit_scenario(scenario_id, kwargs['user_id'])
     scenario_i = _get_scenario(scenario_id)
 
-    scenario_i.status = 'X'
+    scenario_i.status = status
     DBSession.flush()
-    return success
+    return 'OK' 
 
+def purge_scenario(scenario_id, **kwargs):
+    """
+        Set the status of a scenario.
+    """
+
+    _check_can_edit_scenario(scenario_id, kwargs['user_id'])
+    scenario_i = _get_scenario(scenario_id)
+    DBSession.delete(scenario_i)
+    DBSession.flush()
+    return 'OK' 
 
 def clone_scenario(scenario_id,**kwargs):
     scen_i = _get_scenario(scenario_id)

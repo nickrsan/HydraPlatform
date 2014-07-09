@@ -690,8 +690,8 @@ class Link(Base):
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
    
     network = relationship('Network', backref=backref("links", order_by=network_id, cascade="all, delete-orphan"), lazy='joined')
-    node_a = relationship('Node', foreign_keys=[node_1_id], backref=backref("links_to", order_by=link_id))
-    node_b = relationship('Node', foreign_keys=[node_2_id], backref=backref("links_from", order_by=link_id))
+    node_a = relationship('Node', foreign_keys=[node_1_id], backref=backref("links_to", order_by=link_id, cascade="all, delete-orphan"))
+    node_b = relationship('Node', foreign_keys=[node_2_id], backref=backref("links_from", order_by=link_id, cascade="all, delete-orphan"))
 
     def add_attribute(self, attr_id, attr_is_var='N'):
         attr = ResourceAttr()

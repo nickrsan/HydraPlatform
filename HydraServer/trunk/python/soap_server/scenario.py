@@ -63,14 +63,28 @@ class ScenarioService(HydraService):
         return Scenario(updated_scen)
 
     @rpc(Integer, _returns=Unicode)
+    def purge_scenario(ctx, scenario_id):
+        """
+            Set the status of a scenario to 'X'.
+        """
+
+        return scenario.purge_scenario(scenario_id, **ctx.in_header.__dict__)
+
+    @rpc(Integer, _returns=Unicode)
     def delete_scenario(ctx, scenario_id):
         """
             Set the status of a scenario to 'X'.
         """
 
-        success = 'OK'
-        scenario.update_scenario(scenario_id, **ctx.in_header.__dict__)
-        return success
+        return scenario.set_scenario_status(scenario_id, 'X', **ctx.in_header.__dict__)
+
+    @rpc(Integer, _returns=Unicode)
+    def activate_scenario(ctx, scenario_id):
+        """
+            Set the status of a scenario to 'X'.
+        """
+
+        return scenario.set_scenario_status(scenario_id, 'A', **ctx.in_header.__dict__)
 
 
     @rpc(Integer, _returns=Scenario)

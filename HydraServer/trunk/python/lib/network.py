@@ -533,11 +533,11 @@ def get_network(network_id, summary=False, include_data='N', scenario_ids=None, 
         net_i.attributes
 
         #Define the basic resource queries
-        node_qry = DBSession.query(Node).filter(Node.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template'))
+        node_qry = DBSession.query(Node).filter(Node.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template')).filter(Node.status=='A')
 
-        link_qry = DBSession.query(Link).filter(Link.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template'))
+        link_qry = DBSession.query(Link).filter(Link.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template')).filter(Link.status=='A')
 
-        group_qry = DBSession.query(ResourceGroup).filter(ResourceGroup.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template'))
+        group_qry = DBSession.query(ResourceGroup).filter(ResourceGroup.network_id==network_id).options(noload('attributes')).options(joinedload_all('types.templatetype.template')).filter(ResourceGroup.status=='A')
         #Perform any required filtering on the resources
         if template_id is not None:
             node_qry = node_qry.join(ResourceType).join(TemplateType).filter(TemplateType.template_id==template_id)
@@ -567,7 +567,7 @@ def get_network(network_id, summary=False, include_data='N', scenario_ids=None, 
 
         log.debug("Network Retrieved")
          
-        scen_qry = DBSession.query(Scenario).filter(Scenario.network_id == net_i.network_id).options(joinedload(Scenario.resourcescenarios)).options(noload('resourcescenarios.dataset')).options(joinedload('resourcegroupitems'))
+        scen_qry = DBSession.query(Scenario).filter(Scenario.network_id == net_i.network_id).options(joinedload(Scenario.resourcescenarios)).options(noload('resourcescenarios.dataset')).options(joinedload('resourcegroupitems')).filter(Scenario.status == 'A')
         if scenario_ids:
             logging.info("Filtering by scenario_ids %s",scenario_ids)
             scen_qry = scen_qry.join(Network.scenarios).filter(Scenario.scenario_id.in_(scenario_ids))
@@ -829,18 +829,16 @@ def update_network(network,**kwargs):
 
     return net_i
 
-def delete_network(network_id, purge_data,**kwargs):
+def set_network_status(network_id,status,**kwargs):
     """
-    Deletes a network. This does not remove the network from the DB. It
-    just sets the status to 'X', meaning it can no longer be seen by the
-    user.
+    Activates a network by setting its status attribute to 'A'.
     """
     user_id = kwargs.get('user_id')
     #check_perm(user_id, 'delete_network')
     try:
         net_i = DBSession.query(Network).filter(Network.network_id == network_id).one()
         net_i.check_write_permission(user_id)
-        net_i.status = 'X'
+        net_i.status = status
     except NoResultFound:
         raise ResourceNotFoundError("Network %s not found"%(network_id))
     DBSession.flush()
@@ -950,7 +948,7 @@ def delete_resourceattr(resource_attr_id, purge_data,**kwargs):
     DBSession.flush()
     return 'OK'
 
-def delete_node(node_id,**kwargs):
+def set_node_status(node_id, status, **kwargs):
     """
         Set the status of a node to 'X'
     """
@@ -962,7 +960,13 @@ def delete_node(node_id,**kwargs):
 
     node_i.network.check_write_permission(user_id)
 
-    node_i.status = 'X'
+    node_i.status = status
+
+    for link in node_i.links_to:
+        link.status = status
+    for link in node_i.links_from:
+        link.status = status
+
     DBSession.flush()
 
     return node_i
@@ -1049,9 +1053,9 @@ def update_link(link,**kwargs):
     DBSession.flush()
     return link_i
 
-def delete_link(link_id,**kwargs):
+def set_link_status(link_id, status, **kwargs):
     """
-        Set the status of a link to 'X'
+        Set the status of a link
     """
     user_id = kwargs.get('user_id')
     #check_perm(user_id, 'edit_topology')
@@ -1062,7 +1066,7 @@ def delete_link(link_id,**kwargs):
 
     link_i.network.check_write_permission(user_id)
 
-    link_i.status = 'X'
+    link_i.status = status
     DBSession.flush()
 
 def purge_link(link_id, purge_data,**kwargs):
@@ -1097,11 +1101,43 @@ def add_group(network_id, group,**kwargs):
     res_grp_i = net_i.add_group(group.name, group.description, group.status)
 
     add_attributes(res_grp_i, group.attributes)
-    add_resource_types(res_grp_i, group.types)
     
     DBSession.flush()
 
+
+    res_types = []
+    res_attrs = []
+    for typesummary in group.types:
+        ra, rt = template.set_resource_type(res_grp_i,
+                                        typesummary.id,
+                                         **kwargs)
+        res_types.append(rt)
+        res_attrs.extend(ra)
+
+    DBSession.execute(ResourceType.__table__.insert(), res_types)
+    DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
+
+    DBSession.refresh(res_grp_i)
+
     return res_grp_i
+
+def set_group_status(group_id, status, **kwargs):
+    """
+        Set the status of a group to 'X'
+    """
+    user_id = kwargs.get('user_id')
+    try:
+        group_i = DBSession.query(ResourceGroup).filter(ResourceGroup.group_id == group_id).one()
+    except NoResultFound:
+        raise ResourceNotFoundError("ResourceGroup %s not found"%(group_id))
+
+    group_i.network.check_write_permission(user_id)
+
+    group_i.status = status
+
+    DBSession.flush()
+
+    return group_i
 
 def get_scenarios(network_id,**kwargs):
     """
@@ -1131,10 +1167,13 @@ def validate_network_topology(network_id,**kwargs):
 
     nodes = []
     for node_i in net_i.nodes:
-        nodes.append(node_i.node_id)
+        if node_i.status == 'A':
+            nodes.append(node_i.node_id)
 
     link_nodes = []
     for link_i in net_i.links:
+        if link_i.status != 'A':
+            continue
         if link_i.node_1_id not in link_nodes:
             link_nodes.append(link_i.node_1_id)
 
@@ -1160,3 +1199,38 @@ def get_resources_of_type(network_id, type_id, **kwargs):
 
     return nodes_with_type, links_with_type, groups_with_type
 
+def clean_up_network(network_id, **kwargs):
+    """
+        Purge any deleted nodes, links, resourcegroups and scenarios in a given network
+    """
+    user_id = kwargs.get('user_id')
+    #check_perm(user_id, 'delete_network')
+    try:
+        log.debug("Querying Network %s", network_id)
+        net_i = DBSession.query(Network).filter(Network.network_id == network_id).\
+        options(noload('scenarios')).options(noload('nodes')).options(noload('links')).options(noload('resourcegroups')).options(joinedload_all('types.templatetype.template')).one()
+        net_i.attributes
+
+        #Define the basic resource queries
+        node_qry = DBSession.query(Node).filter(Node.network_id==network_id).filter(Node.status=='X').all()
+
+        link_qry = DBSession.query(Link).filter(Link.network_id==network_id).filter(Link.status=='X').all()
+
+        group_qry = DBSession.query(ResourceGroup).filter(ResourceGroup.network_id==network_id).filter(ResourceGroup.status=='X').all()
+
+        scenario_qry = DBSession.query(Scenario).filter(Scenario.network_id==network_id).filter(Scenario.status=='X').all()
+
+
+        for n in node_qry:
+            DBSession.delete(n)
+        for l in link_qry:
+            DBSession.delete(l)
+        for g in group_qry:
+            DBSession.delete(g)
+        for s in scenario_qry:
+            DBSession.delete(s)
+
+    except NoResultFound:
+        raise ResourceNotFoundError("Network %s not found"%(network_id))
+    DBSession.flush()
+    return 'OK'

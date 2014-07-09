@@ -383,6 +383,38 @@ class NetworkTest(test_SoapServer.SoapServerTest):
                 updated_node = n
         assert updated_node.name == "Updated Node Name" 
 
+    def test_delete_node(self):
+        network = self.test_add_node()
+
+        node_to_delete = network.nodes.Node[0]
+
+        self.client.service.delete_node(node_to_delete.id)
+
+        new_network = self.client.service.get_network(network.id)
+        
+        node_ids = []
+        for n in new_network.nodes.Node:
+            node_ids.append(n.id)
+        for l in new_network.links.Link:
+            node_ids.append(l.node_1_id)
+            node_ids.append(l.node_2_id)
+        assert node_to_delete.id not in node_ids 
+
+        self.client.service.activate_node(node_to_delete.id)
+        
+        new_network = self.client.service.get_network(network.id)
+
+        node_ids = []
+        for n in new_network.nodes.Node:
+            node_ids.append(n.id)
+        link_node_ids = []
+        for l in new_network.links.Link:
+            link_node_ids.append(l.node_1_id)
+            link_node_ids.append(l.node_2_id)
+        assert node_to_delete.id in link_node_ids 
+        assert node_to_delete.id in link_node_ids 
+        assert node_to_delete.id in node_ids 
+
     def test_update_link(self):
         network = self.test_add_link()
 
@@ -399,16 +431,37 @@ class NetworkTest(test_SoapServer.SoapServerTest):
                 updated_link = l
         assert updated_link.name == "Updated link Name" 
 
-    def test_update_node_aud(self):
-        network = self.test_add_node()
+    def test_delete_link(self):
+        network = self.test_add_link()
 
-        node_to_update = network.nodes.Node[0]
-        for i in range(104):
-            node_to_update.name = "Updated Node Name %s"%(i)
+        link_to_delete = network.links.Link[0]
 
-            new_node = self.client.service.update_node(node_to_update)
+        self.client.service.delete_link(link_to_delete.id)
 
-        assert open('~/.hydra/audit/tNodeaud', mode='r') 
+        new_network = self.client.service.get_network(network.id)
+        
+        link_ids = []
+        for l in new_network.links.Link:
+            link_ids.append(l.id)
+        assert link_to_delete.id not in link_ids 
+
+        self.client.service.activate_link(link_to_delete.id)
+        new_network = self.client.service.get_network(network.id)
+        link_ids = []
+        for l in new_network.links.Link:
+            link_ids.append(l.id)
+        assert link_to_delete.id in link_ids
+
+#    def test_update_node_aud(self):
+#        network = self.test_add_node()
+#
+#        node_to_update = network.nodes.Node[0]
+#        for i in range(104):
+#            node_to_update.name = "Updated Node Name %s"%(i)
+#
+#            new_node = self.client.service.update_node(node_to_update)
+#
+#        assert open('~/.hydra/audit/tNodeaud', mode='r') 
 
     def test_load(self):
         project = self.create_project('test')
@@ -501,6 +554,32 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         assert self.client.service.get_network(network.id).status == 'X', \
             'Deleting network did not work correctly.'
 
+        self.client.service.activate_network(network.id)
+
+        assert self.client.service.get_network(network.id).status == 'A', \
+            'Reactivating network did not work correctly.'
+
+    def test_cleanup_network(self):
+        network = self.test_add_node()
+
+        node_to_delete = network.nodes.Node[0]
+
+        link_ids = []
+        for l in network.links.Link:
+            if l.node_1_id == node_to_delete.id:
+                link_ids.append(l.node_1_id)
+            if l.node_2_id == node_to_delete.id:
+                link_ids.append(l.node_2_id)
+
+        self.client.service.delete_node(node_to_delete.id)
+
+        self.client.service.clean_up_network(network.id)
+
+        self.assertRaises(suds.WebFault, self.client.service.get_node, node_to_delete.id)
+        for l in link_ids:
+            self.assertRaises(suds.WebFault, self.client.service.get_link, l)
+
+
 
     def test_validate_topology(self):
         project = self.create_project('test')
@@ -584,6 +663,73 @@ class NetworkTest(test_SoapServer.SoapServerTest):
                 if str(a) != str(b):
                     logging.info("%s vs %s",str(a), str(b))
                 assert str(a) == str(b)
+
+    def test_add_resourcegroup(self):
+
+        network = self.create_network_with_data()
+
+        group = self.client.factory.create('hyd:ResourceGroup')
+        group.network_id=network.id
+        group.id = -1
+        group.name = 'test new group'
+        group.description = 'test new group'
+        
+        tmpl = self.create_template()
+
+        type_summary_arr = self.client.factory.create('hyd:TypeSummaryArray')
+
+        type_summary      = self.client.factory.create('hyd:TypeSummary')
+        type_summary.id   = tmpl.id
+        type_summary.name = tmpl.name
+        type_summary.id   = tmpl.types.TemplateType[2].id
+        type_summary.name = tmpl.types.TemplateType[2].name
+
+        type_summary_arr.TypeSummary.append(type_summary)
+
+        group.types = type_summary_arr
+
+        new_group = self.client.service.add_group(network.id, group)
+
+        group_attr_ids = []
+        for resource_attr in new_group.attributes.ResourceAttr:
+            group_attr_ids.append(resource_attr.attr_id)
+
+        for typeattr in tmpl.types.TemplateType[2].typeattrs.TypeAttr:
+            assert typeattr.attr_id in group_attr_ids
+
+        new_network = self.client.service.get_network(network.id)
+
+        assert len(new_network.resourcegroups.ResourceGroup) == len(network.resourcegroups.ResourceGroup)+1; "new resource group was not added correctly"
+        
+        return new_network
+
+    def test_delete_resourcegroup(self):
+        net = self.test_add_resourcegroup()
+
+        group_to_delete = net.resourcegroups.ResourceGroup[0]
+
+        self.client.service.delete_group(group_to_delete.id)
+
+        updated_net = self.client.service.get_network(net.id)
+
+        group_ids = []
+        for g in updated_net.resourcegroups.ResourceGroup:
+            group_ids.append(g.id)
+
+        assert group_to_delete.id not in group_ids
+
+        self.client.service.activate_group(group_to_delete.id)
+
+        updated_net = self.client.service.get_network(net.id)
+        
+        group_ids = []
+        for g in updated_net.resourcegroups.ResourceGroup:
+            group_ids.append(g.id)
+
+        assert group_to_delete.id in group_ids
+
+
+
 
 if __name__ == '__main__':
     test_SoapServer.run()

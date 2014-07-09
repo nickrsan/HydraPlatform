@@ -110,14 +110,23 @@ class NetworkService(HydraService):
         return Link(link)
 
     @rpc(Integer, Boolean, _returns=Unicode)
-    def delete_network(ctx, network_id, purge_data):
+    def delete_network(ctx, network_id):
+        """
+        Set status of network for delete or un-delete
+        """
+        #check_perm('delete_network')
+        network.set_network_status(network_id, 'X', **ctx.in_header.__dict__)
+        return 'OK'
+
+    @rpc(Integer, Boolean, _returns=Unicode)
+    def activate_network(ctx, network_id):
         """
         Deletes a network. This does not remove the network from the DB. It
         just sets the status to 'X', meaning it can no longer be seen by the
         user.
         """
         #check_perm('delete_network')
-        network.delete_network(network_id, purge_data, **ctx.in_header.__dict__)
+        network.set_network_status(network_id, 'A', **ctx.in_header.__dict__)
         return 'OK'
 
     @rpc(Integer, _returns=NetworkExtents)
@@ -233,7 +242,15 @@ class NetworkService(HydraService):
             Set the status of a node to 'X'
         """
         #check_perm('edit_topology')
-        network.delete_node(node_id, **ctx.in_header.__dict__)
+        network.set_node_status(node_id, 'X', **ctx.in_header.__dict__)
+        return 'OK' 
+    @rpc(Integer, _returns=Unicode)
+    def activate_node(ctx, node_id):
+        """
+            Set the status of a node to 'A'
+        """
+        #check_perm('edit_topology')
+        network.set_node_status(node_id, 'A', **ctx.in_header.__dict__)
         return 'OK' 
 
     @rpc(Integer, Boolean, _returns=Unicode)
@@ -274,7 +291,15 @@ class NetworkService(HydraService):
         """
             Set the status of a link to 'X'
         """
-        network.update_link(link_id, **ctx.in_header.__dict__)
+        network.set_link_status(link_id, 'X', **ctx.in_header.__dict__)
+        return 'OK'
+
+    @rpc(Integer, Boolean, _returns=Unicode)
+    def activate_link(ctx, link_id):
+        """
+            Set the status of a link to 'X'
+        """
+        network.set_link_status(link_id, 'A', **ctx.in_header.__dict__)
         return 'OK'
 
     @rpc(Integer, Boolean, _returns=Unicode)
@@ -298,6 +323,23 @@ class NetworkService(HydraService):
         new_group = ResourceGroup(group_i)
 
         return new_group
+
+    @rpc(Integer, _returns=Unicode)
+    def delete_group(ctx, group_id):
+        """
+            Set the status of a group to 'X'
+        """
+        network.set_group_status(group_id, 'X', **ctx.in_header.__dict__)
+        return 'OK'
+
+    @rpc(Integer, _returns=Unicode)
+    def activate_group(ctx, group_id):
+        """
+            Set the status of a group to 'A'
+        """
+        network.set_group_status(group_id, 'A', **ctx.in_header.__dict__)
+        return 'OK'
+
 
     @rpc(Integer, _returns=SpyneArray(Scenario))
     def get_scenarios(ctx, network_id):
@@ -342,3 +384,11 @@ class NetworkService(HydraService):
             resources.append(ResourceSummary(g))
 
         return resources
+
+    @rpc(Integer, _returns=Unicode)
+    def clean_up_network(ctx, network_id):
+        """
+            Purge all nodes, links, groups and scenarios from a network which 
+            have previously been deleted.
+        """
+        return network.clean_up_network(network_id, **ctx.in_header.__dict__)

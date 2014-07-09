@@ -275,6 +275,8 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         
         assert len(scen_1_resourcegroupitems) == len(scen_2_resourcegroupitems)
 
+        return updated_network
+
     def test_compare(self):
 
         network =  self.create_network_with_data()
@@ -339,7 +341,57 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         assert len(scenario_diff.groups.scenario_2_items) == 1, "Group comparison was not successful!"
         assert scenario_diff.groups.scenario_1_items is None, "Group comparison was not successful!"
 
+        return updated_network
 
+    def test_purge_scenario(self):
+        net = self.test_clone()
+
+        scenarios_before = net.scenarios.Scenario
+
+        assert len(scenarios_before) == 2
+
+        self.client.service.purge_scenario(scenarios_before[1].id)
+
+        updated_net = self.client.service.get_network(net.id)
+
+        scenarios_after = updated_net.scenarios.Scenario
+
+        assert len(scenarios_after) == 1
+
+        self.assertRaises(suds.WebFault, self.client.service.get_scenario, scenarios_before[1].id)
+
+        assert str(scenarios_after[0]) == str(scenarios_before[0])
+
+    def test_delete_scenario(self):
+        net = self.test_clone()
+
+        scenarios_before = net.scenarios.Scenario
+
+        assert len(scenarios_before) == 2
+
+        self.client.service.delete_scenario(scenarios_before[1].id)
+
+        updated_net = self.client.service.get_network(net.id)
+
+        scenarios_after_delete = updated_net.scenarios.Scenario
+
+        assert len(scenarios_after_delete) == 1
+
+        self.client.service.activate_scenario(scenarios_before[1].id)
+
+        updated_net2 = self.client.service.get_network(net.id)
+
+        scenarios_after_reactivate = updated_net2.scenarios.Scenario
+
+        assert len(scenarios_after_reactivate) == 2
+        
+        self.client.service.delete_scenario(scenarios_before[1].id)
+        self.client.service.clean_up_network(net.id)
+        updated_net3 = self.client.service.get_network(net.id)
+        scenarios_after_cleanup = updated_net3.scenarios.Scenario
+        assert len(scenarios_after_cleanup) == 1
+        self.assertRaises(suds.WebFault, self.client.service.get_scenario, scenarios_before[1].id)
+        
     def test_lock_scenario(self):
 
         network =  self.create_network_with_data()
