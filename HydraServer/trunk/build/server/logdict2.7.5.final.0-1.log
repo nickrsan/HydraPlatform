@@ -572,7 +572,7 @@ soap_server.groups: None -> <PyModule 'soap_server.groups' C:\Users\steve\Docume
 spyne.util: None -> <PkgModule 'spyne.util' C:\Python27\lib\site-packages\spyne\util\__init__.pyc imports=[('urllib.splithost', 0, 0, -1), ('urllib.parse.splithost', 0, 1, -1), ('sys', 0, 0, -1), ('urllib.parse.splittype', 0, 1, -1), ('urllib.splittype', 0, 0, -1), ('urllib.parse', 0, 1, -1), ('datetime', 0, 0, -1), ('urllib.parse.quote', 0, 1, -1), ('urllib', 0, 0, -1), ('urllib.quote', 0, 0, -1)] binaries=[] datas=[]>
 spyne.util.wsgi_wrapper: None -> <PyModule 'spyne.util.wsgi_wrapper' C:\Python27\lib\site-packages\spyne\util\wsgi_wrapper.pyc imports=[('twisted.web.static', 1, 0, -1), ('spyne.server.wsgi', 0, 0, -1), ('twisted.web.wsgi.WSGIResource', 1, 0, -1), ('twisted.web.resource', 1, 0, -1), ('os', 0, 0, -1), ('twisted.web.server', 1, 0, -1), ('twisted.internet.reactor', 1, 0, -1), ('spyne.server.wsgi.WsgiApplication', 0, 0, -1), ('logging', 0, 0, -1), ('twisted.internet', 1, 0, -1), ('twisted.web.resource.Resource', 1, 0, -1), ('twisted.web.wsgi', 1, 0, -1)] binaries=[] datas=[]>
 soap_server.attributes: None -> <PyModule 'soap_server.attributes' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\soap_server\attributes.pyc imports=[('lib', 0, 0, -1), ('spyne.decorator.rpc', 0, 0, -1), ('spyne.model.complex.Array', 0, 0, -1), ('spyne.model.primitive.Unicode', 0, 0, -1), ('spyne.model.primitive', 0, 0, -1), ('spyne.model.complex', 0, 0, -1), ('hydra_complexmodels.Attr', 0, 0, -1), ('spyne.model.primitive.Integer', 0, 0, -1), ('hydra_base.HydraService', 0, 0, -1), ('spyne.model.primitive.Boolean', 0, 0, -1), ('hydra_complexmodels.Resource', 0, 0, -1), ('lib.attributes', 0, 0, -1), ('hydra_complexmodels', 0, 0, -1), ('spyne.decorator', 0, 0, -1), ('hydra_complexmodels.ResourceAttr', 0, 0, -1), ('hydra_base', 0, 0, -1)] binaries=[] datas=[]>
-soap_server.network: None -> <PyModule 'soap_server.network' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\soap_server\network.pyc imports=[('spyne.decorator.rpc', 0, 0, -1), ('spyne.model.complex.Array', 0, 0, -1), ('spyne.model.primitive.Unicode', 0, 0, -1), ('spyne.model.primitive', 0, 0, -1), ('spyne.model.complex', 0, 0, -1), ('hydra_base.HydraService', 0, 0, -1), ('hydra_complexmodels.Link', 0, 0, -1), ('spyne.model.primitive.Integer', 0, 0, -1), ('hydra_complexmodels.Scenario', 0, 0, -1), ('lib.network', 0, 0, -1), ('spyne.model.primitive.Boolean', 0, 0, -1), ('hydra_complexmodels.Resource', 0, 0, -1), ('hydra_complexmodels.ResourceSummary', 0, 0, -1), ('hydra_complexmodels', 0, 0, -1), ('hydra_complexmodels.Network', 0, 0, -1), ('spyne.decorator', 0, 0, -1), ('lib', 0, 0, -1), ('hydra_complexmodels.Node', 0, 0, -1), ('hydra_complexmodels.NetworkExtents', 0, 0, -1), ('hydra_complexmodels.ResourceGroup', 0, 0, -1), ('hydra_base', 0, 0, -1)] binaries=[] datas=[]>
+soap_server.network: None -> <PyModule 'soap_server.network' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\soap_server\network.pyc imports=[('spyne.model.complex.Array', 0, 0, -1), ('spyne.model.primitive.Unicode', 0, 0, -1), ('hydra_complexmodels.Scenario', 0, 0, -1), ('spyne.model.primitive.Boolean', 0, 0, -1), ('hydra_complexmodels', 0, 0, -1), ('spyne.decorator', 0, 0, -1), ('hydra_complexmodels.Node', 0, 0, -1), ('spyne.decorator.rpc', 0, 0, -1), ('lib.scenario', 0, 0, -1), ('spyne.model.primitive.Integer', 0, 0, -1), ('hydra_base.HydraService', 0, 0, -1), ('hydra_complexmodels.ResourceSummary', 0, 0, -1), ('hydra_complexmodels.NetworkExtents', 0, 0, -1), ('hydra_complexmodels.ResourceGroup', 0, 0, -1), ('hydra_base', 0, 0, -1), ('spyne.model.primitive', 0, 0, -1), ('hydra_complexmodels.ResourceScenario', 0, 0, -1), ('lib', 0, 0, -1), ('spyne.model.complex', 0, 0, -1), ('hydra_complexmodels.Link', 0, 0, -1), ('hydra_complexmodels.Network', 0, 0, -1), ('lib.network', 0, 0, -1)] binaries=[] datas=[]>
 spyne.protocol.json: None -> <PyModule 'spyne.protocol.json' C:\Python27\lib\site-packages\spyne\protocol\json.pyc imports=[('spyne.model.primitive', 0, 0, 0), ('__future__.absolute_import', 0, 0, 0), ('spyne.model.fault', 0, 0, 0), ('spyne.error.ValidationError', 0, 0, 0), ('simplejson.decoder.JSONDecodeError', 0, 0, 0), ('simplejson', 0, 0, 0), ('spyne.error', 0, 0, 0), ('spyne.model.primitive.Integer', 0, 0, 0), ('spyne.model.primitive.Date', 0, 0, 0), ('simplejson.decoder', 0, 0, 0), ('decimal', 0, 0, 0), ('spyne.model.primitive.Time', 0, 0, 0), ('spyne.model.binary.BINARY_ENCODING_BASE64', 0, 0, 0), ('spyne.model.primitive.Boolean', 0, 0, 0), ('spyne.protocol.dictdoc', 0, 0, 0), ('logging', 0, 0, 0), ('spyne.model.fault.Fault', 0, 0, 0), ('spyne.model.primitive.DateTime', 0, 0, 0), ('json', 0, 1, 0), ('__future__', 0, 0, 0), ('spyne.model.binary', 0, 0, 0), ('spyne.protocol.dictdoc.HierDictDocument', 0, 0, 0), ('spyne.model.primitive.Double', 0, 0, 0)] binaries=[] datas=[]>
 soap_server.units: None -> <PyModule 'soap_server.units' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\soap_server\units.pyc imports=[('spyne.model.primitive.Decimal', 0, 0, -1), ('spyne.decorator.rpc', 0, 0, -1), ('spyne.model.complex.Array', 0, 0, -1), ('spyne.model.primitive.Unicode', 0, 0, -1), ('spyne.model.primitive', 0, 0, -1), ('spyne.model.complex', 0, 0, -1), ('spyne.model.primitive.Integer', 0, 0, -1), ('HydraLib.units', 0, 0, -1), ('spyne.util.dictdoc.get_object_as_dict', 0, 0, -1), ('spyne.model.primitive.Boolean', 0, 0, -1), ('lib.units', 0, 0, -1), ('hydra_base.HydraService', 0, 0, -1), ('HydraLib', 0, 0, -1), ('spyne.util.dictdoc', 0, 0, -1), ('hydra_complexmodels', 0, 0, -1), ('spyne.decorator', 0, 0, -1), ('lib', 0, 0, -1), ('hydra_complexmodels.Unit', 0, 0, -1), ('hydra_base', 0, 0, -1)] binaries=[] datas=[]>
 cherrypy: None -> <PkgModule 'cherrypy' C:\Python27\lib\site-packages\cherrypy\__init__.pyc imports=[('inspect', 1, 0, -1), ('cherrypy.lib.httputil', 0, 0, -1), ('cherrypy._cpconfig', 0, 0, -1), ('cherrypy._cpcompat.urljoin', 0, 0, -1), ('cherrypy._cprequest', 0, 0, -1), ('cherrypy.process', 0, 0, -1), ('types', 1, 0, -1), ('cherrypy._cptools', 0, 0, -1), ('cherrypy._cptree', 0, 0, -1), ('cherrypy._cplogging', 0, 0, -1), ('cherrypy._cperror.HTTPError', 0, 0, -1), ('cherrypy._cpchecker', 0, 0, -1), ('cherrypy._cperror.InternalRedirect', 0, 0, -1), ('cherrypy._cpdispatch', 0, 0, -1), ('cherrypy._cpcompat.set', 0, 0, -1), ('cherrypy.process.win32', 0, 0, -1), ('pydoc', 0, 0, -1), ('cherrypy._cperror.NotFound', 0, 0, -1), ('cherrypy._cptree.Application', 0, 0, -1), ('cherrypy._cpcompat.threadlocal', 0, 0, -1), ('cherrypy._cpserver', 0, 0, -1), ('cherrypy._cpcompat.urlencode', 0, 0, -1), ('cherrypy._cperror.CherryPyException', 0, 0, -1), ('cherrypy._cperror.HTTPRedirect', 0, 0, -1), ('cherrypy.lib', 0, 0, -1), ('cherrypy._cpcompat.unicodestr', 0, 0, -1), ('cherrypy._cperror.TimeoutError', 0, 0, -1), ('cherrypy', 0, 0, -1), ('cherrypy._cpcompat.basestring', 0, 0, -1), ('cherrypy._cpcompat', 0, 0, -1), ('sys', 1, 0, -1), ('cherrypy._cpwsgi', 0, 0, -1), ('cherrypy._cperror', 0, 0, -1)] binaries=[] datas=[]>
@@ -1810,20 +1810,218 @@ email.message_from_string: None -> None
 spyne.protocol.soap.base64: None -> None
 spyne.protocol.soap.urllib: None -> None
 email.mime.application: None -> <PyModule 'email.mime.application' C:\Python27\lib\email\mime\application.pyc imports=[('email.encoders', 0, 0, -1), ('email.mime.nonmultipart.MIMENonMultipart', 0, 0, -1), ('email.mime.nonmultipart', 0, 0, -1), ('email', 0, 0, -1)] binaries=[] datas=[]>
-soap_server.hydra_complexmodels: None -> <PyModule 'soap_server.hydra_complexmodels' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\soap_server\hydra_complexmodels.pyc imports=[('spyne.model.primitive.Decimal', 0, 0, -1), ('numpy', 0, 0, -1), ('spyne.model.complex.Array', 0, 0, -1), ('spyne.model.primitive.Unicode', 0, 0, -1), ('spyne.model.primitive', 0, 0, -1), ('spyne.model.complex', 0, 0, -1), ('logging', 0, 0, -1), ('numpy.array', 0, 0, -1), ('spyne.model.primitive.Integer', 0, 0, -1), ('decimal.Decimal', 0, 0, -1), ('sys', 0, 0, -1), ('spyne.model.primitive.Double', 0, 0, -1), ('HydraLib.util.ordinal_to_timestamp', 0, 0, -1), ('HydraLib.util', 0, 0, -1), ('HydraLib.util.timestamp_to_ordinal', 0, 0, -1), ('spyne.model.complex.ComplexModel', 0, 0, -1), ('spyne.model.primitive.DateTime', 0, 0, -1), ('spyne.model.primitive.AnyDict', 0, 0, -1), ('decimal', 0, 0, -1), ('spyne.model.primitive.Float', 0, 0, -1)] binaries=[] datas=[]>
+soap_server.hydra_complexmodels: None -> <PyModule 'soap_server.hydra_complexmodels' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\soap_server\hydra_complexmodels.pyc imports=[('spyne.model.primitive.Decimal', 0, 0, -1), ('spyne.model.complex.Array', 0, 0, -1), ('spyne.model.primitive.Unicode', 0, 0, -1), ('spyne.model.primitive', 0, 0, -1), ('spyne.model.complex', 0, 0, -1), ('logging', 0, 0, -1), ('spyne.model.primitive.Integer', 0, 0, -1), ('decimal.Decimal', 0, 0, -1), ('sys', 0, 0, -1), ('spyne.model.primitive.Double', 0, 0, -1), ('HydraLib.util.ordinal_to_timestamp', 0, 0, -1), ('HydraLib.util', 0, 0, -1), ('HydraLib.util.timestamp_to_ordinal', 0, 0, -1), ('spyne.model.complex.ComplexModel', 0, 0, -1), ('spyne.model.primitive.DateTime', 0, 0, -1), ('spyne.model.primitive.AnyDict', 0, 0, -1), ('decimal', 0, 0, -1), ('spyne.model.primitive.Float', 0, 0, -1)] binaries=[] datas=[]>
 soap_server.spyne: None -> None
 soap_server.lib: None -> None
 lib: None -> <PkgModule 'lib' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\lib\__init__.pyc imports=[] binaries=[] datas=[]>
 lib.plugins: None -> <PyModule 'lib.plugins' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\lib\plugins.pyc imports=[('sys', 0, 0, -1), ('lxml.etree', 0, 0, -1), ('os', 0, 0, -1), ('lxml', 0, 0, -1), ('logging', 0, 0, -1), ('HydraLib', 0, 0, -1), ('subprocess', 0, 0, -1), ('HydraLib.config', 0, 0, -1)] binaries=[] datas=[]>
-soap_server.numpy: None -> None
-numpy: None -> <PkgModule 'numpy' C:\Python27\lib\site-packages\numpy\__init__.pyc imports=[('version.version', 0, 1, 1), ('__future__.print_function', 0, 0, 0), ('version.git_revision', 0, 1, 1), ('matrixlib.*', 0, 1, 1), ('__future__.absolute_import', 0, 0, 0), ('builtins.float', 0, 1, 0), ('version', 0, 1, 1), ('_import_tools', 0, 1, 1), ('__builtin__.bool', 0, 1, 0), ('', 0, 1, 1), ('core.round', 0, 1, 1), ('__builtin__.str', 0, 1, 0), ('os', 1, 0, 0), ('builtins.str', 0, 1, 0), ('sys', 0, 1, 0), ('random', 0, 1, 1), ('sys', 0, 0, 0), ('linalg', 0, 1, 1), ('numpy.__config__.show', 0, 1, 0), ('builtins.object', 0, 1, 0), ('fft', 0, 1, 1), ('builtins.bool', 0, 1, 0), ('__builtin__.complex', 0, 1, 0), ('testing', 0, 1, 1), ('__builtin__.int', 0, 1, 0), ('testing.Tester', 0, 1, 1), ('__future__.division', 0, 0, 0), ('matrixlib', 0, 1, 1), ('__builtin__', 0, 1, 0), ('compat.long', 0, 1, 1), ('builtins.int', 0, 1, 0), ('_import_tools.PackageLoader', 0, 1, 1), ('__builtin__.unicode', 0, 1, 0), ('lib', 0, 1, 1), ('core.min', 0, 1, 1), ('ctypeslib', 0, 1, 1), ('core', 0, 1, 1), ('core.max', 0, 1, 1), ('__future__', 0, 0, 0), ('numpy.__config__', 0, 1, 0), ('builtins.complex', 0, 1, 0), ('add_newdocs', 0, 1, 1), ('builtins', 0, 1, 0), ('warnings', 0, 1, 0), ('__builtin__.object', 0, 1, 0), ('lib.*', 0, 1, 1), ('core.abs', 0, 1, 1), ('compat', 0, 1, 1), ('__builtin__.float', 0, 1, 0), ('ma', 0, 1, 1), ('core.*', 0, 1, 1), ('polynomial', 0, 1, 1)] binaries=[] datas=[]>
 soap_server.logging: None -> None
-numpy.array: None -> None
-  DEL numpy.array
 soap_server.decimal: None -> None
 soap_server.sys: None -> None
 soap_server.HydraLib: None -> None
 HydraLib.util: None -> <PyModule 'HydraLib.util' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\util.pyc imports=[('decimal.ROUND_HALF_UP', 0, 0, -1), ('operator.mul', 0, 0, -1), ('decimal.Decimal', 0, 0, -1), ('operator', 0, 0, -1), ('logging', 0, 0, -1), ('datetime', 0, 0, -1), ('decimal', 0, 0, -1)] binaries=[] datas=[]>
+HydraLib.hydra_logging: None -> <PyModule 'HydraLib.hydra_logging' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\hydra_logging.pyc imports=[('logging.config', 0, 0, -1), ('ctypes', 0, 0, -1), ('re', 1, 1, -1), ('os', 0, 0, -1), ('logging', 0, 0, -1), ('config', 0, 0, -1)] binaries=[] datas=[]>
+HydraLib.logging: None -> None
+logging.config: None -> <PyModule 'logging.config' C:\Python27\lib\logging\config.pyc imports=[('tempfile', 1, 0, -1), ('re', 0, 0, -1), ('json', 1, 1, -1), ('sys', 0, 0, -1), ('types', 0, 0, -1), ('os', 0, 0, -1), ('threading', 0, 0, -1), ('struct', 0, 0, -1), ('thread', 0, 0, -1), ('SocketServer.ThreadingTCPServer', 0, 0, -1), ('logging', 0, 0, -1), ('cStringIO', 0, 0, -1), ('ConfigParser', 1, 0, -1), ('socket', 0, 0, -1), ('traceback', 0, 0, -1), ('SocketServer.StreamRequestHandler', 0, 0, -1), ('select', 1, 0, -1), ('SocketServer', 0, 0, -1), ('logging.handlers', 0, 0, -1)] binaries=[] datas=[]>
+HydraLib.ctypes: None -> None
+HydraLib.re: None -> None
+HydraLib.os: None -> None
+logging.tempfile: None -> None
+logging.re: None -> None
+logging.json: None -> None
+logging.types: None -> None
+logging.struct: None -> None
+logging.SocketServer: None -> None
+logging.logging: None -> None
+logging.ConfigParser: None -> None
+logging.socket: None -> None
+logging.select: None -> None
+logging.handlers: None -> <PyModule 'logging.handlers' C:\Python27\lib\logging\handlers.pyc imports=[('re', 0, 0, -1), ('httplib', 1, 0, -1), ('stat.ST_DEV', 0, 0, -1), ('stat.ST_MTIME', 0, 0, -1), ('os', 0, 0, -1), ('email.utils', 1, 0, -1), ('smtplib', 1, 0, -1), ('email.utils.formatdate', 1, 0, -1), ('struct', 0, 0, -1), ('urllib', 1, 0, -1), ('logging', 0, 0, -1), ('cPickle', 0, 0, -1), ('stat.ST_INO', 0, 0, -1), ('socket', 0, 0, -1), ('win32evtlogutil', 1, 0, -1), ('win32evtlog', 1, 0, -1), ('errno', 0, 0, -1), ('time', 0, 0, -1), ('codecs', 0, 0, -1), ('stat', 0, 0, -1)] binaries=[] datas=[]>
+logging.httplib: None -> None
+logging.stat: None -> None
+logging.email: None -> None
+logging.smtplib: None -> None
+smtplib: None -> <PyModule 'smtplib' C:\Python27\lib\smtplib.pyc imports=[('re', 0, 0, -1), ('sys.stderr', 0, 0, -1), ('sys', 0, 0, -1), ('hmac', 0, 0, -1), ('email.base64mime.encode', 0, 0, -1), ('email.base64mime', 0, 0, -1), ('ssl', 0, 0, -1), ('socket', 0, 0, -1), ('sys', 0, 1, -1), ('email.utils', 0, 0, -1), ('base64', 0, 0, -1)] binaries=[] datas=[]>
+logging.urllib: None -> None
+logging.cPickle: None -> None
+logging.win32evtlogutil: None -> None
+win32evtlogutil: None -> <PyModule 'win32evtlogutil' C:\Python27\lib\site-packages\win32\lib\win32evtlogutil.pyc imports=[('win32con', 0, 0, -1), ('win32evtlog', 0, 0, -1), ('win32api', 0, 0, -1), ('winerror', 0, 0, -1)] binaries=[] datas=[]>
+logging.win32evtlog: None -> None
+win32evtlog: None -> <ExtensionModule 'win32evtlog' C:\Python27\lib\site-packages\win32\win32evtlog.pyd imports=[] binaries=[] datas=[]>
+logging.errno: None -> None
+hmac: None -> <PyModule 'hmac' C:\Python27\lib\hmac.pyc imports=[('hashlib', 1, 1, -1), ('warnings', 0, 0, -1)] binaries=[] datas=[]>
+winerror: None -> <PyModule 'winerror' C:\Python27\lib\site-packages\win32\lib\winerror.pyc imports=[] binaries=[] datas=[]>
+HydraLib.winpaths: None -> None
+winpaths: None -> <PyModule 'winpaths' C:\Python27\lib\site-packages\winpaths.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.wintypes', 0, 0, -1), ('ctypes.windll', 0, 0, -1)] binaries=[('shell32.dll', 'C:\\Windows\\system32\\shell32.dll', 'BINARY')] datas=[]>
+HydraLib.glob: None -> None
+HydraLib.ConfigParser: None -> None
+HydraLib.sys: None -> None
+ctypes.wintypes: None -> <PyModule 'ctypes.wintypes' C:\Python27\lib\ctypes\wintypes.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.*', 0, 0, -1), ('ctypes._SimpleCData', 0, 0, -1)] binaries=[] datas=[]>
+ctypes.windll: None -> None
+  DEL ctypes.windll
+ctypes._SimpleCData: None -> None
+  DEL ctypes._SimpleCData
+HydraLib.decimal: None -> None
+HydraLib.operator: None -> None
+HydraLib.datetime: None -> None
+spyne.MethodDescriptor: None -> None
+  DEL spyne.MethodDescriptor
+spyne.const.RESULT_SUFFIX: None -> None
+  DEL spyne.const.RESULT_SUFFIX
+spyne.const.RESPONSE_SUFFIX: None -> None
+  DEL spyne.const.RESPONSE_SUFFIX
+soap_server.db: None -> None
+db.transaction: None -> None
+transaction: None -> <PkgModule 'transaction' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\__init__.pyc imports=[('transaction._transaction', 0, 0, -1), ('transaction._manager.TransactionManager', 0, 0, -1), ('transaction._manager.ThreadTransactionManager', 0, 0, -1), ('transaction._transaction.Transaction', 0, 0, -1), ('transaction._manager', 0, 0, -1)] binaries=[] datas=[]>
+db.sqlalchemy: None -> None
+sqlalchemy.orm.sessionmaker: None -> None
+  DEL sqlalchemy.orm.sessionmaker
+db.logging: None -> None
+sqlalchemy.orm.scoped_session: None -> None
+  DEL sqlalchemy.orm.scoped_session
+db.zope: None -> None
+zope: None -> <PkgModule 'zope' C:\Python27\lib\site-packages\zope\__init__.pyc imports=[] binaries=[] datas=[]>
+zope.sqlalchemy: None -> <PkgModule 'zope.sqlalchemy' C:\Python27\lib\site-packages\zope\sqlalchemy\__init__.pyc imports=[('zope.sqlalchemy.datamanager.mark_changed', 0, 0, -1), ('zope.sqlalchemy.datamanager.ZopeTransactionExtension', 0, 0, -1), ('zope.sqlalchemy.datamanager', 0, 0, -1), ('zope.sqlalchemy.datamanager.register', 0, 0, -1)] binaries=[] datas=[]>
+zope.sqlalchemy.ZopeTransactionExtension: None -> None
+  DEL zope.sqlalchemy.ZopeTransactionExtension
+sqlalchemy.ext.declarative.declarative_base: None -> None
+  DEL sqlalchemy.ext.declarative.declarative_base
+db.HydraLib: None -> None
+sqlalchemy.create_engine: None -> None
+  DEL sqlalchemy.create_engine
+transaction.transaction: None -> None
+transaction._transaction: None -> <PyModule 'transaction._transaction' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\_transaction.pyc imports=[('transaction._compat.reraise', 0, 0, -1), ('sys', 0, 0, -1), ('zope.interface.implementer', 0, 0, -1), ('transaction._compat.get_thread_ident', 0, 0, -1), ('transaction._compat.bytes_', 0, 0, -1), ('transaction.interfaces.TransactionFailedError', 0, 0, -1), ('transaction.weakset.WeakSet', 0, 0, -1), ('transaction._compat.StringIO', 0, 0, -1), ('transaction', 0, 0, -1), ('logging', 0, 0, -1), ('transaction.interfaces', 0, 0, -1), ('traceback', 0, 0, -1), ('binascii', 0, 0, -1), ('zope.interface', 0, 0, -1), ('transaction._compat.native_', 0, 0, -1), ('transaction._compat', 0, 0, -1), ('transaction.weakset', 0, 0, -1), ('weakref', 0, 0, -1)] binaries=[] datas=[]>
+transaction._manager: None -> <PyModule 'transaction._manager' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\_manager.pyc imports=[('transaction._compat.reraise', 0, 0, -1), ('threading', 0, 0, -1), ('sys', 0, 0, -1), ('zope.interface.implementer', 0, 0, -1), ('transaction.weakset.WeakSet', 0, 0, -1), ('transaction.interfaces.TransientError', 0, 0, -1), ('transaction._transaction.Transaction', 0, 0, -1), ('transaction._transaction', 0, 0, -1), ('transaction.interfaces', 0, 0, -1), ('zope.interface', 0, 0, -1), ('transaction._compat', 0, 0, -1), ('transaction.weakset', 0, 0, -1), ('transaction.interfaces.ITransactionManager', 0, 0, -1)] binaries=[] datas=[]>
+transaction._compat: None -> <PyModule 'transaction._compat' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\_compat.pyc imports=[('threading._get_ident', 0, 1, -1), ('UserDict', 0, 1, -1), ('UserDict.UserDict', 0, 1, -1), ('builtins', 0, 1, -1), ('sys', 0, 0, -1), ('io.BytesIO', 0, 1, -1), ('io.StringIO', 0, 1, -1), ('types', 0, 0, -1), ('thread', 0, 1, -1), ('threading', 0, 1, -1), ('io', 0, 1, -1), ('collections', 0, 1, -1), ('collections.MutableMapping', 0, 1, -1), ('threading.get_ident', 0, 1, -1), ('thread.get_ident', 0, 1, -1)] binaries=[] datas=[]>
+transaction.sys: None -> None
+transaction.zope: None -> None
+zope.interface: None -> <PkgModule 'zope.interface' C:\Python27\lib\site-packages\zope\interface\__init__.pyc imports=[('zope.interface.declarations.noLongerProvides', 0, 0, -1), ('zope.interface.declarations.classImplementsOnly', 0, 0, -1), ('zope.interface.declarations.alsoProvides', 0, 0, -1), ('zope.interface.declarations.providedBy', 0, 0, -1), ('zope.interface.interface._wire', 0, 0, -1), ('zope.interface.interface.Interface', 0, 0, -1), ('zope.interface.interface', 0, 0, -1), ('zope.interface.declarations.provider', 0, 0, -1), ('zope.interface.declarations.named', 0, 0, -1), ('zope.interface.declarations.Declaration', 0, 0, -1), ('zope.interface.declarations.implementsOnly', 0, 0, -1), ('zope.interface.declarations.moduleProvides', 0, 0, -1), ('zope.interface.declarations.directlyProvidedBy', 0, 0, -1), ('zope.interface.declarations.classProvides', 0, 0, -1), ('zope.interface.exceptions', 0, 0, -1), ('zope.interface.declarations.Provides', 0, 0, -1), ('zope.interface.declarations.implements', 0, 0, -1), ('zope.interface.declarations.implementer_only', 0, 0, -1), ('zope.interface.exceptions.Invalid', 0, 0, -1), ('zope.interface.declarations.implementedBy', 0, 0, -1), ('zope.interface.interface.Attribute', 0, 0, -1), ('zope.interface.declarations.classImplements', 0, 0, -1), ('zope.interface.interface.taggedValue', 0, 0, -1), ('zope.interface.interface.invariant', 0, 0, -1), ('zope.interface.interfaces.IInterfaceDeclaration', 0, 0, -1), ('zope.interface.declarations.implementer', 0, 0, -1), ('zope.interface.declarations.directlyProvides', 0, 0, -1), ('zope.interface.declarations', 0, 0, -1), ('zope.interface.interfaces', 0, 0, -1)] binaries=[] datas=[]>
+zope.interface.implementer: None -> None
+  DEL zope.interface.implementer
+transaction.interfaces: None -> <PyModule 'transaction.interfaces' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\interfaces.pyc imports=[('zope.interface', 0, 0, -1)] binaries=[] datas=[]>
+transaction.weakset: None -> <PyModule 'transaction.weakset' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\weakset.pyc imports=[('weakref', 0, 0, -1)] binaries=[] datas=[]>
+transaction.logging: None -> None
+transaction.traceback: None -> None
+transaction.binascii: None -> None
+transaction.weakref: None -> None
+transaction.threading: None -> None
+transaction.UserDict: None -> None
+transaction.builtins: None -> None
+builtins: None -> None
+  DEL builtins
+transaction.io: None -> None
+transaction.types: None -> None
+transaction.thread: None -> None
+transaction.collections: None -> None
+zope.interface.zope: None -> None
+zope.interface.declarations: None -> <PyModule 'zope.interface.declarations' C:\Python27\lib\site-packages\zope\interface\declarations.pyc imports=[('zope.interface.interface.Specification', 0, 0, -1), ('_zope_interface_coptimizations.implementedBy', 0, 1, -1), ('_zope_interface_coptimizations.providedBy', 0, 1, -1), ('warnings', 0, 0, -1), ('zope.interface.advice', 0, 0, -1), ('types.ModuleType', 0, 0, -1), ('_zope_interface_coptimizations.ObjectSpecificationDescriptor', 0, 1, -1), ('sys', 0, 0, -1), ('zope.interface._compat.CLASS_TYPES', 0, 0, -1), ('_zope_interface_coptimizations', 0, 1, -1), ('types.FunctionType', 0, 0, -1), ('_zope_interface_coptimizations.getObjectSpecification', 0, 1, -1), ('zope.interface.advice.addClassAdvisor', 0, 0, -1), ('zope.interface.interface.InterfaceClass', 0, 0, -1), ('weakref', 0, 0, -1), ('types', 0, 0, -1), ('zope.interface._compat', 0, 0, -1), ('zope.interface.interface', 0, 0, -1), ('_zope_interface_coptimizations.ClassProvidesBase', 0, 1, -1), ('zope.interface._compat.PYTHON3', 0, 0, -1), ('_zope_interface_coptimizations', 0, 0, -1), ('types.MethodType', 0, 0, -1), ('zope.interface.interface.SpecificationBase', 0, 0, -1)] binaries=[] datas=[]>
+zope.interface.interface: None -> <PyModule 'zope.interface.interface' C:\Python27\lib\site-packages\zope\interface\interface.pyc imports=[('zope.interface.declarations.providedBy', 0, 0, -1), ('warnings', 0, 0, -1), ('__future__', 0, 0, -1), ('zope.interface.exceptions.Invalid', 0, 0, -1), ('_zope_interface_coptimizations.adapter_hooks', 0, 0, -1), ('zope.interface.declarations', 1, 0, -1), ('sys', 0, 0, -1), ('zope.interface.exceptions.InvalidInterface', 0, 0, -1), ('types.FunctionType', 0, 0, -1), ('zope.interface.ro.ro', 0, 0, -1), ('__future__.generators', 0, 0, -1), ('zope.interface.ro', 0, 0, -1), ('zope.interface.exceptions', 0, 0, -1), ('weakref', 0, 0, -1), ('types', 0, 0, -1), ('zope.interface.interfaces', 1, 0, -1), ('zope.interface.exceptions.BrokenImplementation', 0, 0, -1), ('_zope_interface_coptimizations.SpecificationBase', 0, 0, -1), ('zope.interface.declarations.implementedBy', 0, 0, -1), ('_zope_interface_coptimizations', 0, 0, -1), ('zope.interface.interfaces.ISpecification', 1, 0, -1), ('_zope_interface_coptimizations.InterfaceBase', 0, 0, -1), ('zope.interface.interfaces.IAttribute', 1, 0, -1), ('types.MethodType', 0, 0, -1), ('zope.interface.declarations.classImplements', 1, 0, -1), ('zope.interface.interfaces.IInterface', 1, 0, -1), ('zope.interface.declarations', 0, 0, -1), ('zope.interface.interfaces.IMethod', 1, 0, -1)] binaries=[] datas=[]>
+zope.interface.exceptions: None -> <PyModule 'zope.interface.exceptions' C:\Python27\lib\site-packages\zope\interface\exceptions.pyc imports=[] binaries=[] datas=[]>
+zope.interface.interfaces: None -> <PyModule 'zope.interface.interfaces' C:\Python27\lib\site-packages\zope\interface\interfaces.pyc imports=[('zope.interface.interface.Attribute', 0, 0, -1), ('zope.interface._compat', 0, 0, -1), ('zope.interface.declarations.implementer', 0, 0, -1), ('zope.interface.declarations', 0, 0, -1), ('zope.interface.interface.Interface', 0, 0, -1), ('zope.interface.interface', 0, 0, -1), ('zope.interface._compat._u', 0, 0, -1)] binaries=[] datas=[]>
+zope.interface._zope_interface_coptimizations: None -> <ExtensionModule 'zope.interface._zope_interface_coptimizations' C:\Python27\lib\site-packages\zope\interface\_zope_interface_coptimizations.pyd imports=[] binaries=[] datas=[]>
+zope.interface.warnings: None -> None
+zope.interface.advice: None -> <PyModule 'zope.interface.advice' C:\Python27\lib\site-packages\zope\interface\advice.pyc imports=[('types.FunctionType', 0, 0, -1), ('types.ClassType', 0, 0, -1), ('sys', 0, 0, -1), ('types', 0, 0, -1)] binaries=[] datas=[]>
+zope.interface.types: None -> None
+zope.interface.sys: None -> None
+zope.interface._compat: None -> <PyModule 'zope.interface._compat' C:\Python27\lib\site-packages\zope\interface\_compat.pyc imports=[('sys', 0, 0, -1), ('types', 0, 0, -1)] binaries=[] datas=[]>
+zope.interface.weakref: None -> None
+zope.interface.__future__: None -> None
+zope.interface.ro: None -> <PyModule 'zope.interface.ro' C:\Python27\lib\site-packages\zope\interface\ro.pyc imports=[] binaries=[] datas=[]>
+zope.interface.implementer: None -> None
+  DEL zope.interface.implementer
+zope.sqlalchemy.zope: None -> None
+zope.sqlalchemy.datamanager: None -> <PyModule 'zope.sqlalchemy.datamanager' C:\Python27\lib\site-packages\zope\sqlalchemy\datamanager.pyc imports=[('sqlalchemy.orm.session', 0, 0, -1), ('sqlalchemy.orm.exc', 0, 0, -1), ('sqlalchemy.event', 1, 0, -1), ('zope.interface.implementer', 0, 0, -1), ('cx_Oracle', 0, 0, -1), ('transaction.interfaces.ISavepointDataManager', 0, 0, -1), ('sqlalchemy.orm.session.SessionExtension', 0, 0, -1), ('sqlalchemy', 1, 0, -1), ('transaction', 0, 0, -1), ('sqlalchemy.orm.exc.ConcurrentModificationError', 0, 0, -1), ('transaction.interfaces.IDataManagerSavepoint', 0, 0, -1), ('sqlalchemy.exc', 0, 0, -1), ('psycopg2.extensions', 0, 0, -1), ('sqlalchemy.engine.base.Engine', 0, 0, -1), ('sqlalchemy.__version__', 1, 0, -1), ('transaction._transaction', 0, 0, -1), ('transaction.interfaces', 0, 0, -1), ('zope.interface', 0, 0, -1), ('transaction._transaction.Status', 0, 0, -1), ('sqlalchemy.exc.DBAPIError', 0, 0, -1), ('sqlalchemy.engine.base', 0, 0, -1)] binaries=[] datas=[]>
+zope.sqlalchemy.sqlalchemy: None -> None
+zope.interface.implementer: None -> None
+  DEL zope.interface.implementer
+zope.sqlalchemy.cx_Oracle: None -> None
+cx_Oracle: None -> None
+  DEL cx_Oracle
+zope.sqlalchemy.transaction: None -> None
+zope.sqlalchemy.psycopg2: None -> None
+psycopg2: None -> None
+  DEL psycopg2
+sqlalchemy.__version__: None -> None
+  DEL sqlalchemy.__version__
+db.db: None -> None
+db.DBSession: None -> None
+  DEL db.DBSession
+db.bcrypt: None -> None
+bcrypt: None -> <PkgModule 'bcrypt' C:\Python27\lib\site-packages\bcrypt\__init__.pyc imports=[('os', 0, 0, -1), ('_bcrypt', 0, 0, -1), ('_bcrypt.*', 0, 0, -1)] binaries=[] datas=[]>
+db.datetime: None -> None
+db.random: None -> None
+sqlalchemy.text: None -> None
+  DEL sqlalchemy.text
+sqlalchemy.BigInteger: None -> None
+  DEL sqlalchemy.BigInteger
+db.DeclarativeBase: None -> None
+  DEL db.DeclarativeBase
+db.engine: None -> None
+  DEL db.engine
+db.decimal: None -> None
+sqlalchemy.Numeric: None -> None
+  DEL sqlalchemy.Numeric
+sqlalchemy.orm.backref: None -> None
+  DEL sqlalchemy.orm.backref
+sqlalchemy.orm.relationship: None -> None
+  DEL sqlalchemy.orm.relationship
+  DEL sqlalchemy.Column
+sqlalchemy.Integer: None -> None
+  DEL sqlalchemy.Integer
+db.DBSession: None -> None
+  DEL db.DBSession
+sqlalchemy.String: None -> None
+  DEL sqlalchemy.String
+sqlalchemy.ForeignKey: None -> None
+  DEL sqlalchemy.ForeignKey
+sqlalchemy.Text: None -> None
+  DEL sqlalchemy.Text
+sqlalchemy.and_: None -> None
+  DEL sqlalchemy.and_
+sqlalchemy.LargeBinary: None -> None
+  DEL sqlalchemy.LargeBinary
+sqlalchemy.DateTime: None -> None
+  DEL sqlalchemy.DateTime
+bcrypt.os: None -> None
+bcrypt._bcrypt: None -> <ExtensionModule 'bcrypt._bcrypt' C:\Python27\lib\site-packages\bcrypt\_bcrypt.pyd imports=[] binaries=[] datas=[]>
+spyne.util.oset.oset: None -> None
+  DEL spyne.util.oset.oset
+lib.sys: None -> None
+lib.lxml: None -> None
+lib.os: None -> None
+lib.logging: None -> None
+lib.HydraLib: None -> None
+lib.subprocess: None -> None
+lib.static: None -> <PyModule 'lib.static' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\lib\static.pyc imports=[('HydraLib.HydraException.HydraError', 0, 0, -1), ('os', 0, 0, -1), ('logging', 0, 0, -1), ('HydraLib', 0, 0, -1), ('HydraLib.config', 0, 0, -1), ('base64', 0, 0, -1), ('HydraLib.HydraException', 0, 0, -1)] binaries=[] datas=[]>
+lib.base64: None -> None
+lib.scenario: None -> <PyModule 'lib.scenario' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\lib\scenario.pyc imports=[('sqlalchemy.orm.exc', 0, 0, -1), ('db.model.Node', 0, 0, -1), ('db.model.ResourceAttr', 0, 0, -1), ('db.model.Scenario', 0, 0, -1), ('HydraLib.HydraException.ResourceNotFoundError', 0, 0, -1), ('db.model.ResourceGroupItem', 0, 0, -1), ('db.model.ResourceScenario', 0, 0, -1), ('HydraLib.HydraException', 0, 0, -1), ('HydraLib.HydraException.HydraError', 0, 0, -1), ('collections.namedtuple', 0, 0, -1), ('db.model.Attr', 0, 0, -1), ('copy.deepcopy', 0, 0, -1), ('sqlalchemy.orm', 0, 0, -1), ('HydraLib', 0, 0, -1), ('sqlalchemy.orm.joinedload_all', 0, 0, -1), ('sqlalchemy.or_', 0, 0, -1), ('collections', 0, 0, -1), ('HydraLib.HydraException.PermissionError', 0, 0, -1), ('sqlalchemy', 0, 0, -1), ('db.model.Dataset', 0, 0, -1), ('db', 0, 0, -1), ('db.model.NetworkOwner', 0, 0, -1), ('db.DBSession', 0, 0, -1), ('sqlalchemy.orm.exc.NoResultFound', 0, 0, -1), ('db.model.TypeAttr', 0, 0, -1), ('HydraLib.util', 0, 0, -1), ('copy', 0, 0, -1), ('data', 0, 0, -1), ('logging', 0, 0, -1), ('HydraLib.util.timestamp_to_ordinal', 0, 0, -1), ('db.model', 0, 0, -1), ('HydraLib.units', 0, 0, -1)] binaries=[] datas=[]>
+lib.sqlalchemy: None -> None
+lib.db: None -> None
+lib.collections: None -> None
+lib.copy: None -> None
+sqlalchemy.orm.joinedload_all: None -> None
+  DEL sqlalchemy.orm.joinedload_all
+sqlalchemy.or_: None -> None
+  DEL sqlalchemy.or_
+db.DBSession: None -> None
+  DEL db.DBSession
+lib.data: None -> <PyModule 'lib.data' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\lib\data.pyc imports=[('sqlalchemy.orm.exc', 0, 0, -1), ('HydraLib.util.get_datetime', 0, 0, -1), ('sqlalchemy.and_', 0, 0, -1), ('HydraLib.util', 0, 0, -1), ('HydraLib.units', 0, 0, -1), ('db.model', 0, 0, -1), ('decimal', 0, 0, -1), ('HydraLib.HydraException', 0, 0, -1), ('HydraLib.HydraException.HydraError', 0, 0, -1), ('sys', 0, 0, -1), ('decimal.Decimal', 0, 0, -1), ('HydraLib', 0, 0, -1), ('sqlalchemy.sql.expression', 0, 0, -1), ('db.model.TimeSeriesData', 0, 0, -1), ('numpy.array', 0, 0, -1), ('numpy', 0, 0, -1), ('sqlalchemy', 0, 0, -1), ('db.model.Metadata', 0, 0, -1), ('datetime', 0, 0, -1), ('db.model.DatasetGroup', 0, 0, -1), ('db', 0, 0, -1), ('db.DBSession', 0, 0, -1), ('sqlalchemy.orm.exc.NoResultFound', 0, 0, -1), ('db.model.DatasetGroupItem', 0, 0, -1), ('sqlalchemy.null', 0, 0, -1), ('db.model.Dataset', 0, 0, -1), ('logging', 0, 0, -1), ('HydraLib.util.timestamp_to_ordinal', 0, 0, -1), ('sqlalchemy.sql.expression.case', 0, 0, -1), ('db.model.DatasetOwner', 0, 0, -1), ('HydraLib.HydraException.ResourceNotFoundError', 0, 0, -1)] binaries=[] datas=[]>
+HydraLib.units: None -> <PyModule 'HydraLib.units' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\units.pyc imports=[('HydraLib.HydraException.HydraError', 0, 0, -1), ('ConfigParser', 0, 0, -1), ('ConfigParser.NoSectionError', 0, 0, -1), ('lxml.etree', 0, 0, -1), ('copy', 0, 0, -1), ('os', 0, 0, -1), ('logging', 0, 0, -1), ('lxml', 0, 0, -1), ('copy.deepcopy', 0, 0, -1), ('config', 0, 0, -1), ('HydraLib.HydraException', 0, 0, -1)] binaries=[] datas=[]>
+sqlalchemy.and_: None -> None
+  DEL sqlalchemy.and_
+lib.decimal: None -> None
+lib.numpy: None -> None
+numpy: None -> <PkgModule 'numpy' C:\Python27\lib\site-packages\numpy\__init__.pyc imports=[('version.version', 0, 1, 1), ('__future__.print_function', 0, 0, 0), ('version.git_revision', 0, 1, 1), ('matrixlib.*', 0, 1, 1), ('__future__.absolute_import', 0, 0, 0), ('builtins.float', 0, 1, 0), ('version', 0, 1, 1), ('_import_tools', 0, 1, 1), ('__builtin__.bool', 0, 1, 0), ('', 0, 1, 1), ('core.round', 0, 1, 1), ('__builtin__.str', 0, 1, 0), ('os', 1, 0, 0), ('builtins.str', 0, 1, 0), ('sys', 0, 1, 0), ('random', 0, 1, 1), ('sys', 0, 0, 0), ('linalg', 0, 1, 1), ('numpy.__config__.show', 0, 1, 0), ('builtins.object', 0, 1, 0), ('fft', 0, 1, 1), ('builtins.bool', 0, 1, 0), ('__builtin__.complex', 0, 1, 0), ('testing', 0, 1, 1), ('__builtin__.int', 0, 1, 0), ('testing.Tester', 0, 1, 1), ('__future__.division', 0, 0, 0), ('matrixlib', 0, 1, 1), ('__builtin__', 0, 1, 0), ('compat.long', 0, 1, 1), ('builtins.int', 0, 1, 0), ('_import_tools.PackageLoader', 0, 1, 1), ('__builtin__.unicode', 0, 1, 0), ('lib', 0, 1, 1), ('core.min', 0, 1, 1), ('ctypeslib', 0, 1, 1), ('core', 0, 1, 1), ('core.max', 0, 1, 1), ('__future__', 0, 0, 0), ('numpy.__config__', 0, 1, 0), ('builtins.complex', 0, 1, 0), ('add_newdocs', 0, 1, 1), ('builtins', 0, 1, 0), ('warnings', 0, 1, 0), ('__builtin__.object', 0, 1, 0), ('lib.*', 0, 1, 1), ('core.abs', 0, 1, 1), ('compat', 0, 1, 1), ('__builtin__.float', 0, 1, 0), ('ma', 0, 1, 1), ('core.*', 0, 1, 1), ('polynomial', 0, 1, 1)] binaries=[] datas=[]>
+numpy.array: None -> None
+  DEL numpy.array
+lib.datetime: None -> None
+db.DBSession: None -> None
+  DEL db.DBSession
+sqlalchemy.null: None -> None
+  DEL sqlalchemy.null
+HydraLib.HydraLib: None -> None
+HydraLib.lxml: None -> None
+HydraLib.copy: None -> None
 numpy.version: None -> <PyModule 'numpy.version' C:\Python27\lib\site-packages\numpy\version.pyc imports=[] binaries=[] datas=[]>
 numpy.matrixlib: None -> <PkgModule 'numpy.matrixlib' C:\Python27\lib\site-packages\numpy\matrixlib\__init__.pyc imports=[('defmatrix', 0, 0, 1), ('__future__', 0, 0, 0), ('__future__.division', 0, 0, 0), ('__future__.absolute_import', 0, 0, 0), ('numpy.testing.Tester', 0, 0, 0), ('__future__.print_function', 0, 0, 0), ('defmatrix.*', 0, 0, 1), ('numpy.testing', 0, 0, 0)] binaries=[] datas=[]>
 builtins: None -> None
@@ -2876,7 +3074,6 @@ win32com.client.pywintypes: None -> None
 win32com.client.pythoncom: None -> None
 win32com.client.types: None -> None
 win32com.client.winerror: None -> None
-winerror: None -> <PyModule 'winerror' C:\Python27\lib\site-packages\win32\lib\winerror.pyc imports=[] binaries=[] datas=[]>
 win32com.client.dynamic: None -> <PyModule 'win32com.client.dynamic' C:\Python27\lib\site-packages\win32com\client\dynamic.pyc imports=[('sys', 0, 0, -1), ('types', 0, 0, -1), ('pywintypes', 0, 0, -1), ('pythoncom', 0, 0, -1), ('win32com.client.util', 1, 0, -1), ('util', 1, 0, -1), ('winerror', 0, 0, -1), ('pywintypes.IIDType', 0, 0, -1), ('traceback', 0, 0, -1), ('build', 0, 0, -1), ('win32com.client', 0, 0, -1)] binaries=[] datas=[]>
 win32com.client.sys: None -> None
 win32com.client.genpy: None -> <PyModule 'win32com.client.genpy' C:\Python27\lib\site-packages\win32com\client\genpy.pyc imports=[('win32com', 0, 0, -1), ('sys', 0, 0, -1), ('os', 0, 0, -1), ('pythoncom', 0, 0, -1), ('time', 0, 0, -1), ('build', 0, 0, -1), ('codecs', 1, 1, -1)] binaries=[] datas=[]>
@@ -3088,206 +3285,6 @@ numpy.polynomial.polynomial: None -> <PyModule 'numpy.polynomial.polynomial' C:\
 numpy.polynomial.chebyshev: None -> <PyModule 'numpy.polynomial.chebyshev' C:\Python27\lib\site-packages\numpy\polynomial\chebyshev.pyc imports=[('__future__.print_function', 0, 0, 0), ('__future__', 0, 0, 0), ('__future__.division', 0, 0, 0), ('polytemplate.polytemplate', 0, 0, 1), ('polynomial.polysub', 1, 0, 1), ('', 0, 0, 1), ('__future__.absolute_import', 0, 0, 0), ('numpy.linalg', 0, 0, 0), ('polynomial.polymulx', 1, 0, 1), ('polynomial.polyadd', 1, 0, 1), ('polytemplate', 0, 0, 1), ('polyutils', 0, 0, 1), ('polynomial', 1, 0, 1), ('warnings', 0, 0, 0), ('numpy', 0, 0, 0)] binaries=[] datas=[]>
 numpy.polynomial.polytemplate: None -> <PyModule 'numpy.polynomial.polytemplate' C:\Python27\lib\site-packages\numpy\polynomial\polytemplate.pyc imports=[('sys', 0, 0, 0), ('__future__', 0, 0, 0), ('__future__.division', 0, 0, 0), ('string', 0, 0, 0), ('__future__.absolute_import', 0, 0, 0), ('__future__.print_function', 0, 0, 0)] binaries=[] datas=[]>
 numpy.polynomial.polyutils: None -> <PyModule 'numpy.polynomial.polyutils' C:\Python27\lib\site-packages\numpy\polynomial\polyutils.pyc imports=[('__future__.print_function', 0, 0, 0), ('__future__', 0, 0, 0), ('__future__.division', 0, 0, 0), ('warnings', 0, 0, 0), ('__future__.absolute_import', 0, 0, 0), ('sys', 0, 0, 0), ('numpy', 0, 0, 0)] binaries=[] datas=[]>
-HydraLib.hydra_logging: None -> <PyModule 'HydraLib.hydra_logging' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\hydra_logging.pyc imports=[('logging.config', 0, 0, -1), ('ctypes', 0, 0, -1), ('re', 1, 1, -1), ('os', 0, 0, -1), ('logging', 0, 0, -1), ('config', 0, 0, -1)] binaries=[] datas=[]>
-HydraLib.logging: None -> None
-logging.config: None -> <PyModule 'logging.config' C:\Python27\lib\logging\config.pyc imports=[('tempfile', 1, 0, -1), ('re', 0, 0, -1), ('json', 1, 1, -1), ('sys', 0, 0, -1), ('types', 0, 0, -1), ('os', 0, 0, -1), ('threading', 0, 0, -1), ('struct', 0, 0, -1), ('thread', 0, 0, -1), ('SocketServer.ThreadingTCPServer', 0, 0, -1), ('logging', 0, 0, -1), ('cStringIO', 0, 0, -1), ('ConfigParser', 1, 0, -1), ('socket', 0, 0, -1), ('traceback', 0, 0, -1), ('SocketServer.StreamRequestHandler', 0, 0, -1), ('select', 1, 0, -1), ('SocketServer', 0, 0, -1), ('logging.handlers', 0, 0, -1)] binaries=[] datas=[]>
-HydraLib.ctypes: None -> None
-HydraLib.re: None -> None
-HydraLib.os: None -> None
-logging.tempfile: None -> None
-logging.re: None -> None
-logging.json: None -> None
-logging.types: None -> None
-logging.struct: None -> None
-logging.SocketServer: None -> None
-logging.logging: None -> None
-logging.ConfigParser: None -> None
-logging.socket: None -> None
-logging.select: None -> None
-logging.handlers: None -> <PyModule 'logging.handlers' C:\Python27\lib\logging\handlers.pyc imports=[('re', 0, 0, -1), ('httplib', 1, 0, -1), ('stat.ST_DEV', 0, 0, -1), ('stat.ST_MTIME', 0, 0, -1), ('os', 0, 0, -1), ('email.utils', 1, 0, -1), ('smtplib', 1, 0, -1), ('email.utils.formatdate', 1, 0, -1), ('struct', 0, 0, -1), ('urllib', 1, 0, -1), ('logging', 0, 0, -1), ('cPickle', 0, 0, -1), ('stat.ST_INO', 0, 0, -1), ('socket', 0, 0, -1), ('win32evtlogutil', 1, 0, -1), ('win32evtlog', 1, 0, -1), ('errno', 0, 0, -1), ('time', 0, 0, -1), ('codecs', 0, 0, -1), ('stat', 0, 0, -1)] binaries=[] datas=[]>
-logging.httplib: None -> None
-logging.stat: None -> None
-logging.email: None -> None
-logging.smtplib: None -> None
-smtplib: None -> <PyModule 'smtplib' C:\Python27\lib\smtplib.pyc imports=[('re', 0, 0, -1), ('sys.stderr', 0, 0, -1), ('sys', 0, 0, -1), ('hmac', 0, 0, -1), ('email.base64mime.encode', 0, 0, -1), ('email.base64mime', 0, 0, -1), ('ssl', 0, 0, -1), ('socket', 0, 0, -1), ('sys', 0, 1, -1), ('email.utils', 0, 0, -1), ('base64', 0, 0, -1)] binaries=[] datas=[]>
-logging.urllib: None -> None
-logging.cPickle: None -> None
-logging.win32evtlogutil: None -> None
-win32evtlogutil: None -> <PyModule 'win32evtlogutil' C:\Python27\lib\site-packages\win32\lib\win32evtlogutil.pyc imports=[('win32con', 0, 0, -1), ('win32evtlog', 0, 0, -1), ('win32api', 0, 0, -1), ('winerror', 0, 0, -1)] binaries=[] datas=[]>
-logging.win32evtlog: None -> None
-win32evtlog: None -> <ExtensionModule 'win32evtlog' C:\Python27\lib\site-packages\win32\win32evtlog.pyd imports=[] binaries=[] datas=[]>
-logging.errno: None -> None
-hmac: None -> <PyModule 'hmac' C:\Python27\lib\hmac.pyc imports=[('hashlib', 1, 1, -1), ('warnings', 0, 0, -1)] binaries=[] datas=[]>
-HydraLib.winpaths: None -> None
-winpaths: None -> <PyModule 'winpaths' C:\Python27\lib\site-packages\winpaths.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.wintypes', 0, 0, -1), ('ctypes.windll', 0, 0, -1)] binaries=[('shell32.dll', 'C:\\Windows\\system32\\shell32.dll', 'BINARY')] datas=[]>
-HydraLib.glob: None -> None
-HydraLib.ConfigParser: None -> None
-HydraLib.sys: None -> None
-ctypes.wintypes: None -> <PyModule 'ctypes.wintypes' C:\Python27\lib\ctypes\wintypes.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.*', 0, 0, -1), ('ctypes._SimpleCData', 0, 0, -1)] binaries=[] datas=[]>
-ctypes.windll: None -> None
-  DEL ctypes.windll
-ctypes._SimpleCData: None -> None
-  DEL ctypes._SimpleCData
-HydraLib.decimal: None -> None
-HydraLib.operator: None -> None
-HydraLib.datetime: None -> None
-spyne.MethodDescriptor: None -> None
-  DEL spyne.MethodDescriptor
-spyne.const.RESULT_SUFFIX: None -> None
-  DEL spyne.const.RESULT_SUFFIX
-spyne.const.RESPONSE_SUFFIX: None -> None
-  DEL spyne.const.RESPONSE_SUFFIX
-soap_server.db: None -> None
-db.transaction: None -> None
-transaction: None -> <PkgModule 'transaction' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\__init__.pyc imports=[('transaction._transaction', 0, 0, -1), ('transaction._manager.TransactionManager', 0, 0, -1), ('transaction._manager.ThreadTransactionManager', 0, 0, -1), ('transaction._transaction.Transaction', 0, 0, -1), ('transaction._manager', 0, 0, -1)] binaries=[] datas=[]>
-db.sqlalchemy: None -> None
-sqlalchemy.orm.sessionmaker: None -> None
-  DEL sqlalchemy.orm.sessionmaker
-db.logging: None -> None
-sqlalchemy.orm.scoped_session: None -> None
-  DEL sqlalchemy.orm.scoped_session
-db.zope: None -> None
-zope: None -> <PkgModule 'zope' C:\Python27\lib\site-packages\zope\__init__.pyc imports=[] binaries=[] datas=[]>
-zope.sqlalchemy: None -> <PkgModule 'zope.sqlalchemy' C:\Python27\lib\site-packages\zope\sqlalchemy\__init__.pyc imports=[('zope.sqlalchemy.datamanager.mark_changed', 0, 0, -1), ('zope.sqlalchemy.datamanager.ZopeTransactionExtension', 0, 0, -1), ('zope.sqlalchemy.datamanager', 0, 0, -1), ('zope.sqlalchemy.datamanager.register', 0, 0, -1)] binaries=[] datas=[]>
-zope.sqlalchemy.ZopeTransactionExtension: None -> None
-  DEL zope.sqlalchemy.ZopeTransactionExtension
-sqlalchemy.ext.declarative.declarative_base: None -> None
-  DEL sqlalchemy.ext.declarative.declarative_base
-db.HydraLib: None -> None
-sqlalchemy.create_engine: None -> None
-  DEL sqlalchemy.create_engine
-transaction.transaction: None -> None
-transaction._transaction: None -> <PyModule 'transaction._transaction' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\_transaction.pyc imports=[('transaction._compat.reraise', 0, 0, -1), ('sys', 0, 0, -1), ('zope.interface.implementer', 0, 0, -1), ('transaction._compat.get_thread_ident', 0, 0, -1), ('transaction._compat.bytes_', 0, 0, -1), ('transaction.interfaces.TransactionFailedError', 0, 0, -1), ('transaction.weakset.WeakSet', 0, 0, -1), ('transaction._compat.StringIO', 0, 0, -1), ('transaction', 0, 0, -1), ('logging', 0, 0, -1), ('transaction.interfaces', 0, 0, -1), ('traceback', 0, 0, -1), ('binascii', 0, 0, -1), ('zope.interface', 0, 0, -1), ('transaction._compat.native_', 0, 0, -1), ('transaction._compat', 0, 0, -1), ('transaction.weakset', 0, 0, -1), ('weakref', 0, 0, -1)] binaries=[] datas=[]>
-transaction._manager: None -> <PyModule 'transaction._manager' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\_manager.pyc imports=[('transaction._compat.reraise', 0, 0, -1), ('threading', 0, 0, -1), ('sys', 0, 0, -1), ('zope.interface.implementer', 0, 0, -1), ('transaction.weakset.WeakSet', 0, 0, -1), ('transaction.interfaces.TransientError', 0, 0, -1), ('transaction._transaction.Transaction', 0, 0, -1), ('transaction._transaction', 0, 0, -1), ('transaction.interfaces', 0, 0, -1), ('zope.interface', 0, 0, -1), ('transaction._compat', 0, 0, -1), ('transaction.weakset', 0, 0, -1), ('transaction.interfaces.ITransactionManager', 0, 0, -1)] binaries=[] datas=[]>
-transaction._compat: None -> <PyModule 'transaction._compat' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\_compat.pyc imports=[('threading._get_ident', 0, 1, -1), ('UserDict', 0, 1, -1), ('UserDict.UserDict', 0, 1, -1), ('builtins', 0, 1, -1), ('sys', 0, 0, -1), ('io.BytesIO', 0, 1, -1), ('io.StringIO', 0, 1, -1), ('types', 0, 0, -1), ('thread', 0, 1, -1), ('threading', 0, 1, -1), ('io', 0, 1, -1), ('collections', 0, 1, -1), ('collections.MutableMapping', 0, 1, -1), ('threading.get_ident', 0, 1, -1), ('thread.get_ident', 0, 1, -1)] binaries=[] datas=[]>
-transaction.sys: None -> None
-transaction.zope: None -> None
-zope.interface: None -> <PkgModule 'zope.interface' C:\Python27\lib\site-packages\zope\interface\__init__.pyc imports=[('zope.interface.declarations.noLongerProvides', 0, 0, -1), ('zope.interface.declarations.classImplementsOnly', 0, 0, -1), ('zope.interface.declarations.alsoProvides', 0, 0, -1), ('zope.interface.declarations.providedBy', 0, 0, -1), ('zope.interface.interface._wire', 0, 0, -1), ('zope.interface.interface.Interface', 0, 0, -1), ('zope.interface.interface', 0, 0, -1), ('zope.interface.declarations.provider', 0, 0, -1), ('zope.interface.declarations.named', 0, 0, -1), ('zope.interface.declarations.Declaration', 0, 0, -1), ('zope.interface.declarations.implementsOnly', 0, 0, -1), ('zope.interface.declarations.moduleProvides', 0, 0, -1), ('zope.interface.declarations.directlyProvidedBy', 0, 0, -1), ('zope.interface.declarations.classProvides', 0, 0, -1), ('zope.interface.exceptions', 0, 0, -1), ('zope.interface.declarations.Provides', 0, 0, -1), ('zope.interface.declarations.implements', 0, 0, -1), ('zope.interface.declarations.implementer_only', 0, 0, -1), ('zope.interface.exceptions.Invalid', 0, 0, -1), ('zope.interface.declarations.implementedBy', 0, 0, -1), ('zope.interface.interface.Attribute', 0, 0, -1), ('zope.interface.declarations.classImplements', 0, 0, -1), ('zope.interface.interface.taggedValue', 0, 0, -1), ('zope.interface.interface.invariant', 0, 0, -1), ('zope.interface.interfaces.IInterfaceDeclaration', 0, 0, -1), ('zope.interface.declarations.implementer', 0, 0, -1), ('zope.interface.declarations.directlyProvides', 0, 0, -1), ('zope.interface.declarations', 0, 0, -1), ('zope.interface.interfaces', 0, 0, -1)] binaries=[] datas=[]>
-zope.interface.implementer: None -> None
-  DEL zope.interface.implementer
-transaction.interfaces: None -> <PyModule 'transaction.interfaces' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\interfaces.pyc imports=[('zope.interface', 0, 0, -1)] binaries=[] datas=[]>
-transaction.weakset: None -> <PyModule 'transaction.weakset' C:\Python27\lib\site-packages\transaction-1.4.3-py2.7.egg\transaction\weakset.pyc imports=[('weakref', 0, 0, -1)] binaries=[] datas=[]>
-transaction.logging: None -> None
-transaction.traceback: None -> None
-transaction.binascii: None -> None
-transaction.weakref: None -> None
-transaction.threading: None -> None
-transaction.UserDict: None -> None
-transaction.builtins: None -> None
-builtins: None -> None
-  DEL builtins
-transaction.io: None -> None
-transaction.types: None -> None
-transaction.thread: None -> None
-transaction.collections: None -> None
-zope.interface.zope: None -> None
-zope.interface.declarations: None -> <PyModule 'zope.interface.declarations' C:\Python27\lib\site-packages\zope\interface\declarations.pyc imports=[('zope.interface.interface.Specification', 0, 0, -1), ('_zope_interface_coptimizations.implementedBy', 0, 1, -1), ('_zope_interface_coptimizations.providedBy', 0, 1, -1), ('warnings', 0, 0, -1), ('zope.interface.advice', 0, 0, -1), ('types.ModuleType', 0, 0, -1), ('_zope_interface_coptimizations.ObjectSpecificationDescriptor', 0, 1, -1), ('sys', 0, 0, -1), ('zope.interface._compat.CLASS_TYPES', 0, 0, -1), ('_zope_interface_coptimizations', 0, 1, -1), ('types.FunctionType', 0, 0, -1), ('_zope_interface_coptimizations.getObjectSpecification', 0, 1, -1), ('zope.interface.advice.addClassAdvisor', 0, 0, -1), ('zope.interface.interface.InterfaceClass', 0, 0, -1), ('weakref', 0, 0, -1), ('types', 0, 0, -1), ('zope.interface._compat', 0, 0, -1), ('zope.interface.interface', 0, 0, -1), ('_zope_interface_coptimizations.ClassProvidesBase', 0, 1, -1), ('zope.interface._compat.PYTHON3', 0, 0, -1), ('_zope_interface_coptimizations', 0, 0, -1), ('types.MethodType', 0, 0, -1), ('zope.interface.interface.SpecificationBase', 0, 0, -1)] binaries=[] datas=[]>
-zope.interface.interface: None -> <PyModule 'zope.interface.interface' C:\Python27\lib\site-packages\zope\interface\interface.pyc imports=[('zope.interface.declarations.providedBy', 0, 0, -1), ('warnings', 0, 0, -1), ('__future__', 0, 0, -1), ('zope.interface.exceptions.Invalid', 0, 0, -1), ('_zope_interface_coptimizations.adapter_hooks', 0, 0, -1), ('zope.interface.declarations', 1, 0, -1), ('sys', 0, 0, -1), ('zope.interface.exceptions.InvalidInterface', 0, 0, -1), ('types.FunctionType', 0, 0, -1), ('zope.interface.ro.ro', 0, 0, -1), ('__future__.generators', 0, 0, -1), ('zope.interface.ro', 0, 0, -1), ('zope.interface.exceptions', 0, 0, -1), ('weakref', 0, 0, -1), ('types', 0, 0, -1), ('zope.interface.interfaces', 1, 0, -1), ('zope.interface.exceptions.BrokenImplementation', 0, 0, -1), ('_zope_interface_coptimizations.SpecificationBase', 0, 0, -1), ('zope.interface.declarations.implementedBy', 0, 0, -1), ('_zope_interface_coptimizations', 0, 0, -1), ('zope.interface.interfaces.ISpecification', 1, 0, -1), ('_zope_interface_coptimizations.InterfaceBase', 0, 0, -1), ('zope.interface.interfaces.IAttribute', 1, 0, -1), ('types.MethodType', 0, 0, -1), ('zope.interface.declarations.classImplements', 1, 0, -1), ('zope.interface.interfaces.IInterface', 1, 0, -1), ('zope.interface.declarations', 0, 0, -1), ('zope.interface.interfaces.IMethod', 1, 0, -1)] binaries=[] datas=[]>
-zope.interface.exceptions: None -> <PyModule 'zope.interface.exceptions' C:\Python27\lib\site-packages\zope\interface\exceptions.pyc imports=[] binaries=[] datas=[]>
-zope.interface.interfaces: None -> <PyModule 'zope.interface.interfaces' C:\Python27\lib\site-packages\zope\interface\interfaces.pyc imports=[('zope.interface.interface.Attribute', 0, 0, -1), ('zope.interface._compat', 0, 0, -1), ('zope.interface.declarations.implementer', 0, 0, -1), ('zope.interface.declarations', 0, 0, -1), ('zope.interface.interface.Interface', 0, 0, -1), ('zope.interface.interface', 0, 0, -1), ('zope.interface._compat._u', 0, 0, -1)] binaries=[] datas=[]>
-zope.interface._zope_interface_coptimizations: None -> <ExtensionModule 'zope.interface._zope_interface_coptimizations' C:\Python27\lib\site-packages\zope\interface\_zope_interface_coptimizations.pyd imports=[] binaries=[] datas=[]>
-zope.interface.warnings: None -> None
-zope.interface.advice: None -> <PyModule 'zope.interface.advice' C:\Python27\lib\site-packages\zope\interface\advice.pyc imports=[('types.FunctionType', 0, 0, -1), ('types.ClassType', 0, 0, -1), ('sys', 0, 0, -1), ('types', 0, 0, -1)] binaries=[] datas=[]>
-zope.interface.types: None -> None
-zope.interface.sys: None -> None
-zope.interface._compat: None -> <PyModule 'zope.interface._compat' C:\Python27\lib\site-packages\zope\interface\_compat.pyc imports=[('sys', 0, 0, -1), ('types', 0, 0, -1)] binaries=[] datas=[]>
-zope.interface.weakref: None -> None
-zope.interface.__future__: None -> None
-zope.interface.ro: None -> <PyModule 'zope.interface.ro' C:\Python27\lib\site-packages\zope\interface\ro.pyc imports=[] binaries=[] datas=[]>
-zope.interface.implementer: None -> None
-  DEL zope.interface.implementer
-zope.sqlalchemy.zope: None -> None
-zope.sqlalchemy.datamanager: None -> <PyModule 'zope.sqlalchemy.datamanager' C:\Python27\lib\site-packages\zope\sqlalchemy\datamanager.pyc imports=[('sqlalchemy.orm.session', 0, 0, -1), ('sqlalchemy.orm.exc', 0, 0, -1), ('sqlalchemy.event', 1, 0, -1), ('zope.interface.implementer', 0, 0, -1), ('cx_Oracle', 0, 0, -1), ('transaction.interfaces.ISavepointDataManager', 0, 0, -1), ('sqlalchemy.orm.session.SessionExtension', 0, 0, -1), ('sqlalchemy', 1, 0, -1), ('transaction', 0, 0, -1), ('sqlalchemy.orm.exc.ConcurrentModificationError', 0, 0, -1), ('transaction.interfaces.IDataManagerSavepoint', 0, 0, -1), ('sqlalchemy.exc', 0, 0, -1), ('psycopg2.extensions', 0, 0, -1), ('sqlalchemy.engine.base.Engine', 0, 0, -1), ('sqlalchemy.__version__', 1, 0, -1), ('transaction._transaction', 0, 0, -1), ('transaction.interfaces', 0, 0, -1), ('zope.interface', 0, 0, -1), ('transaction._transaction.Status', 0, 0, -1), ('sqlalchemy.exc.DBAPIError', 0, 0, -1), ('sqlalchemy.engine.base', 0, 0, -1)] binaries=[] datas=[]>
-zope.sqlalchemy.sqlalchemy: None -> None
-zope.interface.implementer: None -> None
-  DEL zope.interface.implementer
-zope.sqlalchemy.cx_Oracle: None -> None
-cx_Oracle: None -> None
-  DEL cx_Oracle
-zope.sqlalchemy.transaction: None -> None
-zope.sqlalchemy.psycopg2: None -> None
-psycopg2: None -> None
-  DEL psycopg2
-sqlalchemy.__version__: None -> None
-  DEL sqlalchemy.__version__
-db.db: None -> None
-db.DBSession: None -> None
-  DEL db.DBSession
-db.bcrypt: None -> None
-bcrypt: None -> <PkgModule 'bcrypt' C:\Python27\lib\site-packages\bcrypt\__init__.pyc imports=[('os', 0, 0, -1), ('_bcrypt', 0, 0, -1), ('_bcrypt.*', 0, 0, -1)] binaries=[] datas=[]>
-db.datetime: None -> None
-db.random: None -> None
-sqlalchemy.text: None -> None
-  DEL sqlalchemy.text
-sqlalchemy.BigInteger: None -> None
-  DEL sqlalchemy.BigInteger
-db.DeclarativeBase: None -> None
-  DEL db.DeclarativeBase
-db.engine: None -> None
-  DEL db.engine
-db.decimal: None -> None
-sqlalchemy.Numeric: None -> None
-  DEL sqlalchemy.Numeric
-sqlalchemy.orm.backref: None -> None
-  DEL sqlalchemy.orm.backref
-sqlalchemy.orm.relationship: None -> None
-  DEL sqlalchemy.orm.relationship
-  DEL sqlalchemy.Column
-sqlalchemy.Integer: None -> None
-  DEL sqlalchemy.Integer
-db.DBSession: None -> None
-  DEL db.DBSession
-sqlalchemy.String: None -> None
-  DEL sqlalchemy.String
-sqlalchemy.ForeignKey: None -> None
-  DEL sqlalchemy.ForeignKey
-sqlalchemy.Text: None -> None
-  DEL sqlalchemy.Text
-sqlalchemy.and_: None -> None
-  DEL sqlalchemy.and_
-sqlalchemy.LargeBinary: None -> None
-  DEL sqlalchemy.LargeBinary
-sqlalchemy.DateTime: None -> None
-  DEL sqlalchemy.DateTime
-bcrypt.os: None -> None
-bcrypt._bcrypt: None -> <ExtensionModule 'bcrypt._bcrypt' C:\Python27\lib\site-packages\bcrypt\_bcrypt.pyd imports=[] binaries=[] datas=[]>
-spyne.util.oset.oset: None -> None
-  DEL spyne.util.oset.oset
-lib.sys: None -> None
-lib.lxml: None -> None
-lib.os: None -> None
-lib.logging: None -> None
-lib.HydraLib: None -> None
-lib.subprocess: None -> None
-lib.static: None -> <PyModule 'lib.static' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\lib\static.pyc imports=[('HydraLib.HydraException.HydraError', 0, 0, -1), ('os', 0, 0, -1), ('logging', 0, 0, -1), ('HydraLib', 0, 0, -1), ('HydraLib.config', 0, 0, -1), ('base64', 0, 0, -1), ('HydraLib.HydraException', 0, 0, -1)] binaries=[] datas=[]>
-lib.base64: None -> None
-lib.scenario: None -> <PyModule 'lib.scenario' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\lib\scenario.pyc imports=[('sqlalchemy.orm.exc', 0, 0, -1), ('db.model.Node', 0, 0, -1), ('db.model.ResourceAttr', 0, 0, -1), ('db.model.Scenario', 0, 0, -1), ('HydraLib.HydraException.ResourceNotFoundError', 0, 0, -1), ('db.model.ResourceGroupItem', 0, 0, -1), ('db.model.ResourceScenario', 0, 0, -1), ('HydraLib.HydraException', 0, 0, -1), ('HydraLib.HydraException.HydraError', 0, 0, -1), ('collections.namedtuple', 0, 0, -1), ('db.model.Attr', 0, 0, -1), ('copy.deepcopy', 0, 0, -1), ('sqlalchemy.orm', 0, 0, -1), ('HydraLib', 0, 0, -1), ('sqlalchemy.orm.joinedload_all', 0, 0, -1), ('sqlalchemy.or_', 0, 0, -1), ('collections', 0, 0, -1), ('HydraLib.HydraException.PermissionError', 0, 0, -1), ('sqlalchemy', 0, 0, -1), ('db.model.Dataset', 0, 0, -1), ('db', 0, 0, -1), ('db.model.NetworkOwner', 0, 0, -1), ('db.DBSession', 0, 0, -1), ('sqlalchemy.orm.exc.NoResultFound', 0, 0, -1), ('db.model.TypeAttr', 0, 0, -1), ('HydraLib.util', 0, 0, -1), ('copy', 0, 0, -1), ('data', 0, 0, -1), ('logging', 0, 0, -1), ('HydraLib.util.timestamp_to_ordinal', 0, 0, -1), ('db.model', 0, 0, -1), ('HydraLib.units', 0, 0, -1)] binaries=[] datas=[]>
-lib.sqlalchemy: None -> None
-lib.db: None -> None
-lib.collections: None -> None
-lib.copy: None -> None
-sqlalchemy.orm.joinedload_all: None -> None
-  DEL sqlalchemy.orm.joinedload_all
-sqlalchemy.or_: None -> None
-  DEL sqlalchemy.or_
-db.DBSession: None -> None
-  DEL db.DBSession
-lib.data: None -> <PyModule 'lib.data' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\lib\data.pyc imports=[('sqlalchemy.orm.exc', 0, 0, -1), ('HydraLib.util.get_datetime', 0, 0, -1), ('sqlalchemy.and_', 0, 0, -1), ('HydraLib.util', 0, 0, -1), ('HydraLib.units', 0, 0, -1), ('db.model', 0, 0, -1), ('decimal', 0, 0, -1), ('HydraLib.HydraException', 0, 0, -1), ('HydraLib.HydraException.HydraError', 0, 0, -1), ('sys', 0, 0, -1), ('decimal.Decimal', 0, 0, -1), ('HydraLib', 0, 0, -1), ('sqlalchemy.sql.expression', 0, 0, -1), ('db.model.TimeSeriesData', 0, 0, -1), ('numpy.array', 0, 0, -1), ('numpy', 0, 0, -1), ('sqlalchemy', 0, 0, -1), ('db.model.Metadata', 0, 0, -1), ('datetime', 0, 0, -1), ('db.model.DatasetGroup', 0, 0, -1), ('db', 0, 0, -1), ('db.DBSession', 0, 0, -1), ('sqlalchemy.orm.exc.NoResultFound', 0, 0, -1), ('db.model.DatasetGroupItem', 0, 0, -1), ('sqlalchemy.null', 0, 0, -1), ('db.model.Dataset', 0, 0, -1), ('logging', 0, 0, -1), ('HydraLib.util.timestamp_to_ordinal', 0, 0, -1), ('sqlalchemy.sql.expression.case', 0, 0, -1), ('db.model.DatasetOwner', 0, 0, -1), ('HydraLib.HydraException.ResourceNotFoundError', 0, 0, -1)] binaries=[] datas=[]>
-HydraLib.units: None -> <PyModule 'HydraLib.units' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\units.pyc imports=[('HydraLib.HydraException.HydraError', 0, 0, -1), ('ConfigParser', 0, 0, -1), ('ConfigParser.NoSectionError', 0, 0, -1), ('lxml.etree', 0, 0, -1), ('copy', 0, 0, -1), ('os', 0, 0, -1), ('logging', 0, 0, -1), ('lxml', 0, 0, -1), ('copy.deepcopy', 0, 0, -1), ('config', 0, 0, -1), ('HydraLib.HydraException', 0, 0, -1)] binaries=[] datas=[]>
-sqlalchemy.and_: None -> None
-  DEL sqlalchemy.and_
-lib.decimal: None -> None
-lib.numpy: None -> None
-numpy.array: None -> None
-  DEL numpy.array
-lib.datetime: None -> None
-db.DBSession: None -> None
-  DEL db.DBSession
-sqlalchemy.null: None -> None
-  DEL sqlalchemy.null
-HydraLib.HydraLib: None -> None
-HydraLib.lxml: None -> None
-HydraLib.copy: None -> None
 lib.sharing: None -> <PyModule 'lib.sharing' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\lib\sharing.pyc imports=[('HydraLib.HydraException.HydraError', 0, 0, -1), ('sqlalchemy.orm.exc', 0, 0, -1), ('sqlalchemy.orm.exc.NoResultFound', 0, 0, -1), ('db.model.Project', 0, 0, -1), ('db.model.Network', 0, 0, -1), ('logging', 0, 0, -1), ('db.model.Dataset', 0, 0, -1), ('HydraLib.HydraException.ResourceNotFoundError', 0, 0, -1), ('db.model', 0, 0, -1), ('db', 0, 0, -1), ('db.DBSession', 0, 0, -1), ('db.model.User', 0, 0, -1), ('HydraLib.HydraException', 0, 0, -1)] binaries=[] datas=[]>
 db.DBSession: None -> None
   DEL db.DBSession
