@@ -23,8 +23,8 @@ from hydra_complexmodels import Network,\
     ResourceGroup,\
     NetworkExtents,\
     ResourceSummary,\
-    Resource
-from lib import network
+    ResourceScenario
+from lib import network, scenario
 from hydra_base import HydraService
 
 class NetworkService(HydraService):
@@ -99,15 +99,71 @@ class NetworkService(HydraService):
         net = network.update_network(net, **ctx.in_header.__dict__)
         return Network(net, summary=True)
 
-    @rpc(Integer, _returns=Node)
-    def get_node(ctx, node_id):
+    @rpc(Integer, Integer(min_occurs=0), _returns=Node)
+    def get_node(ctx, node_id, scenario_id):
+        """
+            Get a node using the node_id.
+            optionally, scenario_id can be included if data is to be included
+        """
         node = network.get_node(node_id, **ctx.in_header.__dict__)
-        return Node(node)
 
-    @rpc(Integer, _returns=Link)
-    def get_link(ctx, link_id):
+        if scenario_id is not None:
+            ret_node = Node(node)
+            
+            res_scens = scenario.get_resource_data('NODE', node_id, scenario_id, None)
+        
+            rs_dict = {}
+            for rs in res_scens:
+                rs_dict[rs.resource_attr_id] = rs
+
+            for ra in ret_node.attributes:
+                if rs_dict.get(ra.id):
+                    ra.resourcescenario = ResourceScenario(rs_dict[ra.id])
+
+            return ret_node
+        else:
+            ret_node = Node(node)
+            return ret_node
+
+    @rpc(Integer, Integer, _returns=Link)
+    def get_link(ctx, link_id, scenario_id):
         link = network.get_link(link_id, **ctx.in_header.__dict__)
-        return Link(link)
+
+        if scenario_id is not None:
+            ret_link = Link(link)
+            res_scens = scenario.get_resource_data('LINK', link_id, scenario_id, None) 
+            rs_dict = {}
+            for rs in res_scens:
+                rs_dict[rs.resource_attr_id] = rs
+
+            for ra in ret_link.attributes:
+                if rs_dict.get(ra.id):
+                    ra.resourcescenario = ResourceScenario(rs_dict[ra.id])
+
+            return ret_link
+        else:
+            ret_link = Link(link)
+            return ret_link
+
+    @rpc(Integer, Integer, _returns=ResourceGroup)
+    def get_resourcegroup(ctx, group_id, scenario_id):
+        group = network.get_resourcegroup(group_id, **ctx.in_header.__dict__)
+
+        if scenario_id is not None:
+            ret_group = ResourceGroup(group)
+            res_scens = scenario.get_resource_data('GROUP', group_id, scenario_id, None) 
+            rs_dict = {}
+            for rs in res_scens:
+                rs_dict[rs.resource_attr_id] = rs
+
+            for ra in ret_group.attributes:
+                if rs_dict.get(ra.id):
+                    ra.resourcescenario = ResourceScenario(rs_dict[ra.id])
+
+            return ret_group
+        else:
+            ret_group = ResourceGroup(group)
+            return ret_group
 
     @rpc(Integer, Boolean, _returns=Unicode)
     def delete_network(ctx, network_id):

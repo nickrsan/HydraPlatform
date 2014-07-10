@@ -559,6 +559,63 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         assert self.client.service.get_network(network.id).status == 'A', \
             'Reactivating network did not work correctly.'
 
+    def test_get_node(self):
+        network = self.create_network_with_data()
+        n = network.nodes.Node[0]
+        s = network.scenarios.Scenario[0]
+
+        node_without_data = self.client.service.get_node(n.id)
+
+        for ra in node_without_data.attributes.ResourceAttr:
+            assert not hasattr(ra, 'resourcescenario')
+
+        node_with_data = self.client.service.get_node(n.id, s.id)
+        
+        attrs_with_data = []
+        for ra in node_with_data.attributes.ResourceAttr:
+            if hasattr(ra, 'resourcescenario'): 
+                if ra.resourcescenario:
+                    attrs_with_data.append(ra.id)
+        assert len(attrs_with_data) == 2
+
+    def test_get_link(self):
+        network = self.create_network_with_data()
+        n = network.links.Link[0]
+        s = network.scenarios.Scenario[0]
+
+        link_without_data = self.client.service.get_link(n.id)
+
+        for ra in link_without_data.attributes.ResourceAttr:
+            assert not hasattr(ra, 'resourcescenario')
+
+        link_with_data = self.client.service.get_link(n.id, s.id)
+        
+        attrs_with_data = []
+        for ra in link_with_data.attributes.ResourceAttr:
+            if hasattr(ra, 'resourcescenario'): 
+                if ra.resourcescenario:
+                    attrs_with_data.append(ra.id)
+        assert len(attrs_with_data) == 2
+
+    def test_get_resourcegroup(self):
+        network = self.create_network_with_data()
+        n = network.resourcegroups.ResourceGroup[0]
+        s = network.scenarios.Scenario[0]
+
+        resourcegroup_without_data = self.client.service.get_resourcegroup(n.id)
+
+        for ra in resourcegroup_without_data.attributes.ResourceAttr:
+            assert not hasattr(ra, 'resourcescenario')
+
+        resourcegroup_with_data = self.client.service.get_resourcegroup(n.id, s.id)
+        
+        attrs_with_data = []
+        for ra in resourcegroup_with_data.attributes.ResourceAttr:
+            if hasattr(ra, 'resourcescenario'): 
+                if ra.resourcescenario:
+                    attrs_with_data.append(ra.id)
+        assert len(attrs_with_data) > 0
+
     def test_cleanup_network(self):
         network = self.test_add_node()
 
@@ -578,8 +635,6 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         self.assertRaises(suds.WebFault, self.client.service.get_node, node_to_delete.id)
         for l in link_ids:
             self.assertRaises(suds.WebFault, self.client.service.get_link, l)
-
-
 
     def test_validate_topology(self):
         project = self.create_project('test')

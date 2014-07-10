@@ -464,13 +464,30 @@ class Attr(HydraComplexModel):
         self.name = parent.attr_name
         self.dimen = parent.attr_dimen
 
+class ResourceScenario(HydraComplexModel):
+    _type_info = [
+        ('resource_attr_id', Integer(default=None)),
+        ('attr_id',          Integer(default=None)),
+        ('value',            Dataset),
+    ]
+
+    def __init__(self, parent=None):
+        super(ResourceScenario, self).__init__()
+        if parent is None:
+            return
+        self.resource_attr_id = parent.resource_attr_id
+        self.attr_id          = parent.resourceattr.attr_id
+
+        self.value = Dataset(parent.dataset)
+
 class ResourceAttr(HydraComplexModel):
     _type_info = [
         ('id',      Integer(default=None)),
         ('attr_id', Integer(default=None)),
         ('ref_id',  Integer(default=None)),
         ('ref_key', Unicode(default=None)),
-        ('attr_is_var',  Unicode(min_occurs=1, default='N')),
+        ('attr_is_var', Unicode(min_occurs=1, default='N')),
+        ('resourcescenario', ResourceScenario),
     ]
 
     def __init__(self, parent=None):
@@ -490,6 +507,8 @@ class ResourceAttr(HydraComplexModel):
             parent.ref_id = parent.group_id
 
         self.attr_is_var = parent.attr_is_var
+        #This should be set externally as it is not related to its parent.
+        self.resourcescenario = None
 
 
 class ResourceTypeDef(HydraComplexModel):
@@ -702,22 +721,6 @@ class Link(Resource):
             self.attributes = [ResourceAttr(a) for a in parent.attributes]
         self.types = [TypeSummary(t.templatetype) for t in parent.types]
 
-
-class ResourceScenario(Resource):
-    _type_info = [
-        ('resource_attr_id', Integer(default=None)),
-        ('attr_id',          Integer(default=None)),
-        ('value',            Dataset),
-    ]
-
-    def __init__(self, parent=None):
-        super(ResourceScenario, self).__init__()
-        if parent is None:
-            return
-        self.resource_attr_id = parent.resource_attr_id
-        self.attr_id          = parent.resourceattr.attr_id
-
-        self.value = Dataset(parent.dataset)
 
 class AttributeData(HydraComplexModel):
     """

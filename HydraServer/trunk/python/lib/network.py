@@ -655,6 +655,13 @@ def get_link(link_id,**kwargs):
     except NoResultFound:
         raise ResourceNotFoundError("Link %s not found"%(link_id,))
 
+def get_resourcegroup(group_id,**kwargs): 
+    try:
+        rg = DBSession.query(ResourceGroup).filter(ResourceGroup.group_id==group_id).one() 
+        return rg
+    except NoResultFound:
+        raise ResourceNotFoundError("ResourceGroup %s not found"%(group_id,))
+
 def get_network_by_name(project_id, network_name,**kwargs):
     """
     Return a whole network as a complex model.
