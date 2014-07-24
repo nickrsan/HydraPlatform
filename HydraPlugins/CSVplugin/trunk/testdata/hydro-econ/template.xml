@@ -39,12 +39,24 @@
                 <dimension/>
                 <is_var>N</is_var>
                 <data_type>descriptor</data_type>
+                <restrictions>
+                    <restriction>
+                        <type>MAXLEN</type>
+                        <value>3</value>
+                    </restriction>
+                </restrictions>
             </attribute>
             <attribute>
                 <name>maxStor</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
                 <data_type>scalar</data_type>
+                <restrictions>
+                    <restriction>
+                        <type>GREATERTHAN</type>
+                        <value>3</value>
+                    </restriction>
+                </restrictions>
             </attribute>
             <attribute>
                 <name>minStor</name>
@@ -146,6 +158,11 @@
                 <name>BC</name>
                 <dimension/>
                 <is_var>N</is_var>
+                <!--<restrictions>
+                    <restriction>
+                        <type>INCREASING</type>
+                    </restriction>
+                </restrictions>-->
             </attribute>
             <attribute>
                 <name>IC</name>
@@ -234,6 +251,12 @@
                 <name>quadCoeff</name>
                 <dimension/>
                 <is_var>N</is_var>
+                <restrictions>
+                    <restriction>
+                        <type>GREATERTHAN</type>
+                        <value>-11</value>
+                    </restriction>
+                </restrictions>
             </attribute>
             <attribute>
                 <name>BC</name>
@@ -244,6 +267,25 @@
                 <name>test_array</name>
                 <dimension/>
                 <is_var>N</is_var>
+                <restrictions>
+                    <restriction>
+                        <type>INCREASING</type>
+                    </restriction>
+                    <restriction>
+                        <type>ENUM</type>
+                        <value>
+                            <item>1</item>
+                            <item>2</item>
+                            <item>3</item>
+                            <item>4</item>
+                            <item>5</item>
+                            <item>6</item>
+                            <item>7</item>
+                            <item>8</item>
+                            <item>9</item>
+                        </value>
+                    </restriction>
+                </restrictions>
             </attribute>
             <attribute>
                 <name>agBenefits</name>

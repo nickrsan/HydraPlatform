@@ -17,8 +17,6 @@
 # -*- coding: utf-8 -*-
 import unittest
 import logging
-import shutil
-import os
 
 from HydraLib import config
 from HydraLib.util import get_datetime
@@ -26,7 +24,6 @@ from HydraLib.PluginLib import create_dict
 
 from suds.client import Client
 from suds.plugin import MessagePlugin
-from tempfile import gettempdir as tmp
 import datetime
 
 global CLIENT
@@ -130,10 +127,10 @@ class SoapServerTest(unittest.TestCase):
         if template is not None:
             return template
 
-        link_attr_1 = self.create_attr("node_attr_1", dimension='Pressure')
-        link_attr_2 = self.create_attr("node_attr_2", dimension='Speed')
-        node_attr_1 = self.create_attr("link_attr_1", dimension='Volume')
-        node_attr_2 = self.create_attr("link_attr_2", dimension='Speed')
+        link_attr_1 = self.create_attr("link_attr_from_tmpl_a", dimension='Pressure')
+        link_attr_2 = self.create_attr("link_attr_from_tmpl_b", dimension='Speed')
+        node_attr_1 = self.create_attr("node_attr_from_tmpl_a", dimension='Volume')
+        node_attr_2 = self.create_attr("node_attr_from_tmpl_b", dimension='Speed')
         group_attr_1  = self.create_attr("grp_attr_1", dimension='Cost')
         group_attr_2  = self.create_attr("grp_attr_2", dimension='Displacement')
 
@@ -154,10 +151,12 @@ class SoapServerTest(unittest.TestCase):
 
         typeattr_1 = self.client.factory.create('hyd:TypeAttr')
         typeattr_1.attr_id = node_attr_1.id
+        typeattr_1.data_restriction = {'LESSTHAN': 10, 'NUMPLACES': 1}
         typeattrs.TypeAttr.append(typeattr_1)
 
         typeattr_2 = self.client.factory.create('hyd:TypeAttr')
         typeattr_2.attr_id = node_attr_2.id
+        typeattr_2.data_restriction = {'INCREASING': None}
         typeattrs.TypeAttr.append(typeattr_2)
 
         type1.typeattrs = typeattrs

@@ -22,6 +22,7 @@ from suds.plugin import MessagePlugin
 from datetime import datetime
 import os
 import logging
+from decimal import Decimal
 
 log = logging.getLogger(__name__)
 from lxml import objectify
@@ -744,35 +745,6 @@ def parse_suds_array(arr):
             return parse_suds_array(sub_arr)
     elif hasattr(arr, 'item'):
         for x in arr.item:
-            try:
-                val = float(x)
-            except:
-                val = str(x)
-            ret_arr.append(val)
-        return ret_arr
-    else:
-        raise ValueError("Something has gone wrong parsing an array.")
-    return ret_arr
-
-def parse_array(arr):
-    """
-        Take a dictionary and turn it into an array as follows:
-        {'array': ['item' : [1, 2, 3]}]} -> [1, 2, 3]
-        {'array' :[
-            {'array': [ 'item' : [1, 2, 3]} ]}
-            {'array': [ 'item' : [1, 2, 3]} ]} 
-        ]} -> [[1, 2, 3], [4, 5, 6]]
-    """
-    ret_arr = []
-    if arr.get('array'):
-        sub_arr = arr['array']
-        if len(sub_arr) > 1:
-            for s in sub_arr:
-                ret_arr.append(parse_array(s))
-        else:
-            return parse_array(sub_arr[0])
-    elif arr.get('item'):
-        for x in arr['item']:
             try:
                 val = float(x)
             except:

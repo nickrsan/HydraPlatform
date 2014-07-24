@@ -19,7 +19,8 @@
 import test_SoapServer
 import datetime
 import logging
-from HydraLib.PluginLib import parse_suds_array, parse_array, create_dict
+from HydraLib.PluginLib import parse_suds_array, create_dict
+from HydraLib.util import parse_array
 log = logging.getLogger(__name__)
 class DataGroupTest(test_SoapServer.SoapServerTest):
 

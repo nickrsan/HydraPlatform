@@ -82,6 +82,44 @@
                                                             </xs:restriction>
                                                         </xs:simpleType>
                                                     </xs:element>
+                                                    <xs:element name="restrictions" minOccurs="0" maxOccurs="1">
+                                                        <xs:complexType>
+                                                            <xs:sequence>
+                                                                <xs:element name="restriction" maxOccurs="unbounded">
+                                                                    <xs:complexType>
+                                                                        <xs:sequence>
+                                                                            <xs:element name="type">
+                                                                                <xs:simpleType>
+                                                                                    <xs:restriction base="xs:string">
+                                                                                        <xs:enumeration value="ENUM"/>
+                                                                                        <xs:enumeration value="BOOLYN"/>
+                                                                                        <xs:enumeration value="BOOL10"/>
+                                                                                        <xs:enumeration value="NUMPLACES"/>
+                                                                                        <xs:enumeration value="VALUERANGE"/>
+                                                                                        <xs:enumeration value="DATERANGE"/>
+                                                                                        <xs:enumeration value="MAXLEN"/>
+                                                                                        <xs:enumeration value="EQUALTO"/>
+                                                                                        <xs:enumeration value="NOTEQUALTO"/>
+                                                                                        <xs:enumeration value="LESSTHAN"/>
+                                                                                        <xs:enumeration value="LESSTHANEQ"/>
+                                                                                        <xs:enumeration value="GREATERTHAN"/>
+                                                                                        <xs:enumeration value="GREATERTHANEQ"/>
+                                                                                        <xs:enumeration value="MULTIPLEOF"/>
+                                                                                        <xs:enumeration value="ISNULL"/>
+                                                                                        <xs:enumeration value="NOTNULL"/>
+                                                                                        <xs:enumeration value="SUMTO"/>
+                                                                                        <xs:enumeration value="INCREASING"/>
+                                                                                        <xs:enumeration value="DECREASING"/>
+                                                                                    </xs:restriction>
+                                                                                </xs:simpleType>
+                                                                            </xs:element>
+                                                                            <xs:element name="value" type="xs:anyType" minOccurs="0" maxOccurs="1"/>
+                                                                        </xs:sequence>
+                                                                    </xs:complexType>
+                                                                </xs:element>
+                                                            </xs:sequence>
+                                                        </xs:complexType>
+                                                    </xs:element>
                                                 </xs:sequence>
                                             </xs:complexType>
                                         </xs:element>

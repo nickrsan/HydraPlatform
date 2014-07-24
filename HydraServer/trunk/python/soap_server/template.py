@@ -264,3 +264,7 @@ class TemplateService(HydraService):
 
         return template_xml
 
+    @rpc(Integer, Integer, Integer, _returns=Unicode)
+    def validate_attr(ctx, resource_attr_id, scenario_id, type_id):
+        template.validate_attr(resource_attr_id, scenario_id, type_id)
+        return 'OK'

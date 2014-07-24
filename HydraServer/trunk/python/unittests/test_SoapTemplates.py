@@ -21,6 +21,7 @@ import datetime
 from lxml import etree
 from HydraLib import config
 import logging
+from suds import WebFault
 log = logging.getLogger(__name__)
 
 class TemplatesTest(test_SoapServer.SoapServerTest):
@@ -73,10 +74,12 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         tattr_1 = self.client.factory.create('hyd:TypeAttr')
         tattr_1.attr_id = node_attr_1.id
+        tattr_1.data_restriction = {'LESSTHAN': 10, 'NUMPLACES': 1}
         tattrs.TypeAttr.append(tattr_1)
 
         tattr_2 = self.client.factory.create('hyd:TypeAttr')
         tattr_2.attr_id = node_attr_2.id
+        tattr_2.data_restriction = {'INCREASING': None}
         tattrs.TypeAttr.append(tattr_2)
 
         type1.typeattrs = tattrs
@@ -387,6 +390,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         assert len(updated_type.typeattrs[0]) == 1, "Resource type attr did not add correctly"
 
     def test_get_templates(self):
+        self.get_template()
         templates = self.client.service.get_templates()
         for t in templates.Template:
             for typ in t.types.TemplateType:
@@ -588,6 +592,20 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             assert len(n.types.TypeSummary) == 2
             for t in n.types.TypeSummary:
                 assert t.name == 'Test type 1'
+
+    def test_validate_data(self):
+        network = self.create_network_with_data()
+        
+        scenario = network.scenarios.Scenario[0]
+        rs_ids = [rs.resource_attr_id for rs in scenario.resourcescenarios.ResourceScenario]
+
+        for n in network.nodes.Node:
+            node_type = self.client.service.get_templatetype(n.types.TypeSummary[0].id)
+            for ra in n.attributes.ResourceAttr:
+                for attr in node_type.typeattrs.TypeAttr:
+                    if ra.attr_id == attr.attr_id and ra.id in rs_ids and attr.data_restriction is not None:
+                #        logging.info("Validating RA %s in scenario %s", ra.id, scenario.id)
+                        self.assertRaises(WebFault, self.client.service.validate_attr, ra.id, scenario.id, None)
 
 if __name__ == '__main__':
     test_SoapServer.run()

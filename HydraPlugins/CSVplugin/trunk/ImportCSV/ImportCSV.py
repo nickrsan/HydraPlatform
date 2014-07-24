@@ -174,9 +174,9 @@ import pytz
 
 from HydraLib import PluginLib
 from HydraLib.PluginLib import write_progress, write_output, validate_plugin_xml
-from HydraLib import config
+from HydraLib import config, util
 
-from HydraLib.HydraException import HydraPluginError
+from HydraLib.HydraException import HydraPluginError,HydraError
 
 from suds import WebFault
 from numpy import array, reshape
@@ -208,7 +208,7 @@ class ImportCSV(object):
 
         #This stores all the types in the template
         #so that node, link and group types can be validated
-        self.Types      = dict()
+        self.Templates      = dict()
 
         #These are used to keep track of whether
         #duplicate names have been specified in the files.
@@ -245,6 +245,15 @@ class ImportCSV(object):
         self.files = []
 
         self.num_steps = 6
+
+    def validate_value(self, value, restriction_dict):
+        if restriction_dict is None or restriction_dict == {}:
+            return
+
+        try:
+            util.validate_value(restriction_dict, value)
+        except HydraError, e:
+            raise HydraPluginError(e.message)
 
     def get_file_data(self, file):
         """
@@ -556,6 +565,7 @@ class ImportCSV(object):
         self.check_header(file, keys)
         units = node_data[1].split(',')
         data = node_data[2:-1]
+        restrictions = {}
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -613,17 +623,20 @@ class ImportCSV(object):
                 if field_idx['type'] is not None:
                     node_type = linedata[field_idx['type']].strip()
 
-                    if len(self.Types):
-                        if node_type not in self.Types.get('NODE', []):
-                            raise HydraPluginError("Node type %s not specified in the template."%(node_type))
-
+                    if len(self.Templates):
+                        if node_type not in self.Templates['resources'].get('NODE', {}).keys():
+                            raise HydraPluginError(
+                                "Node type %s not specified in the template."%
+                                (node_type))
+                    
+                    restrictions = self.Templates['resources']['NODE'][node_type]['attributes']
                     if node_type not in self.nodetype_dict.keys():
                         self.nodetype_dict.update({node_type: (nodename,)})
                     else:
                         self.nodetype_dict[node_type] += (nodename,)
 
             if len(attrs) > 0:
-                node = self.add_data(node, attrs, linedata, metadata, units=units)
+                node = self.add_data(node, attrs, linedata, metadata, units=units, restrictions=restrictions)
 
             self.Nodes.update({node['name']: node})
 
@@ -646,6 +659,7 @@ class ImportCSV(object):
         self.check_header(file, keys)
         units = link_data[1].split(',')
         data = link_data[2:-1]
+        restrictions = {}
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -702,15 +716,19 @@ class ImportCSV(object):
 
                 if field_idx['type'] is not None:
                     link_type = linedata[field_idx['type']].strip()
-                    if len(self.Types):
-                        if link_type not in self.Types.get('LINK', []):
-                            raise HydraPluginError("Link type %s not specified in the template."%(link_type))
+                    if len(self.Templates):
+                        if link_type not in self.Templates['resources'].get('LINK', {}).keys():
+                            raise HydraPluginError(
+                                "Link type %s not specified in the template."
+                                %(link_type))
+                    
+                    restrictions = self.Templates['resources']['LINK'][link_type]['attributes']
                     if link_type not in self.linktype_dict.keys():
                         self.linktype_dict.update({link_type: (linkname,)})
                     else:
                         self.linktype_dict[link_type] += (linkname,)
             if len(attrs) > 0:
-                link = self.add_data(link, attrs, linedata, metadata, units=units)
+                link = self.add_data(link, attrs, linedata, metadata, units=units, restrictions=restrictions)
             self.Links.update({link['name']: link})
 
     def read_groups(self, file):
@@ -736,6 +754,7 @@ class ImportCSV(object):
         self.check_header(file, keys)
         units = group_data[1].split(',')
         data  = group_data[2:-1]
+        restrictions = {}
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -782,9 +801,12 @@ class ImportCSV(object):
 
                 if field_idx['type'] is not None:
                     group_type = group_data[field_idx['type']].strip()
-                    if len(self.Types):
-                        if group_type not in self.Types.get('GROUP', []):
-                            raise HydraPluginError("Group type %s not specified in the template."%(group_type))
+                    if len(self.Templates):
+                        if group_type not in self.Templates['resources'].get('GROUP', {}).keys():
+                            raise HydraPluginError(
+                                "Group type %s not specified in the template."
+                                %(group_type))
+                    restrictions = self.Templates['resources']['GROUP'][group_type]['attributes']
                     if group_type not in self.grouptype_dict.keys():
                         self.grouptype_dict.update({group_type: (group_name,)})
                     else:
@@ -792,7 +814,7 @@ class ImportCSV(object):
 
 
             if len(attrs) > 0:
-                group = self.add_data(group, attrs, group_data, metadata, units=units)
+                group = self.add_data(group, attrs, group_data, metadata, units=units, restrictions=restrictions)
 
             self.Groups.update({group['name']: group})
 
@@ -885,7 +907,7 @@ class ImportCSV(object):
 
         return attribute
 
-    def add_data(self, resource, attrs, data, metadata, units=None):
+    def add_data(self, resource, attrs, data, metadata, units=None, restrictions={}):
         '''Add the data read for each resource to the resource. This requires
         creating the attributes, resource attributes and a scenario which holds
         the data.'''
@@ -934,7 +956,6 @@ class ImportCSV(object):
                     attr_id = attr['id'],
                     attr_is_var = 'N',
                 )
-
             # create dataset and assign to attribute (if not empty)
             if len(data[i].strip()) > 0:
 
@@ -964,6 +985,7 @@ class ImportCSV(object):
                                                       dimension,
                                                       resource['name'],
                                                       dataset_metadata,
+                                                      restrictions.get(attr['name'], {}).get('restrictions', {})
                                                      )
                     else:
                         dataset = self.create_dataset(data[i],
@@ -972,6 +994,7 @@ class ImportCSV(object):
                                                       None,
                                                       resource['name'],
                                                       dataset_metadata,
+                                                      restrictions.get(attr['name'], {}).get('restrictions', {})
                                                      )
 
                     if dataset is not None:
@@ -1061,7 +1084,8 @@ class ImportCSV(object):
         return warnings
 
 
-    def create_dataset(self, value, resource_attr, unit, dimension, resource_name, metadata):
+    def create_dataset(self, value, resource_attr, unit, dimension, resource_name, metadata, restriction_dict):
+ 
         resourcescenario = dict()
         
         if metadata.get('name'):
@@ -1092,7 +1116,7 @@ class ImportCSV(object):
         try:
             float(value)
             dataset['type'] = 'scalar'
-            scal = self.create_scalar(value)
+            scal = self.create_scalar(value, restriction_dict)
             dataset['value'] = scal
         except ValueError:
             try:
@@ -1137,18 +1161,17 @@ class ImportCSV(object):
                         return None
                     else:
                         if self.is_timeseries(filedata):
-                            ts_type, ts = self.create_timeseries(filedata)
+                            ts_type, ts = self.create_timeseries(filedata, restriction_dict)
                             dataset['type'] = ts_type 
                             dataset['value'] = ts
                         else:
                             dataset['type'] = 'array'
-                            arr = self.create_array(filedata)
-                            dataset['value'] = arr
+                            dataset['value'] = self.create_array(filedata, restriction_dict)
                 else:
                     raise IOError
             except IOError:
                 dataset['type'] = 'descriptor'
-                desc = self.create_descriptor(value)
+                desc = self.create_descriptor(value, restriction_dict)
                 dataset['value'] = desc
 
         dataset['unit'] = unit
@@ -1170,19 +1193,21 @@ class ImportCSV(object):
 
         return resourcescenario
 
-    def create_scalar(self, value):
+    def create_scalar(self, value, restriction_dict={}):
+        self.validate_value(value, restriction_dict)
         scalar = dict(
             param_value = str(value)
         )
         return scalar
 
-    def create_descriptor(self, value):
+    def create_descriptor(self, value, restriction_dict={}):
+        self.validate_value(value, restriction_dict)
         descriptor = dict(
             desc_val = value
         )
         return descriptor
 
-    def create_timeseries(self, data):
+    def create_timeseries(self, data, restriction_dict={}):
         date = data.split(',', 1)[0].strip()
         timeformat = PluginLib.guess_timefmt(date)
         seasonal = False
@@ -1220,8 +1245,9 @@ class ImportCSV(object):
                         ts_val_1d.append(str(dataset[i + 2].strip()))
 
                     ts_arr = array(ts_val_1d)
-                    ts_arr = reshape(ts_arr, array_shape)
-                    ts_value = PluginLib.create_dict(ts_arr.tolist())
+                    ts_arr = reshape(ts_arr, array_shape) 
+
+                    ts_value = ts_arr.tolist()
 
                 #Check for whether timeseries is equally spaced.
                 if is_eq_spaced:
@@ -1240,20 +1266,28 @@ class ImportCSV(object):
                     prev_time = tstime
 
                 ts_values.append({'ts_time': ts_time,
-                                  'ts_value': ts_value,
+                                  'ts_value': ts_value
                                   })
+
         if is_eq_spaced:
             ts_type = 'eqtimeseries'
             timeseries = {'frequency': freq.total_seconds(),
                           'start_time':PluginLib.date_to_string(start_time, seasonal=seasonal),
                           'arr_data':str(eq_val)}
+            self.validate_value(timeseries, restriction_dict)
         else:
             ts_type = 'timeseries'
             timeseries = {'ts_values': ts_values}
+            self.validate_value(timeseries, restriction_dict)
+
+            #After validating the data, turn it into the format the server wants.
+            for ts in timeseries['ts_values']:
+                ts['ts_value'] = PluginLib.create_dict(ts['ts_value'])
+
 
         return ts_type, timeseries
 
-    def create_array(self, data):
+    def create_array(self, data, restriction_dict={}):
         #Split the line into a list
         dataset = data.split(',')
         #First column is always the array dimensions
@@ -1270,6 +1304,8 @@ class ImportCSV(object):
         #Reshape the array back to its correct dimensions
         arr = array(dataset)
         arr = reshape(arr, array_shape)
+
+        self.validate_value(arr.tolist(), restriction_dict)
 
         arr = dict(
             arr_data = PluginLib.create_dict(arr.tolist())
@@ -1338,16 +1374,38 @@ class ImportCSV(object):
         except etree.DocumentInvalid as e:
             raise HydraPluginError('Template validation failed: ' + e.message)
 
-        resources = xml_tree.find('resources')
-        types = [(r.find('name').text, r.find('type').text) for r in resources.findall('resource')]
+        template_dict = {'name':xml_tree.find('template_name').text,
+                         'resources' : {}
+                        }
 
-        for t in types:
-            resource_type = t[1]
-            type_name     = t[0]
-            if self.Types.get(resource_type):
-                self.Types[resource_type].append(type_name)
+        for r in xml_tree.find('resources'):
+            resource_dict = {}
+            resource_name = r.find('name').text
+            resource_type = r.find('type').text
+            resource_dict['type'] = resource_type
+            resource_dict['name'] = resource_name 
+            resource_dict['attributes'] = {}
+            for attr in r.findall("attribute"):
+                attr_dict = {}
+                attr_name = attr.find('name').text
+                attr_dict['name'] = attr_name
+                if attr.find('dimension') is not None:
+                    attr_dict['dimension'] = attr.find('dimension').text
+                if attr.find('is_var') is not None:
+                    attr_dict['is_var'] = attr.find('is_var').text
+                if attr.find('data_type') is not None:
+                    attr_dict['data_type'] = attr.find('data_type').text
+
+                restction_xml = attr.find("restrictions") 
+                attr_dict['restrictions'] = util.get_restriction_as_dict(restction_xml)
+                resource_dict['attributes'][attr_name] = attr_dict
+
+            if template_dict['resources'].get(resource_type):
+                template_dict['resources'][resource_type][resource_name] = resource_dict
             else:
-                self.Types[resource_type] = [type_name]
+                template_dict['resources'][resource_type] = {resource_name : resource_dict}
+        
+        self.Templates = template_dict
 
         log.info("Template OK")
 

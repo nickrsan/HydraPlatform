@@ -40,10 +40,10 @@ class Dataset(Base):
     __tablename__='tDataset'
 
     dataset_id = Column(Integer(), primary_key=True, nullable=False)
-    data_type = Column(String(45),  nullable=False)
-    data_units = Column(String(45))
-    data_dimen = Column(String(45))
-    data_name = Column(String(45),  nullable=False)
+    data_type = Column(String(60),  nullable=False)
+    data_units = Column(String(60))
+    data_dimen = Column(String(60))
+    data_name = Column(String(60),  nullable=False)
     data_hash = Column(BigInteger(),  nullable=False)
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
     created_by = Column(Integer(), ForeignKey('tUser.user_id'))
@@ -70,7 +70,7 @@ class Dataset(Base):
                 m_i = Metadata(metadata_name=k,metadata_val=v)
                 self.metadata.append(m_i)
 
-    def get_val(self, timestamp=None):
+    def get_val(self, timestamp=None, raw=True):
         """
             If a timestamp is passed to this function, 
             return the values appropriate to the requested times.
@@ -78,6 +78,10 @@ class Dataset(Base):
             If the timestamp is *before* the start of the timeseries data, return None
             If the timestamp is *after* the end of the timeseries data, return the last
             value.
+
+            The raw flag indicates whether timeseries should be returned raw -- exactly
+            as they are in the DB (a timeseries being a list of timeseries data objects,
+            for example) or as a single python dictionary
         """
         if self.data_type == 'array':
             return eval(self.value)
@@ -89,7 +93,14 @@ class Dataset(Base):
             return Decimal(str(self.value))
         elif self.data_type == 'timeseries':
             if timestamp is None:
-                return self.timeseriesdata
+                if raw:
+                    return self.timeseriesdata
+                else:
+                    ts_val = []
+                    for ts in self.timeseriesdata:
+                        ts_val.append({'ts_time':get_timestamp(Decimal(ts.ts_time)),
+                                       'ts_value': eval(ts.ts_value)})
+                    return {'ts_values':ts_val}
             else:
                 ts_val_dict = {}
                 for ts in self.timeseriesdata:
@@ -244,7 +255,7 @@ class DatasetGroup(Base):
     __tablename__='tDatasetGroup'
 
     group_id = Column(Integer(), primary_key=True, nullable=False)
-    group_name = Column(String(45),  nullable=False)
+    group_name = Column(String(60),  nullable=False)
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
     
 class DatasetGroupItem(Base):
@@ -273,7 +284,7 @@ class Metadata(Base):
     __tablename__='tMetadata'
 
     dataset_id = Column(Integer(), ForeignKey('tDataset.dataset_id'), primary_key=True, nullable=False)
-    metadata_name = Column(String(45), primary_key=True, nullable=False)
+    metadata_name = Column(String(60), primary_key=True, nullable=False)
     metadata_val = Column(LargeBinary(),  nullable=False)
     
     dataset = relationship('Dataset', backref=backref("metadata", order_by=dataset_id, cascade="all, delete-orphan"))
@@ -289,8 +300,8 @@ class Attr(Base):
     __tablename__='tAttr'
 
     attr_id = Column(Integer(), primary_key=True, nullable=False)
-    attr_name = Column(String(45),  nullable=False)
-    attr_dimen = Column(String(45))
+    attr_name = Column(String(60),  nullable=False)
+    attr_dimen = Column(String(60))
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
 
 class AttrMap(Base):
@@ -308,7 +319,7 @@ class Template(Base):
     __tablename__='tTemplate'
 
     template_id = Column(Integer(), primary_key=True, nullable=False)
-    template_name = Column(String(45),  nullable=False)
+    template_name = Column(String(60),  nullable=False)
     layout = Column(Text(1000))
     
 class TemplateType(Base):
@@ -316,9 +327,9 @@ class TemplateType(Base):
     __tablename__='tTemplateType'
 
     type_id = Column(Integer(), primary_key=True, nullable=False)
-    type_name = Column(String(45),  nullable=False)
+    type_name = Column(String(60),  nullable=False)
     template_id = Column(Integer(), ForeignKey('tTemplate.template_id'))
-    resource_type = Column(String(45))
+    resource_type = Column(String(60))
     alias = Column(String(100))
     layout = Column(Text(1000))
     
@@ -331,10 +342,11 @@ class TypeAttr(Base):
     attr_id = Column(Integer(), ForeignKey('tAttr.attr_id'), primary_key=True, nullable=False)
     type_id = Column(Integer(), ForeignKey('tTemplateType.type_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     default_dataset_id = Column(Integer(), ForeignKey('tDataset.dataset_id'))
-    attr_is_var = Column(String(1), server_default=text(u"'N'"))
-    data_type = Column(String(45))
-    dimension = Column(String(45))
-    
+    attr_is_var        = Column(String(1), server_default=text(u"'N'"))
+    data_type          = Column(String(60))
+    data_restriction   = Column(Text(1000))
+    dimension          = Column(String(60))
+
     attr = relationship('Attr')
     templatetype = relationship('TemplateType',  backref=backref("typeattrs", order_by=attr_id, cascade="all, delete-orphan"))
     default_dataset = relationship('Dataset')
@@ -346,7 +358,7 @@ class ResourceAttr(Base):
 
     resource_attr_id = Column(Integer(), primary_key=True, nullable=False)
     attr_id = Column(Integer(), ForeignKey('tAttr.attr_id'),  nullable=False)
-    ref_key = Column(String(45),  nullable=False)
+    ref_key = Column(String(60),  nullable=False)
     network_id  = Column(Integer(),  ForeignKey('tNetwork.network_id'), index=True, nullable=True,)
     project_id  = Column(Integer(),  ForeignKey('tProject.project_id'), index=True, nullable=True,)
     node_id     = Column(Integer(),  ForeignKey('tNode.node_id'), index=True, nullable=True)
@@ -393,7 +405,7 @@ class ResourceType(Base):
     __tablename__='tResourceType'
     resource_type_id = Column(Integer, primary_key=True, nullable=False)
     type_id = Column(Integer(), ForeignKey('tTemplateType.type_id'), primary_key=False, nullable=False)
-    ref_key = Column(String(45),nullable=False)
+    ref_key = Column(String(60),nullable=False)
     network_id  = Column(Integer(),  ForeignKey('tNetwork.network_id'), nullable=True,)
     node_id     = Column(Integer(),  ForeignKey('tNode.node_id'), nullable=True)
     link_id     = Column(Integer(),  ForeignKey('tLink.link_id'), nullable=True)
@@ -445,7 +457,7 @@ class Project(Base):
     attribute_data = []
 
     project_id = Column(Integer(), primary_key=True, nullable=False)
-    project_name = Column(String(45),  nullable=False)
+    project_name = Column(String(60),  nullable=False)
     project_description = Column(String(1000))
     status = Column(String(1),  nullable=False, server_default=text(u"'A'"))
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
@@ -536,7 +548,7 @@ class Network(Base):
     ref_key = 'NETWORK'
 
     network_id = Column(Integer(), primary_key=True, nullable=False)
-    network_name = Column(String(45),  nullable=False)
+    network_name = Column(String(60),  nullable=False)
     network_description = Column(String(1000))
     network_layout = Column(Text(1000))
     project_id = Column(Integer(), ForeignKey('tProject.project_id'),  nullable=False)
@@ -684,7 +696,7 @@ class Link(Base):
     status = Column(String(1),  nullable=False, server_default=text(u"'A'"))
     node_1_id = Column(Integer(), ForeignKey('tNode.node_id'), nullable=False)
     node_2_id = Column(Integer(), ForeignKey('tNode.node_id'), nullable=False)
-    link_name = Column(String(45))
+    link_name = Column(String(60))
     link_description = Column(String(1000))
     link_layout = Column(Text(1000))
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
@@ -711,7 +723,7 @@ class Node(Base):
     node_id = Column(Integer(), primary_key=True, nullable=False)
     network_id = Column(Integer(), ForeignKey('tNetwork.network_id'), nullable=False)
     node_description = Column(String(1000))
-    node_name = Column(String(45),  nullable=False)
+    node_name = Column(String(60),  nullable=False)
     status = Column(String(1),  nullable=False, server_default=text(u"'A'"))
     node_x = Column(Numeric(asdecimal=True))
     node_y = Column(Numeric(asdecimal=True))
@@ -736,7 +748,7 @@ class ResourceGroup(Base):
 
     ref_key = 'GROUP'
     group_id = Column(Integer(), primary_key=True, nullable=False)
-    group_name = Column(String(45),  nullable=False)
+    group_name = Column(String(60),  nullable=False)
     group_description = Column(String(1000))
     status = Column(String(1),  nullable=False, server_default=text(u"'A'"))
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
@@ -759,7 +771,7 @@ class ResourceGroupItem(Base):
     __tablename__='tResourceGroupItem'
 
     item_id = Column(Integer(), primary_key=True, nullable=False)
-    ref_key = Column(String(45),  nullable=False)
+    ref_key = Column(String(60),  nullable=False)
 
     node_id     = Column(Integer(),  ForeignKey('tNode.node_id'))
     link_id     = Column(Integer(),  ForeignKey('tLink.link_id'))
@@ -831,7 +843,7 @@ class Scenario(Base):
     __tablename__='tScenario'
 
     scenario_id = Column(Integer(), primary_key=True, nullable=False)
-    scenario_name = Column(String(45),  nullable=False)
+    scenario_name = Column(String(60),  nullable=False)
     scenario_description = Column(String(1000))
     status = Column(String(1),  nullable=False, server_default=text(u"'A'"))
     network_id = Column(Integer(), ForeignKey('tNetwork.network_id'))
@@ -912,8 +924,8 @@ class Perm(Base):
     __tablename__='tPerm'
 
     perm_id = Column(Integer(), primary_key=True, nullable=False)
-    perm_code = Column(String(45),  nullable=False)
-    perm_name = Column(String(45),  nullable=False)
+    perm_code = Column(String(60),  nullable=False)
+    perm_name = Column(String(60),  nullable=False)
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
     roleperms = relationship('RolePerm', lazy='joined')
     
@@ -922,8 +934,8 @@ class Role(Base):
     __tablename__='tRole'
 
     role_id = Column(Integer(), primary_key=True, nullable=False)
-    role_code = Column(String(45),  nullable=False)
-    role_name = Column(String(45),  nullable=False)
+    role_code = Column(String(60),  nullable=False)
+    role_name = Column(String(60),  nullable=False)
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
     roleperms = relationship('RolePerm', lazy='joined', cascade='all')
     roleusers = relationship('RoleUser', lazy='joined', cascade='all')
@@ -955,7 +967,7 @@ class User(Base):
     __tablename__='tUser'
 
     user_id = Column(Integer(), primary_key=True, nullable=False)
-    username = Column(String(45),  nullable=False)
+    username = Column(String(60),  nullable=False)
     password = Column(String(1000),  nullable=False)
     display_name = Column(String(60),  nullable=False, server_default=text(u"''"))
     last_login = Column(DateTime())

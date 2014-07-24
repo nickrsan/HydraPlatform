@@ -14,16 +14,17 @@
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
 from db import DBSession
-from db.model import Template, TemplateType, TypeAttr, Attr, Network, Node, Link, ResourceGroup, ResourceType, ResourceAttr
+from db.model import Template, TemplateType, TypeAttr, Attr, Network, Node, Link, ResourceGroup, ResourceType, ResourceAttr, ResourceScenario
 from data import add_dataset
 
-from HydraLib.HydraException import HydraError
-from HydraLib import config
+from HydraLib.HydraException import HydraError, ResourceNotFoundError
+from HydraLib import config, util
 from lxml import etree
 from decimal import Decimal
 import logging
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload_all
+import re
 log = logging.getLogger(__name__)
 
 def get_types_by_attr(resource, template_id=None):
@@ -90,6 +91,7 @@ def parse_typeattr(type_i, attribute):
     attr = parse_attribute(attribute)
 
     dimension = attribute.find('dimension').text
+
     try:
         typeattr_i = DBSession.query(TypeAttr).filter(TypeAttr.type_id==type_i.type_id,
                                                       TypeAttr.attr_id==attr.attr_id).one()
@@ -100,6 +102,8 @@ def parse_typeattr(type_i, attribute):
         typeattr_i.attr_id=attr.attr_id
         type_i.typeattrs.append(typeattr_i)
         DBSession.add(typeattr_i)
+    
+    typeattr_i.dimension=dimension
 
     if attribute.find('is_var') is not None:
         typeattr_i.attr_is_var = attribute.find('is_var').text
@@ -120,6 +124,11 @@ def parse_typeattr(type_i, attribute):
                                dimension,
                                name="%s Default"%attr.attr_name,)
         typeattr_i.default_dataset_id = dataset.dataset_id
+   
+    if attribute.find('restrictions') is not None:
+        typeattr_i.data_restriction = str(util.get_restriction_as_dict(attribute.find('restrictions')))
+    else:
+        typeattr_i.data_restriction = None
 
     return typeattr_i
 
@@ -450,6 +459,25 @@ def remove_type_from_resource( type_id, resource_type, resource_id,**kwargs):
     ResourceType.group_id == group_id).one() 
     DBSession.delete(resourcetype) 
 
+def _parse_data_restriction(restriction_dict):
+#    {{soap_server.hydra_complexmodels}LESSTHAN}
+
+    if restriction_dict is None or restriction_dict == '':
+        return None
+
+    dict_str = re.sub('{[a-zA-Z\.\_]*}', '', str(restriction_dict))
+
+    new_dict = eval(dict_str)
+
+    ret_dict = {}
+    for k, v in new_dict.items():
+        if len(v) == 1:
+            ret_dict[k] = v[0]
+        else:
+            ret_dict[k] = v
+
+    return str(ret_dict)
+
 def add_template(template,**kwargs):
     """
         Add template and a type and typeattrs.
@@ -470,6 +498,10 @@ def add_template(template,**kwargs):
 
         for typeattr in templatetype.typeattrs:
             ta = TypeAttr(attr_id=typeattr.attr_id)
+            ta.data_restriction = _parse_data_restriction(typeattr.data_restriction)
+            ta.data_type        = typeattr.data_type
+            ta.dimension        = typeattr.dimension
+            ta.attr_is_var      = typeattr.is_var
             ttype.typeattrs.append(ta)
             DBSession.add(ta)
         tmpl.templatetypes.append(ttype)
@@ -503,9 +535,18 @@ def update_template(template,**kwargs):
         for typeattr in templatetype.typeattrs:
             for typeattr_i in type_i.typeattrs:
                 if typeattr_i.attr_id == typeattr.attr_id:
+                    typeattr_i.data_restriction = _parse_data_restriction(typeattr.data_restriction)
+                    typeattr_i.data_type        = typeattr.data_type
+                    typeattr_i.dimension        = typeattr.dimension
+                    typeattr_i.attr_is_var      = typeattr.is_var
+
                     break
             else:
                 ta = TypeAttr(attr_id=typeattr.attr_id)
+                ta.data_restriction = _parse_data_restriction(typeattr.data_restriction)
+                ta.data_type        = typeattr.data_type
+                ta.dimension        = typeattr.dimension
+                ta.attr_is_var      = typeattr.is_var
                 type_i.typeattrs.append(ta)
                 DBSession.add(ta)
 
@@ -645,6 +686,53 @@ def delete_typeattr(typeattr,**kwargs):
     DBSession.delete(ta)
 
     return 'OK'
+
+def validate_attr(resource_attr_id, scenario_id, type_id=None):
+    try:
+        rs = DBSession.query(ResourceScenario).filter(ResourceScenario.resource_attr_id==resource_attr_id, ResourceScenario.scenario_id==scenario_id).options(joinedload_all("resourceattr")).options(joinedload_all("dataset")).one()
+
+        _do_validate_resourcescenario(rs)
+                    
+    except NoResultFound:
+        raise ResourceNotFoundError("Resource Scenario %s not found"%resource_attr_id)
+
+def validate_attrs(resource_attr_ids, scenario_id, type_id=None):
+    try:
+        multi_rs = DBSession.query(ResourceScenario).filter(ResourceScenario.resource_attr_id.in_(resource_attr_ids), ResourceScenario.scenario_id==scenario_id).options(joinedload_all("resourceattr")).options(joinedload_all("dataset")).all()
+        
+        for rs in multi_rs:
+            _do_validate_resourcescenario(rs, type_id)
+                    
+    except NoResultFound:
+        raise ResourceNotFoundError("Resource Scenarios %s not found"%resource_attr_ids)
+
+
+def _do_validate_resourcescenario(resourcescenario, type_id=None):
+    res = resourcescenario.resourceattr.get_resource()
+
+    types = res.types
+
+    dataset = resourcescenario.dataset
+
+    if len(types) == 0:
+        return
+
+    #Validate against all the types for the resource
+    for resourcetype in types:
+        #If a specific type has been specified, then only validate
+        #against that type and ignore all the others
+        if type_id is not None:
+            if resourcetype.type_id != type_id:
+                continue
+        #Identify the template types for the template
+        tmpltype = resourcetype.templatetype
+        for ta in tmpltype.typeattrs:
+            #If we find a template type which mactches the current attribute.
+            #we can do some validation.
+            if ta.attr_id == resourcescenario.resourceattr.attr_id:
+                if ta.data_restriction:
+                    validation_dict = eval(ta.data_restriction)
+                    util.validate_value(validation_dict, dataset.get_val(raw=False))
 
 def get_network_as_xml_template(network_id,**kwargs):
     """
