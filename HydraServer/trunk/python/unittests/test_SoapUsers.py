@@ -206,6 +206,18 @@ class UsersTest(test_SoapServer.SoapServerTest):
         assert len(check_role.roleperms) == len(single_role.roleperms)
         self.assertRaises(suds.WebFault, self.client.service.get_role, 99999)
 
+    def test_get_user_roles(self):
+        roles = self.client.service.get_user_roles(1)
+        assert len(roles.Role) == 1
+        assert roles.Role[0].code == 'admin'
+
+    def test_get_user_permissions(self):
+        permissions = self.client.service.get_user_permissions(1)
+
+        role = self.client.service.get_role_by_code('admin')
+
+        assert len(permissions.Perm) == len(role.roleperms.RolePerm)
+
 def setup():
     test_SoapServer.connect()
 

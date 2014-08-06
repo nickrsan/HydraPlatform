@@ -732,7 +732,7 @@ def _do_validate_resourcescenario(resourcescenario, type_id=None):
             if ta.attr_id == resourcescenario.resourceattr.attr_id:
                 if ta.data_restriction:
                     validation_dict = eval(ta.data_restriction)
-                    util.validate_value(validation_dict, dataset.get_val(raw=False))
+                    util.validate_value(validation_dict, dataset.get_val())
 
 def get_network_as_xml_template(network_id,**kwargs):
     """

@@ -27,7 +27,7 @@ from db import DBSession
 from numpy import array
 from HydraLib.HydraException import HydraError, ResourceNotFoundError
 from sqlalchemy import and_
-
+from HydraLib.util import create_dict
 from decimal import Decimal
 global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
@@ -39,21 +39,6 @@ current_module = sys.modules[__name__]
 NS = "soap_server.hydra_complexmodels"
 
 log = logging.getLogger(__name__)
-
-def create_dict(arr_data):
-    arr_data = array(arr_data)
-
-    arr = {'array': []}
-    if arr_data.ndim == 0:
-        return {'array': []}
-    elif arr_data.ndim == 1:
-        return {'array': [{'item': list(arr_data)}]}
-    else:
-        for a in arr_data:
-            val = create_dict(a)
-            arr['array'].append(val)
-
-        return arr
 
 def get_dataset(dataset_id,**kwargs):
     """
@@ -305,7 +290,7 @@ def _get_timeseriesdata(dataset_ids):
             else:
                 extent = extent +qry_in_threshold 
     else:
-        ts_qry = DBSession.query(TimeSeriesData).filter(TimeSeriesData.dataset_id.in_(dataset_ids))
+        ts_qry = DBSession.query(TimeSeriesData).filter(TimeSeriesData.dataset_id.in_(dataset_ids)).all()
         for ts in ts_qry:
             tsdata.append(ts)
 
@@ -443,11 +428,10 @@ def get_vals_between_times(dataset_id, start_time, end_time, timestep,**kwargs):
     log.debug("Number of times to fetch: %s", len(times))
     data = td.get_val(timestamp=times)
 
-    data = td.get_val(timestamp=times)
     data_to_return = []
     if type(data) is list:
         for d in data:
-            data_to_return.append(create_dict(d))
+            data_to_return.append(create_dict(list(d)))
     else:
         data_to_return.append(data)
 

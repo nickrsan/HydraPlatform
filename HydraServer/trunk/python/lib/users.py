@@ -254,6 +254,31 @@ def get_role(role_id,**kwargs):
     except: 
         raise HydraError("Role not found (role_id=%s)", role_id)
     
+def get_user_roles(uid,**kwargs):
+    """
+        Get the roles for a user.
+        @param user_id
+    """
+    try:
+        user_roles = DBSession.query(Role).filter(Role.role_id==RoleUser.role_id,
+                                                  RoleUser.user_id==uid).all()
+        return user_roles
+    except: 
+        raise HydraError("Roles not found for user (user_id=%s)", uid)
+
+def get_user_permissions(uid, **kwargs):
+    """
+        Get the roles for a user.
+        @param user_id
+    """
+    try:
+        user_perms = DBSession.query(Perm).filter(Perm.perm_id==RolePerm.perm_id,
+                                                  RolePerm.role_id==Role.role_id,
+                                                  Role.role_id==RoleUser.role_id,
+                                                  RoleUser.user_id==uid).all()
+        return user_perms
+    except: 
+        raise HydraError("Permissions not found for user (user_id=%s)", uid)
 
 def get_role_by_code(role_code,**kwargs):
     """

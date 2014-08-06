@@ -24,6 +24,9 @@ from hydra_complexmodels import User,\
 
 from hydra_base import HydraService
 from lib import users
+import logging
+log = logging.getLogger(__name__)
+
 
 class UserService(HydraService):
     """
@@ -212,6 +215,14 @@ class UserService(HydraService):
 
         return Role(role_i)
 
+    @rpc(Unicode, _returns=SpyneArray(Role))
+    def get_user_roles(ctx, user_id):
+        """
+            Get the roles assigned to a user.
+            @param: user_id
+        """
+        roles = users.get_user_roles(user_id, **ctx.in_header.__dict__)
+        return [Role(r) for r in roles]
 
     @rpc(Integer, _returns=Perm)
     def get_perm(ctx, perm_id):
@@ -230,3 +241,13 @@ class UserService(HydraService):
         perm = users.get_perm_by_code(perm_code, **ctx.in_header.__dict__)
         perm_cm = Perm(perm)
         return perm_cm
+
+    @rpc(Unicode, _returns=SpyneArray(Perm))
+    def get_user_permissions(ctx, user_id):
+        """
+            Get all the permissions granted to the user, based
+            on all the roles that the user is in.
+            @param: user_id
+        """
+        perms = users.get_user_permissions(user_id, **ctx.in_header.__dict__)
+        return [Perm(p) for p in perms]

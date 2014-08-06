@@ -607,7 +607,7 @@ class SoapServerTest(unittest.TestCase):
         #with a resource attribute.
         #[[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]]]
 
-        test_val_1 = create_dict([[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]]]) 
+        test_val_1 = create_dict([[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]], [[9, 8, 7],[6, 5, 4]]]) 
 
         test_val_2 = create_dict([1.0, 2.0, 3.0])
 
@@ -631,7 +631,7 @@ class SoapServerTest(unittest.TestCase):
                 {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=1),
                 'ts_value' : test_val_2},
                 {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=2),
-                'ts_value' : 3.0},
+                'ts_value' : create_dict([3.0, None, None])},
 
             ]
         },

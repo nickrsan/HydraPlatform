@@ -33,7 +33,7 @@ def get_datetime(timestamp):
 
     if timestamp[0:4] == 'XXXX':
         # Do seasonal time series stuff...
-        timestamp = timestamp.replace('XXXX', '0001')
+        timestamp = timestamp.replace('XXXX', '1900')
     # and proceed as usual
     try:
         ts_time = datetime.datetime.strptime(timestamp, FORMAT)
@@ -140,6 +140,32 @@ def vector_to_arr(vec, dim):
         dim = dim[0:-1]
 
         return array
+
+def create_dict(arr):
+    return {'array': [create_sub_dict(arr)]}
+
+def create_sub_dict(arr):
+    if arr is None:
+        return None 
+
+    #Either the array contains sub-arrays or values
+    vals = None
+    sub_arrays = []
+    for sub_val in arr:
+        if type(sub_val) is list:
+            sub_dict = create_sub_dict(sub_val)
+            sub_arrays.append(sub_dict)
+        else:
+            #if any of the elements of the array is NOT a list,
+            #then there are no sub arrays
+            vals = arr 
+            break
+
+    if vals:
+        return {'item': vals}
+
+    if sub_arrays:
+        return {'array': sub_arrays}
 
 def parse_array(arr):
     """

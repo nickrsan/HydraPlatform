@@ -24,7 +24,11 @@ from spyne.model.primitive import Double
 from decimal import Decimal as Dec
 import sys
 from HydraLib.util import timestamp_to_ordinal, ordinal_to_timestamp
+import pandas as pd
 import logging
+from numpy import array
+from HydraLib.util import create_dict
+
 global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 #"2013-08-13T15:55:43.468886Z"
@@ -41,34 +45,6 @@ def get_timestamp(ordinal):
     timestamp = str(ordinal_to_timestamp(ordinal))
     return timestamp
 
-
-
-
-def create_dict(arr):
-    return {'array': [create_sub_dict(arr)]}
-
-def create_sub_dict(arr):
-    if arr is None:
-        return None 
-
-    #Either the array contains sub-arrays or values
-    vals = None
-    sub_arrays = []
-    for sub_val in arr:
-        if type(sub_val) is list:
-            sub_dict = create_sub_dict(sub_val)
-            sub_arrays.append(sub_dict)
-        else:
-            #if any of the elements of the array is NOT a list,
-            #then there are no sub arrays
-            vals = arr 
-            break
-
-    if vals:
-        return {'item': vals}
-
-    if sub_arrays:
-        return {'array': sub_arrays}
 
 class LoginResponse(ComplexModel):
     __namespace__ = 'soap_server.hydra_complexmodels'
@@ -158,8 +134,12 @@ class Dataset(HydraComplexModel):
                 self.value = Scalar(parent.value)
             elif parent.data_type == 'eqtimeseries':
                 self.value = EqTimeSeries(parent.start_time, parent.frequency, parent.value)
-        if parent.timeseriesdata and len(parent.timeseriesdata) > 0:
-            self.value = TimeSeries(parent.timeseriesdata)
+        if parent.data_type == 'timeseries':
+            if parent.value is not None:
+                self.value = TimeSeries(val = parent.value)
+            else:
+                if len(parent.timeseriesdata) > 0:
+                    self.value = TimeSeries(val = parent.timeseriesdata)
         
         if self.value:
             self.value = self.value.__dict__
@@ -275,7 +255,7 @@ class Dataset(HydraComplexModel):
                 if arr_data[0].get('item'):
                     for v in arr_data[0].get('item'):
                         try:
-                            ret_arr.append(float(v))
+                            ret_arr.append(eval(v))
                         except:
                             ret_arr.append(v)
                 else:
@@ -360,15 +340,37 @@ class TimeSeriesData(HydraComplexModel):
 class TimeSeries(HydraComplexModel):
     _type_info = [
         ('ts_values', SpyneArray(TimeSeriesData)),
+        ('frequency', Unicode(default=None))
+        ('periods',   Integer(default=None))
     ]
 
     def __init__(self, val=None):
         super(TimeSeries, self).__init__()
-        if  val is None:
+        if  val is None or len(val) == 0:
             return
+
         ts_vals = []
-        for ts in val:
-            ts_vals.append(TimeSeriesData(ts).__dict__)
+        if type(val) == str:
+            logging.info("Creating timeseries complexmodels")
+            timeseries = pd.read_json(val)
+            timestamps = list(timeseries.index)
+            for i, ts in enumerate(timestamps):
+                ts_val = timeseries.loc[ts].values
+                ts_data = TimeSeriesData()
+                ts_data.ts_time = [str(ts.to_pydatetime())]
+                try:
+                    ts_val = list(ts_val)
+                    ts_data.ts_value = [create_dict(ts_val)]
+                except:
+                    ts_data.ts_value = [ts_val]
+                ts_vals.append(ts_data.__dict__)
+
+            self.freq = timeseries.index.inferred_freq
+            self.periods = len(timeseries.index)
+            logging.info("Timeseries complexmodels created")
+        else:
+            for ts in val:
+                ts_vals.append(TimeSeriesData(ts).__dict__)
         self.ts_values = ts_vals
 
 class EqTimeSeries(HydraComplexModel):

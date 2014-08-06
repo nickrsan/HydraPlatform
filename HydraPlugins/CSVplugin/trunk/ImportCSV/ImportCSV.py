@@ -1219,7 +1219,7 @@ class ImportCSV(object):
         freq       = None
         prev_time  = None
         eq_val     = []
-        is_eq_spaced = True
+        is_eq_spaced = False 
         timedata = data.split('\n')
         for line in timedata:
             if line != '':

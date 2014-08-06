@@ -756,6 +756,8 @@ def parse_suds_array(arr):
     return ret_arr
 
 def create_dict(arr):
+    if type(arr) is not list:
+        return arr
     return {'array': [create_sub_dict(arr)]}
 
 def create_sub_dict(arr):

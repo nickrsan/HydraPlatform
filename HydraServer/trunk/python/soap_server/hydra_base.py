@@ -31,6 +31,10 @@ _session_db = dict()
 def get_session_db():
     return _session_db
 
+def set_session_db(session_db):
+    global _session_db
+    _session_db = session_db
+
 class HydraDocument(JsonDocument):
     """An implementation of the json protocol
        with request headers working"""

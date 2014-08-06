@@ -122,12 +122,12 @@ def convert_dataset(dataset_id, to_unit,**kwargs):
             new_val = vector_to_arr(newvec, dim)
         elif dataset_type == 'timeseries':
             new_val = []
-            for ts_data in dsval:
-                dim = array_dim(ts_data[1])
-                vecdata = arr_to_vector(ts_data[1])
+            for ts_time, ts_val in dsval.items():
+                dim = array_dim(ts_val)
+                vecdata = arr_to_vector(ts_val)
                 newvec = hydra_units.convert(vecdata, old_unit, to_unit)
                 newarr = vector_to_arr(newvec, dim)
-                new_val.append(ts_data[0], newarr)
+                new_val.append(ts_time, newarr)
         elif dataset_type == 'eqtimeseries':
             pass
         elif dataset_type == 'descriptor':

@@ -547,7 +547,7 @@ class ExportCSV(object):
                                     arr_file.write("array description,,,%s\n"%arr_desc)
 
                     for ts in value:
-                        ts_time = ts['ts_time'].replace('0001', 'XXXX')
+                        ts_time = ts['ts_time'].replace('1900', 'XXXX')
                         ts_val  = ts['ts_value']
 
                         try:

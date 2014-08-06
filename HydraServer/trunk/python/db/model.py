@@ -21,6 +21,10 @@ from db import DeclarativeBase as Base, DBSession
 
 from sqlalchemy.sql.expression import case
 from sqlalchemy import and_
+
+import pandas as pd
+import numpy as np
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -70,7 +74,7 @@ class Dataset(Base):
                 m_i = Metadata(metadata_name=k,metadata_val=v)
                 self.metadata.append(m_i)
 
-    def get_val(self, timestamp=None, raw=True):
+    def get_val(self, timestamp=None):
         """
             If a timestamp is passed to this function, 
             return the values appropriate to the requested times.
@@ -92,16 +96,28 @@ class Dataset(Base):
         elif self.data_type == 'scalar':
             return Decimal(str(self.value))
         elif self.data_type == 'timeseries':
+            timeseries = pd.read_json(self.value)
+            ts_val_tmp = []
             if timestamp is None:
-                if raw:
-                    return self.timeseriesdata
-                else:
-                    ts_val = []
-                    for ts in self.timeseriesdata:
-                        ts_val.append({'ts_time':get_timestamp(Decimal(ts.ts_time)),
-                                       'ts_value': eval(ts.ts_value)})
-                    return {'ts_values':ts_val}
+                timestamps = list(timeseries.index)
+                for i, ts in enumerate(timestamps):
+                    ts_val_tmp.append({'ts_time':str(ts),
+                                   'ts_value': timeseries.loc[ts].values.tolist()})
+
+                ts_val = []
+                for ts in self.timeseriesdata:
+                    ts_val.append({'ts_time':get_timestamp(Decimal(ts.ts_time)),
+                                   'ts_value': eval(ts.ts_value)})
+                assert ts_val == ts_val_tmp
+                return {'ts_values':ts_val_tmp}
             else:
+
+                timestamps = [ordinal_to_timestamp(x) for x in timestamp]
+                pandas_ts = timeseries.reindex(timestamps, method='ffill')
+
+                ret_val = list(pandas_ts.loc[timestamps].values)
+                return ret_val
+
                 ts_val_dict = {}
                 for ts in self.timeseriesdata:
                     ts_val_dict[ts.ts_time] = eval(ts.ts_value)
@@ -149,6 +165,17 @@ class Dataset(Base):
                     ts_val.ts_time = str(time)
                     ts_val.ts_value = value
                     self.timeseriesdata.append(ts_val)
+            test_val_keys = []
+            test_vals = []
+            for time, value in val:
+                try:
+                    v = float(value)
+                except:
+                    v = eval(value)
+                test_val_keys.append(str(ordinal_to_timestamp(time)))
+                test_vals.append(v)
+            test_pd = pd.DataFrame(test_vals, index=pd.Series(test_val_keys))
+            self.value = test_pd.to_json()
         else:
             raise HydraError("Invalid data type %s"%(data_type,))
 
@@ -162,6 +189,9 @@ class Dataset(Base):
                                        self.data_type,
                                        str(val),
                                        metadata)
+
+        log.debug("Generating data hash from: %s", hash_string)
+
         data_hash  = hash(hash_string)
 
         self.data_hash = data_hash
