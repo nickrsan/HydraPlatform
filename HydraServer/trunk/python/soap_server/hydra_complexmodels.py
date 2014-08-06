@@ -156,6 +156,8 @@ class Dataset(HydraComplexModel):
         """
 
         is_soap_req = False
+        #attr_data.value is a dictionary,
+        #but the keys have namespaces which must be stripped.
         data = str(self.value)
         if data.find('{%s}'%NS) >= 0:
             data = data.replace('{%s}'%NS, '')
@@ -168,8 +170,6 @@ class Dataset(HydraComplexModel):
        
         data_type = self.type
 
-        #attr_data.value is a dictionary,
-        #but the keys have namespaces which must be stripped.
         val_names = data.keys()
         value = []
         for name in val_names:
@@ -181,7 +181,7 @@ class Dataset(HydraComplexModel):
 
             # The brand new way to parse time series data:
             ts = []
-            for ts_val in value[0]:
+            for ts_val in data['ts_values']:
                 #The value is a list, so must get index 0
                 timestamp = ts_val['ts_time']
                 if is_soap_req:
@@ -340,8 +340,8 @@ class TimeSeriesData(HydraComplexModel):
 class TimeSeries(HydraComplexModel):
     _type_info = [
         ('ts_values', SpyneArray(TimeSeriesData)),
-        ('frequency', Unicode(default=None))
-        ('periods',   Integer(default=None))
+        ('frequency', Unicode(default=None)),
+        ('periods',   Integer(default=None)),
     ]
 
     def __init__(self, val=None):
@@ -365,8 +365,8 @@ class TimeSeries(HydraComplexModel):
                     ts_data.ts_value = [ts_val]
                 ts_vals.append(ts_data.__dict__)
 
-            self.freq = timeseries.index.inferred_freq
-            self.periods = len(timeseries.index)
+            self.frequency = [timeseries.index.inferred_freq]
+            self.periods = [len(timeseries.index)]
             logging.info("Timeseries complexmodels created")
         else:
             for ts in val:
