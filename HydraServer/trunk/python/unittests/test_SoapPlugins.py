@@ -20,6 +20,7 @@ import test_SoapServer
 from lxml import etree
 from subprocess import Popen, PIPE
 import logging
+import os
 log = logging.getLogger(__name__)
 
 class PluginsTest(test_SoapServer.SoapServerTest):
@@ -76,15 +77,22 @@ class PluginsTest(test_SoapServer.SoapServerTest):
         #Popen chosen instead of os.popen because it has greater control over waiting for
         #subprocesses to finish. (Important when waiting for files to be written before starting the next
         #piece of work
-        stream = Popen('cd ../../../../HydraPlugins/CSVplugin/trunk/testdata/hydro-econ/; ./import_data.sh', shell=True, stdout=PIPE)
+        if os.name == 'nt':
+       	    stream = Popen('cd ..\\..\\..\\..\\HydraPlugins\\CSVplugin\\trunk\\testdata\\hydro-econ & import_data', shell=True, stdout=PIPE)
+       	else:
+       	    stream = Popen('cd ../../../../HydraPlugins/CSVplugin/trunk/testdata/hydro-econ; ./import_data.sh', shell=True, stdout=PIPE)
+
         stream.wait()
         result_text = stream.stdout.readlines()
         xml_start = 1
+        xml_end   = -1
         for i, r in enumerate(result_text):
             if r.find('<plugin_result>') == 0:
                 xml_start = i
-        result = ''.join(result_text[xml_start:])
-        tree = etree.XML(result)
+            if r.find('</plugin_result>') == 0:
+                xml_end = i+1
+        result = ''.join(result_text[xml_start:xml_end])
+        tree = etree.XML(result.strip())
         print result
         assert tree.find('errors').getchildren() == []
         assert tree.find('warnings').getchildren() == []
