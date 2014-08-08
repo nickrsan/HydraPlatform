@@ -57,16 +57,21 @@ class HydraDocument(JsonDocument):
         super(HydraDocument, self).deserialize(ctx, message)
         if ctx.descriptor.in_header:
             in_header_class = ctx.descriptor.in_header[0]
-            ctx.in_header = in_header_class
+            ctx.in_header = in_header_class()
             for k, v in ctx.in_header_doc.items():
                 setattr(ctx.in_header, k, v[0])
 
 class RequestHeader(ComplexModel):
     __namespace__ = 'hydra.base'
     session_id    = Mandatory.String
-    username      = String
-    user_id       = String
-    app_name      = String
+    username      = Unicode
+    user_id       = Unicode
+    app_name      = Unicode
+
+    def __init__(self):
+        self.app_name = None
+        self.user_id  = None
+        self.username = None
 
 class HydraService(ServiceBase):
     __tns__ = 'hydra.base'
