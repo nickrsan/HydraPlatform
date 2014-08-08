@@ -1656,10 +1656,9 @@ _pytest: None -> None
 sqlalchemy.testing.schema: None -> <PyModule 'sqlalchemy.testing.schema' C:\Python27\lib\site-packages\sqlalchemy\testing\schema.pyc imports=[('schema', 0, 0, 2), ('', 0, 0, 2), ('event', 0, 0, 2), ('', 0, 0, 1), ('config', 0, 0, 1), ('exclusions', 0, 0, 1)] binaries=[] datas=[]>
 configparser: None -> None
   DEL configparser
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
+nose: None -> <PkgModule 'nose' C:\Python27\lib\site-packages\nose\__init__.pyc imports=[('nose.exc.SkipTest', 0, 0, -1), ('nose.tools.with_setup', 0, 0, -1), ('nose.exc.DeprecatedTest', 0, 0, -1), ('nose.core.main', 0, 0, -1), ('nose.core.runmodule', 0, 0, -1), ('nose.core.run', 0, 0, -1), ('nose.core.collector', 0, 0, -1), ('nose.exc', 0, 0, -1), ('nose.core.run_exit', 0, 0, -1), ('nose.core', 0, 0, -1), ('nose.tools', 0, 0, -1)] binaries=[] datas=[]>
+nose.SkipTest: None -> None
+  DEL nose.SkipTest
 sqlalchemy.testing.engines: None -> <PyModule 'sqlalchemy.testing.engines' C:\Python27\lib\site-packages\sqlalchemy\testing\engines.pyc imports=[('collections', 0, 0, 0), ('types', 0, 0, 0), ('event', 0, 0, 2), ('weakref', 0, 0, 0), ('sqlalchemy', 1, 0, 0), ('sqlalchemy.databases', 1, 0, 0), ('__future__', 0, 0, 0), ('collections.deque', 0, 0, 0), ('', 0, 0, 1), ('__future__.absolute_import', 0, 0, 0), ('assertsql', 1, 0, 1), ('util', 0, 0, 2), ('util.decorator', 0, 0, 1), ('', 0, 0, 2), ('sqlalchemy.create_engine', 1, 0, 0), ('config', 0, 0, 1), ('assertsql.asserter', 1, 0, 1), ('re', 0, 0, 0), ('util', 0, 0, 1), ('warnings', 0, 0, 0), ('pool', 0, 0, 2)] binaries=[] datas=[]>
 sqlalchemy.testing.fixtures: None -> <PyModule 'sqlalchemy.testing.fixtures' C:\Python27\lib\site-packages\sqlalchemy\testing\fixtures.pyc imports=[('sqlalchemy', 0, 0, -1), ('assertions', 0, 0, 1), ('sqlalchemy.event', 0, 0, -1), ('util.adict', 0, 0, 1), ('sqlalchemy.ext.declarative.DeclarativeMeta', 0, 0, -1), ('', 0, 0, 2), ('sqlalchemy.ext.declarative.declarative_base', 0, 0, -1), ('', 0, 0, 1), ('entities.BasicEntity', 0, 0, 1), ('sqlalchemy.ext.declarative', 0, 0, -1), ('engines', 0, 0, 1), ('util', 0, 0, 2), ('entities.ComparableEntity', 0, 0, 1), ('engines.drop_all_tables', 0, 0, 1), ('config', 0, 0, 1), ('util', 0, 0, 1), ('schema', 0, 0, 1), ('entities', 0, 0, 1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
 sqlalchemy.testing.profiling: None -> <PyModule 'sqlalchemy.testing.profiling' C:\Python27\lib\site-packages\sqlalchemy\testing\profiling.pyc imports=[('collections', 0, 0, -1), ('util.win32', 0, 0, 2), ('util.jython', 0, 0, 2), ('sys', 0, 0, -1), ('util.gc_collect', 0, 0, 1), ('', 0, 0, 2), ('os', 0, 0, -1), ('', 0, 0, 1), ('util.update_wrapper', 0, 0, 2), ('util', 0, 0, 2), ('util.decorator', 0, 0, 1), ('plugin.plugin_base.SkipTest', 0, 0, 1), ('config', 0, 0, 1), ('plugin.plugin_base', 0, 0, 1), ('time', 0, 0, -1), ('util', 0, 0, 1), ('util.pypy', 0, 0, 2), ('pstats', 0, 0, -1), ('cProfile', 0, 0, -1)] binaries=[] datas=[]>
@@ -1668,6 +1667,292 @@ cdecimal: None -> None
 _pytest: None -> None
   DEL _pytest
   DEL sqlalchemy.inspect
+nose.nose: None -> None
+nose.exc: None -> <PyModule 'nose.exc' C:\Python27\lib\site-packages\nose\exc.pyc imports=[('nose.plugins.skip', 0, 0, -1), ('nose.plugins.skip.SkipTest', 0, 0, -1), ('nose.plugins.deprecated', 0, 0, -1), ('nose.plugins.deprecated.DeprecatedTest', 0, 0, -1)] binaries=[] datas=[]>
+nose.tools: None -> <PkgModule 'nose.tools' C:\Python27\lib\site-packages\nose\tools\__init__.pyc imports=[('nose.tools.trivial', 0, 0, -1), ('nose.tools.trivial.__all__', 0, 0, -1), ('nose.tools.trivial.*', 0, 0, -1), ('nose.tools.nontrivial.*', 0, 0, -1), ('nose.tools.nontrivial', 0, 0, -1), ('nose.tools.nontrivial.__all__', 0, 0, -1)] binaries=[] datas=[]>
+nose.tools.with_setup: None -> None
+  DEL nose.tools.with_setup
+nose.core: None -> <PyModule 'nose.core' C:\Python27\lib\site-packages\nose\core.pyc imports=[('nose.result.TextTestResult', 0, 0, -1), ('nose.util.tolist', 0, 0, -1), ('os', 0, 0, -1), ('nose', 1, 0, -1), ('nose.__version__', 1, 1, -1), ('__future__', 0, 0, -1), ('nose.suite.FinalizingSuiteWrapper', 0, 0, -1), ('nose.plugins.manager.RestrictedPluginManager', 0, 0, -1), ('nose.result', 0, 0, -1), ('sys', 0, 0, -1), ('nose.plugins.manager.PluginManager', 0, 0, -1), ('nose.suite', 0, 0, -1), ('nose.config', 0, 0, -1), ('unittest', 0, 0, -1), ('time', 0, 0, -1), ('nose', 1, 1, -1), ('nose.plugins.manager.DefaultPluginManager', 0, 0, -1), ('nose.plugins.manager', 0, 0, -1), ('nose.loader.defaultTestLoader', 0, 0, -1), ('textwrap', 1, 0, -1), ('nose.loader', 0, 0, -1), ('nose.config.all_config_files', 0, 0, -1), ('__future__.generators', 0, 0, -1), ('nose.util.isclass', 0, 0, -1), ('nose.util', 0, 0, -1), ('nose.config.Config', 0, 0, -1), ('logging', 0, 0, -1)] binaries=[] datas=[]>
+nose.plugins: None -> <PkgModule 'nose.plugins' C:\Python27\lib\site-packages\nose\plugins\__init__.pyc imports=[('nose.plugins.manager.*', 0, 0, -1), ('nose.plugins.base.Plugin', 0, 0, -1), ('nose.plugins.manager', 0, 0, -1), ('doctest', 0, 1, -1), ('nose.plugins.base', 0, 0, -1), ('nose.plugins.plugintest.PluginTester', 0, 0, -1), ('nose.plugins.plugintest', 0, 0, -1)] binaries=[] datas=[]>
+nose.plugins.skip: None -> <PyModule 'nose.plugins.skip' C:\Python27\lib\site-packages\nose\plugins\skip.pyc imports=[('unittest.case.SkipTest', 0, 0, -1), ('nose.plugins.errorclass', 0, 0, -1), ('nose.plugins.errorclass.ErrorClass', 0, 0, -1), ('unittest.case', 0, 0, -1), ('unittest2.case', 0, 1, -1), ('unittest2.case.SkipTest', 0, 1, -1), ('nose.plugins.errorclass.ErrorClassPlugin', 0, 0, -1)] binaries=[] datas=[]>
+nose.plugins.deprecated: None -> <PyModule 'nose.plugins.deprecated' C:\Python27\lib\site-packages\nose\plugins\deprecated.pyc imports=[('nose.plugins.errorclass', 0, 0, -1), ('nose.plugins.errorclass.ErrorClass', 0, 0, -1), ('nose.plugins.errorclass.ErrorClassPlugin', 0, 0, -1)] binaries=[] datas=[]>
+nose.plugins.nose: None -> None
+nose.plugins.manager: None -> <PyModule 'nose.plugins.manager' C:\Python27\lib\site-packages\nose\plugins\manager.pyc imports=[('pkg_resources', 1, 0, -1), ('nose.pyversion.sort_list', 0, 0, -1), ('os', 0, 0, -1), ('StringIO.StringIO', 0, 0, -1), ('warnings', 0, 0, -1), ('nose.failure.Failure', 0, 0, -1), ('inspect', 0, 0, -1), ('nose.plugins.base', 0, 0, -1), ('nose.failure', 0, 0, -1), ('nose.plugins', 1, 0, -1), ('itertools', 0, 0, -1), ('sys', 0, 0, -1), ('pkg_resources.iter_entry_points', 1, 0, -1), ('nose.plugins.base.IPluginInterface', 0, 0, -1), ('StringIO', 0, 0, -1), ('nose.exc.SkipTest', 1, 0, -1), ('cStringIO', 0, 0, -1), ('pickle', 0, 0, -1), ('nose.config', 0, 0, -1), ('optparse', 1, 1, -1), ('itertools.chain', 0, 0, -1), ('pkg_resources', 0, 0, -1), ('cStringIO.StringIO', 0, 0, -1), ('nose.exc', 1, 0, -1), ('nose.exc.DeprecatedTest', 1, 0, -1), ('logging', 0, 0, -1), ('cPickle', 0, 0, -1), ('nose.plugins.builtin', 1, 0, -1), ('warnings.warn', 0, 0, -1), ('optparse.OptionParser', 1, 1, -1), ('nose.pyversion', 0, 0, -1)] binaries=[] datas=[]>
+nose.plugins.base: None -> <PyModule 'nose.plugins.base' C:\Python27\lib\site-packages\nose\plugins\base.pyc imports=[('os', 0, 0, -1), ('nose.util.tolist', 0, 0, -1), ('warnings', 0, 0, -1), ('nose.util', 0, 0, -1), ('optparse.OptionConflictError', 0, 0, -1), ('textwrap', 0, 0, -1), ('warnings.warn', 0, 0, -1), ('optparse', 0, 0, -1)] binaries=[] datas=[]>
+nose.plugins.doctest: None -> None
+nose.plugins.plugintest: None -> <PyModule 'nose.plugins.plugintest' C:\Python27\lib\site-packages\nose\plugins\plugintest.pyc imports=[('os', 0, 0, -1), ('nose', 1, 0, -1), ('warnings', 0, 0, -1), ('multiprocessing.current_process', 1, 0, -1), ('multiprocessing', 1, 0, -1), ('collections', 1, 0, -1), ('Queue.Empty', 1, 0, -1), ('multiprocessing.Manager', 0, 0, -1), ('nose.plugins.manager', 1, 0, -1), ('nose.config.Config', 1, 0, -1), ('sys', 0, 0, -1), ('doctest', 0, 1, -1), ('cStringIO', 0, 0, -1), ('nose.config', 1, 0, -1), ('collections.defaultdict', 1, 0, -1), ('StringIO.StringIO', 0, 1, -1), ('cStringIO.StringIO', 0, 0, -1), ('re', 0, 0, -1), ('nose.core', 1, 0, -1), ('multiprocessing', 0, 0, -1), ('os.getpid', 0, 0, -1), ('nose.run', 1, 0, -1), ('nose.core.TestProgram', 1, 0, -1), ('Queue', 1, 0, -1), ('StringIO', 0, 1, -1), ('nose.plugins.manager.PluginManager', 1, 0, -1), ('warnings.warn', 0, 0, -1)] binaries=[] datas=[]>
+nose.plugins.pkg_resources: None -> None
+nose.pyversion: None -> <PyModule 'nose.pyversion' C:\Python27\lib\site-packages\nose\pyversion.pyc imports=[('sys', 0, 0, -1), ('types', 0, 0, -1), ('os', 0, 0, -1), ('new', 0, 0, -1), ('compiler.consts', 0, 1, -1), ('nose.util', 0, 0, -1), ('inspect', 0, 0, -1), ('traceback', 0, 0, -1), ('compiler.consts.CO_GENERATOR', 0, 1, -1)] binaries=[] datas=[]>
+nose.plugins.os: None -> None
+nose.plugins.StringIO: None -> None
+nose.plugins.warnings: None -> None
+nose.failure: None -> <PyModule 'nose.failure' C:\Python27\lib\site-packages\nose\failure.pyc imports=[('traceback.format_tb', 0, 0, -1), ('logging', 0, 0, -1), ('traceback', 0, 0, -1), ('nose.pyversion.is_base_exception', 0, 0, -1), ('unittest', 0, 0, -1), ('nose.pyversion', 0, 0, -1)] binaries=[] datas=[]>
+nose.plugins.inspect: None -> None
+nose.plugins.itertools: None -> None
+nose.plugins.sys: None -> None
+nose.plugins.cStringIO: None -> None
+nose.plugins.pickle: None -> None
+nose.config: None -> <PyModule 'nose.config' C:\Python27\lib\site-packages\nose\config.pyc imports=[('logging.config', 1, 1, -1), ('logging.config.fileConfig', 1, 1, -1), ('re', 0, 0, -1), ('ConfigParser', 0, 0, -1), ('sys', 0, 0, -1), ('nose.plugins.manager.NoPlugins', 0, 0, -1), ('os', 0, 0, -1), ('nose.util.tolist', 0, 0, -1), ('warnings', 0, 0, -1), ('nose.util', 0, 0, -1), ('nose.util.absdir', 0, 0, -1), ('logging', 0, 0, -1), ('nose.importer', 1, 0, -1), ('nose.plugins.manager', 0, 0, -1), ('nose.importer.add_path', 1, 0, -1), ('warnings.filterwarnings', 0, 0, -1), ('warnings.warn', 0, 0, -1), ('optparse', 0, 0, -1), ('optparse.OptionParser', 0, 0, -1)] binaries=[] datas=[]>
+nose.plugins.optparse: None -> None
+nose.plugins.logging: None -> None
+nose.plugins.cPickle: None -> None
+nose.plugins.builtin: None -> <PyModule 'nose.plugins.builtin' C:\Python27\lib\site-packages\nose\plugins\builtin.pyc imports=[] binaries=[] datas=[]>
+nose.sys: None -> None
+nose.types: None -> None
+nose.os: None -> None
+nose.new: None -> None
+new: None -> <PyModule 'new' C:\Python27\lib\new.pyc imports=[('types.CodeType', 0, 0, -1), ('types.MethodType', 0, 0, -1), ('types', 0, 0, -1), ('types.InstanceType', 0, 0, -1), ('warnings', 0, 0, -1), ('types.FunctionType', 0, 0, -1), ('types.ModuleType', 0, 0, -1), ('warnings.warnpy3k', 0, 0, -1), ('types.ClassType', 0, 0, -1)] binaries=[] datas=[]>
+nose.compiler: None -> None
+compiler: None -> <PkgModule 'compiler' C:\Python27\lib\compiler\__init__.pyc imports=[('compiler.visitor', 0, 0, -1), ('compiler.transformer', 0, 0, -1), ('compiler.transformer.parseFile', 0, 0, -1), ('compiler.pycodegen', 0, 0, -1), ('compiler.transformer.parse', 0, 0, -1), ('compiler.pycodegen.compile', 0, 0, -1), ('warnings', 0, 0, -1), ('compiler.pycodegen.compileFile', 0, 0, -1), ('compiler.visitor.walk', 0, 0, -1)] binaries=[] datas=[]>
+compiler.consts: None -> <PyModule 'compiler.consts' C:\Python27\lib\compiler\consts.pyc imports=[] binaries=[] datas=[]>
+nose.util: None -> <PyModule 'nose.util' C:\Python27\lib\site-packages\nose\util.pyc imports=[('doctest', 0, 1, -1), ('nose.tools', 1, 0, -1), ('re', 0, 0, -1), ('itertools', 0, 0, -1), ('sys', 0, 0, -1), ('types', 0, 0, -1), ('os', 0, 0, -1), ('nose.pyversion.ismethod', 0, 0, -1), ('nose.pyversion.TypeType', 0, 0, -1), ('nose.tools.make_decorator', 1, 0, -1), ('nose.pyversion.isgenerator', 0, 0, -1), ('logging', 0, 0, -1), ('nose.pyversion.ClassType', 0, 0, -1), ('inspect', 0, 0, -1), ('sets.Set', 0, 1, -1), ('unittest', 0, 0, -1), ('sets', 0, 1, -1), ('nose.pyversion', 0, 0, -1)] binaries=[] datas=[]>
+nose.inspect: None -> None
+nose.traceback: None -> None
+compiler.compiler: None -> None
+compiler.visitor: None -> <PyModule 'compiler.visitor' C:\Python27\lib\compiler\visitor.pyc imports=[('compiler.ast', 0, 0, -1), ('compiler', 0, 0, -1)] binaries=[] datas=[]>
+compiler.transformer: None -> <PyModule 'compiler.transformer' C:\Python27\lib\compiler\transformer.pyc imports=[('token', 0, 0, -1), ('compiler.ast.*', 0, 0, -1), ('compiler.consts.CO_VARKEYWORDS', 0, 0, -1), ('compiler.consts.OP_ASSIGN', 0, 0, -1), ('compiler.consts.OP_APPLY', 0, 0, -1), ('compiler.ast', 0, 0, -1), ('compiler.consts.CO_VARARGS', 0, 0, -1), ('compiler.consts.OP_DELETE', 0, 0, -1), ('parser', 0, 0, -1), ('compiler.consts', 0, 0, -1), ('symbol', 0, 0, -1)] binaries=[] datas=[]>
+compiler.pycodegen: None -> <PyModule 'compiler.pycodegen' C:\Python27\lib\compiler\pycodegen.pyc imports=[('compiler.consts.CO_FUTURE_DIVISION', 0, 0, -1), ('compiler.consts.CO_FUTURE_PRINT_FUNCTION', 0, 0, -1), ('os', 0, 0, -1), ('struct', 0, 0, -1), ('compiler.consts.SC_LOCAL', 0, 0, -1), ('pprint', 1, 1, -1), ('compiler.future', 0, 0, -1), ('compiler.misc', 0, 0, -1), ('compiler', 0, 0, -1), ('sys', 0, 0, -1), ('compiler.consts.SC_FREE', 0, 0, -1), ('compiler.consts.CO_FUTURE_ABSIMPORT', 0, 0, -1), ('cStringIO', 0, 0, -1), ('compiler.consts.CO_FUTURE_WITH_STATEMENT', 0, 0, -1), ('compiler.consts.SC_CELL', 0, 0, -1), ('compiler.consts.CO_GENERATOR', 0, 0, -1), ('compiler.consts.CO_NEWLOCALS', 0, 0, -1), ('compiler.consts.CO_NESTED', 0, 0, -1), ('compiler.syntax', 0, 0, -1), ('compiler.pyassem.TupleArg', 0, 0, -1), ('compiler.symbols', 0, 0, -1), ('compiler.consts.CO_VARARGS', 0, 0, -1), ('cStringIO.StringIO', 0, 0, -1), ('compiler.pyassem', 0, 0, -1), ('compiler.parse', 0, 0, -1), ('imp', 0, 0, -1), ('compiler.consts.CO_VARKEYWORDS', 0, 0, -1), ('marshal', 0, 0, -1), ('compiler.consts.SC_GLOBAL_IMPLICIT', 0, 0, -1), ('compiler.ast', 0, 0, -1), ('compiler.consts.SC_GLOBAL_EXPLICIT', 0, 0, -1), ('compiler.consts', 0, 0, -1), ('compiler.walk', 0, 0, -1)] binaries=[] datas=[]>
+compiler.warnings: None -> None
+compiler.ast: None -> <PyModule 'compiler.ast' C:\Python27\lib\compiler\ast.pyc imports=[('compiler.consts', 0, 0, -1), ('compiler.consts.CO_VARARGS', 0, 0, -1), ('compiler.consts.CO_VARKEYWORDS', 0, 0, -1)] binaries=[] datas=[]>
+compiler.token: None -> None
+compiler.parser: None -> None
+compiler.symbol: None -> None
+compiler.os: None -> None
+compiler.struct: None -> None
+compiler.pprint: None -> None
+compiler.future: None -> <PyModule 'compiler.future' C:\Python27\lib\compiler\future.pyc imports=[('compiler.parseFile', 0, 1, -1), ('compiler', 0, 0, -1), ('compiler.walk', 0, 1, -1), ('compiler', 0, 1, -1), ('compiler.ast', 0, 0, -1), ('sys', 0, 1, -1), ('compiler.walk', 0, 0, -1)] binaries=[] datas=[]>
+compiler.misc: None -> <PyModule 'compiler.misc' C:\Python27\lib\compiler\misc.pyc imports=[] binaries=[] datas=[]>
+compiler.sys: None -> None
+compiler.cStringIO: None -> None
+compiler.syntax: None -> <PyModule 'compiler.syntax' C:\Python27\lib\compiler\syntax.pyc imports=[('compiler.ast', 0, 0, -1), ('compiler', 0, 0, -1), ('compiler.walk', 0, 0, -1)] binaries=[] datas=[]>
+compiler.pyassem: None -> <PyModule 'compiler.pyassem' C:\Python27\lib\compiler\pyassem.pyc imports=[('compiler.misc', 0, 0, -1), ('compiler', 0, 0, -1), ('sys', 0, 0, -1), ('compiler.consts.CO_VARARGS', 0, 0, -1), ('types', 0, 0, -1), ('compiler.consts.CO_VARKEYWORDS', 0, 0, -1), ('compiler.consts.CO_OPTIMIZED', 0, 0, -1), ('compiler.consts.CO_NEWLOCALS', 0, 0, -1), ('dis', 0, 0, -1), ('compiler.consts', 0, 0, -1)] binaries=[] datas=[]>
+compiler.symbols: None -> <PyModule 'compiler.symbols' C:\Python27\lib\compiler\symbols.pyc imports=[('compiler.parseFile', 0, 1, -1), ('compiler.misc', 0, 0, -1), ('compiler', 0, 0, -1), ('sys', 0, 0, -1), ('types', 0, 0, -1), ('compiler.consts.SC_FREE', 0, 0, -1), ('compiler.walk', 0, 1, -1), ('compiler.consts.SC_GLOBAL_IMPLICIT', 0, 0, -1), ('compiler', 0, 1, -1), ('compiler.ast', 0, 0, -1), ('compiler.consts.SC_GLOBAL_EXPLICIT', 0, 0, -1), ('compiler.consts.SC_CELL', 0, 0, -1), ('symtable', 0, 1, -1), ('compiler.consts.SC_LOCAL', 0, 0, -1), ('sys', 0, 1, -1), ('compiler.consts', 0, 0, -1), ('compiler.misc.mangle', 0, 0, -1), ('compiler.consts.SC_UNKNOWN', 0, 0, -1)] binaries=[] datas=[]>
+compiler.parse: None -> None
+  DEL compiler.parse
+compiler.imp: None -> None
+compiler.marshal: None -> None
+compiler.walk: None -> None
+  DEL compiler.walk
+compiler.parseFile: None -> None
+  DEL compiler.parseFile
+compiler.walk: None -> None
+  DEL compiler.walk
+compiler.walk: None -> None
+  DEL compiler.walk
+compiler.walk: None -> None
+  DEL compiler.walk
+compiler.types: None -> None
+compiler.dis: None -> None
+compiler.parseFile: None -> None
+  DEL compiler.parseFile
+compiler.walk: None -> None
+  DEL compiler.walk
+compiler.symtable: None -> None
+symtable: None -> <PyModule 'symtable' C:\Python27\lib\symtable.pyc imports=[('_symtable.SCOPE_OFF', 0, 0, -1), ('_symtable.GLOBAL_IMPLICIT', 0, 0, -1), ('_symtable.OPT_BARE_EXEC', 0, 0, -1), ('weakref', 0, 0, -1), ('_symtable.DEF_BOUND', 0, 0, -1), ('_symtable.FREE', 0, 0, -1), ('_symtable.GLOBAL_EXPLICIT', 0, 0, -1), ('_symtable.DEF_IMPORT', 0, 0, -1), ('_symtable.DEF_PARAM', 0, 0, -1), ('_symtable.DEF_LOCAL', 0, 0, -1), ('_symtable.DEF_GLOBAL', 0, 0, -1), ('sys', 0, 1, -1), ('_symtable.USE', 0, 0, -1), ('_symtable.OPT_IMPORT_STAR', 0, 0, -1), ('_symtable.CELL', 0, 0, -1), ('_symtable.LOCAL', 0, 0, -1), ('_symtable', 0, 0, -1), ('os', 0, 1, -1), ('_symtable.SCOPE_MASK', 0, 0, -1), ('_symtable.OPT_EXEC', 0, 0, -1)] binaries=[] datas=[]>
+_symtable: None -> <BuiltinModule '_symtable' None imports=[] binaries=[] datas=[]>
+nose.doctest: None -> None
+nose.re: None -> None
+nose.itertools: None -> None
+nose.tools.make_decorator: None -> None
+  DEL nose.tools.make_decorator
+nose.logging: None -> None
+nose.sets: None -> None
+nose.unittest: None -> None
+nose.tools.nose: None -> None
+nose.tools.trivial: None -> <PyModule 'nose.tools.trivial' C:\Python27\lib\site-packages\nose\tools\trivial.pyc imports=[('re', 0, 0, -1), ('unittest', 0, 0, -1)] binaries=[] datas=[]>
+nose.tools.nontrivial: None -> <PyModule 'nose.tools.nontrivial' C:\Python27\lib\site-packages\nose\tools\nontrivial.pyc imports=[('sys', 1, 0, -1), ('pdb', 1, 0, -1), ('time', 0, 0, -1)] binaries=[] datas=[]>
+nose.tools.re: None -> None
+nose.tools.unittest: None -> None
+nose.tools.sys: None -> None
+nose.tools.pdb: None -> None
+nose.tools.time: None -> None
+nose.plugins.textwrap: None -> None
+logging.config: None -> <PyModule 'logging.config' C:\Python27\lib\logging\config.pyc imports=[('tempfile', 1, 0, -1), ('re', 0, 0, -1), ('json', 1, 1, -1), ('sys', 0, 0, -1), ('types', 0, 0, -1), ('os', 0, 0, -1), ('threading', 0, 0, -1), ('struct', 0, 0, -1), ('thread', 0, 0, -1), ('SocketServer.ThreadingTCPServer', 0, 0, -1), ('logging', 0, 0, -1), ('cStringIO', 0, 0, -1), ('ConfigParser', 1, 0, -1), ('socket', 0, 0, -1), ('traceback', 0, 0, -1), ('SocketServer.StreamRequestHandler', 0, 0, -1), ('select', 1, 0, -1), ('SocketServer', 0, 0, -1), ('logging.handlers', 0, 0, -1)] binaries=[] datas=[]>
+nose.ConfigParser: None -> None
+nose.warnings: None -> None
+nose.importer: None -> <PyModule 'nose.importer' C:\Python27\lib\site-packages\nose\importer.pyc imports=[('imp.release_lock', 0, 0, -1), ('imp', 0, 0, -1), ('sys', 0, 0, -1), ('imp.find_module', 0, 0, -1), ('os', 0, 0, -1), ('nose.config.Config', 0, 0, -1), ('logging', 0, 0, -1), ('imp.acquire_lock', 0, 0, -1), ('imp.load_module', 0, 0, -1), ('nose.config', 0, 0, -1)] binaries=[] datas=[]>
+nose.optparse: None -> None
+logging.tempfile: None -> None
+logging.re: None -> None
+logging.json: None -> None
+logging.types: None -> None
+logging.struct: None -> None
+logging.SocketServer: None -> None
+logging.logging: None -> None
+logging.ConfigParser: None -> None
+logging.socket: None -> None
+logging.select: None -> None
+logging.handlers: None -> <PyModule 'logging.handlers' C:\Python27\lib\logging\handlers.pyc imports=[('re', 0, 0, -1), ('httplib', 1, 0, -1), ('stat.ST_DEV', 0, 0, -1), ('stat.ST_MTIME', 0, 0, -1), ('os', 0, 0, -1), ('email.utils', 1, 0, -1), ('smtplib', 1, 0, -1), ('email.utils.formatdate', 1, 0, -1), ('struct', 0, 0, -1), ('urllib', 1, 0, -1), ('logging', 0, 0, -1), ('cPickle', 0, 0, -1), ('stat.ST_INO', 0, 0, -1), ('socket', 0, 0, -1), ('win32evtlogutil', 1, 0, -1), ('win32evtlog', 1, 0, -1), ('errno', 0, 0, -1), ('time', 0, 0, -1), ('codecs', 0, 0, -1), ('stat', 0, 0, -1)] binaries=[] datas=[]>
+logging.httplib: None -> None
+logging.stat: None -> None
+logging.email: None -> None
+logging.smtplib: None -> None
+smtplib: None -> <PyModule 'smtplib' C:\Python27\lib\smtplib.pyc imports=[('re', 0, 0, -1), ('sys.stderr', 0, 0, -1), ('sys', 0, 0, -1), ('hmac', 0, 0, -1), ('email.base64mime.encode', 0, 0, -1), ('email.base64mime', 0, 0, -1), ('ssl', 0, 0, -1), ('socket', 0, 0, -1), ('sys', 0, 1, -1), ('email.utils', 0, 0, -1), ('base64', 0, 0, -1)] binaries=[] datas=[]>
+logging.urllib: None -> None
+logging.cPickle: None -> None
+logging.win32evtlogutil: None -> None
+win32evtlogutil: None -> <PyModule 'win32evtlogutil' C:\Python27\lib\site-packages\win32\lib\win32evtlogutil.pyc imports=[('win32con', 0, 0, -1), ('win32evtlog', 0, 0, -1), ('win32api', 0, 0, -1), ('winerror', 0, 0, -1)] binaries=[] datas=[]>
+logging.win32evtlog: None -> None
+win32evtlog: None -> <ExtensionModule 'win32evtlog' C:\Python27\lib\site-packages\win32\win32evtlog.pyd imports=[] binaries=[] datas=[]>
+logging.errno: None -> None
+hmac: None -> <PyModule 'hmac' C:\Python27\lib\hmac.pyc imports=[('hashlib', 1, 1, -1), ('warnings', 0, 0, -1)] binaries=[] datas=[]>
+winerror: None -> <PyModule 'winerror' C:\Python27\lib\site-packages\win32\lib\winerror.pyc imports=[] binaries=[] datas=[]>
+nose.imp: None -> None
+nose.plugins.multiprocessing: None -> None
+multiprocessing: None -> <PkgModule 'multiprocessing' C:\Python27\lib\multiprocessing\__init__.pyc imports=[('multiprocessing.util.SUBDEBUG', 0, 0, -1), ('multiprocessing.util.SUBWARNING', 0, 0, -1), ('os', 0, 0, -1), ('multiprocessing.reduction', 1, 0, -1), ('multiprocessing', 1, 0, -1), ('multiprocessing.managers.SyncManager', 1, 0, -1), ('multiprocessing.sharedctypes.Array', 1, 0, -1), ('multiprocessing.synchronize.Event', 1, 0, -1), ('multiprocessing.managers', 1, 0, -1), ('multiprocessing.util', 1, 0, -1), ('sys', 0, 0, -1), ('multiprocessing.synchronize', 1, 0, -1), ('multiprocessing.forking', 1, 1, -1), ('multiprocessing.synchronize.Lock', 1, 0, -1), ('multiprocessing.synchronize.Semaphore', 1, 0, -1), ('multiprocessing.connection', 1, 0, -1), ('multiprocessing.pool', 1, 0, -1), ('multiprocessing.process.current_process', 0, 0, -1), ('multiprocessing.synchronize.Condition', 1, 0, -1), ('multiprocessing.queues', 1, 0, -1), ('multiprocessing.sharedctypes.RawArray', 1, 0, -1), ('_multiprocessing', 0, 0, -1), ('multiprocessing.connection.Pipe', 1, 0, -1), ('multiprocessing.synchronize.RLock', 1, 0, -1), ('multiprocessing.synchronize.BoundedSemaphore', 1, 0, -1), ('multiprocessing.sharedctypes.Value', 1, 0, -1), ('multiprocessing.util', 0, 0, -1), ('multiprocessing.sharedctypes.RawValue', 1, 0, -1), ('multiprocessing.queues.JoinableQueue', 1, 0, -1), ('multiprocessing.util.log_to_stderr', 1, 0, -1), ('multiprocessing.forking.freeze_support', 1, 1, -1), ('multiprocessing.process.Process', 0, 0, -1), ('multiprocessing.pool.Pool', 1, 0, -1), ('multiprocessing.forking.set_executable', 1, 0, -1), ('multiprocessing.process', 0, 0, -1), ('multiprocessing.util.get_logger', 1, 0, -1), ('multiprocessing.process.active_children', 0, 0, -1), ('multiprocessing.sharedctypes', 1, 0, -1), ('multiprocessing.forking', 1, 0, -1), ('multiprocessing.queues.Queue', 1, 0, -1)] binaries=[] datas=[]>
+multiprocessing.current_process: None -> None
+  DEL multiprocessing.current_process
+nose.plugins.collections: None -> None
+nose.plugins.Queue: None -> None
+Queue: None -> <PyModule 'Queue' C:\Python27\lib\Queue.pyc imports=[('collections', 0, 0, -1), ('threading', 0, 0, -1), ('collections.deque', 0, 0, -1), ('time.time', 0, 0, -1), ('heapq', 0, 0, -1), ('dummy_threading', 0, 1, -1), ('time', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing.Manager: None -> None
+  DEL multiprocessing.Manager
+nose.plugins.re: None -> None
+nose.run: None -> None
+  DEL nose.run
+multiprocessing.multiprocessing: None -> None
+multiprocessing.util: None -> <PyModule 'multiprocessing.util' C:\Python27\lib\multiprocessing\util.pyc imports=[('atexit', 1, 0, -1), ('atexit', 0, 0, -1), ('itertools', 0, 0, -1), ('logging', 1, 0, -1), ('weakref', 0, 0, -1), ('shutil', 1, 1, -1), ('threading', 0, 0, -1), ('subprocess._args_from_interpreter_flags', 0, 0, -1), ('subprocess', 0, 0, -1), ('traceback', 1, 1, -1), ('multiprocessing.process.current_process', 0, 0, -1), ('multiprocessing.process.active_children', 0, 0, -1), ('tempfile', 1, 1, -1), ('multiprocessing.process', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing.os: None -> None
+multiprocessing.reduction: None -> <PyModule 'multiprocessing.reduction' C:\Python27\lib\multiprocessing\reduction.pyc imports=[('_multiprocessing', 0, 1, -1), ('os', 0, 0, -1), ('multiprocessing.forking.close', 0, 0, -1), ('util.is_exiting', 1, 0, 1), ('_multiprocessing.win32', 0, 1, -1), ('threading', 0, 0, -1), ('sys', 0, 0, -1), ('util', 1, 0, 1), ('multiprocessing.forking.Popen', 0, 0, -1), ('multiprocessing.connection.Listener', 0, 0, -1), ('_multiprocessing', 0, 0, -1), ('multiprocessing.current_process', 0, 0, -1), ('multiprocessing.forking.duplicate', 0, 0, -1), ('multiprocessing.forking', 0, 0, -1), ('multiprocessing.util', 0, 0, -1), ('socket', 0, 0, -1), ('_subprocess', 0, 1, -1), ('traceback', 1, 1, -1), ('multiprocessing.util.debug', 0, 0, -1), ('multiprocessing.connection', 0, 0, -1), ('util.sub_warning', 1, 0, 1), ('multiprocessing.util.sub_debug', 0, 0, -1), ('multiprocessing', 0, 0, -1), ('multiprocessing.forking.ForkingPickler', 0, 0, -1), ('multiprocessing.util.register_after_fork', 0, 0, -1), ('multiprocessing.connection.Client', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing.managers: None -> <PyModule 'multiprocessing.managers' C:\Python27\lib\multiprocessing\managers.pyc imports=[('multiprocessing.util.Finalize', 0, 0, -1), ('multiprocessing.Process', 0, 0, -1), ('os', 0, 0, -1), ('multiprocessing.forking.assert_spawning', 0, 0, -1), ('pickle.PicklingError', 0, 1, -1), ('threading', 0, 0, -1), ('sys', 0, 0, -1), ('multiprocessing.forking.Popen', 0, 0, -1), ('cPickle.PicklingError', 0, 0, -1), ('pickle', 0, 1, -1), ('multiprocessing.current_process', 0, 0, -1), ('weakref', 0, 0, -1), ('multiprocessing.forking.exit', 0, 0, -1), ('multiprocessing.forking', 0, 0, -1), ('array', 0, 0, -1), ('multiprocessing.util', 0, 0, -1), ('multiprocessing.util.info', 0, 0, -1), ('traceback', 1, 0, -1), ('multiprocessing.connection', 0, 0, -1), ('Queue', 0, 0, -1), ('multiprocessing.active_children', 0, 0, -1), ('multiprocessing.process', 0, 0, -1), ('multiprocessing', 0, 0, -1), ('traceback.format_exc', 0, 0, -1), ('multiprocessing.forking.ForkingPickler', 0, 0, -1), ('cPickle', 0, 0, -1), ('traceback', 0, 0, -1), ('multiprocessing.process.AuthenticationString', 0, 0, -1), ('multiprocessing.Pool', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing.sharedctypes: None -> <PyModule 'multiprocessing.sharedctypes' C:\Python27\lib\multiprocessing\sharedctypes.pyc imports=[('ctypes', 0, 0, -1), ('sys', 0, 0, -1), ('multiprocessing', 0, 0, -1), ('multiprocessing.forking', 0, 0, -1), ('weakref', 0, 0, -1), ('multiprocessing.forking.ForkingPickler', 0, 0, -1), ('multiprocessing.forking.assert_spawning', 0, 0, -1), ('multiprocessing.heap', 0, 0, -1), ('multiprocessing.RLock', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing.synchronize: None -> <PyModule 'multiprocessing.synchronize' C:\Python27\lib\multiprocessing\synchronize.pyc imports=[('threading', 0, 0, -1), ('sys', 0, 0, -1), ('multiprocessing.forking', 0, 0, -1), ('os', 0, 0, -1), ('multiprocessing.util', 0, 0, -1), ('time.time', 0, 0, -1), ('multiprocessing.forking.assert_spawning', 0, 0, -1), ('multiprocessing.forking.Popen', 0, 0, -1), ('multiprocessing.util.register_after_fork', 0, 0, -1), ('time.sleep', 0, 0, -1), ('multiprocessing.process.current_process', 0, 0, -1), ('_multiprocessing.SemLock', 0, 0, -1), ('_multiprocessing', 0, 0, -1), ('multiprocessing.util.debug', 0, 0, -1), ('time', 0, 0, -1), ('multiprocessing.util.Finalize', 0, 0, -1), ('multiprocessing.process', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing.sys: None -> None
+multiprocessing.forking: None -> <PyModule 'multiprocessing.forking' C:\Python27\lib\multiprocessing\forking.pyc imports=[('thread', 0, 1, -1), ('functools.partial', 0, 0, -1), ('_multiprocessing', 0, 1, -1), ('os', 0, 0, -1), ('_multiprocessing.win32', 0, 1, -1), ('_multiprocessing.Connection', 0, 1, -1), ('pickle.HIGHEST_PROTOCOL', 0, 1, -1), ('signal', 0, 0, -1), ('pickle', 0, 0, -1), ('sys', 0, 0, -1), ('util', 1, 0, 1), ('util._logger', 1, 0, 1), ('time', 0, 1, -1), ('_multiprocessing.PipeConnection', 0, 1, -1), ('functools', 0, 0, -1), ('pickle', 0, 1, -1), ('imp', 1, 1, -1), ('util', 0, 1, 1), ('util._log_to_stderr', 1, 0, 1), ('multiprocessing.util', 0, 0, -1), ('util.Finalize', 0, 1, 1), ('_subprocess', 0, 1, -1), ('errno', 0, 0, -1), ('pickle.load', 0, 1, -1), ('pickle.Pickler', 0, 0, -1), ('multiprocessing.process', 0, 0, -1), ('multiprocessing', 0, 0, -1), ('msvcrt', 0, 1, -1), ('random', 1, 1, -1)] binaries=[] datas=[]>
+multiprocessing.connection: None -> <PyModule 'multiprocessing.connection' C:\Python27\lib\multiprocessing\connection.pyc imports=[('multiprocessing.util.Finalize', 0, 0, -1), ('_multiprocessing', 0, 1, -1), ('os', 0, 0, -1), ('multiprocessing.forking.close', 0, 0, -1), ('hmac', 1, 0, -1), ('_multiprocessing.win32', 0, 1, -1), ('errno', 0, 0, -1), ('itertools', 0, 0, -1), ('sys', 0, 0, -1), ('_multiprocessing', 0, 0, -1), ('time', 0, 0, -1), ('multiprocessing.current_process', 0, 0, -1), ('multiprocessing.forking.duplicate', 0, 0, -1), ('multiprocessing.forking', 0, 0, -1), ('xmlrpclib', 1, 0, -1), ('multiprocessing.util', 0, 0, -1), ('socket', 0, 0, -1), ('multiprocessing.util.get_temp_dir', 0, 0, -1), ('multiprocessing.util.debug', 0, 0, -1), ('multiprocessing.util.sub_debug', 0, 0, -1), ('multiprocessing.AuthenticationError', 0, 0, -1), ('multiprocessing', 0, 0, -1), ('tempfile', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing.pool: None -> <PyModule 'multiprocessing.pool' C:\Python27\lib\multiprocessing\pool.pyc imports=[('dummy', 1, 0, 1), ('collections', 0, 0, -1), ('threading', 0, 0, -1), ('itertools', 0, 0, -1), ('Queue', 0, 0, -1), ('multiprocessing', 0, 0, -1), ('queues.SimpleQueue', 1, 0, 1), ('dummy.Process', 1, 0, 1), ('multiprocessing.util', 0, 0, -1), ('multiprocessing.TimeoutError', 0, 0, -1), ('multiprocessing.cpu_count', 0, 0, -1), ('queues', 1, 0, 1), ('multiprocessing.util.debug', 0, 0, -1), ('time', 0, 0, -1), ('multiprocessing.util.Finalize', 0, 0, -1), ('multiprocessing.Process', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing.process: None -> <PyModule 'multiprocessing.process' C:\Python27\lib\multiprocessing\process.pyc imports=[('forking', 1, 1, 1), ('itertools', 0, 0, -1), ('sys', 0, 0, -1), ('util', 1, 0, 1), ('os', 0, 0, -1), ('forking.Popen', 1, 0, 1), ('forking', 1, 0, 1), ('forking.Popen', 1, 1, 1), ('', 1, 0, 1), ('traceback', 1, 1, -1), ('signal', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing.queues: None -> <PyModule 'multiprocessing.queues' C:\Python27\lib\multiprocessing\queues.pyc imports=[('multiprocessing.synchronize.Semaphore', 0, 0, -1), ('multiprocessing.util.Finalize', 0, 0, -1), ('os', 0, 0, -1), ('multiprocessing.synchronize.Condition', 0, 0, -1), ('multiprocessing.forking.assert_spawning', 0, 0, -1), ('util.is_exiting', 1, 0, 1), ('multiprocessing.synchronize.BoundedSemaphore', 0, 0, -1), ('threading', 0, 0, -1), ('Queue.Full', 0, 0, -1), ('util', 1, 0, 1), ('_multiprocessing', 0, 0, -1), ('time', 0, 0, -1), ('multiprocessing.Pipe', 0, 0, -1), ('collections', 0, 0, -1), ('atexit', 0, 0, -1), ('weakref', 0, 0, -1), ('multiprocessing.forking', 0, 0, -1), ('multiprocessing.util', 0, 0, -1), ('multiprocessing.util.info', 0, 0, -1), ('traceback', 1, 1, -1), ('multiprocessing.util.debug', 0, 0, -1), ('sys', 0, 0, -1), ('multiprocessing', 0, 0, -1), ('Queue.Empty', 0, 0, -1), ('multiprocessing.util.register_after_fork', 0, 0, -1), ('Queue', 0, 0, -1), ('multiprocessing.synchronize', 0, 0, -1), ('multiprocessing.synchronize.Lock', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing._multiprocessing: None -> None
+_multiprocessing: None -> <ExtensionModule '_multiprocessing' C:\Python27\DLLs\_multiprocessing.pyd imports=[] binaries=[] datas=[]>
+multiprocessing.atexit: None -> None
+multiprocessing.itertools: None -> None
+multiprocessing.logging: None -> None
+multiprocessing.weakref: None -> None
+multiprocessing.shutil: None -> None
+multiprocessing.threading: None -> None
+multiprocessing.subprocess: None -> None
+multiprocessing.traceback: None -> None
+multiprocessing.tempfile: None -> None
+multiprocessing.signal: None -> None
+multiprocessing.thread: None -> None
+multiprocessing.functools: None -> None
+multiprocessing.pickle: None -> None
+multiprocessing.time: None -> None
+multiprocessing.imp: None -> None
+multiprocessing._subprocess: None -> None
+multiprocessing.errno: None -> None
+multiprocessing.msvcrt: None -> None
+multiprocessing.random: None -> None
+multiprocessing.current_process: None -> None
+  DEL multiprocessing.current_process
+multiprocessing.socket: None -> None
+multiprocessing.hmac: None -> None
+multiprocessing.current_process: None -> None
+  DEL multiprocessing.current_process
+multiprocessing.xmlrpclib: None -> None
+xmlrpclib: None -> <PyModule 'xmlrpclib' C:\Python27\lib\xmlrpclib.pyc imports=[('xmllib', 1, 0, -1), ('httplib', 0, 0, -1), ('base64', 1, 1, -1), ('sys.modules', 0, 0, -1), ('sys', 0, 0, -1), ('string', 0, 0, -1), ('cStringIO', 0, 0, -1), ('base64', 0, 0, -1), ('time', 0, 0, -1), ('xml.parsers', 0, 0, -1), ('types', 0, 0, -1), ('gzip', 0, 0, -1), ('socket', 0, 0, -1), ('datetime', 0, 0, -1), ('errno', 0, 0, -1), ('types.*', 0, 0, -1), ('re', 0, 0, -1), ('xml.parsers.expat', 0, 0, -1), ('urllib', 1, 0, -1), ('operator', 0, 0, -1), ('_xmlrpclib', 0, 0, -1), ('StringIO', 0, 1, -1)] binaries=[] datas=[]>
+multiprocessing.AuthenticationError: None -> None
+  DEL multiprocessing.AuthenticationError
+xmllib: None -> <PyModule 'xmllib' C:\Python27\lib\xmllib.pyc imports=[('re', 0, 0, -1), ('time', 1, 0, -1), ('warnings', 0, 0, -1), ('string', 0, 0, -1), ('getopt', 1, 0, -1), ('sys', 1, 0, -1), ('time.time', 1, 0, -1)] binaries=[] datas=[]>
+_xmlrpclib: None -> None
+  DEL _xmlrpclib
+multiprocessing.Process: None -> None
+  DEL multiprocessing.Process
+multiprocessing.cPickle: None -> None
+multiprocessing.current_process: None -> None
+  DEL multiprocessing.current_process
+multiprocessing.array: None -> None
+multiprocessing.Queue: None -> None
+multiprocessing.active_children: None -> None
+  DEL multiprocessing.active_children
+multiprocessing.Pool: None -> None
+  DEL multiprocessing.Pool
+multiprocessing.ctypes: None -> None
+multiprocessing.heap: None -> <PyModule 'multiprocessing.heap' C:\Python27\lib\multiprocessing\heap.pyc imports=[('multiprocessing.forking.assert_spawning', 0, 0, -1), ('threading', 0, 0, -1), ('itertools', 0, 0, -1), ('sys', 0, 0, -1), ('multiprocessing.forking', 0, 0, -1), ('os', 0, 0, -1), ('multiprocessing.util', 0, 0, -1), ('tempfile', 0, 0, -1), ('multiprocessing.util.info', 0, 0, -1), ('_multiprocessing.win32', 0, 1, -1), ('_multiprocessing', 0, 0, -1), ('mmap', 0, 0, -1), ('bisect', 0, 0, -1), ('multiprocessing.util.Finalize', 0, 0, -1), ('_multiprocessing', 0, 1, -1)] binaries=[] datas=[]>
+multiprocessing.RLock: None -> None
+  DEL multiprocessing.RLock
+multiprocessing.mmap: None -> None
+mmap: None -> <BuiltinModule 'mmap' None imports=[] binaries=[] datas=[]>
+multiprocessing.bisect: None -> None
+multiprocessing.dummy: None -> <PkgModule 'multiprocessing.dummy' C:\Python27\lib\multiprocessing\dummy\__init__.pyc imports=[('threading', 0, 0, -1), ('itertools', 0, 0, -1), ('sys', 0, 0, -1), ('multiprocessing', 0, 0, -1), ('multiprocessing.dummy.connection', 0, 0, -1), ('threading.BoundedSemaphore', 0, 0, -1), ('multiprocessing.pool.ThreadPool', 1, 0, -1), ('array', 0, 0, -1), ('threading.Semaphore', 0, 0, -1), ('threading.Lock', 0, 0, -1), ('multiprocessing.TimeoutError', 0, 0, -1), ('multiprocessing.cpu_count', 0, 0, -1), ('multiprocessing.pool', 1, 0, -1), ('threading.RLock', 0, 0, -1), ('multiprocessing.dummy.connection.Pipe', 0, 0, -1), ('Queue.Queue', 0, 0, -1), ('Queue', 0, 0, -1), ('threading.Event', 0, 0, -1), ('weakref', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing.collections: None -> None
+multiprocessing.dummy.Process: None -> None
+  DEL multiprocessing.dummy.Process
+multiprocessing.TimeoutError: None -> None
+  DEL multiprocessing.TimeoutError
+multiprocessing.cpu_count: None -> None
+  DEL multiprocessing.cpu_count
+multiprocessing.Process: None -> None
+  DEL multiprocessing.Process
+multiprocessing.dummy.threading: None -> None
+multiprocessing.dummy.itertools: None -> None
+multiprocessing.dummy.sys: None -> None
+multiprocessing.dummy.multiprocessing: None -> None
+multiprocessing.dummy.connection: None -> <PyModule 'multiprocessing.dummy.connection' C:\Python27\lib\multiprocessing\dummy\connection.pyc imports=[('Queue', 0, 0, -1), ('Queue.Queue', 0, 0, -1)] binaries=[] datas=[]>
+multiprocessing.dummy.array: None -> None
+multiprocessing.TimeoutError: None -> None
+  DEL multiprocessing.TimeoutError
+multiprocessing.cpu_count: None -> None
+  DEL multiprocessing.cpu_count
+multiprocessing.dummy.Queue: None -> None
+multiprocessing.dummy.weakref: None -> None
+multiprocessing.Pipe: None -> None
+  DEL multiprocessing.Pipe
+nose.result: None -> <PyModule 'nose.result' C:\Python27\lib\site-packages\nose\result.pyc imports=[('nose.util.ln', 0, 0, -1), ('unittest._TextTestResult', 0, 1, -1), ('nose.util.isclass', 0, 0, -1), ('nose.plugins.skip.SkipTest', 1, 0, -1), ('unittest.runner', 0, 0, -1), ('nose.util', 0, 0, -1), ('unittest', 0, 1, -1), ('nose.plugins.skip', 1, 0, -1), ('nose.config.Config', 0, 0, -1), ('logging', 0, 0, -1), ('warnings.warn', 1, 0, -1), ('warnings', 1, 0, -1), ('nose.config', 0, 0, -1), ('unittest.runner._TextTestResult', 0, 0, -1)] binaries=[] datas=[]>
+nose.__version__: None -> None
+  DEL nose.__version__
+nose.__future__: None -> None
+nose.suite: None -> <PyModule 'nose.suite' C:\Python27\lib\site-packages\nose\suite.pyc imports=[('nose.config.Config', 0, 0, -1), ('nose.proxy', 0, 0, -1), ('unittest', 0, 0, -1), ('nose.util.try_run', 0, 0, -1), ('sys', 0, 0, -1), ('nose.util.isclass', 0, 0, -1), ('IronPython.Runtime.Exceptions.StringException', 0, 1, -1), ('nose.case.Test', 0, 0, -1), ('nose.util', 0, 0, -1), ('__future__', 0, 0, -1), ('logging', 0, 0, -1), ('nose.proxy.ResultProxyFactory', 0, 0, -1), ('nose.case', 0, 0, -1), ('nose.util.resolve_name', 0, 0, -1), ('nose.config', 0, 0, -1), ('clr', 0, 1, -1), ('__future__.generators', 0, 0, -1), ('IronPython.Runtime.Exceptions', 0, 1, -1)] binaries=[] datas=[]>
+nose.time: None -> None
+nose.loader: None -> <PyModule 'nose.loader' C:\Python27\lib\site-packages\nose\loader.pyc imports=[('nose.suite.ContextList', 0, 0, -1), ('nose.pyversion.sort_list', 0, 0, -1), ('os', 0, 0, -1), ('nose.failure.Failure', 0, 0, -1), ('__future__', 0, 0, -1), ('nose.util.resolve_name', 0, 0, -1), ('nose.failure', 0, 0, -1), ('nose.pyversion.cmp_to_key', 0, 0, -1), ('nose.util.regex_last_key', 0, 0, -1), ('sys', 0, 0, -1), ('nose.util.func_lineno', 0, 0, -1), ('nose.suite', 0, 0, -1), ('nose.suite.ContextSuiteFactory', 0, 0, -1), ('nose.util.test_address', 0, 0, -1), ('nose.util.getpackage', 0, 0, -1), ('nose.suite.LazySuite', 0, 0, -1), ('nose.case.MethodTestCase', 0, 0, -1), ('nose.config', 0, 0, -1), ('unittest', 0, 0, -1), ('nose.selector', 0, 0, -1), ('nose.selector.defaultSelector', 0, 0, -1), ('nose.importer.Importer', 0, 0, -1), ('nose.importer.add_path', 0, 0, -1), ('types', 0, 0, -1), ('nose.util.transplant_func', 0, 0, -1), ('nose.util.transplant_class', 0, 0, -1), ('nose.importer', 0, 0, -1), ('nose.case', 0, 0, -1), ('nose.importer.remove_path', 0, 0, -1), ('inspect', 0, 0, -1), ('nose.pyversion.unbound_method', 0, 0, -1), ('__future__.generators', 0, 0, -1), ('nose.pyversion.ismethod', 0, 0, -1), ('nose.util.isclass', 0, 0, -1), ('nose.util', 0, 0, -1), ('nose.util.isgenerator', 0, 0, -1), ('nose.config.Config', 0, 0, -1), ('logging', 0, 0, -1), ('nose.util.ispackage', 0, 0, -1), ('inspect.isfunction', 0, 0, -1), ('nose.case.FunctionTestCase', 0, 0, -1), ('nose.selector.TestAddress', 0, 0, -1), ('nose.pyversion', 0, 0, -1)] binaries=[] datas=[]>
+nose.textwrap: None -> None
+unittest._TextTestResult: None -> None
+  DEL unittest._TextTestResult
+nose.plugins.unittest: None -> None
+nose.plugins.errorclass: None -> <PyModule 'nose.plugins.errorclass' C:\Python27\lib\site-packages\nose\plugins\errorclass.pyc imports=[('nose.result.TextTestResult', 0, 0, -1), ('nose.result', 0, 0, -1), ('nose.util.isclass', 0, 0, -1), ('nose.plugins.base.Plugin', 0, 0, -1), ('doctest', 0, 1, -1), ('nose.pyversion.make_instancemethod', 0, 0, -1), ('nose.util', 0, 0, -1), ('nose.plugins.base', 0, 0, -1), ('nose.pyversion', 0, 0, -1)] binaries=[] datas=[]>
+nose.plugins.unittest2: None -> None
+unittest2: None -> <PkgModule 'unittest2' C:\Python27\lib\site-packages\pyinstaller-2.1.1dev_-py2.7.egg\PyInstaller\lib\unittest2\__init__.pyc imports=[('unittest2.case.expectedFailure', 0, 0, -1), ('unittest2.case', 0, 0, -1), ('unittest2.loader.makeSuite', 0, 0, -1), ('unittest2.main.main', 0, 0, -1), ('unittest2.signals.registerResult', 0, 0, -1), ('unittest2.loader', 0, 0, -1), ('unittest2.suite.BaseTestSuite', 0, 0, -1), ('unittest2.suite', 0, 0, -1), ('unittest2.signals.installHandler', 0, 0, -1), ('unittest2.main.TestProgram', 0, 0, -1), ('unittest2.collector', 0, 0, -1), ('unittest2.runner', 0, 0, -1), ('unittest2.result', 0, 0, -1), ('unittest2.signals.removeHandler', 0, 0, -1), ('unittest2.result.TestResult', 0, 0, -1), ('unittest2.main.main_', 0, 0, -1), ('unittest2.runner.TextTestResult', 0, 0, -1), ('unittest2.signals.removeResult', 0, 0, -1), ('unittest2.case.skip', 0, 0, -1), ('unittest2.suite.TestSuite', 0, 0, -1), ('unittest2.loader.getTestCaseNames', 0, 0, -1), ('unittest2.case.TestCase', 0, 0, -1), ('unittest2.case.skipIf', 0, 0, -1), ('unittest2.signals', 0, 0, -1), ('unittest2.collector.collector', 0, 0, -1), ('unittest2.runner.TextTestRunner', 0, 0, -1), ('unittest2.loader.findTestCases', 0, 0, -1), ('unittest2.case.FunctionTestCase', 0, 0, -1), ('unittest2.case.SkipTest', 0, 0, -1), ('unittest2.loader.TestLoader', 0, 0, -1), ('unittest2.case.skipUnless', 0, 0, -1), ('unittest2.loader.defaultTestLoader', 0, 0, -1), ('unittest2.main', 0, 0, -1)] binaries=[] datas=[]>
+unittest2.case: None -> <PyModule 'unittest2.case' C:\Python27\lib\site-packages\pyinstaller-2.1.1dev_-py2.7.egg\PyInstaller\lib\unittest2\case.pyc imports=[('re', 0, 0, -1), ('unittest2.compatibility.wraps', 0, 0, -1), ('sys', 0, 0, -1), ('unittest2', 0, 0, -1), ('sets.Set', 0, 1, -1), ('sets', 0, 1, -1), ('unittest2.util.unorderable_list_difference', 0, 0, -1), ('warnings', 0, 0, -1), ('sets.ImmutableSet', 0, 1, -1), ('unittest2.result', 0, 0, -1), ('unittest2.util', 0, 0, -1), ('unittest2.util.safe_repr', 0, 0, -1), ('unittest2.compatibility', 0, 0, -1), ('difflib', 0, 0, -1), ('unittest2.util.strclass', 0, 0, -1), ('pprint', 0, 0, -1), ('unittest', 0, 0, -1), ('unittest2.util.safe_str', 0, 0, -1)] binaries=[] datas=[]>
+unittest2.unittest2: None -> None
+unittest2.loader: None -> <PyModule 'unittest2.loader' C:\Python27\lib\site-packages\pyinstaller-2.1.1dev_-py2.7.egg\PyInstaller\lib\unittest2\loader.pyc imports=[('re', 0, 0, -1), ('unittest2.compatibility', 0, 1, -1), ('sys', 0, 0, -1), ('unittest2', 0, 0, -1), ('types', 0, 0, -1), ('os', 0, 0, -1), ('fnmatch.fnmatch', 0, 0, -1), ('os.path', 0, 0, -1), ('fnmatch', 0, 0, -1), ('unittest2.compatibility.relpath', 0, 1, -1), ('traceback', 0, 0, -1), ('unittest2.suite', 0, 0, -1), ('unittest', 0, 0, -1), ('os.path.relpath', 0, 0, -1), ('unittest2.case', 0, 0, -1)] binaries=[] datas=[]>
+unittest2.main: None -> <PyModule 'unittest2.main' C:\Python27\lib\site-packages\pyinstaller-2.1.1dev_-py2.7.egg\PyInstaller\lib\unittest2\main.pyc imports=[('unittest2.runner', 0, 0, -1), ('unittest2', 0, 0, -1), ('types', 0, 0, -1), ('os', 0, 0, -1), ('unittest2.signals.installHandler', 0, 0, -1), ('optparse', 1, 0, -1), ('getopt', 1, 0, -1), ('unittest2.loader', 0, 0, -1), ('unittest2.signals', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
+unittest2.signals: None -> <PyModule 'unittest2.signals' C:\Python27\lib\site-packages\pyinstaller-2.1.1dev_-py2.7.egg\PyInstaller\lib\unittest2\signals.pyc imports=[('signal', 0, 0, -1), ('weakref', 0, 0, -1), ('unittest2.compatibility', 0, 0, -1), ('unittest2.compatibility.wraps', 0, 0, -1)] binaries=[] datas=[]>
+unittest2.suite: None -> <PyModule 'unittest2.suite' C:\Python27\lib\site-packages\pyinstaller-2.1.1dev_-py2.7.egg\PyInstaller\lib\unittest2\suite.pyc imports=[('unittest', 0, 0, -1), ('unittest2.util', 0, 0, -1), ('sys', 0, 0, -1), ('unittest2', 0, 0, -1), ('unittest2.case', 0, 0, -1)] binaries=[] datas=[]>
+unittest2.collector: None -> <PyModule 'unittest2.collector' C:\Python27\lib\site-packages\pyinstaller-2.1.1dev_-py2.7.egg\PyInstaller\lib\unittest2\collector.pyc imports=[('unittest2.loader', 0, 0, -1), ('os', 0, 0, -1), ('unittest2.loader.defaultTestLoader', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
+unittest2.runner: None -> <PyModule 'unittest2.runner' C:\Python27\lib\site-packages\pyinstaller-2.1.1dev_-py2.7.egg\PyInstaller\lib\unittest2\runner.pyc imports=[('sys', 0, 0, -1), ('unittest2', 0, 0, -1), ('unittest2.result', 0, 0, -1), ('unittest2.signals.registerResult', 0, 0, -1), ('unittest2.signals', 0, 0, -1), ('unittest', 0, 0, -1), ('time', 0, 0, -1)] binaries=[] datas=[]>
+unittest2.result: None -> <PyModule 'unittest2.result' C:\Python27\lib\site-packages\pyinstaller-2.1.1dev_-py2.7.egg\PyInstaller\lib\unittest2\result.pyc imports=[('unittest2.compatibility.wraps', 0, 0, -1), ('sys', 0, 0, -1), ('unittest2', 0, 0, -1), ('StringIO.StringIO', 0, 0, -1), ('StringIO', 0, 0, -1), ('unittest2.util', 0, 0, -1), ('unittest2.compatibility', 0, 0, -1), ('traceback', 0, 0, -1), ('unittest', 0, 0, -1)] binaries=[] datas=[]>
+unittest2.re: None -> None
+unittest2.compatibility: None -> <PyModule 'unittest2.compatibility' C:\Python27\lib\site-packages\pyinstaller-2.1.1dev_-py2.7.egg\PyInstaller\lib\unittest2\compatibility.pyc imports=[('os', 0, 0, -1), ('functools.wraps', 0, 0, -1), ('functools', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
+unittest2.sys: None -> None
+unittest2.sets: None -> None
+unittest2.util: None -> <PyModule 'unittest2.util' C:\Python27\lib\site-packages\pyinstaller-2.1.1dev_-py2.7.egg\PyInstaller\lib\unittest2\util.pyc imports=[] binaries=[] datas=[]>
+unittest2.warnings: None -> None
+unittest2.difflib: None -> None
+unittest2.pprint: None -> None
+unittest2.unittest: None -> None
+unittest2.os: None -> None
+unittest2.functools: None -> None
+unittest2.StringIO: None -> None
+unittest2.traceback: None -> None
+unittest2.types: None -> None
+unittest2.fnmatch: None -> None
+unittest2.optparse: None -> None
+unittest2.getopt: None -> None
+unittest2.time: None -> None
+unittest2.signal: None -> None
+unittest2.weakref: None -> None
+nose.proxy: None -> <PyModule 'nose.proxy' C:\Python27\lib\site-packages\nose\proxy.pyc imports=[('nose.config.Config', 0, 0, -1), ('logging', 0, 0, -1), ('nose.plugins.skip.SkipTest', 1, 0, -1), ('nose.plugins.skip', 1, 0, -1), ('nose.config', 0, 0, -1)] binaries=[] datas=[]>
+nose.IronPython: None -> None
+IronPython: None -> None
+  DEL IronPython
+nose.case: None -> <PyModule 'nose.case' C:\Python27\lib\site-packages\nose\case.pyc imports=[('nose.util.test_address', 0, 0, -1), ('nose.util.try_run', 0, 0, -1), ('sys', 0, 0, -1), ('nose.util', 0, 0, -1), ('nose.failure.Failure', 0, 0, -1), ('nose.config.Config', 0, 0, -1), ('logging', 0, 0, -1), ('nose.util.resolve_name', 0, 0, -1), ('inspect', 0, 0, -1), ('nose.config', 0, 0, -1), ('nose.failure', 0, 0, -1), ('unittest', 0, 0, -1), ('inspect.isfunction', 0, 0, -1)] binaries=[] datas=[]>
+nose.clr: None -> None
+clr: None -> None
+  DEL clr
+IronPython: None -> None
+  DEL IronPython
+nose.selector: None -> <PyModule 'nose.selector' C:\Python27\lib\site-packages\nose\selector.pyc imports=[('nose.util.src', 0, 0, -1), ('os', 0, 0, -1), ('nose.util.getfilename', 0, 0, -1), ('nose.util', 0, 0, -1), ('nose.config.Config', 0, 0, -1), ('logging', 0, 0, -1), ('nose.util.getpackage', 0, 0, -1), ('nose.util.ispackage', 0, 0, -1), ('nose.config', 0, 0, -1), ('nose.util.split_test_name', 0, 0, -1), ('unittest', 0, 0, -1)] binaries=[] datas=[]>
 sqlalchemy.testing.assertsql: None -> <PyModule 'sqlalchemy.testing.assertsql' C:\Python27\lib\site-packages\sqlalchemy\testing\assertsql.pyc imports=[('', 0, 0, 2), ('engine.default', 0, 0, 2), ('sqlalchemy.schema._DDLCompiles', 1, 0, -1), ('re', 0, 0, -1), ('engine.default.DefaultDialect', 0, 0, 2), ('util', 0, 0, 2), ('sqlalchemy.schema', 1, 0, -1)] binaries=[] datas=[]>
 sqlalchemy.engine.create_engine: None -> None
   DEL sqlalchemy.engine.create_engine
@@ -1816,7 +2101,7 @@ soap_server.lib: None -> None
 lib: None -> <PkgModule 'lib' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\lib\__init__.pyc imports=[] binaries=[] datas=[]>
 lib.plugins: None -> <PyModule 'lib.plugins' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\lib\plugins.pyc imports=[('sys', 0, 0, -1), ('lxml.etree', 0, 0, -1), ('os', 0, 0, -1), ('lxml', 0, 0, -1), ('logging', 0, 0, -1), ('HydraLib', 0, 0, -1), ('subprocess', 0, 0, -1), ('HydraLib.config', 0, 0, -1)] binaries=[] datas=[]>
 soap_server.HydraLib: None -> None
-HydraLib.util: None -> <PyModule 'HydraLib.util' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\util.pyc imports=[('HydraException', 0, 0, -1), ('decimal.ROUND_HALF_UP', 0, 0, -1), ('operator.mul', 0, 0, -1), ('HydraException.HydraError', 0, 0, -1), ('decimal.Decimal', 0, 0, -1), ('operator', 0, 0, -1), ('logging', 0, 0, -1), ('datetime', 0, 0, -1), ('traceback', 0, 0, -1), ('decimal', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
+HydraLib.util: None -> <PyModule 'HydraLib.util' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\util.pyc imports=[('HydraException', 0, 0, -1), ('decimal.ROUND_HALF_UP', 0, 0, -1), ('operator.mul', 0, 0, -1), ('pandas', 0, 0, -1), ('HydraException.HydraError', 0, 0, -1), ('decimal.Decimal', 0, 0, -1), ('operator', 0, 0, -1), ('logging', 0, 0, -1), ('datetime', 0, 0, -1), ('decimal', 0, 0, -1)] binaries=[] datas=[]>
 soap_server.decimal: None -> None
 soap_server.sys: None -> None
 soap_server.pandas: None -> None
@@ -1828,35 +2113,9 @@ numpy.array: None -> None
 soap_server.logging: None -> None
 HydraLib.hydra_logging: None -> <PyModule 'HydraLib.hydra_logging' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\hydra_logging.pyc imports=[('logging.config', 0, 0, -1), ('ctypes', 0, 0, -1), ('re', 1, 1, -1), ('os', 0, 0, -1), ('logging', 0, 0, -1), ('config', 0, 0, -1)] binaries=[] datas=[]>
 HydraLib.logging: None -> None
-logging.config: None -> <PyModule 'logging.config' C:\Python27\lib\logging\config.pyc imports=[('tempfile', 1, 0, -1), ('re', 0, 0, -1), ('json', 1, 1, -1), ('sys', 0, 0, -1), ('types', 0, 0, -1), ('os', 0, 0, -1), ('threading', 0, 0, -1), ('struct', 0, 0, -1), ('thread', 0, 0, -1), ('SocketServer.ThreadingTCPServer', 0, 0, -1), ('logging', 0, 0, -1), ('cStringIO', 0, 0, -1), ('ConfigParser', 1, 0, -1), ('socket', 0, 0, -1), ('traceback', 0, 0, -1), ('SocketServer.StreamRequestHandler', 0, 0, -1), ('select', 1, 0, -1), ('SocketServer', 0, 0, -1), ('logging.handlers', 0, 0, -1)] binaries=[] datas=[]>
 HydraLib.ctypes: None -> None
 HydraLib.re: None -> None
 HydraLib.os: None -> None
-logging.tempfile: None -> None
-logging.re: None -> None
-logging.json: None -> None
-logging.types: None -> None
-logging.struct: None -> None
-logging.SocketServer: None -> None
-logging.logging: None -> None
-logging.ConfigParser: None -> None
-logging.socket: None -> None
-logging.select: None -> None
-logging.handlers: None -> <PyModule 'logging.handlers' C:\Python27\lib\logging\handlers.pyc imports=[('re', 0, 0, -1), ('httplib', 1, 0, -1), ('stat.ST_DEV', 0, 0, -1), ('stat.ST_MTIME', 0, 0, -1), ('os', 0, 0, -1), ('email.utils', 1, 0, -1), ('smtplib', 1, 0, -1), ('email.utils.formatdate', 1, 0, -1), ('struct', 0, 0, -1), ('urllib', 1, 0, -1), ('logging', 0, 0, -1), ('cPickle', 0, 0, -1), ('stat.ST_INO', 0, 0, -1), ('socket', 0, 0, -1), ('win32evtlogutil', 1, 0, -1), ('win32evtlog', 1, 0, -1), ('errno', 0, 0, -1), ('time', 0, 0, -1), ('codecs', 0, 0, -1), ('stat', 0, 0, -1)] binaries=[] datas=[]>
-logging.httplib: None -> None
-logging.stat: None -> None
-logging.email: None -> None
-logging.smtplib: None -> None
-smtplib: None -> <PyModule 'smtplib' C:\Python27\lib\smtplib.pyc imports=[('re', 0, 0, -1), ('sys.stderr', 0, 0, -1), ('sys', 0, 0, -1), ('hmac', 0, 0, -1), ('email.base64mime.encode', 0, 0, -1), ('email.base64mime', 0, 0, -1), ('ssl', 0, 0, -1), ('socket', 0, 0, -1), ('sys', 0, 1, -1), ('email.utils', 0, 0, -1), ('base64', 0, 0, -1)] binaries=[] datas=[]>
-logging.urllib: None -> None
-logging.cPickle: None -> None
-logging.win32evtlogutil: None -> None
-win32evtlogutil: None -> <PyModule 'win32evtlogutil' C:\Python27\lib\site-packages\win32\lib\win32evtlogutil.pyc imports=[('win32con', 0, 0, -1), ('win32evtlog', 0, 0, -1), ('win32api', 0, 0, -1), ('winerror', 0, 0, -1)] binaries=[] datas=[]>
-logging.win32evtlog: None -> None
-win32evtlog: None -> <ExtensionModule 'win32evtlog' C:\Python27\lib\site-packages\win32\win32evtlog.pyd imports=[] binaries=[] datas=[]>
-logging.errno: None -> None
-hmac: None -> <PyModule 'hmac' C:\Python27\lib\hmac.pyc imports=[('hashlib', 1, 1, -1), ('warnings', 0, 0, -1)] binaries=[] datas=[]>
-winerror: None -> <PyModule 'winerror' C:\Python27\lib\site-packages\win32\lib\winerror.pyc imports=[] binaries=[] datas=[]>
 HydraLib.winpaths: None -> None
 winpaths: None -> <PyModule 'winpaths' C:\Python27\lib\site-packages\winpaths.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.wintypes', 0, 0, -1), ('ctypes.windll', 0, 0, -1)] binaries=[('shell32.dll', 'C:\\Windows\\system32\\shell32.dll', 'BINARY')] datas=[]>
 HydraLib.glob: None -> None
@@ -1869,8 +2128,8 @@ ctypes._SimpleCData: None -> None
   DEL ctypes._SimpleCData
 HydraLib.decimal: None -> None
 HydraLib.operator: None -> None
+HydraLib.pandas: None -> None
 HydraLib.datetime: None -> None
-HydraLib.traceback: None -> None
 pandas.pandas: None -> None
 pandas.info: None -> <PyModule 'pandas.info' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\info.pyc imports=[] binaries=[] datas=[]>
 pandas.util: None -> <PkgModule 'pandas.util' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\util\__init__.pyc imports=[] binaries=[] datas=[]>
@@ -1964,8 +2223,6 @@ pandas.compat.lmap: None -> None
 pandas.tseries.period: None -> <PyModule 'pandas.tseries.period' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\tseries\period.pyc imports=[('pandas.algos', 0, 0, -1), ('pandas.tseries.frequencies.get_freq_code', 0, 0, -1), ('pandas.lib.Timestamp', 0, 0, -1), ('pandas.core.common.ABCSeries', 0, 0, -1), ('pandas.tslib', 0, 0, -1), ('pandas.tseries.frequencies.FreqGroup', 0, 0, -1), ('pandas.tseries.index.Index', 0, 0, -1), ('pandas', 0, 0, -1), ('pandas.core.base.DatetimeIndexOpsMixin', 0, 0, -1), ('pandas.tseries.frequencies._month_numbers', 0, 0, -1), ('pandas.lib', 0, 0, -1), ('pandas.tseries.index', 0, 0, -1), ('pandas.compat', 0, 0, -1), ('pandas.tseries.tools', 0, 0, -1), ('pandas.tseries.tools.parse_time_string', 0, 0, -1), ('pandas.core.common._maybe_box', 0, 0, -1), ('pandas.core.common._values_from_object', 0, 0, -1), ('numpy', 0, 0, -1), ('pandas.core.common._INT64_DTYPE', 0, 0, -1), ('datetime.date', 0, 0, -1), ('pandas.core.base', 0, 0, -1), ('pandas.compat.zip', 0, 0, -1), ('datetime.datetime', 0, 0, -1), ('pandas.core.base.PandasObject', 0, 0, -1), ('pandas.tseries.index.Int64Index', 0, 0, -1), ('pandas.tseries.index.DatetimeIndex', 0, 0, -1), ('pandas.tseries.frequencies', 0, 0, -1), ('operator', 0, 0, -1), ('pandas.compat.u', 0, 0, -1), ('pandas.core.common.isnull', 0, 0, -1), ('datetime', 0, 0, -1), ('pandas.core.common', 0, 0, -1)] binaries=[] datas=[]>
 pandas.core.ops: None -> <PyModule 'pandas.core.ops' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\core\ops.pyc imports=[('pandas.tseries.timedeltas', 1, 0, -1), ('__future__', 0, 0, -1), ('pandas.core.common._maybe_match_name', 0, 0, -1), ('pandas.core.common.is_list_like', 0, 0, -1), ('pandas.tslib', 0, 0, -1), ('pandas', 0, 0, -1), ('pandas.core.common', 0, 0, -1), ('pandas.lib', 0, 0, -1), ('__future__.division', 0, 0, -1), ('pandas.compat', 0, 0, -1), ('pandas.computation.expressions', 0, 0, -1), ('pandas.core.array', 0, 0, -1), ('pandas.core.common._values_from_object', 0, 0, -1), ('numpy', 0, 0, -1), ('pandas.core.common.bind_method', 0, 0, -1), ('pandas.index', 0, 0, -1), ('pandas.util.decorators', 0, 0, -1), ('pandas.util.decorators.Appender', 0, 0, -1), ('pandas.core.common.notnull', 0, 0, -1), ('operator', 0, 0, -1), ('pandas.tseries.timedeltas._possibly_cast_to_timedelta', 1, 0, -1), ('pandas.core.common.isnull', 0, 0, -1)] binaries=[] datas=[]>
 pandas.core.nose: None -> None
-nose: None -> None
-  DEL nose
 pandas.core.algorithms: None -> <PyModule 'pandas.core.algorithms' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\core\algorithms.pyc imports=[('pandas.tslib', 1, 1, -1), ('pandas.algos', 0, 0, -1), ('pandas.core.series', 1, 0, -1), ('warnings', 0, 0, -1), ('__future__', 0, 0, -1), ('collections', 1, 0, -1), ('pandas.tools.tile.cut', 1, 0, -1), ('pandas.compat.string_types', 0, 0, -1), ('pandas.core.common', 0, 0, -1), ('__future__.division', 0, 0, -1), ('pandas.compat', 0, 0, -1), ('pandas.tslib.iNaT', 1, 1, -1), ('pandas.core.series', 1, 1, -1), ('pandas.tools.tile', 1, 0, -1), ('numpy', 0, 0, -1), ('pandas.core.index.Index', 1, 0, -1), ('pandas.hashtable', 0, 0, -1), ('collections.defaultdict', 1, 0, -1), ('pandas.core.series.Series', 1, 1, -1), ('pandas.core.index', 1, 0, -1), ('warnings.warn', 0, 0, -1), ('pandas.core.series.Series', 1, 0, -1)] binaries=[] datas=[]>
 pandas.computation.expressions: None -> <PyModule 'pandas.computation.expressions' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\computation\expressions.pyc imports=[('pandas.core.common._values_from_object', 0, 0, -1), ('numpy', 0, 0, -1), ('pandas.core.common', 0, 0, -1), ('numexpr', 0, 0, -1), ('warnings', 0, 0, -1), ('distutils.version.LooseVersion', 0, 0, -1), ('distutils.version', 0, 0, -1)] binaries=[] datas=[]>
 pandas.core.generic: None -> <PyModule 'pandas.core.generic' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\core\generic.pyc imports=[('pandas.core.common._maybe_box_datetimelike', 0, 0, -1), ('pandas.Series', 1, 0, -1), ('pandas', 1, 1, -1), ('pandas.core.nanops', 0, 0, -1), ('pandas.io.packers', 1, 0, -1), ('warnings', 0, 0, -1), ('pandas.io.clipboard', 1, 0, -1), ('pandas.tseries.resample', 1, 0, -1), ('re', 1, 0, -1), ('pandas.core.common.SettingWithCopyWarning', 0, 0, -1), ('pandas.core.config', 0, 0, -1), ('pandas.compat.lmap', 0, 0, -1), ('warnings.warn', 1, 1, -1), ('pandas.core.common.ABCSeries', 0, 0, -1), ('pandas.tseries.period.PeriodIndex', 0, 0, -1), ('pandas.core.common.is_list_like', 0, 0, -1), ('gc', 0, 0, -1), ('pandas.core.index.Index', 0, 0, -1), ('pandas.compat.lrange', 0, 0, -1), ('pandas.compat.zip', 0, 0, -1), ('pandas.core.common._values_from_object', 0, 0, -1), ('pandas', 0, 0, -1), ('pandas.io.json', 1, 0, -1), ('pandas.util.decorators.Substitution', 0, 0, -1), ('pandas.core.common', 0, 0, -1), ('pandas.io.pickle.to_pickle', 1, 0, -1), ('pandas.lib', 0, 0, -1), ('pandas.tseries.index', 0, 0, -1), ('pandas.compat', 0, 0, -1), ('pandas.core.common._maybe_promote', 0, 0, -1), ('pandas.core.common.isnull', 0, 0, -1), ('pandas.io.pytables', 1, 0, -1), ('pandas.tseries.period', 0, 0, -1), ('pandas.tseries.frequencies', 1, 0, -1), ('pandas.core.index.MultiIndex', 0, 0, -1), ('pandas.io.sql', 1, 0, -1), ('pandas.tseries.resample.asfreq', 1, 0, -1), ('weakref', 0, 0, -1), ('pandas.core.index', 0, 0, -1), ('pandas.io.pickle', 1, 0, -1), ('pandas.core.common.SettingWithCopyError', 0, 0, -1), ('numpy', 0, 0, -1), ('pandas.core.datetools._resolve_offset', 1, 0, -1), ('pandas.core.datetools', 1, 0, -1), ('pandas.compat.string_types', 0, 0, -1), ('pandas.core.base', 0, 0, -1), ('pandas.core.datetools', 0, 0, -1), ('pandas.tseries.resample.TimeGrouper', 1, 0, -1), ('warnings', 1, 0, -1), ('pandas.tseries.tools.to_datetime', 1, 1, -1), ('pandas.compat.map', 0, 0, -1), ('pandas.core.groupby.groupby', 1, 0, -1), ('pandas.core.groupby', 1, 0, -1), ('pandas.util.decorators', 0, 0, -1), ('pandas.core.base.PandasObject', 0, 0, -1), ('pandas.DataFrame', 1, 0, -1), ('pandas.core.internals.BlockManager', 0, 0, -1), ('pandas.util.decorators.Appender', 0, 0, -1), ('pandas.tseries.index.DatetimeIndex', 0, 0, -1), ('pandas._np_version_under1p7', 0, 0, -1), ('pandas.tseries.frequencies.to_offset', 1, 0, -1), ('pandas.core.index.InvalidIndexError', 0, 0, -1), ('warnings', 1, 1, -1), ('operator', 0, 0, -1), ('pandas.compat.isidentifier', 0, 0, -1), ('pandas.tseries.tools', 1, 1, -1), ('pandas.core.common.notnull', 0, 0, -1), ('pandas.Series', 1, 1, -1), ('pandas', 1, 0, -1), ('pandas.core.internals', 0, 0, -1), ('pandas.io.pickle.read_pickle', 1, 0, -1), ('pandas.core.index._ensure_index', 0, 0, -1), ('pandas.core', 0, 0, -1), ('pandas.core.indexing', 0, 0, -1), ('pandas.io', 1, 0, -1)] binaries=[] datas=[]>
@@ -2009,8 +2266,6 @@ pandas.util.pandas: None -> None
 pandas.compat.StringIO: None -> None
   DEL pandas.compat.StringIO
 pandas.util.nose: None -> None
-nose: None -> None
-  DEL nose
 pandas.util.warnings: None -> None
 pandas.compat.callable: None -> None
   DEL pandas.compat.callable
@@ -2192,7 +2447,6 @@ numpy.compat.asbytes: None -> None
   DEL numpy.compat.asbytes
 numpy.compat.long: None -> None
   DEL numpy.compat.long
-mmap: None -> <BuiltinModule 'mmap' None imports=[] binaries=[] datas=[]>
 numpy.compat.long: None -> None
   DEL numpy.compat.long
 numpy.compat.basestring: None -> None
@@ -2451,7 +2705,6 @@ numpy.core.product: None -> None
 numpy.numarray: None -> <PkgModule 'numpy.numarray' C:\Python27\lib\site-packages\numpy\numarray\__init__.pyc imports=[('compat.*', 0, 0, 1), ('__future__.print_function', 0, 0, 0), ('ufuncs.*', 0, 0, 1), ('__future__.absolute_import', 0, 0, 0), ('util.*', 0, 0, 1), ('session.*', 0, 0, 1), ('compat', 0, 0, 1), ('numerictypes', 0, 0, 1), ('numpy.ModuleDeprecationWarning', 0, 0, 0), ('ufuncs', 0, 0, 1), ('__future__.division', 0, 0, 0), ('', 0, 0, 1), ('functions', 0, 0, 1), ('numpy.testing', 0, 0, 0), ('__future__', 0, 0, 0), ('warnings', 0, 0, 0), ('numpy.testing.Tester', 0, 0, 0), ('numerictypes.*', 0, 0, 1), ('util', 0, 0, 1), ('numpy', 0, 0, 0), ('functions.*', 0, 0, 1), ('session', 0, 0, 1)] binaries=[] datas=[]>
 numpy.numarray.get_numarray_include_dirs: None -> None
   DEL numpy.numarray.get_numarray_include_dirs
-compiler: None -> <PkgModule 'compiler' C:\Python27\lib\compiler\__init__.pyc imports=[('compiler.visitor', 0, 0, -1), ('compiler.transformer', 0, 0, -1), ('compiler.transformer.parseFile', 0, 0, -1), ('compiler.pycodegen', 0, 0, -1), ('compiler.transformer.parse', 0, 0, -1), ('compiler.pycodegen.compile', 0, 0, -1), ('warnings', 0, 0, -1), ('compiler.pycodegen.compileFile', 0, 0, -1), ('compiler.visitor.walk', 0, 0, -1)] binaries=[] datas=[]>
 numpy.core.ndarray: None -> None
   DEL numpy.core.ndarray
 numpy.core.ufunc: None -> None
@@ -2654,49 +2907,6 @@ numpy.dot: None -> None
   DEL numpy.dot
 numpy.allclose: None -> None
   DEL numpy.allclose
-compiler.compiler: None -> None
-compiler.visitor: None -> <PyModule 'compiler.visitor' C:\Python27\lib\compiler\visitor.pyc imports=[('compiler.ast', 0, 0, -1), ('compiler', 0, 0, -1)] binaries=[] datas=[]>
-compiler.transformer: None -> <PyModule 'compiler.transformer' C:\Python27\lib\compiler\transformer.pyc imports=[('token', 0, 0, -1), ('compiler.ast.*', 0, 0, -1), ('compiler.consts.CO_VARKEYWORDS', 0, 0, -1), ('compiler.consts.OP_ASSIGN', 0, 0, -1), ('compiler.consts.OP_APPLY', 0, 0, -1), ('compiler.ast', 0, 0, -1), ('compiler.consts.CO_VARARGS', 0, 0, -1), ('compiler.consts.OP_DELETE', 0, 0, -1), ('parser', 0, 0, -1), ('compiler.consts', 0, 0, -1), ('symbol', 0, 0, -1)] binaries=[] datas=[]>
-compiler.pycodegen: None -> <PyModule 'compiler.pycodegen' C:\Python27\lib\compiler\pycodegen.pyc imports=[('compiler.consts.CO_FUTURE_DIVISION', 0, 0, -1), ('compiler.consts.CO_FUTURE_PRINT_FUNCTION', 0, 0, -1), ('os', 0, 0, -1), ('struct', 0, 0, -1), ('compiler.consts.SC_LOCAL', 0, 0, -1), ('pprint', 1, 1, -1), ('compiler.future', 0, 0, -1), ('compiler.misc', 0, 0, -1), ('compiler', 0, 0, -1), ('sys', 0, 0, -1), ('compiler.consts.SC_FREE', 0, 0, -1), ('compiler.consts.CO_FUTURE_ABSIMPORT', 0, 0, -1), ('cStringIO', 0, 0, -1), ('compiler.consts.CO_FUTURE_WITH_STATEMENT', 0, 0, -1), ('compiler.consts.SC_CELL', 0, 0, -1), ('compiler.consts.CO_GENERATOR', 0, 0, -1), ('compiler.consts.CO_NEWLOCALS', 0, 0, -1), ('compiler.consts.CO_NESTED', 0, 0, -1), ('compiler.syntax', 0, 0, -1), ('compiler.pyassem.TupleArg', 0, 0, -1), ('compiler.symbols', 0, 0, -1), ('compiler.consts.CO_VARARGS', 0, 0, -1), ('cStringIO.StringIO', 0, 0, -1), ('compiler.pyassem', 0, 0, -1), ('compiler.parse', 0, 0, -1), ('imp', 0, 0, -1), ('compiler.consts.CO_VARKEYWORDS', 0, 0, -1), ('marshal', 0, 0, -1), ('compiler.consts.SC_GLOBAL_IMPLICIT', 0, 0, -1), ('compiler.ast', 0, 0, -1), ('compiler.consts.SC_GLOBAL_EXPLICIT', 0, 0, -1), ('compiler.consts', 0, 0, -1), ('compiler.walk', 0, 0, -1)] binaries=[] datas=[]>
-compiler.warnings: None -> None
-compiler.ast: None -> <PyModule 'compiler.ast' C:\Python27\lib\compiler\ast.pyc imports=[('compiler.consts', 0, 0, -1), ('compiler.consts.CO_VARARGS', 0, 0, -1), ('compiler.consts.CO_VARKEYWORDS', 0, 0, -1)] binaries=[] datas=[]>
-compiler.consts: None -> <PyModule 'compiler.consts' C:\Python27\lib\compiler\consts.pyc imports=[] binaries=[] datas=[]>
-compiler.token: None -> None
-compiler.parser: None -> None
-compiler.symbol: None -> None
-compiler.os: None -> None
-compiler.struct: None -> None
-compiler.pprint: None -> None
-compiler.future: None -> <PyModule 'compiler.future' C:\Python27\lib\compiler\future.pyc imports=[('compiler.parseFile', 0, 1, -1), ('compiler', 0, 0, -1), ('compiler.walk', 0, 1, -1), ('compiler', 0, 1, -1), ('compiler.ast', 0, 0, -1), ('sys', 0, 1, -1), ('compiler.walk', 0, 0, -1)] binaries=[] datas=[]>
-compiler.misc: None -> <PyModule 'compiler.misc' C:\Python27\lib\compiler\misc.pyc imports=[] binaries=[] datas=[]>
-compiler.sys: None -> None
-compiler.cStringIO: None -> None
-compiler.syntax: None -> <PyModule 'compiler.syntax' C:\Python27\lib\compiler\syntax.pyc imports=[('compiler.ast', 0, 0, -1), ('compiler', 0, 0, -1), ('compiler.walk', 0, 0, -1)] binaries=[] datas=[]>
-compiler.pyassem: None -> <PyModule 'compiler.pyassem' C:\Python27\lib\compiler\pyassem.pyc imports=[('compiler.misc', 0, 0, -1), ('compiler', 0, 0, -1), ('sys', 0, 0, -1), ('compiler.consts.CO_VARARGS', 0, 0, -1), ('types', 0, 0, -1), ('compiler.consts.CO_VARKEYWORDS', 0, 0, -1), ('compiler.consts.CO_OPTIMIZED', 0, 0, -1), ('compiler.consts.CO_NEWLOCALS', 0, 0, -1), ('dis', 0, 0, -1), ('compiler.consts', 0, 0, -1)] binaries=[] datas=[]>
-compiler.symbols: None -> <PyModule 'compiler.symbols' C:\Python27\lib\compiler\symbols.pyc imports=[('compiler.parseFile', 0, 1, -1), ('compiler.misc', 0, 0, -1), ('compiler', 0, 0, -1), ('sys', 0, 0, -1), ('types', 0, 0, -1), ('compiler.consts.SC_FREE', 0, 0, -1), ('compiler.walk', 0, 1, -1), ('compiler.consts.SC_GLOBAL_IMPLICIT', 0, 0, -1), ('compiler', 0, 1, -1), ('compiler.ast', 0, 0, -1), ('compiler.consts.SC_GLOBAL_EXPLICIT', 0, 0, -1), ('compiler.consts.SC_CELL', 0, 0, -1), ('symtable', 0, 1, -1), ('compiler.consts.SC_LOCAL', 0, 0, -1), ('sys', 0, 1, -1), ('compiler.consts', 0, 0, -1), ('compiler.misc.mangle', 0, 0, -1), ('compiler.consts.SC_UNKNOWN', 0, 0, -1)] binaries=[] datas=[]>
-compiler.parse: None -> None
-  DEL compiler.parse
-compiler.imp: None -> None
-compiler.marshal: None -> None
-compiler.walk: None -> None
-  DEL compiler.walk
-compiler.parseFile: None -> None
-  DEL compiler.parseFile
-compiler.walk: None -> None
-  DEL compiler.walk
-compiler.walk: None -> None
-  DEL compiler.walk
-compiler.walk: None -> None
-  DEL compiler.walk
-compiler.types: None -> None
-compiler.dis: None -> None
-compiler.parseFile: None -> None
-  DEL compiler.parseFile
-compiler.walk: None -> None
-  DEL compiler.walk
-compiler.symtable: None -> None
-symtable: None -> <PyModule 'symtable' C:\Python27\lib\symtable.pyc imports=[('_symtable.SCOPE_OFF', 0, 0, -1), ('_symtable.GLOBAL_IMPLICIT', 0, 0, -1), ('_symtable.OPT_BARE_EXEC', 0, 0, -1), ('weakref', 0, 0, -1), ('_symtable.DEF_BOUND', 0, 0, -1), ('_symtable.FREE', 0, 0, -1), ('_symtable.GLOBAL_EXPLICIT', 0, 0, -1), ('_symtable.DEF_IMPORT', 0, 0, -1), ('_symtable.DEF_PARAM', 0, 0, -1), ('_symtable.DEF_LOCAL', 0, 0, -1), ('_symtable.DEF_GLOBAL', 0, 0, -1), ('sys', 0, 1, -1), ('_symtable.USE', 0, 0, -1), ('_symtable.OPT_IMPORT_STAR', 0, 0, -1), ('_symtable.CELL', 0, 0, -1), ('_symtable.LOCAL', 0, 0, -1), ('_symtable', 0, 0, -1), ('os', 0, 1, -1), ('_symtable.SCOPE_MASK', 0, 0, -1), ('_symtable.OPT_EXEC', 0, 0, -1)] binaries=[] datas=[]>
-_symtable: None -> <BuiltinModule '_symtable' None imports=[] binaries=[] datas=[]>
 termios: None -> None
   DEL termios
 termios: None -> None
@@ -2806,32 +3016,25 @@ scipy: None -> None
   DEL scipy
 numpy.ModuleDeprecationWarning: None -> None
   DEL numpy.ModuleDeprecationWarning
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
-nose: None -> None
-  DEL nose
+nose.plugins.doctests: None -> <PyModule 'nose.plugins.doctests' C:\Python27\lib\site-packages\nose\plugins\doctests.pyc imports=[('nose.util.isproperty', 0, 0, -1), ('nose.plugins.base', 0, 0, -1), ('os', 0, 0, -1), ('inspect.getmodule', 0, 0, -1), ('inspect', 0, 0, -1), ('nose.util.resolve_name', 0, 0, -1), ('nose.util.anyp', 0, 0, -1), ('nose.util.tolist', 0, 0, -1), ('sys', 0, 0, -1), ('nose.plugins.base.Plugin', 0, 0, -1), ('nose.suite', 0, 0, -1), ('nose.util.getpackage', 0, 0, -1), ('__future__.generators', 0, 0, -1), ('cStringIO', 0, 0, -1), ('unittest', 0, 0, -1), ('nose.util.src', 0, 0, -1), ('nose.ext.dtcompat', 0, 1, -1), ('StringIO.StringIO', 0, 1, -1), ('cStringIO.StringIO', 0, 0, -1), ('doctest', 0, 0, -1), ('__future__', 0, 0, -1), ('nose.util.test_address', 0, 0, -1), ('nose.suite.ContextList', 0, 0, -1), ('nose.util', 0, 0, -1), ('logging', 0, 0, -1), ('__builtin__', 0, 0, -1), ('StringIO', 0, 1, -1)] binaries=[] datas=[]>
+nose.plugins.__future__: None -> None
+nose.ext: None -> <PkgModule 'nose.ext' C:\Python27\lib\site-packages\nose\ext\__init__.pyc imports=[] binaries=[] datas=[]>
+nose.ext.dtcompat: None -> <PyModule 'nose.ext.dtcompat' C:\Python27\lib\site-packages\nose\ext\dtcompat.pyc imports=[('linecache', 0, 0, -1), ('StringIO', 0, 0, -1), ('sys', 0, 0, -1), ('pdb', 0, 0, -1), ('os', 0, 0, -1), ('StringIO.StringIO', 0, 0, -1), ('warnings', 0, 0, -1), ('re', 0, 0, -1), ('__future__', 0, 0, -1), ('inspect', 0, 0, -1), ('pdb', 1, 0, -1), ('difflib', 0, 0, -1), ('new', 1, 0, -1), ('traceback', 0, 0, -1), ('unittest', 0, 0, -1), ('tempfile', 0, 0, -1)] binaries=[] datas=[]>
+nose.plugins.__builtin__: None -> None
+nose.ext.linecache: None -> None
+nose.ext.StringIO: None -> None
+nose.ext.sys: None -> None
+nose.ext.pdb: None -> None
+nose.ext.os: None -> None
+nose.ext.warnings: None -> None
+nose.ext.re: None -> None
+nose.ext.__future__: None -> None
+nose.ext.inspect: None -> None
+nose.ext.difflib: None -> None
+nose.ext.new: None -> None
+nose.ext.traceback: None -> None
+nose.ext.unittest: None -> None
+nose.ext.tempfile: None -> None
 numpy.random.mtrand: None -> <ExtensionModule 'numpy.random.mtrand' C:\Python27\lib\site-packages\numpy\random\mtrand.pyd imports=[] binaries=[] datas=[]>
 numpy.random.info: None -> <PyModule 'numpy.random.info' C:\Python27\lib\site-packages\numpy\random\info.pyc imports=[('__future__.absolute_import', 0, 0, 0), ('__future__.print_function', 0, 0, 0), ('__future__.division', 0, 0, 0), ('__future__', 0, 0, 0)] binaries=[] datas=[]>
 numpy.testing.Tester: None -> None
@@ -4149,12 +4352,8 @@ pudb: None -> <PkgModule 'pudb' C:\Python27\lib\site-packages\pudb\__init__.pyc 
 pandas.util.scipy: None -> None
 scipy: None -> None
   DEL scipy
-nose: None -> None
-  DEL nose
 pandas.compat.filter: None -> None
   DEL pandas.compat.filter
-nose: None -> None
-  DEL nose
 pandas.util.IPython: None -> None
 IPython: None -> None
   DEL IPython
@@ -4189,8 +4388,8 @@ numpy.random.randn: None -> None
 pandas.util.traceback: None -> None
 pandas.compat.range: None -> None
   DEL pandas.compat.range
-nose: None -> None
-  DEL nose
+nose.SkipTest: None -> None
+  DEL nose.SkipTest
 pandas.util.tempfile: None -> None
 scipy: None -> None
   DEL scipy
@@ -5182,7 +5381,6 @@ ctypes.WinError: None -> None
   DEL ctypes.WinError
 cherrypy.wsgiserver.errno: None -> None
 cherrypy.wsgiserver.Queue: None -> None
-Queue: None -> <PyModule 'Queue' C:\Python27\lib\Queue.pyc imports=[('collections', 0, 0, -1), ('threading', 0, 0, -1), ('collections.deque', 0, 0, -1), ('time.time', 0, 0, -1), ('heapq', 0, 0, -1), ('dummy_threading', 0, 1, -1), ('time', 0, 0, -1)] binaries=[] datas=[]>
 cherrypy.wsgiserver.re: None -> None
 cherrypy.wsgiserver.operator: None -> None
 cherrypy.wsgiserver.logging: None -> None
@@ -5246,13 +5444,9 @@ fcntl: None -> None
 cherrypy.lib.msvcrt: None -> None
 cherrypy.lib.httpauth: None -> <PyModule 'cherrypy.lib.httpauth' C:\Python27\lib\site-packages\cherrypy\lib\httpauth.pyc imports=[('cherrypy._cpcompat.md5', 0, 0, -1), ('cherrypy._cpcompat.parse_http_list', 0, 0, -1), ('cherrypy._cpcompat.base64_decode', 0, 0, -1), ('cherrypy._cpcompat.parse_keqv_list', 0, 0, -1), ('cherrypy._cpcompat', 0, 0, -1), ('cherrypy._cpcompat.ntob', 0, 0, -1), ('time', 0, 0, -1)] binaries=[] datas=[]>
 cherrypy.lib.xmlrpclib: None -> None
-xmlrpclib: None -> <PyModule 'xmlrpclib' C:\Python27\lib\xmlrpclib.pyc imports=[('xmllib', 1, 0, -1), ('httplib', 0, 0, -1), ('base64', 1, 1, -1), ('sys.modules', 0, 0, -1), ('sys', 0, 0, -1), ('string', 0, 0, -1), ('cStringIO', 0, 0, -1), ('base64', 0, 0, -1), ('time', 0, 0, -1), ('xml.parsers', 0, 0, -1), ('types', 0, 0, -1), ('gzip', 0, 0, -1), ('socket', 0, 0, -1), ('datetime', 0, 0, -1), ('errno', 0, 0, -1), ('types.*', 0, 0, -1), ('re', 0, 0, -1), ('xml.parsers.expat', 0, 0, -1), ('urllib', 1, 0, -1), ('operator', 0, 0, -1), ('_xmlrpclib', 0, 0, -1), ('StringIO', 0, 1, -1)] binaries=[] datas=[]>
 cherrypy.lib.xmlrpc: None -> None
 xmlrpc: None -> None
   DEL xmlrpc
-xmllib: None -> <PyModule 'xmllib' C:\Python27\lib\xmllib.pyc imports=[('re', 0, 0, -1), ('time', 1, 0, -1), ('warnings', 0, 0, -1), ('string', 0, 0, -1), ('getopt', 1, 0, -1), ('sys', 1, 0, -1), ('time.time', 1, 0, -1)] binaries=[] datas=[]>
-_xmlrpclib: None -> None
-  DEL _xmlrpclib
 cherrypy.tools: None -> None
   DEL cherrypy.tools
 cherrypy.logging: None -> None
