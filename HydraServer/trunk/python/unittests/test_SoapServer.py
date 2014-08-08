@@ -87,13 +87,9 @@ class SoapServerTest(unittest.TestCase):
     def login(self, username, password):
         login_response = self.client.service.login(username, password)
 
-        session_id = login_response.session_id
-        user_id    = login_response.user_id
-
         token = self.client.factory.create('RequestHeader')
-        token.session_id = session_id
-        token.username = username
-        token.user_id  = user_id
+        token.session_id = login_response.session_id 
+        token.app_name = "Unit Test"
 
         self.client.set_options(cache=None, soapheaders=token)
 
@@ -436,6 +432,7 @@ class SoapServerTest(unittest.TestCase):
         scenario.id = -1
         scenario.name        = 'Scenario 1'
         scenario.description = 'Scenario Description'
+        scenario.layout      = {'app': ["Unit Test1", "Unit Test2"]}
         scenario.start_time  = datetime.datetime.now()
         scenario.end_time    = scenario.start_time + datetime.timedelta(hours=1)
         scenario.time_step   = 1 # one second intervals.

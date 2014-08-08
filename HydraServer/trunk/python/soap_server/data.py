@@ -102,13 +102,15 @@ class DataService(HydraService):
         """
         val = dataset.parse_value()
 
+        metadata = dataset.get_metadata_as_dict()
+
         updated_dataset = data.update_dataset(dataset.id,
                                         dataset.name,
                                         dataset.type,
                                         val,
                                         dataset.unit,
                                         dataset.dimension,
-                                        dataset.metadata,
+                                        metadata,
                                         **ctx.in_header.__dict__)
 
         return Dataset(updated_dataset)

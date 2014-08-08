@@ -362,6 +362,7 @@ class ImportCSV(object):
         headers = {
                     'Content-Type': 'application/json',       
                     'session_id':self.session_id,
+                    'app_name' : 'Import CSV'
                   }
         r = requests.post(self.url, data=json.dumps(call), headers=headers)
         if not r.ok:

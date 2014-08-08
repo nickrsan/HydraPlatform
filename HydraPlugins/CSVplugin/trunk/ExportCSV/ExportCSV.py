@@ -308,7 +308,7 @@ class ExportCSV(object):
             link_attributes_string = ',%s'%(','.join(link_attributes.values()))
 
         link_heading   = "Name, from, to %s, description\n" % (link_attributes_string)
-        metadata_heading   = "Name, %s\n"%(link_attributes_string)
+        metadata_heading   = "Name %s\n"%(link_attributes_string)
 
 
         link_attr_units = []
@@ -373,7 +373,7 @@ class ExportCSV(object):
 
         group_heading   = "Name %s, description\n" % (group_attributes_string)
         group_units_heading  = "Units,%s\n"%(','.join(group_attr_units) if group_attr_units else ',')
-        metadata_heading   = "Name, %s\n"%(group_attributes_string)
+        metadata_heading   = "Name %s\n"%(group_attributes_string)
 
         group_entries = []
         metadata_entries = []

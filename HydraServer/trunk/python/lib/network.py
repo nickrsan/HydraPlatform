@@ -221,7 +221,7 @@ def _add_nodes(net_i, nodes):
         node_dict = {'network_id'   : net_i.network_id,
                     'node_name' : node.name,
                      'node_description': node.description,
-                     'node_layout'     : node.layout,
+                     'node_layout'     : node.get_layout(),
                      'node_x'     : node.x,
                      'node_y'     : node.y,
                     }
@@ -271,7 +271,7 @@ def _add_links(net_i, links, node_id_map):
         link_dicts.append({'network_id' : net_i.network_id,
                            'link_name' : link.name,
                            'link_description' : link.description,
-                           'link_layout' : link.layout,
+                           'link_layout' : link.get_layout(),
                            'node_1_id' : node_1.node_id,
                            'node_2_id' : node_2.node_id
                           })
@@ -376,7 +376,7 @@ def add_network(network,**kwargs):
     net_i.created_by          = user_id
 
     if network.layout is not None:
-        net_i.network_layout = str(network.layout)
+        net_i.network_layout = network.get_layout()
 
     network.network_id = net_i.network_id
     DBSession.add(net_i)
@@ -410,6 +410,7 @@ def add_network(network,**kwargs):
             scen = Scenario()
             scen.scenario_name        = s.name
             scen.scenario_description = s.description
+            scen.scenario_layout      = s.get_layout()
             scen.start_time           = str(timestamp_to_ordinal(s.start_time)) if s.start_time else None
             scen.end_time             = str(timestamp_to_ordinal(s.end_time)) if s.end_time else None
             scen.time_step            = s.time_step
@@ -423,10 +424,10 @@ def add_network(network,**kwargs):
                 scenario_resource_attrs.append(ra)
 
             data_start_time = datetime.datetime.now()
-            datasets = data._bulk_insert_data(datasets, user_id)
+            datasets = data._bulk_insert_data(datasets, user_id, kwargs.get('app_name'))
             log.info("Data bulk insert took %s", get_timing(data_start_time))
             for i, ra in enumerate(scenario_resource_attrs):
-                scen.add_resource_scenario(ra, datasets[i])
+                scen.add_resource_scenario(ra, datasets[i], source=kwargs.get('app_name'))
 
             item_start_time = datetime.datetime.now()
             for group_item in s.resourcegroupitems:
@@ -701,7 +702,7 @@ def update_network(network,**kwargs):
     net_i.project_id          = network.project_id
     net_i.network_name        = network.name
     net_i.network_description = network.description
-    net_i.network_layout      = str(network.layout)
+    net_i.network_layout      = network.get_layout()
 
     all_resource_attrs = {} 
     all_resource_attrs.update(_update_attributes(net_i, network.attributes))
@@ -803,6 +804,7 @@ def update_network(network,**kwargs):
 
             scen.scenario_name        = s.name
             scen.scenario_description = s.description
+            scen.scenario_layout      = s.get_layout()
             scen.start_time           = str(timestamp_to_ordinal(s.start_time)) if s.start_time else None
             scen.end_time             = str(timestamp_to_ordinal(s.end_time)) if s.end_time else None
             scen.time_step            = s.time_step

@@ -66,6 +66,7 @@ class RequestHeader(ComplexModel):
     session_id    = Mandatory.String
     username      = String
     user_id       = String
+    app_name      = String
 
 class HydraService(ServiceBase):
     __tns__ = 'hydra.base'

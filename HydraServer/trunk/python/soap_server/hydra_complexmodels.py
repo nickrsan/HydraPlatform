@@ -471,6 +471,7 @@ class ResourceScenario(HydraComplexModel):
         ('resource_attr_id', Integer(default=None)),
         ('attr_id',          Integer(default=None)),
         ('value',            Dataset),
+        ('source',           Unicode),
     ]
 
     def __init__(self, parent=None):
@@ -481,6 +482,7 @@ class ResourceScenario(HydraComplexModel):
         self.attr_id          = parent.resourceattr.attr_id
 
         self.value = Dataset(parent.dataset)
+        self.source = parent.source
 
 class ResourceAttr(HydraComplexModel):
     _type_info = [
@@ -629,7 +631,13 @@ class TypeSummary(HydraComplexModel):
         self.template_id   = parent.template_id
 
 class Resource(HydraComplexModel):
-    pass
+
+    def get_layout(self):
+        if hasattr(self, 'layout') and self.layout is not None:
+            return str(self.layout).replace('{%s}'%NS, '')
+        else:
+            return None
+
 
 class ResourceSummary(HydraComplexModel):
     _type_info = [
@@ -804,6 +812,7 @@ class Scenario(Resource):
         ('name',                 Unicode(default=None)),
         ('description',          Unicode(min_occurs=1, default="")),
         ('network_id',           Integer(default=None)),
+        ('layout',               AnyDict(min_occurs=0, max_occurs=1, default=None)),
         ('status',               Unicode(default='A', pattern="[AX]")),
         ('locked',               Unicode(default='N', pattern="[YN]")),
         ('start_time',           Unicode(default=None)),
@@ -821,6 +830,12 @@ class Scenario(Resource):
         self.id = parent.scenario_id
         self.name = parent.scenario_name
         self.description = parent.scenario_description
+
+        if parent.scenario_layout is not None:
+            self.layout    = eval(parent.scenario_layout)
+        else:
+            self.layout = {}
+
         self.network_id = parent.network_id
         self.status = parent.status
         self.locked = parent.locked

@@ -843,6 +843,7 @@ class ResourceScenario(Base):
     dataset_id = Column(Integer(), ForeignKey('tDataset.dataset_id'), nullable=False)
     scenario_id = Column(Integer(), ForeignKey('tScenario.scenario_id'), primary_key=True, nullable=False)
     resource_attr_id = Column(Integer(), ForeignKey('tResourceAttr.resource_attr_id'), primary_key=True, nullable=False)
+    source           = Column(String(60))
     
     dataset      = relationship('Dataset', backref=backref("resourcescenarios", order_by=dataset_id))
     scenario     = relationship('Scenario', backref=backref("resourcescenarios", order_by=resource_attr_id, lazy='joined', cascade="all, delete-orphan"))
@@ -875,6 +876,7 @@ class Scenario(Base):
     scenario_id = Column(Integer(), primary_key=True, nullable=False)
     scenario_name = Column(String(60),  nullable=False)
     scenario_description = Column(String(1000))
+    scenario_layout = Column(Text(1000))
     status = Column(String(1),  nullable=False, server_default=text(u"'A'"))
     network_id = Column(Integer(), ForeignKey('tNetwork.network_id'))
     start_time = Column(String())
@@ -885,11 +887,12 @@ class Scenario(Base):
     
     network = relationship('Network', backref=backref("scenarios", order_by=scenario_id))
 
-    def add_resource_scenario(self, resource_attr, dataset=None):
+    def add_resource_scenario(self, resource_attr, dataset=None, source=None):
         rs_i = ResourceScenario()
         rs_i.resource_attr_id = resource_attr.resource_attr_id
         rs_i.dataset_id       = dataset.dataset_id
         rs_i.dataset = dataset
+        rs_i.source = source
         rs_i.resourceattr = resource_attr 
         self.resourcescenarios.append(rs_i)
 

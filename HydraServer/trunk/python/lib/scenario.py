@@ -81,6 +81,7 @@ def add_scenario(network_id, scenario,**kwargs):
     scen = Scenario()
     scen.scenario_name        = scenario.name
     scen.scenario_description = scenario.description
+    scen.scenario_layout      = scenario.get_layout()
     scen.network_id           = network_id
     scen.start_time           = str(timestamp_to_ordinal(scenario.start_time)) if scenario.start_time else None
     scen.end_time             = str(timestamp_to_ordinal(scenario.end_time)) if scenario.end_time else None
@@ -141,12 +142,13 @@ def update_scenario(scenario,**kwargs):
     
     scen.scenario_name        = scenario.name
     scen.scenario_description = scenario.description
+    scen.scenario_layout      = scenario.get_layout()
     scen.start_time           = str(timestamp_to_ordinal(scenario.start_time)) if scenario.start_time else None
     scen.end_time             = str(timestamp_to_ordinal(scenario.end_time)) if scenario.end_time else None
     scen.time_step            = scenario.time_step
 
     for r_scen in scenario.resourcescenarios:
-        _update_resourcescenario(scen, r_scen, user_id=user_id)
+        _update_resourcescenario(scen, r_scen, user_id=user_id, source=kwargs.get('app_name'))
         DBSession.flush()
 
     #Get all the exiting resource group items for this scenario.
@@ -428,7 +430,7 @@ def update_resourcedata(scenario_id, resource_scenario,**kwargs):
     scen_i = _get_scenario(scenario_id)
 
     if resource_scenario.value is not None:
-        res = _update_resourcescenario(scen_i, resource_scenario, user_id=user_id)
+        res = _update_resourcescenario(scen_i, resource_scenario, user_id=user_id, source=kwargs.get('app_name'))
         if res is None:
             raise HydraError("Could not update resource data. No value "
                 "sent with data. Check privilages.")
@@ -454,7 +456,7 @@ def _delete_resourcescenario(scenario_id, resource_scenario):
         raise HydraError("ResourceAttr %s does not exist in scenario %s."%(ra_id, scenario_id))
     DBSession.delete(sd_i)
 
-def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=None):
+def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=None, source=None):
     """
         Insert or Update the value of a resource's attribute by first getting the
         resource, then parsing the input data, then assigning the value.
@@ -507,12 +509,12 @@ def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=Non
     data_hash = resource_scenario.value.get_hash()
 
     assign_value(r_scen_i, data_type, value, data_unit, name, dimension, 
-                          metadata=metadata, data_hash=data_hash, user_id=user_id)
+                          metadata=metadata, data_hash=data_hash, user_id=user_id, source=source)
    
     return r_scen_i 
 
 def assign_value(rs, data_type, val,
-                 units, name, dimension, metadata={}, data_hash=None, user_id=None):
+                 units, name, dimension, metadata={}, data_hash=None, user_id=None, source=None):
     """
         Insert or update a piece of data in a scenario. the 'new' flag
         indicates that the data is new, thus allowing us to avoid unnecessary
@@ -539,6 +541,7 @@ def assign_value(rs, data_type, val,
                             name=name,
                             **dict(user_id=user_id))
     rs.dataset = dataset
+    rs.source  = source 
 
 def add_data_to_attribute(scenario_id, resource_attr_id, dataset,**kwargs):
     """
@@ -561,6 +564,10 @@ def add_data_to_attribute(scenario_id, resource_attr_id, dataset,**kwargs):
     value = dataset.parse_value()
 
     dataset_metadata = {}
+    if kwargs.get('user_id') is not None:
+        dataset_metadata = {'user_id':str(kwargs['user_id'])}
+    if kwargs.get('source') is not None:
+        dataset_metadata = {'source': str(kwargs.get('source'))}
     if dataset.metadata is not None:
         for m in dataset.metadata:
             dataset_metadata[m.name] = m.value

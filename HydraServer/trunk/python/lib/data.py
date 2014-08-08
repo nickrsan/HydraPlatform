@@ -160,19 +160,22 @@ def add_dataset(data_type, val, units, dimension, metadata={}, name="", user_id=
         return d
 
 def bulk_insert_data(data, **kwargs):
-    datasets = _bulk_insert_data(data, user_id=kwargs.get('user_id'))
+    datasets = _bulk_insert_data(data, user_id=kwargs.get('user_id'), source=kwargs.get('app_name'))
     DBSession.flush()
     return datasets
 
-def _bulk_insert_data(bulk_data, user_id=None):
+def _bulk_insert_data(bulk_data, user_id=None, source=None):
     """
         Insert lots of datasets at once to reduce the number of DB interactions.
+        user_id indicates the user adding the data
+        source indicates the name of the app adding the data
+        both user_id and source are added as metadata
     """
     get_timing = lambda x: datetime.datetime.now() - x
 
     start_time=datetime.datetime.now()
     log.info("Starting data insert (%s datasets) %s", len(bulk_data), get_timing(start_time))
-    datasets, incoming_data  = _process_incoming_data(bulk_data, user_id)
+    datasets, incoming_data  = _process_incoming_data(bulk_data, user_id, source)
     existing_data = _get_existing_data(incoming_data.keys())
 
     #A list of all the dataset objects
@@ -225,7 +228,7 @@ def _bulk_insert_data(bulk_data, user_id=None):
     log.info("Done bulk inserting data. %s datasets", len(dataset_hashes))
     return dataset_hashes 
 
-def _process_incoming_data(data, user_id=None):
+def _process_incoming_data(data, user_id=None, source=None):
 
     unit = units.Units()
 
@@ -254,6 +257,10 @@ def _process_incoming_data(data, user_id=None):
         scenario_datum.set_val(d.type, val)
 
         dataset_metadata = {}
+        if user_id is not None:
+            dataset_metadata['user_id'] = str(user_id)
+        if source is not None:
+            dataset_metadata['source'] = str(source)
         if d.metadata is not None:
             for m in d.metadata:
                 dataset_metadata[m.name] = m.value
