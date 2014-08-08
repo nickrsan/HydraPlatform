@@ -246,6 +246,18 @@
                 <name>linCoeff</name>
                 <dimension/>
                 <is_var>N</is_var>
+                <restrictions>
+                    <restriction>
+                        <type>EQUALTIMESTEPS</type>
+                    </restriction>
+                    <restriction>
+                        <type>DATERANGE</type>
+                        <value>
+                            <item>1900-01-01 00:00:00.0</item>
+                            <item>2000-01-01 00:00:00.0</item>
+                        </value>
+                    </restriction>
+                </restrictions>
             </attribute>
             <attribute>
                 <name>quadCoeff</name>

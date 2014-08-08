@@ -20,7 +20,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from operator import mul
 from HydraException import HydraError
 
-import traceback, sys
+import pandas as pd
 log = logging.getLogger(__name__)
 
 def get_datetime(timestamp):
@@ -214,10 +214,10 @@ def _get_val(val):
     except:
         pass
 
-    try:
-        val = get_datetime(val)
-    except:
-        pass
+  #  try:
+  #      val = get_datetime(val)
+  #  except:
+  #      pass
 
     if type(val) == dict:
         newval = []
@@ -370,14 +370,16 @@ def validate_DATERANGE(value, restriction):
     if type(value) is list:
         for subval in value:
             if type(subval) is tuple:
-                subval = subval[0]
-            validate_DATERANGE(subval, restriction)
+                ts_time = subval[0]
+            elif type(subval) is dict:
+                ts_time = subval['ts_time']
+            validate_DATERANGE(ts_time, restriction)
+        return
 
-    min_date = restriction[0]
-    max_date = restriction[1]
-    for timestamp, val in value:
-        if timestamp < min_date or timestamp > max_date:
-            raise ValidationError("DATERANGE: %s <> %s"%(min_date, max_date))
+    min_date = get_datetime(restriction[0])
+    max_date = get_datetime(restriction[1])
+    if value < get_datetime(min_date) or value > get_datetime(max_date):
+        raise ValidationError("DATERANGE: %s <%s> %s"%(min_date,value,max_date))
 
 def validate_MAXLEN(value, restriction):
     """
@@ -543,6 +545,79 @@ def validate_DECREASING(value,restriction):
             raise ValidationError("INCREASING")
         previous = a
 
+def validate_EQUALTIMESTEPS(value, restriction):
+    """
+        Test to ensure the values of a list sum to a specified value:
+        Parameters: a list of numeric values and a target to which the values
+        in the list must sum
+    """
+    if len(value) == 0:
+        return
+
+    if type(value) != list:
+        raise ValidationError("Value %s cannot be validated. It is not a list."%(value))
+
+    ts_val_keys = []
+    ts_vals     = []
+    for ts_instance in value:
+        if type(ts_instance) is tuple:
+            ts_val_keys.append(ts_instance[0])
+            ts_vals.append(ts_instance[1])
+        else:
+            ts_val_keys.append(ts_instance['ts_time'])
+            ts_vals.append(ts_instance['ts_value'])
+
+    test_pd = pd.DataFrame(ts_vals, index=pd.Series(ts_val_keys))
+    
+    if not hasattr(test_pd.index, 'inferred_freq'):
+        raise ValidationError("Timesteps not equal: %s"%(ts_val_keys,))
+
+    if restriction is None:
+        if test_pd.index.inferred_freq is None:
+            raise ValidationError("Timesteps not equal: %s"%(ts_val_keys,))
+    else:
+        if test_pd.index.inferred_freq != restriction:
+            raise ValidationError("Timesteps not equal: %s"%(ts_val_keys,))
+
+validation_func_map = dict(
+    ENUM = validate_ENUM,
+    BOOLYN = validate_BOOLYN,
+    BOOL10 = validate_BOOL10,
+    NUMPLACES = validate_NUMPLACES,
+    VALUERANGE = validate_VALUERANGE,
+    DATERANGE = validate_DATERANGE,
+    MAXLEN = validate_MAXLEN,
+    EQUALTO = validate_EQUALTO,
+    NOTEQUALTO = validate_NOTEQUALTO,
+    LESSTHAN = validate_LESSTHAN,
+    LESSTHANEQ = validate_LESSTHANEQ,
+    GREATERTHAN = validate_GREATERTHAN,
+    GREATERTHANEQ = validate_GREATERTHANEQ,
+    MULTIPLEOF = validate_MULTIPLEOF,
+    SUMTO = validate_SUMTO,
+    INCREASING = validate_INCREASING,
+    DECREASING = validate_DECREASING,
+    EQUALTIMESTEPS = validate_EQUALTIMESTEPS,
+)
+
+def validate_value(restriction_dict, inval):
+    if len(restriction_dict) == 0:
+        return
+
+    val = _get_val(inval)
+    #log.warn("%s -> %s", inval, val)
+    try:
+        for restriction_type, restriction in restriction_dict.items():
+            func = validation_func_map.get(restriction_type)
+            if func is None:
+                raise Exception("Validation type %s does not exist"%(restriction_type,))
+            func(val, restriction)
+    except ValidationError, e:
+        raise HydraError("Validation error. Val %s does not conform with rule %s" 
+                         %(val, e.message))
+    except Exception, e:
+        raise HydraError("An error occurred in validation. (%s)"%(e))
+
 def _flatten_value(value):
     """
         1: Turn a multi-dimensional array into a 1-dimensional array
@@ -582,44 +657,6 @@ def _flatten_list(l):
         else:
             flat_list.append(item)
     return flat_list
-
-validation_func_map = dict(
-    ENUM = validate_ENUM,
-    BOOLYN = validate_BOOLYN,
-    BOOL10 = validate_BOOL10,
-    NUMPLACES = validate_NUMPLACES,
-    VALUERANGE = validate_VALUERANGE,
-    DATERANGE = validate_DATERANGE,
-    MAXLEN = validate_MAXLEN,
-    EQUALTO = validate_EQUALTO,
-    NOTEQUALTO = validate_NOTEQUALTO,
-    LESSTHAN = validate_LESSTHAN,
-    LESSTHANEQ = validate_LESSTHANEQ,
-    GREATERTHAN = validate_GREATERTHAN,
-    GREATERTHANEQ = validate_GREATERTHANEQ,
-    MULTIPLEOF = validate_MULTIPLEOF,
-    SUMTO = validate_SUMTO,
-    INCREASING = validate_INCREASING,
-    DECREASING = validate_DECREASING,
-)
-
-def validate_value(restriction_dict, inval):
-    if len(restriction_dict) == 0:
-        return
-
-    val = _get_val(inval)
-    #log.warn("%s -> %s", inval, val)
-    try:
-        for restriction_type, restriction in restriction_dict.items():
-            func = validation_func_map.get(restriction_type)
-            if func is None:
-                raise Exception("Validation type %s does not exist"%(restriction_type,))
-            func(val, restriction)
-    except ValidationError, e:
-        raise HydraError("Validation error. Val %s does not conform with rule %s" 
-                         %(val, e.message))
-    except Exception, e:
-        raise HydraError("An error occurred in validation. (%s)"%(e))
 
 if __name__ == '__main__':
     pass

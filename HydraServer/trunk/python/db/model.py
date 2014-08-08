@@ -169,9 +169,9 @@ class Dataset(Base):
             test_vals = []
             for time, value in val:
                 try:
-                    v = float(value)
-                except:
                     v = eval(value)
+                except:
+                    v = value
                 test_val_keys.append(str(ordinal_to_timestamp(time)))
                 test_vals.append(v)
             test_pd = pd.DataFrame(test_vals, index=pd.Series(test_val_keys))

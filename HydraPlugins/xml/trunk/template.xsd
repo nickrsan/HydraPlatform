@@ -110,6 +110,7 @@
                                                                                         <xs:enumeration value="SUMTO"/>
                                                                                         <xs:enumeration value="INCREASING"/>
                                                                                         <xs:enumeration value="DECREASING"/>
+                                                                                        <xs:enumeration value="EQUALTIMESTEPS"/>
                                                                                     </xs:restriction>
                                                                                 </xs:simpleType>
                                                                             </xs:element>
