@@ -358,7 +358,7 @@ class TemplateType(Base):
 
     type_id = Column(Integer(), primary_key=True, nullable=False)
     type_name = Column(String(60),  nullable=False)
-    template_id = Column(Integer(), ForeignKey('tTemplate.template_id'))
+    template_id = Column(Integer(), ForeignKey('tTemplate.template_id'), nullable=False)
     resource_type = Column(String(60))
     alias = Column(String(100))
     layout = Column(Text(1000))
@@ -442,7 +442,7 @@ class ResourceType(Base):
     group_id    = Column(Integer(),  ForeignKey('tResourceGroup.group_id'), nullable=True)
 
     
-    templatetype = relationship('TemplateType')
+    templatetype = relationship('TemplateType', backref=backref('resourcetypes', uselist=True, cascade="all, delete-orphan"))
 
     network = relationship('Network', backref=backref('types', uselist=True, cascade="all, delete-orphan"), uselist=False)
     node = relationship('Node', backref=backref('types', uselist=True, cascade="all, delete-orphan"), uselist=False)

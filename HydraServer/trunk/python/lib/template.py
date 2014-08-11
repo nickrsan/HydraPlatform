@@ -554,6 +554,17 @@ def update_template(template,**kwargs):
  
     return tmpl
 
+def delete_template(template_id,**kwargs):
+    """
+        Add template and a type and typeattrs.
+    """
+    try:
+        tmpl = DBSession.query(Template).filter(Template.template_id==template_id).one()
+    except NoResultFound:
+        raise ResourceNotFoundError("Template %s not found"%(template_id,))
+    DBSession.delete(tmpl)
+    return tmpl
+
 def get_templates(**kwargs):
     """
         Get all resource template templates.
@@ -601,6 +612,7 @@ def add_templatetype(templatetype,**kwargs):
     tmpltype.resource_type = templatetype.resource_type
     tmpltype.alias      = templatetype.alias
     tmpltype.layout     = templatetype.layout
+    tmpltype.template_id = templatetype.template_id
 
     for typeattr in templatetype.typeattrs:
         ta = TypeAttr(attr_id=typeattr.attr_id)
@@ -635,6 +647,20 @@ def update_templatetype(templatetype,**kwargs):
     DBSession.flush()
 
     return tmpltype
+
+
+def delete_templatetype(type_id,**kwargs):
+    """
+        Update a resource type and its typeattrs.
+        New typeattrs will be added. typeattrs not sent will be ignored.
+        To delete typeattrs, call delete_typeattr
+    """
+    try:
+        tmpltype = DBSession.query(TemplateType).filter(TemplateType.type_id == type_id).one()
+    except NoResultFound:
+        raise ResourceNotFoundError("Template Type %s not found"%(type_id,))
+    DBSession.delete(tmpltype)
+    DBSession.flush()
 
 def get_templatetype(type_id,**kwargs):
     """

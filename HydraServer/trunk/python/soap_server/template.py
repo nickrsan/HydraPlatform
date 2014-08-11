@@ -137,6 +137,16 @@ class TemplateService(HydraService):
                                            **ctx.in_header.__dict__)
         return Template(tmpl_i)
 
+
+    @rpc(Integer, _returns=Template)
+    def delete_template(ctx, template_id):
+        """
+            Update template and a type and typeattrs.
+        """
+        template.delete_template(template_id,
+                                           **ctx.in_header.__dict__)
+        return 'OK'
+
     @rpc(_returns=SpyneArray(Template))
     def get_templates(ctx):
         """
@@ -205,6 +215,15 @@ class TemplateService(HydraService):
         type_i = template.update_templatetype(templatetype,
                                               **ctx.in_header.__dict__)
         return TemplateType(type_i)
+
+    @rpc(Integer, _returns=Template)
+    def delete_templatetype(ctx, type_id):
+        """
+            Update template and a type and typeattrs.
+        """
+        template.delete_templatetype(type_id,
+                                           **ctx.in_header.__dict__)
+        return 'OK'
 
     @rpc(Integer, _returns=TemplateType)
     def get_templatetype(ctx, type_id):

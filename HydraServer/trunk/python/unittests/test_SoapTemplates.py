@@ -27,13 +27,16 @@ log = logging.getLogger(__name__)
 class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def set_template(self, template):
-        self.template = template
+        if template is None:
+            self.template = self.test_add_template()
+        else:
+            self.template = template
 
     def get_template(self):
         if hasattr(self, 'template'):
             return self.template
         else:
-            self.test_add_template()
+            self.template = self.test_add_template()
         return self.template
 
     def test_add_xml(self):
@@ -137,7 +140,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             assert t.attr_id in (link_attr_1.id, link_attr_2.id);
             "Node types were not added correctly!"
 
-        self.set_template(new_template)
+        return new_template
 
     def test_update_template(self):
 
@@ -213,7 +216,19 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         assert len(updated_type.typeattrs[0]) == 2, "Resource type template attr did not update correctly"
 
+    def test_delete_template(self):
+        new_template = self.test_add_template()
+
+        retrieved_template = self.client.service.get_template(new_template.id)
+        assert retrieved_template is not None
+
+        self.client.service.delete_template(new_template.id)
+    
+        self.assertRaises(WebFault, self.client.service.get_template, new_template.id)
+
     def test_add_type(self):
+        
+        template = self.get_template()
 
         attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
         attr_2 = self.create_attr("link_attr_2", dimension='Speed')
@@ -223,6 +238,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
         templatetype.alias = "%s alias" % templatetype.name
         templatetype.resource_type = 'LINK'
+        templatetype.template_id = template.id
         layout = self.client.factory.create("xs:anyType")
         layout.color = 'red'
         layout.shapefile = 'blah.shp'
@@ -256,6 +272,9 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         return new_type 
 
     def test_update_type(self):
+       
+
+        template = self.get_template()
 
         attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
         attr_2 = self.create_attr("link_attr_2", dimension='Speed')
@@ -266,6 +285,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         templatetype.alias = templatetype.name + " alias"
         templatetype.template_id = self.get_template().id
         templatetype.resource_type = 'NODE'
+        templatetype.template_id = template.id
 
         tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
@@ -308,6 +328,23 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         assert new_type.id > 0, "New type has incorrect ID!"
 
         assert len(updated_type.typeattrs[0]) == 3, "Template type attrs did not update correctly"
+
+
+    def test_delete_type(self):
+        new_template = self.test_add_template()
+
+        retrieved_template = self.client.service.get_template(new_template.id)
+        assert retrieved_template is not None
+
+        templatetype = new_template.types.TemplateType[0]
+        self.client.service.delete_templatetype(templatetype.id)
+    
+        updated_template = self.client.service.get_template(new_template.id)
+
+        for tmpltype in updated_template.types.TemplateType:
+            assert tmpltype.id != templatetype.id
+
+
 
     def test_get_type(self):
         new_type = self.get_template().types.TemplateType[0]
@@ -357,7 +394,8 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
 
     def test_delete_typeattr(self):
-
+        
+        template = self.test_add_template()
 
         attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
         attr_2 = self.create_attr("link_attr_2", dimension='Speed')
@@ -366,6 +404,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         templatetype.name = "Test type name @ %s"%(datetime.datetime.now())
         templatetype.alias = templatetype.name + " alias"
         templatetype.resource_type = 'NODE'
+        templatetype.template_id = template.id
 
         tattrs = self.client.factory.create('hyd:TypeAttrArray')
 
