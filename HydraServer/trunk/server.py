@@ -167,8 +167,6 @@ class HydraServer():
 
     def __init__(self):
 
-        logging.getLogger('spyne').setLevel(logging.INFO)
-#        logging.getLogger('sqlalchemy').setLevel(logging.INFO)
         util.create_default_users_and_perms()
         util.create_default_net()
         make_root_user()
@@ -191,16 +189,16 @@ class HydraServer():
 
     def run_server(self):
         
-        logging.info("home_dir %s",config.get('DEFAULT', 'home_dir'))
-        logging.info("hydra_base_dir %s",config.get('DEFAULT', 'hydra_base_dir'))
-        logging.info("common_app_data_folder %s",config.get('DEFAULT', 'common_app_data_folder'))
-        logging.info("win_common_documents %s",config.get('DEFAULT', 'win_common_documents'))
-        logging.info("sqlite url %s",config.get('mysqld', 'url'))
-        logging.info("layout_xsd_path %s",config.get('hydra_server', 'layout_xsd_path'))
-        logging.info("default_directory %s",config.get('plugin', 'default_directory'))
-        logging.info("result_file %s",config.get('plugin', 'result_file'))
-        logging.info("plugin_xsd_path %s",config.get('plugin', 'plugin_xsd_path'))
-        logging.info("log_config_path %s",config.get('logging_conf', 'log_config_path'))
+        log.info("home_dir %s",config.get('DEFAULT', 'home_dir'))
+        log.info("hydra_base_dir %s",config.get('DEFAULT', 'hydra_base_dir'))
+        log.info("common_app_data_folder %s",config.get('DEFAULT', 'common_app_data_folder'))
+        log.info("win_common_documents %s",config.get('DEFAULT', 'win_common_documents'))
+        log.info("sqlite url %s",config.get('mysqld', 'url'))
+        log.info("layout_xsd_path %s",config.get('hydra_server', 'layout_xsd_path'))
+        log.info("default_directory %s",config.get('plugin', 'default_directory'))
+        log.info("result_file %s",config.get('plugin', 'result_file'))
+        log.info("plugin_xsd_path %s",config.get('plugin', 'plugin_xsd_path'))
+        log.info("log_config_path %s",config.get('logging_conf', 'log_config_path'))
         
 
 

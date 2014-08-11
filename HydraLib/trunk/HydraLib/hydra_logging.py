@@ -51,6 +51,7 @@ def init(level=None):
         if os.path.isfile(config_file):
             logging.config.fileConfig(config_file)
             use_default=False
+            logging.info("Using logging config at %s", config_file)
         else:
             logging.critical("No logging config file found!")
             use_default = True
