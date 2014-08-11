@@ -281,8 +281,9 @@ class SoapServerTest(unittest.TestCase):
         return attr
 
     def test_create_network(self):
-        self.create_network_with_data()
-
+        net = self.create_network_with_data()
+        s = net.scenarios.Scenario[0]
+        rs = s.resourcescenarios.ResourceScenario[0]
     def create_network_with_data(self, project_id=None, num_nodes=10, ret_full_net=True):
         """
             Test adding data to a network through a scenario.

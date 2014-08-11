@@ -22,18 +22,12 @@ from spyne.model.primitive import DateTime
 from spyne.model.primitive import AnyDict
 from spyne.model.primitive import Double
 from decimal import Decimal as Dec
-import sys
-from HydraLib.util import timestamp_to_ordinal, ordinal_to_timestamp
+from HydraLib.util import get_datetime, timestamp_to_ordinal, ordinal_to_timestamp
 import pandas as pd
 import logging
-from numpy import array
 from HydraLib.util import create_dict
 
-global FORMAT
-FORMAT = "%Y-%m-%d %H:%M:%S.%f"
-#"2013-08-13T15:55:43.468886Z"
 NS = "soap_server.hydra_complexmodels"
-current_module = sys.modules[__name__]
 log = logging.getLogger(__name__)
 
 def get_timestamp(ordinal):
@@ -351,13 +345,13 @@ class TimeSeries(HydraComplexModel):
 
         ts_vals = []
         if type(val) == str:
-            logging.info("Creating timeseries complexmodels")
+            log.debug("Creating timeseries complexmodels")
             timeseries = pd.read_json(val)
             timestamps = list(timeseries.index)
             for i, ts in enumerate(timestamps):
                 ts_val = timeseries.loc[ts].values
                 ts_data = TimeSeriesData()
-                ts_data.ts_time = [str(ts.to_pydatetime())]
+                ts_data.ts_time = [get_datetime(ts.to_pydatetime())]
                 try:
                     ts_val = list(ts_val)
                     ts_data.ts_value = [create_dict(ts_val)]
@@ -367,7 +361,7 @@ class TimeSeries(HydraComplexModel):
 
             self.frequency = [timeseries.index.inferred_freq]
             self.periods = [len(timeseries.index)]
-            logging.info("Timeseries complexmodels created")
+            log.debug("Timeseries complexmodels created")
         else:
             for ts in val:
                 ts_vals.append(TimeSeriesData(ts).__dict__)

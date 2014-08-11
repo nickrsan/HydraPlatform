@@ -230,7 +230,7 @@ class ImportCSV(object):
         
         self.session_id=None
         if session_id is not None:
-            logging.info("Using existing session %s", session_id)
+            log.info("Using existing session %s", session_id)
             self.session_id=session_id
         else:
             self.login()
@@ -349,7 +349,7 @@ class ImportCSV(object):
         resp = self.call('login', login_params)
         #set variables for use in request headers
         self.session_id = resp['session_id']
-        logging.info("Session ID=%s", self.session_id)
+        log.info("Session ID=%s", self.session_id)
 
     def call(self, func, args):
         log.info("Calling: %s"%(func))
@@ -357,7 +357,7 @@ class ImportCSV(object):
             port = config.getint('hydra_server', 'port', 8080)
             domain = config.get('hydra_server', 'domain', '127.0.0.1')
             self.url = "http://%s:%s/json"%(domain, port)
-            logging.info("Setting URL %s", self.url)
+            log.info("Setting URL %s", self.url)
         call = {func:args}
         headers = {
                     'Content-Type': 'application/json',       
@@ -398,7 +398,7 @@ class ImportCSV(object):
                 new_filename = "%s_metadata.%s"%(file_base, file_ext)
                 metadata = self.read_metadata(new_filename)
             except IOError:
-                logging.info("No metadata found for node file %s",file)
+                log.info("No metadata found for node file %s",file)
                 metadata = {}
 
             keys = net_data[0].split(',')
@@ -556,7 +556,7 @@ class ImportCSV(object):
             new_filename = "%s_metadata.%s"%(file_base, file_ext)
             metadata = self.read_metadata(new_filename)
         except IOError:
-            logging.info("No metadata found for node file %s",file)
+            log.info("No metadata found for node file %s",file)
             metadata = {}
 
         
@@ -651,7 +651,7 @@ class ImportCSV(object):
             new_filename = "%s_metadata.%s"%(file_base, file_ext)
             metadata = self.read_metadata(new_filename)
         except IOError:
-            logging.info("No metadata found for node file %s",file)
+            log.info("No metadata found for node file %s",file)
             metadata = {}
 
         self.add_attrs = True
@@ -746,7 +746,7 @@ class ImportCSV(object):
             new_filename = "%s_metadata.%s"%(file_base, file_ext)
             metadata = self.read_metadata(new_filename)
         except IOError:
-            logging.info("No metadata found for node file %s",file)
+            log.info("No metadata found for node file %s",file)
             metadata = {}
 
         self.add_attrs = True
@@ -1121,39 +1121,35 @@ class ImportCSV(object):
             dataset['value'] = scal
         except ValueError:
             try:
+                filedata = []
                 if self.expand_filenames:
                     full_file_path = os.path.join(self.basepath, value)
                     if self.file_dict.get(full_file_path) is None:
                         with open(full_file_path) as f:
-                            log.info('Reading data from %s ...' % full_file_path)
-                            filedata = f.read()
+                            filedata = []
+                            for l in f:
+                                #The name of the resource is how to identify the data for it.
+                                #Once this the correct line(s) has been identified, remove the
+                                #name from the start of the line
+                                l = l.strip().replace('\n', '').replace('\r', '')
+                                if l.startswith(resource_name):
+                                    l = l[l.find(',')+1:]
+                                    filedata.append(l)
                             self.file_dict[full_file_path] = filedata
                     else:
                         filedata = self.file_dict[full_file_path]
 
-                    tmp_filedata = filedata.split('\n')
-                    filedata = ''
-
-                    if tmp_filedata[0].lower().replace(' ', '').startswith('arraydescription'):
-                        arr_struct = tmp_filedata[0]
+                    if filedata[0].lower().replace(' ', '').startswith('arraydescription'):
+                        arr_struct = filedata[0].strip()
                         arr_struct = arr_struct.split(',')
                         arr_struct = "|".join(arr_struct[2:])
-                        tmp_filedata = tmp_filedata[1:]
-                    elif tmp_filedata[0].lower().replace(' ', '').startswith('timeseriesdescription'):
-                        arr_struct = tmp_filedata[0].strip()
+                        filedata = filedata[1:]
+                    elif filedata[0].lower().replace(' ', '').startswith('timeseriesdescription'):
+                        arr_struct = filedata[0].strip()
                         arr_struct = arr_struct.split(',')
                         arr_struct = "|".join(arr_struct[3:])
-                        tmp_filedata = tmp_filedata[1:]
+                        filedata = filedata[1:]
                     
-                    for i, line in enumerate(tmp_filedata):
-                        #The name of the resource is how to identify the data for it.
-                        #Once this the correct line(s) has been identified, remove the
-                        #name from the start of the line
-                        if len(line) > 0 and line.strip().startswith("%s,"%resource_name):
-                            line = line[line.find(',')+1:]
-                            filedata = filedata + line + '\n'
-                        else:
-                            continue
                     if len(filedata) == 0:
                         log.info('%s: No data found in file %s' %
                                      (resource_name, full_file_path))
@@ -1167,7 +1163,10 @@ class ImportCSV(object):
                             dataset['value'] = ts
                         else:
                             dataset['type'] = 'array'
-                            dataset['value'] = self.create_array(filedata, restriction_dict)
+                            if len(filedata) > 0:
+                                dataset['value'] = self.create_array(filedata[0], restriction_dict)
+                            else:
+                                dataset['value'] = None
                 else:
                     raise IOError
             except IOError:
@@ -1209,7 +1208,10 @@ class ImportCSV(object):
         return descriptor
 
     def create_timeseries(self, data, restriction_dict={}):
-        date = data.split(',', 1)[0].strip()
+        if len(data) == 0:
+            return None
+
+        date = data[0].split(',', 1)[0].strip()
         timeformat = PluginLib.guess_timefmt(date)
         seasonal = False
         if 'XXXX' in timeformat:
@@ -1221,7 +1223,7 @@ class ImportCSV(object):
         prev_time  = None
         eq_val     = []
         is_eq_spaced = False 
-        timedata = data.split('\n')
+        timedata = data
         for line in timedata:
             if line != '':
                 dataset = line.split(',')
@@ -1315,7 +1317,7 @@ class ImportCSV(object):
         return arr
 
     def is_timeseries(self, data):
-        date = data.split(',')[0].strip()
+        date = data[0].split(',')[0].strip()
         timeformat = PluginLib.guess_timefmt(date)
         if timeformat is None:
             return False

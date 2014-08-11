@@ -23,13 +23,14 @@ from HydraException import HydraError
 import pandas as pd
 log = logging.getLogger(__name__)
 
+#"2013-08-13 15:55:43.468886Z"
+FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+
 def get_datetime(timestamp):
 
     if isinstance(timestamp, datetime.datetime):
         return timestamp
 
-    FORMAT = "%Y-%m-%d %H:%M:%S.%f"
-    #"2013-08-13T15:55:43.468886Z"
 
     if timestamp[0:4] == 'XXXX':
         # Do seasonal time series stuff...
@@ -92,7 +93,7 @@ def ordinal_to_timestamp(date):
     d = datetime.datetime.fromordinal(day) + td
     log.debug("%s converted to %s", date, d)
 
-    return d
+    return get_datetime(d)
 
 
 def array_dim(arr):
@@ -378,7 +379,7 @@ def validate_DATERANGE(value, restriction):
 
     min_date = get_datetime(restriction[0])
     max_date = get_datetime(restriction[1])
-    if value < get_datetime(min_date) or value > get_datetime(max_date):
+    if value < min_date or value > max_date:
         raise ValidationError("DATERANGE: %s <%s> %s"%(min_date,value,max_date))
 
 def validate_MAXLEN(value, restriction):
@@ -613,6 +614,8 @@ def validate_value(restriction_dict, inval):
                 raise Exception("Validation type %s does not exist"%(restriction_type,))
             func(val, restriction)
     except ValidationError, e:
+        if len(str(inval)) > 100:
+            val = "%s..."%str(inval)[:100]
         raise HydraError("Validation error. Val %s does not conform with rule %s" 
                          %(val, e.message))
     except Exception, e:

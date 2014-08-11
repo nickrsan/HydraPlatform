@@ -624,9 +624,9 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         link_ids = []
         for l in network.links.Link:
             if l.node_1_id == node_to_delete.id:
-                link_ids.append(l.node_1_id)
+                link_ids.append(l.id)
             if l.node_2_id == node_to_delete.id:
-                link_ids.append(l.node_2_id)
+                link_ids.append(l.id)
 
         self.client.service.delete_node(node_to_delete.id)
 
