@@ -22,7 +22,7 @@ from HydraLib.util import ordinal_to_timestamp, timestamp_to_ordinal, get_dateti
 from db import DeclarativeBase as Base, DBSession
 
 from sqlalchemy.sql.expression import case
-from sqlalchemy import and_
+from sqlalchemy import UniqueConstraint, and_
 
 import pandas as pd
 
@@ -455,6 +455,13 @@ class ResourceAttr(Base):
 class ResourceType(Base):
 
     __tablename__='tResourceType'
+    __table_args__ = (
+        UniqueConstraint('network_id', 'type_id', name='net_type_1'),
+        UniqueConstraint('node_id', 'type_id', name='node_type_1'),
+        UniqueConstraint('link_id', 'type_id',  name = 'link_type_1'),
+        UniqueConstraint('group_id', 'type_id', name = 'group_type_1'),
+
+    )
     resource_type_id = Column(Integer, primary_key=True, nullable=False)
     type_id = Column(Integer(), ForeignKey('tTemplateType.type_id'), primary_key=False, nullable=False)
     ref_key = Column(String(60),nullable=False)
@@ -869,7 +876,7 @@ class ResourceScenario(Base):
     
     dataset      = relationship('Dataset', backref=backref("resourcescenarios", order_by=dataset_id))
     scenario     = relationship('Scenario', backref=backref("resourcescenarios", order_by=resource_attr_id, lazy='joined', cascade="all, delete-orphan"))
-    resourceattr = relationship('ResourceAttr', lazy='joined')
+    resourceattr = relationship('ResourceAttr', lazy='joined', backref=backref("resourcescenario", lazy='joined', cascade="all, delete-orphan"))
 
 
     def get_dataset(self, user_id):

@@ -104,6 +104,19 @@ class TemplateService(HydraService):
                                            network_id,
                                            **ctx.in_header.__dict__)
         return 'OK'
+    
+    @rpc(Integer, Integer, Unicode(pattern="[YN]", default='N'), _returns=Unicode)
+    def remove_template_from_network(ctx, network_id, template_id, remove_attrs):
+        """
+            Given a template and a network, try to match up and assign
+            all the nodes & links in the network to the types in the template
+        """
+        template.remove_template_from_network(network_id,
+                                           template_id,
+                                           remove_attrs,
+                                           **ctx.in_header.__dict__)
+        return 'OK'
+
 
     @rpc(Integer, String, Integer, _returns=String)
     def remove_type_from_resource(ctx,  type_id, resource_type, resource_id):

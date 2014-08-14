@@ -24,6 +24,7 @@ from decimal import Decimal
 import logging
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload_all
+from sqlalchemy import or_, and_
 import re
 log = logging.getLogger(__name__)
 
@@ -284,6 +285,83 @@ def apply_template_to_network(template_id, network_id, **kwargs):
         if len(templates) > 0:
             assign_type_to_resource(templates[0].type_id, 'GROUP', group_i.group_id,**kwargs)
 
+
+def remove_template_from_network(network_id, template_id, remove_attrs, **kwargs):
+    """
+        Remove all resource types in a network relating to the specified
+        template.
+        remove_attrs
+            Flag to indicate whether the attributes associated with the template
+            types should be removed from the resources in the network. These will
+            only be removed if they are not shared with another template on the network
+    """
+
+    try:
+        network = DBSession.query(Network).filter(Network.network_id==network_id).one()
+    except NoResultFound:
+        raise HydraError("Network %s not found"%network_id)
+
+    try:
+        template = DBSession.query(Template).filter(Template.template_id==template_id).one()
+    except NoResultFound:
+        raise HydraError("Template %s not found"%template_id)
+
+    type_ids = [tmpltype.type_id for tmpltype in template.templatetypes] 
+    
+    node_ids = [n.node_id for n in network.nodes]
+    link_ids = [l.link_id for l in network.links]
+    group_ids = [g.group_id for g in network.resourcegroups]
+
+    if remove_attrs == 'Y':
+        #find the attributes to remove
+        resource_attrs_to_remove = _get_resources_to_remove(network, template)
+        for n in network.nodes:
+            resource_attrs_to_remove.extend(_get_resources_to_remove(n, template))
+        for l in network.links:
+            resource_attrs_to_remove.extend(_get_resources_to_remove(l, template))
+        for g in network.resourcegroups:
+            resource_attrs_to_remove.extend(_get_resources_to_remove(g, template))
+
+        for ra in resource_attrs_to_remove:
+            DBSession.delete(ra)
+
+    resource_types = DBSession.query(ResourceType).filter(
+        and_(or_(
+            ResourceType.network_id==network_id,
+            ResourceType.node_id.in_(node_ids),
+            ResourceType.link_id.in_(link_ids),
+            ResourceType.group_id.in_(group_ids),
+        ), ResourceType.type_id.in_(type_ids))).all()
+    
+    for resource_type in resource_types:
+        DBSession.delete(resource_type)
+
+
+def _get_resources_to_remove(resource, template):
+    """
+        Given a resource and a template being removed, identify the resource attribtes
+        which can be removed.
+    """
+    type_ids = [tmpltype.type_id for tmpltype in template.templatetypes] 
+
+    node_attr_ids = dict([(a.attr_id, a) for a in resource.attributes])
+    attrs_to_remove = []
+    attrs_to_keep   = []
+    for nt in resource.types:
+        if nt.templatetype.type_id in type_ids:
+            for ta in nt.templatetype.typeattrs:
+                if node_attr_ids.get(ta.attr_id):
+                    attrs_to_remove.append(node_attr_ids[ta.attr_id])
+        else:
+            for ta in nt.templatetype.typeattrs:
+                if node_attr_ids.get(ta.attr_id):
+                    attrs_to_keep.append(node_attr_ids[ta.attr_id])
+    #remove any of the attributes marked for deletion as they are
+    #marked for keeping based on being in another type.
+    final_attrs_to_remove = set(attrs_to_remove) - set(attrs_to_keep)
+
+    return list(final_attrs_to_remove)
+
 def get_matching_resource_types(resource_type, resource_id,**kwargs):
     """
         Get the possible types of a resource by checking its attributes
@@ -374,8 +452,10 @@ def assign_type_to_resource(type_id, resource_type, resource_id,**kwargs):
     if resource_type != type_i.resource_type:
         raise HydraError("Cannot assign a %s type to a %s"%
                          (type_i.resource_type,resource_type))
+    
+    if res_type is not None:
+        DBSession.execute(ResourceType.__table__.insert(), [res_type])
 
-    DBSession.execute(ResourceType.__table__.insert(), [res_type])
     if len(res_attrs) > 0:
         DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
 
@@ -430,16 +510,20 @@ def set_resource_type(resource, type_id, types={}, **kwargs):
 
         )
         new_res_attrs.append(ra_dict)
-
-    # add type to tResourceType if it doesn't exist already
-    resource_type = dict(
-        node_id    = resource.node_id    if ref_key == 'NODE' else None,
-        link_id    = resource.link_id    if ref_key == 'LINK' else None,
-        group_id   = resource.group_id   if ref_key == 'GROUP' else None,
-        network_id = resource.network_id if ref_key == 'NETWORK' else None,
-        ref_key    = ref_key,
-        type_id    = type_id,
-    )
+    resource_type = None
+    for rt in resource.types:
+        if rt.type_id == type_i.type_id:
+            break
+    else:
+        # add type to tResourceType if it doesn't exist already
+        resource_type = dict(
+            node_id    = resource.node_id    if ref_key == 'NODE' else None,
+            link_id    = resource.link_id    if ref_key == 'LINK' else None,
+            group_id   = resource.group_id   if ref_key == 'GROUP' else None,
+            network_id = resource.network_id if ref_key == 'NETWORK' else None,
+            ref_key    = ref_key,
+            type_id    = type_id,
+        )
 
     return new_res_attrs, resource_type
 

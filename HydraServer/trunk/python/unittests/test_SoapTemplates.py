@@ -34,7 +34,12 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
     def get_template(self):
         if hasattr(self, 'template'):
-            return self.template
+            try:
+
+                self.client.service.get_template(self.template.id)
+                return self.template
+            except:
+                self.template = self.test_add_template()
         else:
             self.template = self.test_add_template()
         return self.template
@@ -631,6 +636,121 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             assert len(n.types.TypeSummary) == 2
             for t in n.types.TypeSummary:
                 assert t.name == 'Test type 1'
+
+    def test_apply_template_to_network_twice(self):
+        network = self.create_network_with_data()
+        template = self.get_template()
+       
+        #Test the links as it's easier
+        empty_links = []
+        for l in network.links.Link:
+            if l.types is None:
+                empty_links.append(l.id)
+
+        for n in network.nodes.Node:
+            assert len(n.types.TypeSummary) == 1
+            assert n.types.TypeSummary[0].name == 'Test type 1'
+
+        self.client.service.apply_template_to_network(template.id,
+                                                             network.id)
+        self.client.service.apply_template_to_network(template.id,
+                                                             network.id)
+
+        network = self.client.service.get_network(network.id)
+       
+        assert len(network.types.TypeSummary) == 1
+        assert network.types.TypeSummary[0].name == 'Network Type'
+        for l in network.links.Link:
+            if l.id in empty_links:
+                assert l.types is not None
+                assert len(n.types.TypeSummary) == 1
+                assert l.types.TypeSummary[0].name == 'Test type 2'
+
+        for n in network.nodes.Node:
+            assert len(n.types.TypeSummary) == 2
+            for t in n.types.TypeSummary:
+                assert t.name == 'Test type 1'
+
+    def test_remove_template_from_network(self):
+        network = self.create_network_with_data()
+        template = self.get_template()
+       
+        #Test the links as it's easier
+        empty_links = []
+        for l in network.links.Link:
+            if l.types is None:
+                empty_links.append(l.id)
+
+        for n in network.nodes.Node:
+            assert len(n.types.TypeSummary) == 1
+            assert n.types.TypeSummary[0].name == 'Test type 1'
+
+        self.client.service.apply_template_to_network(template.id,
+                                                             network.id)
+
+        self.client.service.remove_template_from_network(network.id, template.id, 'N')
+
+        network_2 = self.client.service.get_network(network.id)
+        assert network_2.types is None
+        for l in network_2.links.Link:
+            if l.id in empty_links:
+                assert l.types is None
+
+        for n in network_2.nodes.Node:
+            assert len(n.types.TypeSummary) == 1
+
+    def test_remove_template_and_attributes_from_network(self):
+        network = self.create_network_with_data()
+        template = self.get_template()
+       
+        #Test the links as it's easier
+        empty_links = []
+        for l in network.links.Link:
+            if l.types is None:
+                empty_links.append(l.id)
+
+        for n in network.nodes.Node:
+            assert len(n.types.TypeSummary) == 1
+            assert n.types.TypeSummary[0].name == 'Test type 1'
+
+        self.client.service.apply_template_to_network(template.id,
+                                                             network.id)
+
+        self.client.service.remove_template_from_network(network.id, template.id, 'Y')
+
+        network_2 = self.client.service.get_network(network.id)
+
+        assert network_2.types is None
+        
+        link_attrs = []
+        for tt in template['types'].TemplateType:
+            if tt['resource_type'] != 'LINK':
+                continue
+            for ta in tt['typeattrs'].TypeAttr:
+                attr_id = ta['attr_id']
+                if attr_id not in link_attrs:
+                    link_attrs.append(attr_id)
+                link_attrs.append(ta['attr_id'])
+        for l in network_2.links.Link:
+            if l.id in empty_links:
+                assert l.types is None
+            if l.attributes is not None:
+                for a in l.attributes.ResourceAttr:
+                    assert a.attr_id not in link_attrs
+
+        for tt in template['types'].TemplateType:
+            if tt['resource_type'] != 'NODE':
+                continue
+            for ta in tt['typeattrs'].TypeAttr:
+                attr_id = ta['attr_id']
+                if attr_id not in link_attrs:
+                    link_attrs.append(attr_id)
+                link_attrs.append(ta['attr_id'])
+        for n in network_2.nodes.Node:
+            assert len(n.types.TypeSummary) == 1
+            if n.attributes is not None:
+                for a in n.attributes.ResourceAttr:
+                    assert a.attr_id not in link_attrs
 
     def test_validate_data(self):
         network = self.create_network_with_data()
