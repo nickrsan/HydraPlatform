@@ -19,7 +19,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from operator import mul
 from HydraException import HydraError
-
+import numpy as np
 import pandas as pd
 log = logging.getLogger(__name__)
 
@@ -106,6 +106,22 @@ def array_dim(arr):
             arr = arr[0]
         except TypeError:
             return dim
+
+def check_array_struct(array):
+    """
+        Check to ensure arrays are symmetrical, for example:
+        [[1, 2, 3], [1, 2]] is invalid
+    """
+
+    #If a list is transformed into a numpy array and the sub elements
+    #of this array are still lists, then numpy failed to fully convert
+    #the list, meaning it is not symmetrical.
+    try:
+        arr = np.array(array)
+    except:
+        raise HydraError("Array %s is not valid."%(array,))
+    if type(arr[0]) is list:
+        raise HydraError("Array %s is not valid."%(array,))
 
 
 def arr_to_vector(arr):
