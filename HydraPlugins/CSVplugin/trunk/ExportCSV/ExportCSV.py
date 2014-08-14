@@ -559,8 +559,8 @@ class ExportCSV(object):
                                         ts_val))
 
                         except:
-                            ts_val = PluginLib.parse_suds_array(ts_val)
-                            np_val = array(ts_val)
+                            parsed_val = PluginLib.parse_suds_array(ts_val)
+                            np_val = array(parsed_val)
                             shape = np_val.shape
                             n = 1
                             shape_str = []
