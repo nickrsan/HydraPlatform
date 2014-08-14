@@ -284,13 +284,11 @@ class SoapServerTest(unittest.TestCase):
         net = self.create_network_with_data()
         s = net.scenarios.Scenario[0]
         rs = s.resourcescenarios.ResourceScenario[0]
-    def create_network_with_data(self, project_id=None, num_nodes=10, ret_full_net=True):
-        """
-            Test adding data to a network through a scenario.
-            This test adds attributes to one node and then assignes data to them.
-            It assigns a descriptor, array and timeseries to the
-            attributes node.
-        """
+
+
+    def build_network(self, project_id=None, num_nodes=10):
+
+    
         start = datetime.datetime.now()
         if project_id is None:
             (project) = {
@@ -531,6 +529,17 @@ class SoapServerTest(unittest.TestCase):
             'resourcegroups' : group_array,
         }
 
+        return network
+
+    def create_network_with_data(self, project_id=None, num_nodes=10, ret_full_net=True):
+        """
+            Test adding data to a network through a scenario.
+            This test adds attributes to one node and then assignes data to them.
+            It assigns a descriptor, array and timeseries to the
+            attributes node.
+        """
+        network=self.build_network(project_id, num_nodes)
+
         #log.debug(network)
         start = datetime.datetime.now()
         log.info("Creating network...")
@@ -574,7 +583,11 @@ class SoapServerTest(unittest.TestCase):
                 for v in val['ts_values']:
                     after_times.append(v['ts_time'])
         for d in after_times:
-            assert get_datetime(d) in before_times, "%s is incorrect"%(d)
+            try:
+                time = get_datetime(d)
+            except:
+                time = eval(d)
+            assert time in before_times, "%s is incorrect"%(d)
 
 
     def create_descriptor(self, ResourceAttr, val="test"):
@@ -674,7 +687,6 @@ class SoapServerTest(unittest.TestCase):
             resource_attr_id = ResourceAttr['id'],
             value = dataset,
         )
-
 
         return scenario_attr
 

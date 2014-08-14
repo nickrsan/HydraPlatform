@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from spyne.model.primitive import Integer, Boolean, Unicode, AnyDict
+from spyne.model.primitive import Integer, Boolean, Unicode, AnyDict, Decimal
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Descriptor,\
@@ -152,10 +152,11 @@ class DataService(HydraService):
                                     timestamps,
                                     **ctx.in_header.__dict__)
 
-    @rpc(Integer,Unicode,Unicode,Unicode(values=['seconds', 'minutes', 'hours', 'days', 'months']),_returns=AnyDict)
-    def get_vals_between_times(ctx, dataset_id, start_time, end_time, timestep):
+    @rpc(Integer,Unicode,Unicode,Unicode(values=['seconds', 'minutes', 'hours', 'days', 'months']), Decimal(default=1),_returns=AnyDict)
+    def get_vals_between_times(ctx, dataset_id, start_time, end_time, timestep, increment):
         return data.get_vals_between_times(dataset_id, 
                                            start_time, 
                                            end_time, 
                                            timestep,
+                                           increment,
                                            **ctx.in_header.__dict__)

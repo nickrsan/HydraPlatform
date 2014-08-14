@@ -21,7 +21,209 @@ import datetime
 import logging
 from HydraLib.PluginLib import parse_suds_array, create_dict
 from HydraLib.util import parse_array
+from suds import WebFault
 log = logging.getLogger(__name__)
+
+class TimeSeriesTest(test_SoapServer.SoapServerTest):
+    def test_relative_timeseries(self):
+        net = self.build_network()
+
+        relative_ts = self.create_relative_timeseries()
+
+        s = net['scenarios'].Scenario[0]
+        for rs in s['resourcescenarios'].ResourceScenario:
+            if rs['value']['type'] == 'timeseries':
+                rs['value']['value'] = relative_ts
+        
+        new_network_summary = self.client.service.add_network(net)
+        new_net = self.client.service.get_network(new_network_summary.id)
+
+        new_s = new_net.scenarios.Scenario[0]
+        new_rss = new_s.resourcescenarios.ResourceScenario
+        for new_rs in new_rss:
+            if new_rs.value.type == 'timeseries':
+                ret_ts_dict = {}
+                for ret_timestep in new_rs.value.value.ts_values:
+                    ret_ts_time = eval(ret_timestep.ts_time)
+                    ret_ts_val  = parse_suds_array(ret_timestep.ts_value)
+                    ret_ts_dict[ret_ts_time] = ret_ts_val
+                for new_timestep in relative_ts['ts_values']:
+                    assert ret_ts_dict.get(new_timestep['ts_time']) is not None
+                    assert ret_ts_dict[new_timestep['ts_time']] == parse_array(new_timestep['ts_value'])
+        
+        return new_net
+
+    def test_arbitrary_timeseries(self):
+        net = self.build_network()
+
+        arbitrary_ts = self.create_arbitrary_timeseries()
+
+        s = net['scenarios'].Scenario[0]
+        for rs in s['resourcescenarios'].ResourceScenario:
+            if rs['value']['type'] == 'timeseries':
+                rs['value']['value'] =arbitrary_ts 
+        
+        new_network_summary = self.client.service.add_network(net)
+        new_net = self.client.service.get_network(new_network_summary.id)
+
+        new_s = new_net.scenarios.Scenario[0]
+        new_rss = new_s.resourcescenarios.ResourceScenario
+        for new_rs in new_rss:
+            if new_rs.value.type == 'timeseries':
+                ret_ts_dict = {}
+                for ret_timestep in new_rs.value.value.ts_values:
+                    ret_ts_time = ret_timestep.ts_time
+                    ret_ts_val  = parse_suds_array(ret_timestep.ts_value)
+                    ret_ts_dict[ret_ts_time] = ret_ts_val
+                for new_timestep in arbitrary_ts['ts_values']:
+                    assert ret_ts_dict.get(new_timestep['ts_time']) is not None
+                    assert ret_ts_dict[new_timestep['ts_time']] == parse_array(new_timestep['ts_value'])
+
+    def test_get_relative_data_between_times(self):
+        net = self.test_relative_timeseries()
+        scenario = net.scenarios.Scenario[0]
+        val_to_query = None
+        for d in scenario.resourcescenarios.ResourceScenario:
+            if d.value.type == 'timeseries':
+                val_to_query = d.value
+                break
+
+        now = datetime.datetime.now()
+
+        x = self.client.service.get_vals_between_times(
+            val_to_query.id,
+            0,
+            5,
+            None,
+            0.5,
+            )
+        self.assertRaises(WebFault, self.client.service.get_vals_between_times,
+            val_to_query.id,
+            now,
+            now + datetime.timedelta(minutes=75),
+            'minutes',
+            )
+
+
+    def test_get_data_between_times(self):
+        net = self.create_network_with_data()
+        scenario = net.scenarios.Scenario[0]
+        val_to_query = None
+        for d in scenario.resourcescenarios.ResourceScenario:
+            if d.value.type == 'timeseries':
+                val_to_query = d.value
+                break
+
+        val_a = val_to_query.value.ts_values[0].ts_value
+        val_b = val_to_query.value.ts_values[1].ts_value
+
+        now = datetime.datetime.now()
+
+        vals = self.client.service.get_vals_between_times(
+            val_to_query.id,
+            now,
+            now + datetime.timedelta(minutes=75),
+            'minutes',
+            1,
+            )
+
+        data = vals.data
+        assert len(data) == 76
+        for val in data[60:75]:
+            x = parse_suds_array(val_b)
+            y = parse_suds_array(val)
+            assert x == y
+        for val in data[0:59]:
+            x = parse_suds_array(val_a)
+            y = parse_suds_array(val)
+            assert x == y
+
+    def test_descriptor_get_data_between_times(self):
+        net = self.create_network_with_data()
+        scenario = net.scenarios.Scenario[0]
+        val_to_query = None
+        for d in scenario.resourcescenarios.ResourceScenario:
+            if d.value.type == 'descriptor':
+                val_to_query = d.value
+                break
+
+        now = datetime.datetime.now()
+
+        value = self.client.service.get_vals_between_times(
+            val_to_query.id,
+            now,
+            now + datetime.timedelta(minutes=75),
+            'minutes',
+            )
+        log.info(value)
+        assert value.data == 'test'
+
+    def create_relative_timeseries(self):
+        """
+            Create a timeseries which has relative timesteps:
+            1, 2, 3 as opposed to timestamps
+        """
+        test_val_1 = create_dict([[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]], [[9,8,7],[6,5,4]]]) 
+
+        test_val_2 = create_dict(["1.0", "2.0", "3.0"])
+
+        timeseries = {'ts_values' : 
+            [
+                {'ts_time' : 1,
+                'ts_value' : test_val_1},
+                {'ts_time' : 2,
+                'ts_value' : test_val_2},
+                {'ts_time' : 3,
+                'ts_value' : create_dict(["3.0", "", ""])},
+
+            ]
+        }
+        return timeseries 
+
+    def create_arbitrary_timeseries(self):
+        """
+            Create a timeseries which has relative timesteps:
+            1, 2, 3 as opposed to timestamps
+        """
+        test_val_1 = create_dict([[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]], [[9,8,7],[6,5,4]]]) 
+
+        test_val_2 = create_dict(["1.0", "2.0", "3.0"])
+
+        timeseries = {'ts_values' : 
+            [
+                {'ts_time' : 'arb',
+                'ts_value' : test_val_1},
+                {'ts_time' : 'it',
+                'ts_value' : test_val_2},
+                {'ts_time' : 'rary',
+                'ts_value' : create_dict(["3.0", "", ""])},
+
+            ]
+        }
+        return timeseries 
+
+class ArrayTest(test_SoapServer.SoapServerTest):
+    def test_array_format(self):
+        bad_net = self.build_network()
+
+        s = bad_net['scenarios'].Scenario[0]
+        for rs in s['resourcescenarios'].ResourceScenario:
+            if rs['value']['type'] == 'array':
+                rs['value']['value'] = {'arr_data': create_dict([[1, 2] ,[3, 4, 5]])}
+        
+        self.assertRaises(WebFault, self.client.service.add_network,bad_net)
+        
+        net = self.build_network()
+        n = self.client.service.add_network(net)
+        good_net = self.client.service.get_network(n.id)
+        
+        s = good_net.scenarios.Scenario[0]
+        for rs in s.resourcescenarios.ResourceScenario:
+            if rs.value.type == 'array':
+                rs.value.value = {'arr_data': create_dict([[1, 2] ,[3, 4, 5]])}
+                #Get one of the datasets, make it uneven and update it.
+                self.assertRaises(WebFault, self.client.service.update_dataset,rs)
+
 class DataGroupTest(test_SoapServer.SoapServerTest):
 
     def test_get_groups_like_name(self):
@@ -414,11 +616,11 @@ class FormatTest(test_SoapServer.SoapServerTest):
         updated_scenario = updated_net.scenarios.Scenario[0]
         rs_to_update = updated_scenario.resourcescenarios.ResourceScenario[0]
         
-        logging.warn(scenario.resourcescenarios.ResourceScenario[0]['value']['value']['arr_data'])
+        #logging.warn(scenario.resourcescenarios.ResourceScenario[0]['value']['value']['arr_data'])
         old_arr = parse_array(scenario.resourcescenarios.ResourceScenario[0]['value']['value']['arr_data'])
-        logging.warn(updated_scenario.resourcescenarios.ResourceScenario[0].value.value.arr_data)
+        #logging.warn(updated_scenario.resourcescenarios.ResourceScenario[0].value.value.arr_data)
         new_arr = parse_suds_array(updated_scenario.resourcescenarios.ResourceScenario[0].value.value.arr_data)
-        logging.info("%s == %s ?", old_arr, new_arr) 
+        #logging.info("%s == %s ?", old_arr, new_arr) 
         assert old_arr == new_arr
         
     def create_uneven_array(self):
@@ -431,18 +633,18 @@ class FormatTest(test_SoapServer.SoapServerTest):
                         {'array':[
                         {'item':[1.0, 2.0, 3.0]},
                         {'item':[4.0, 5.0, 6.0]},
-                        {'item':[7.0, 8.0]},
+                        {'item':[7.0, 8.0, 9.0]},
                         ]}, 
                     {'array' : [
                         {'item':[1.0, 2.0, 3.0]},
                         {'item':[4.0, 5.0, 6.0]},
-                        {'item':[7.0, 8.0]},
+                        {'item':[7.0, 8.0, 9.0]},
                         ]}
                     ]}
               ]}
         }
 
-        same_arr = create_dict([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0]],[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0]]])
+        same_arr = create_dict([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]])
         
         assert arr['arr_data'] == same_arr 
         

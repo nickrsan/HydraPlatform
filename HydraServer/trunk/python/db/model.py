@@ -11,11 +11,13 @@ Text
 
 from decimal import Decimal
 
+from datetime import datetime
+
 from HydraLib.HydraException import HydraError, PermissionError
 
 from sqlalchemy.orm import relationship, backref
 
-from HydraLib.util import ordinal_to_timestamp
+from HydraLib.util import ordinal_to_timestamp, timestamp_to_ordinal, get_datetime
 
 from db import DeclarativeBase as Base, DBSession
 
@@ -23,7 +25,6 @@ from sqlalchemy.sql.expression import case
 from sqlalchemy import and_
 
 import pandas as pd
-import numpy as np
 
 import logging
 log = logging.getLogger(__name__)
@@ -112,11 +113,14 @@ class Dataset(Base):
                 return {'ts_values':ts_val_tmp}
             else:
 
-                timestamps = [ordinal_to_timestamp(x) for x in timestamp]
-                pandas_ts = timeseries.reindex(timestamps, method='ffill')
-
-                ret_val = list(pandas_ts.loc[timestamps].values)
-                return ret_val
+                try:
+                    pandas_ts = timeseries.reindex(timestamp, method='ffill')
+                
+                    ret_val = list(pandas_ts.loc[timestamp].values)
+                    return ret_val
+                except Exception, e:
+                    log.critical(e)
+                    raise HydraError("Unable to retrive data. Check timestamps.")
 
                 ts_val_dict = {}
                 for ts in self.timeseriesdata:
@@ -129,6 +133,7 @@ class Dataset(Base):
                     #return value will now be a list of actual values instead
                     #of a list of tuples.
                     val = []
+                    timestamps = [timestamp_to_ordinal(x) for x in timestamp]
                     for t in timestamp:
                         for time in sorted_times:
                             if t >= Decimal(time):
@@ -162,7 +167,10 @@ class Dataset(Base):
                     existing_vals[time].ts_val = value
                 else:
                     ts_val = TimeSeriesData()
-                    ts_val.ts_time = str(time)
+                    if type(time) == datetime:
+                        ts_val.ts_time = str(timestamp_to_ordinal(time))
+                    else:
+                        ts_val.ts_time = time
                     ts_val.ts_value = value
                     self.timeseriesdata.append(ts_val)
             test_val_keys = []
@@ -172,14 +180,25 @@ class Dataset(Base):
                     v = eval(value)
                 except:
                     v = value
-                test_val_keys.append(str(ordinal_to_timestamp(time)))
+                try: 
+                    test_val_keys.append(get_datetime(time))
+                except:
+                    test_val_keys.append(time)
                 test_vals.append(v)
+
             test_pd = pd.DataFrame(test_vals, index=pd.Series(test_val_keys))
-            self.value = test_pd.to_json()
+            #Epoch doesn't work here because dates before 1970 are not supported
+            #in read_json. Ridiculous.
+            self.value = test_pd.to_json(date_format='iso', date_unit='ns')
         else:
             raise HydraError("Invalid data type %s"%(data_type,))
 
-    def set_hash(self, val):
+    def set_hash(self, val=None):
+
+        if val is None:
+            val = self.value
+        else:
+            val = str(val)
 
         metadata = self.get_metadata_as_dict()
 
@@ -187,7 +206,7 @@ class Dataset(Base):
                                        self.data_units,
                                        self.data_dimen,
                                        self.data_type,
-                                       str(val),
+                                       val,
                                        metadata)
 
         log.debug("Generating data hash from: %s", hash_string)
@@ -245,6 +264,9 @@ class Dataset(Base):
         """
             Check whether this user can read this dataset 
         """
+
+        if self.locked == 'N':
+            return True
 
         for owner in self.owners:
             if int(owner.user_id) == int(user_id):

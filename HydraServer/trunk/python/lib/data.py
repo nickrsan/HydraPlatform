@@ -126,7 +126,7 @@ def update_dataset(dataset_id, name, data_type, val, units, dimension, metadata=
         dataset.data_name  = name
         dataset.data_dimen = dimension
         dataset.created_by = kwargs['user_id']
-        dataset.data_hash  = dataset.set_hash(val)
+        dataset.data_hash  = dataset.set_hash()
 
     return dataset
 
@@ -150,7 +150,7 @@ def add_dataset(data_type, val, units, dimension, metadata={}, name="", user_id=
     d.data_name  = name
     d.data_dimen = dimension
     d.created_by = user_id
-    d.data_hash  = d.set_hash(val)
+    d.data_hash  = d.set_hash()
  
     try:
         existing_dataset = DBSession.query(Dataset).filter(Dataset.data_hash==d.data_hash).one()
@@ -193,9 +193,24 @@ def _bulk_insert_data(bulk_data, user_id=None, source=None):
         #if this piece of data is already in the DB, then
         #there is no need to insert it!
         if  existing_data.get(current_hash):
-            dataset_hashes.append(existing_data[current_hash])
 
-            all_dataset_objects.append(existing_data[current_hash])
+            existing_datum = existing_data[current_hash]
+            #Is this user allowed to use this dataset?
+            if existing_datum.check_user(user_id) == False:
+                #If the user is not allowed to use the existing dataset, a new
+                #one must be created. This means a unique hash must be created
+                #To create a unique hash, add a unique piece of metadata.
+                datum_metadata = existing_datum.get_metadata_as_dict()
+                datum_metadata['created_at'] = datetime.datetime.now()
+                dataset_i.set_metadata(datum_metadata)
+                new_hash = dataset_i.set_hash()
+
+                dataset_hashes.append(new_hash)
+                all_dataset_objects.append(dataset_i)
+                metadata[new_hash] = dataset_i.metadata 
+            else:
+                dataset_hashes.append(existing_data[current_hash])
+                all_dataset_objects.append(existing_data[current_hash])
             continue
         elif current_hash in dataset_hashes:
             dataset_hashes.append(current_hash)
@@ -267,7 +282,7 @@ def _process_incoming_data(data, user_id=None, source=None):
         
         scenario_datum.set_metadata(dataset_metadata)
 
-        data_hash = scenario_datum.set_hash(val)
+        data_hash = scenario_datum.set_hash()
 
         datasets[data_hash] = scenario_datum 
         d.data_hash = data_hash
@@ -420,16 +435,46 @@ def get_val_at_time(dataset_id, timestamps,**kwargs):
 
     return dataset
 
-def get_vals_between_times(dataset_id, start_time, end_time, timestep,**kwargs):
-    server_start_time = get_datetime(start_time)
-    server_end_time   = get_datetime(end_time)
+def get_vals_between_times(dataset_id, start_time, end_time, timestep,increment,**kwargs):
+    """
+        Retrive data between two specified times within a timeseries. The times
+        need not be specified in the timeseries. This function will 'fill in the blanks'.
 
-    times = [timestamp_to_ordinal(server_start_time)]
+        Two types of data retrieval can be done. 
 
-    next_time = server_start_time
-    while next_time < server_end_time:
-        next_time = next_time  + datetime.timedelta(**{timestep:1})
-        times.append(timestamp_to_ordinal(next_time))
+        If the timeseries is timestamp-based, then start_time and end_time
+        must be datetimes and timestep must be specified (minutes, seconds etc).
+        'increment' reflects the size of the timestep -- timestep = 'minutes' and increment = 2
+        means 'every 2 minutes'.
+
+        If the timeseries is float-based (relative), then start_time and end_time
+        must be decimal values. timestep is ignored and 'increment' represents the increment
+        to be used between the start and end. 
+        Ex: start_time = 1, end_time = 5, increment = 1 will get times at 1, 2, 3, 4, 5
+    """
+    try:
+        server_start_time = get_datetime(start_time)
+        server_end_time   = get_datetime(end_time)
+        times = [server_start_time]
+
+        next_time = server_start_time
+        while next_time < server_end_time:
+            if int(increment) == 0:
+                raise HydraError("%s is not a valid increment for this search."%increment)
+            next_time = next_time  + datetime.timedelta(**{timestep:int(increment)})
+            times.append(next_time)
+    except ValueError:
+        try:
+            server_start_time = Decimal(start_time)
+            server_end_time   = Decimal(end_time)
+            times = [server_start_time]
+
+            next_time = server_start_time
+            while next_time < server_end_time:
+                next_time = next_time + increment
+                times.append(next_time)
+        except:
+            raise HydraError("Unable to get times. Please check to and from times.")
 
     td = DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).one()
     log.debug("Number of times to fetch: %s", len(times))

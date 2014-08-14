@@ -416,15 +416,15 @@ def add_network(network,**kwargs):
             scen.time_step            = s.time_step
 
             #extract the data from each resourcescenario
-            datasets = []
+            incoming_datasets = []
             scenario_resource_attrs = []
             for r_scen in s.resourcescenarios:
                 ra = all_resource_attrs[r_scen.resource_attr_id]
-                datasets.append(r_scen.value)
+                incoming_datasets.append(r_scen.value)
                 scenario_resource_attrs.append(ra)
 
             data_start_time = datetime.datetime.now()
-            datasets = data._bulk_insert_data(datasets, user_id, kwargs.get('app_name'))
+            datasets = data._bulk_insert_data(incoming_datasets, user_id, kwargs.get('app_name'))
             log.info("Data bulk insert took %s", get_timing(data_start_time))
             for i, ra in enumerate(scenario_resource_attrs):
                 scen.add_resource_scenario(ra, datasets[i], source=kwargs.get('app_name'))

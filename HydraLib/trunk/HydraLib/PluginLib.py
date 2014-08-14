@@ -484,9 +484,9 @@ def date_to_string(date, seasonal=False):
     recognised by Hydra as seasonal time stamp.
     """
     if seasonal:
-        FORMAT = 'XXXX-%m-%d %H:%M:%S.%f%z'
+        FORMAT = 'XXXX-%m-%d %H:%M:%S.%f'
     else:
-        FORMAT = '%Y-%m-%d %H:%M:%S.%f%z'
+        FORMAT = '%Y-%m-%d %H:%M:%S.%f'
     return date.strftime(FORMAT)
 
 
@@ -543,7 +543,7 @@ def guess_timefmt(datestr):
                      ['%d', '%m', 'XXXX'],
                      ['%d', '%b', 'XXXX']]
 
-    timeformats = ['%H:%M:%s.%f', '%H:%M:%S', '%H:%M']
+    timeformats = ['%H:%M:%S.%f', '%H:%M:%S', '%H:%M']
 
     # Check if a time is indicated or not
     for timefmt in timeformats:
@@ -744,13 +744,16 @@ def parse_suds_array(arr):
         else:
             return parse_suds_array(sub_arr)
     elif hasattr(arr, 'item'):
-        for x in arr.item:
-            try:
-                val = float(x)
-            except:
-                val = str(x)
-            ret_arr.append(val)
-        return ret_arr
+        if type(arr.item) is list:
+            for x in arr.item:
+                try:
+                    val = float(x)
+                except:
+                    val = str(x)
+                ret_arr.append(val)
+            return ret_arr
+        else:
+            return eval(str(arr.item))
     else:
         raise ValueError("Something has gone wrong parsing an array.")
     return ret_arr

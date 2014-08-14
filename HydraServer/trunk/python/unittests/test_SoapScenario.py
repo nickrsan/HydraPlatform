@@ -183,58 +183,6 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         assert len(new_datasets.integer) == 2, "Data was not added correctly!"
 
-    def test_get_data_between_times(self):
-        net = self.create_network_with_data()
-        scenario = net.scenarios.Scenario[0]
-        val_to_query = None
-        for d in scenario.resourcescenarios.ResourceScenario:
-            if d.value.type == 'timeseries':
-                val_to_query = d.value
-                break
-
-        val_a = val_to_query.value.ts_values[0].ts_value
-        val_b = val_to_query.value.ts_values[1].ts_value
-
-        now = datetime.datetime.now()
-
-        vals = self.client.service.get_vals_between_times(
-            val_to_query.id,
-            now,
-            now + datetime.timedelta(minutes=75),
-            'minutes',
-            )
-
-        data = vals.data
-        assert len(data) == 76
-        for val in data[60:75]:
-            x = PluginLib.parse_suds_array(val_b)
-            y = PluginLib.parse_suds_array(val)
-            assert x == y
-        for val in data[0:59]:
-            x = PluginLib.parse_suds_array(val_a)
-            y = PluginLib.parse_suds_array(val)
-            assert x == y
-
-    def test_descriptor_get_data_between_times(self):
-        net = self.create_network_with_data()
-        scenario = net.scenarios.Scenario[0]
-        val_to_query = None
-        for d in scenario.resourcescenarios.ResourceScenario:
-            if d.value.type == 'descriptor':
-                val_to_query = d.value
-                break
-
-        now = datetime.datetime.now()
-
-        value = self.client.service.get_vals_between_times(
-            val_to_query.id,
-            now,
-            now + datetime.timedelta(minutes=75),
-            'minutes',
-            )
-        log.info(value)
-        assert value.data == 'test'
-
 
     def test_clone(self):
 
@@ -330,7 +278,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         scenario_diff = self.client.service.compare_scenarios(scenario_1.id, scenario_2.id)
         
-        print "Comparison result: %s"%(scenario_diff)
+        #print "Comparison result: %s"%(scenario_diff)
 
         assert len(scenario_diff.resourcescenarios.ResourceScenarioDiff) == 1, "Data comparison was not successful!"
 

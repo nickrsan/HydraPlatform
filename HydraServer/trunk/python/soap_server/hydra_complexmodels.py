@@ -22,8 +22,12 @@ from spyne.model.primitive import DateTime
 from spyne.model.primitive import AnyDict
 from spyne.model.primitive import Double
 from decimal import Decimal as Dec
-from HydraLib.util import get_datetime, timestamp_to_ordinal, ordinal_to_timestamp
+from HydraLib.util import get_datetime,\
+        timestamp_to_ordinal,\
+        ordinal_to_timestamp,\
+        check_array_struct
 import pandas as pd
+from pandas.tseries.index import DatetimeIndex
 import logging
 from HydraLib.util import create_dict
 
@@ -181,7 +185,6 @@ class Dataset(HydraComplexModel):
                 if is_soap_req:
                     timestamp = timestamp[0]
                 # Check if we have received a seasonal time series first
-                ordinal_ts_time = timestamp_to_ordinal(timestamp)
                 arr_data = ts_val['ts_value']
                 if is_soap_req:
                     arr_data = arr_data[0]
@@ -197,7 +200,7 @@ class Dataset(HydraComplexModel):
                     except:
                         ts_value = arr_data
 
-                ts.append((ordinal_ts_time, str(ts_value)))
+                ts.append((timestamp, str(ts_value)))
 
             return ts
         elif data_type == 'eqtimeseries':
@@ -266,7 +269,7 @@ class Dataset(HydraComplexModel):
                             except:
                                 item_arr.append(v)
                         ret_arr.append(item_arr)
-
+        check_array_struct(ret_arr)
         return ret_arr
 
     def get_metadata_as_dict(self):
@@ -319,7 +322,7 @@ class TimeSeriesData(HydraComplexModel):
         if  val is None:
             return
 
-        self.ts_time  = [get_timestamp(Dec(val.ts_time))]
+        self.ts_time  = [val.ts_time]
         
         try:
             ts_val = eval(val.ts_value)
@@ -347,11 +350,16 @@ class TimeSeries(HydraComplexModel):
         if type(val) == str:
             log.debug("Creating timeseries complexmodels")
             timeseries = pd.read_json(val)
-            timestamps = list(timeseries.index)
-            for i, ts in enumerate(timestamps):
+            for ts in timeseries.index:
                 ts_val = timeseries.loc[ts].values
                 ts_data = TimeSeriesData()
-                ts_data.ts_time = [get_datetime(ts.to_pydatetime())]
+                try:
+                    ts_data.ts_time = [get_datetime(ts.to_pydatetime())]
+                except AttributeError:
+                    try:
+                        ts_data.ts_time = [eval(ts)]
+                    except:
+                        ts_data.ts_time = [ts]
                 try:
                     ts_val = list(ts_val)
                     ts_data.ts_value = [create_dict(ts_val)]
@@ -359,7 +367,8 @@ class TimeSeries(HydraComplexModel):
                     ts_data.ts_value = [ts_val]
                 ts_vals.append(ts_data.__dict__)
 
-            self.frequency = [timeseries.index.inferred_freq]
+            if type(timeseries.index) == DatetimeIndex:
+                self.frequency = [timeseries.index.inferred_freq]
             self.periods = [len(timeseries.index)]
             log.debug("Timeseries complexmodels created")
         else:
