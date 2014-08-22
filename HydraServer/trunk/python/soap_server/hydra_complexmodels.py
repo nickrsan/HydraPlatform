@@ -425,25 +425,11 @@ class Array(HydraComplexModel):
         else:
             self.arr_data = [val]
 
-class DatasetGroupItem(HydraComplexModel):
-    _type_info = [
-        ('group_id', Integer(default=None)),
-        ('dataset_id', Integer(default=None)),
-    ]
-
-    def __init__(self, parent=None):
-        super(DatasetGroupItem, self).__init__()
-        if  parent is None:
-            return
-
-        self.group_id = parent.group_id
-        self.dataset_id = parent.dataset_id
-
 class DatasetGroup(HydraComplexModel):
     _type_info = [
         ('group_name', Unicode(default=None)),
         ('group_id'  , Integer(default=None)),
-        ('datasetgroupitems', SpyneArray(DatasetGroupItem)),
+        ('dataset_ids',   SpyneArray(Integer)),
     ]
 
     def __init__(self, parent=None):
@@ -452,7 +438,7 @@ class DatasetGroup(HydraComplexModel):
             return
         self.group_name = parent.group_name
         self.group_id   = parent.group_id
-        self.datasetgroupitems = [DatasetGroupItem(d) for d in parent.items]
+        self.dataset_ids = [d.dataset_id for d in parent.items]
 
 class Attr(HydraComplexModel):
     _type_info = [

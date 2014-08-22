@@ -60,10 +60,16 @@ class DataService(HydraService):
         dataset_scenarios = data.get_dataset_scenarios(dataset_id, **ctx.in_header.__dict__)
         return [Scenario(s) for s in dataset_scenarios]
 
-    @rpc(Unicode, _returns=DatasetGroup)
-    def get_dataset_group(ctx, group_name):
+    @rpc(Integer, _returns=DatasetGroup)
+    def get_dataset_group(ctx, group_id):
 
-        dataset_grp_i = data.get_dataset_group(group_name, **ctx.in_header.__dict__)
+        dataset_grp_i = data.get_dataset_group(group_id, **ctx.in_header.__dict__)
+        return DatasetGroup(dataset_grp_i)
+
+    @rpc(Unicode, _returns=DatasetGroup)
+    def get_dataset_group_by_name(ctx, group_name):
+
+        dataset_grp_i = data.get_dataset_group_by_name(group_name, **ctx.in_header.__dict__)
         return DatasetGroup(dataset_grp_i)
 
     @rpc(DatasetGroup, _returns=DatasetGroup)

@@ -1243,3 +1243,23 @@ def clean_up_network(network_id, **kwargs):
         raise ResourceNotFoundError("Network %s not found"%(network_id))
     DBSession.flush()
     return 'OK'
+
+
+def get_attributes_for_resource(network_id, scenario_id, ref_key, **kwargs):
+
+    try:
+        DBSession.query(Network).filter(Network.network_id==network_id).one()
+    except NoResultFound:
+        raise HydraError("Network %s does not exist"%network_id)
+
+    try:
+        DBSession.query(Scenario).filter(Scenario.scenario_id==scenario_id, Scenario.network_id==network_id).one()
+    except NoResultFound:
+        raise HydraError("Scenario %s not found."%scenario_id)
+
+    resource_attrs = DBSession.query(ResourceAttr).filter(
+                            ResourceScenario.scenario_id==scenario_id,
+                            ResourceScenario.resource_attr_id==ResourceAttr.resource_attr_id,
+                            ResourceAttr.ref_key==ref_key).all()
+    
+    return resource_attrs

@@ -155,7 +155,7 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
             now + datetime.timedelta(minutes=75),
             'minutes',
             )
-        log.info(value)
+        #log.info(value)
         assert value.data == 'test'
 
     def create_relative_timeseries(self):
@@ -248,25 +248,21 @@ class DataGroupTest(test_SoapServer.SoapServerTest):
 
         group = self.client.factory.create('ns1:DatasetGroup')
 
-        itemarray = self.client.factory.create('ns1:DatasetGroupItemArray')
-        item1 = self.client.factory.create('ns1:DatasetGroupItem')
-        item1.dataset_id = scenario_data.Dataset[0].id
+        grp_dataset_ids = self.client.factory.create("integerArray")
+        dataset_id = scenario_data.Dataset[0].id
+        grp_dataset_ids.integer.append(dataset_id)
         for d in scenario_data.Dataset:
-            if d.type == 'timeseries' and d.id != item1.dataset_id:
-
-                item2 = self.client.factory.create('ns1:DatasetGroupItem')
-                item2.dataset_id = d.id
+            if d.type == 'timeseries' and d.id != dataset_id:
+                grp_dataset_ids.integer.append(d.id)
                 break
-        itemarray.DatasetGroupItem.append(item1)
-        itemarray.DatasetGroupItem.append(item2)
 
-        group.datasetgroupitems = itemarray
-        group.group_name        = 'test soap group %s'%(datetime.datetime.now())
+        group.dataset_ids = grp_dataset_ids 
+        group.group_name  = 'test soap group %s'%(datetime.datetime.now())
 
         newly_added_group = self.client.service.add_dataset_group(group)
 
         assert newly_added_group.group_id is not None, "Dataset group does not have an ID!"
-        assert len(newly_added_group.datasetgroupitems.DatasetGroupItem) == 2, "Dataset group does not have any items!"  
+        assert len(newly_added_group.dataset_ids.integer) == 2, "Dataset group does not have any items!"  
 
 class SharingTest(test_SoapServer.SoapServerTest):
 

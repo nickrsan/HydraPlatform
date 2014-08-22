@@ -783,7 +783,31 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
         assert group_to_delete.id in group_ids
 
+    
+    def test_get_attribute_data(self):
+        net = self.create_network_with_data()
+        s = net.scenarios.Scenario[0]
 
+        node_ras = []
+        for node in net.nodes.Node:
+            for ra in node.attributes.ResourceAttr:
+                node_ras.append(ra.id)
+
+        link_ras = []
+        for link in net.links.Link:
+            for ra in link.attributes.ResourceAttr:
+                link_ras.append(ra.id)
+
+        
+        new_node_ras = self.client.service.get_all_node_data(net.id, s.id)
+        for ra in new_node_ras.ResourceAttr:
+            assert ra.resourcescenario is not None
+            assert ra.id in node_ras
+
+        new_link_ras = self.client.service.get_all_link_data(net.id, s.id)
+        for ra in new_link_ras.ResourceAttr:
+            assert ra.resourcescenario is not None
+            assert ra.id in link_ras
 
 
 if __name__ == '__main__':

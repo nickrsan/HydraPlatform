@@ -23,6 +23,7 @@ from hydra_complexmodels import Network,\
     ResourceGroup,\
     NetworkExtents,\
     ResourceSummary,\
+    ResourceAttr,\
     ResourceScenario
 from lib import network, scenario
 from hydra_base import HydraService
@@ -448,3 +449,57 @@ class NetworkService(HydraService):
             have previously been deleted.
         """
         return network.clean_up_network(network_id, **ctx.in_header.__dict__)
+
+    @rpc(Integer, Integer, _returns=SpyneArray(ResourceAttr))
+    def get_all_node_data(ctx, network_id, scenario_id):
+        """
+            Return all the attributes for all the nodes in a given network and a 
+            given scenario.
+            Returns a list of ResourceAttr objects, each with a resourcescenario
+            attribute, containing the actual value for the scenario specified.
+        """
+        node_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'NODE')
+        return_ras = []
+        for nodeattr in node_resourceattrs:
+            ra = ResourceAttr(nodeattr)
+            ra.resourcescenario = ResourceScenario(nodeattr.resourcescenario)
+            return_ras.append(ra)
+
+        return return_ras
+
+    @rpc(Integer, Integer, _returns=SpyneArray(ResourceAttr))
+    def get_all_link_data(ctx, network_id, scenario_id):
+        """
+            Return all the attributes for all the links in a given network and a 
+            given scenario.
+            Returns a list of ResourceAttr objects, each with a resourcescenario
+            attribute, containing the actual value for the scenario specified.
+        """
+        link_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'LINK')
+        return_ras = []
+        for linkattr in link_resourceattrs:
+            ra = ResourceAttr(linkattr)
+            ra.resourcescenario = ResourceScenario(linkattr.resourcescenario)
+            return_ras.append(ra)
+
+        return return_ras
+
+    @rpc(Integer, Integer, _returns=SpyneArray(ResourceAttr))
+    def get_all_group_data(ctx, network_id, scenario_id):
+        """
+            Return all the attributes for all the groups in a given network and a 
+            given scenario.
+            Returns a list of ResourceAttr objects, each with a resourcescenario
+            attribute, containing the actual value for the scenario specified.
+        """
+
+        group_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'GROUP')
+        return_ras = []
+        for groupattr in group_resourceattrs:
+            ra = ResourceAttr(groupattr)
+            ra.resourcescenario = ResourceScenario(groupattr.resourcescenario)
+            return_ras.append(ra)
+
+        return return_ras
+
+
