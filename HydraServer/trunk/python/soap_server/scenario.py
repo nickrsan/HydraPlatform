@@ -248,3 +248,21 @@ class ScenarioService(HydraService):
 
         return ret_obj
 
+    @rpc(Integer, Integer, _returns=SpyneArray(ResourceAttr))
+    def get_attribute_datasets(ctx, attr_id, scenario_id):
+        """
+            Get all the datasets from resource attributes with the given attribute
+            ID in the given scenario.
+
+            Return a list of resource attributes with their associated
+            resource scenarios (and values).
+        """
+        resource_attrs = scenario.get_attribute_datasests(attr_id, scenario_id, **ctx.in_header.__dict__)
+
+        ra_cms = []
+        for ra in resource_attrs:
+            res_attr_cm = ResourceAttr(ra)
+            res_attr_cm.resourcescenario = ResourceScenario(ra.resourcescenario)
+            ra_cms.append(res_attr_cm)
+
+        return ra_cms

@@ -447,5 +447,43 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         assert locked_scenario.locked == 'N'
 
+
+    def test_get_attribute_data(self):
+        """
+            Test for retrieval of data for an attribute in a scenario.
+        """
+
+        new_net = self.create_network_with_data()
+
+        s = new_net.scenarios.Scenario[0]
+
+        nodes = new_net.nodes.Node
+
+        resource_attr = nodes[0].attributes.ResourceAttr[0]
+
+        attr_id = resource_attr.attr_id
+
+        all_matching_ras = []
+        for n in nodes:
+            for ra in n.attributes.ResourceAttr:
+                if ra.attr_id == attr_id:
+                    all_matching_ras.append(ra)
+                    continue
+
+        retrieved_ras = self.client.service.get_attribute_datasets(attr_id, s.id)
+
+        ra_dict  = {}
+        for ra in retrieved_ras.ResourceAttr:
+            ra_dict[ra.id] = ra
+            
+        assert len(retrieved_ras.ResourceAttr) == len(all_matching_ras)
+
+        for rs in s.resourcescenarios.ResourceScenario:
+            if ra_dict.get(rs.resource_attr_id):
+                matching_rs = ra_dict[rs.resource_attr_id].resourcescenario
+                assert str(rs) == str(matching_rs)
+            
+
+
 if __name__ == '__main__':
     test_SoapServer.run()

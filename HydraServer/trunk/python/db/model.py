@@ -876,7 +876,7 @@ class ResourceScenario(Base):
     
     dataset      = relationship('Dataset', backref=backref("resourcescenarios", order_by=dataset_id))
     scenario     = relationship('Scenario', backref=backref("resourcescenarios", order_by=resource_attr_id, lazy='joined', cascade="all, delete-orphan"))
-    resourceattr = relationship('ResourceAttr', lazy='joined', backref=backref("resourcescenario", lazy='joined', cascade="all, delete-orphan"))
+    resourceattr = relationship('ResourceAttr', lazy='joined', backref=backref("resourcescenario", lazy='joined', cascade="all, delete-orphan", uselist=False), uselist=False)
 
 
     def get_dataset(self, user_id):
