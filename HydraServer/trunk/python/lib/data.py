@@ -354,7 +354,7 @@ def _get_existing_data(hashes):
     datasets = []
     if len(str_hashes) > 100:
         idx = 0
-        extent = 99
+        extent = 100
         while idx < len(str_hashes):
             log.info("Querying %s datasets", len(str_hashes[idx:extent]))
             rs = DBSession.query(Dataset).filter(Dataset.data_hash.in_(str_hashes[idx:extent])).all()

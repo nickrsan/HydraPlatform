@@ -44,7 +44,7 @@ class Dataset(Base):
 
     __tablename__='tDataset'
 
-    dataset_id = Column(Integer(), primary_key=True, nullable=False)
+    dataset_id = Column(Integer(), primary_key=True, index=True, nullable=False)
     data_type = Column(String(60),  nullable=False)
     data_units = Column(String(60))
     data_dimen = Column(String(60))
@@ -335,7 +335,7 @@ class Metadata(Base):
 
     __tablename__='tMetadata'
 
-    dataset_id = Column(Integer(), ForeignKey('tDataset.dataset_id'), primary_key=True, nullable=False)
+    dataset_id = Column(Integer(), ForeignKey('tDataset.dataset_id'), primary_key=True, nullable=False, index=True)
     metadata_name = Column(String(60), primary_key=True, nullable=False)
     metadata_val = Column(LargeBinary(),  nullable=False)
     
@@ -410,7 +410,7 @@ class ResourceAttr(Base):
 
     resource_attr_id = Column(Integer(), primary_key=True, nullable=False)
     attr_id = Column(Integer(), ForeignKey('tAttr.attr_id'),  nullable=False)
-    ref_key = Column(String(60),  nullable=False)
+    ref_key = Column(String(60),  nullable=False, index=True)
     network_id  = Column(Integer(),  ForeignKey('tNetwork.network_id'), index=True, nullable=True,)
     project_id  = Column(Integer(),  ForeignKey('tProject.project_id'), index=True, nullable=True,)
     node_id     = Column(Integer(),  ForeignKey('tNode.node_id'), index=True, nullable=True)
@@ -870,14 +870,13 @@ class ResourceScenario(Base):
     __tablename__='tResourceScenario'
 
     dataset_id = Column(Integer(), ForeignKey('tDataset.dataset_id'), nullable=False)
-    scenario_id = Column(Integer(), ForeignKey('tScenario.scenario_id'), primary_key=True, nullable=False)
-    resource_attr_id = Column(Integer(), ForeignKey('tResourceAttr.resource_attr_id'), primary_key=True, nullable=False)
+    scenario_id = Column(Integer(), ForeignKey('tScenario.scenario_id'), primary_key=True, nullable=False, index=True)
+    resource_attr_id = Column(Integer(), ForeignKey('tResourceAttr.resource_attr_id'), primary_key=True, nullable=False, index=True)
     source           = Column(String(60))
     
     dataset      = relationship('Dataset', backref=backref("resourcescenarios", order_by=dataset_id))
-    scenario     = relationship('Scenario', backref=backref("resourcescenarios", order_by=resource_attr_id, lazy='joined', cascade="all, delete-orphan"))
-    resourceattr = relationship('ResourceAttr', lazy='joined', backref=backref("resourcescenario", lazy='joined', cascade="all, delete-orphan", uselist=False), uselist=False)
-
+    scenario     = relationship('Scenario', backref=backref("resourcescenarios", order_by=resource_attr_id, cascade="all, delete-orphan"))
+    resourceattr = relationship('ResourceAttr', backref=backref("resourcescenario", cascade="all, delete-orphan", uselist=False), uselist=False)
 
     def get_dataset(self, user_id):
         dataset = DBSession.query(Dataset.dataset_id,
@@ -902,7 +901,7 @@ class Scenario(Base):
 
     __tablename__='tScenario'
 
-    scenario_id = Column(Integer(), primary_key=True, nullable=False)
+    scenario_id = Column(Integer(), primary_key=True, index=True, nullable=False)
     scenario_name = Column(String(60),  nullable=False)
     scenario_description = Column(String(1000))
     scenario_layout = Column(Text(1000))

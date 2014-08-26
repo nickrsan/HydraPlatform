@@ -107,6 +107,9 @@ class ImportWML(object):
             return an array where each element is a line in the wml.
         """
 
+        nodes = self.call('get_all_node_data', {'network_id':2,'scenario_id': 2})
+        links = self.call('get_all_link_data', {'network_id':2,'scenario_id': 2})
+
         timeseries_xml_data=None
         if file == None:
             log.warn("No file specified")

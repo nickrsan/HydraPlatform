@@ -1,4 +1,4 @@
-#d (c) Copyright 2013, 2014, University of Manchester
+#(c) Copyright 2013, 2014, University of Manchester
 #
 # HydraPlatform is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -391,35 +391,55 @@ def assign_types_to_resources(resource_types,**kwargs):
         function can also be used to update resources, when a resource type has
         changed.
     """
-    types = {}
 
+    types = {}
     for resource_type in resource_types:
         ref_id = resource_type.ref_id
         type_id = resource_type.type_id
         if types.get(resource_type.type_id) is None:
-            t = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).one()
+            t = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).options(joinedload_all('typeattrs')).one()
             types[resource_type.type_id] = t
+    log.info("Retrieved all the appropriate template types")
     res_types = []
     res_attrs = []
+
+    net_id = None
+    node_ids = []
+    link_ids = []
+    grp_ids  = []
+    for resource_type in resource_types:
+        ref_id  = resource_type.ref_id
+        ref_key = resource_type.ref_key
+        if resource_type.ref_key == 'NETWORK':
+            net_id = ref_id
+        elif resource_type.ref_key == 'NODE':
+            node_ids.append(ref_id)
+        elif resource_type.ref_key == 'LINK':
+            link_ids.append(ref_id)
+        elif resource_type.ref_key == 'GROUP':
+            grp_ids.append(ref_id)
+    if net_id:
+        net = DBSession.query(Network).filter(Network.network_id==net_id).one()
+    nodes = _get_nodes(node_ids)
+    links = _get_links(link_ids)
+    groups = _get_groups(grp_ids)
     for resource_type in resource_types:
         ref_id  = resource_type.ref_id
         ref_key = resource_type.ref_key
         type_id = resource_type.type_id
-        if resource_type.ref_key == 'NETWORK':
-            resource = DBSession.query(Network).filter(Network.network_id==ref_id).one()
-        elif resource_type.ref_key == 'NODE':
-            resource = DBSession.query(Node).filter(Node.node_id==ref_id).one()
-        elif resource_type.ref_key == 'LINK':
-            resource = DBSession.query(Link).filter(Link.link_id==ref_id).one()
-        elif resource_type.ref_key == 'GROUP':
-            resource = DBSession.query(ResourceGroup).filter(ResourceGroup.group_id==ref_id).one()
-        resource.ref_key = ref_key
-        resource.ref_id  = ref_id
-        
+        if ref_key == 'NETWORK':
+            resource = net 
+        elif ref_key == 'NODE':
+            resource = nodes[ref_id]
+        elif ref_key == 'LINK':
+            resource = links[ref_id] 
+        elif ref_key == 'GROUP':
+            resource = groups[ref_id]
 
         ra, rt = set_resource_type(resource, type_id, types)
         res_types.append(rt)
         res_attrs.extend(ra)
+    log.info("Retrieved all the appropriate resources")
     DBSession.execute(ResourceType.__table__.insert(), res_types)
     DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
     resource.attributes
@@ -430,6 +450,91 @@ def assign_types_to_resources(resource_types,**kwargs):
     ret_val = [t for t in types.values()]
     return ret_val
 
+def _get_links(link_ids):
+    links = []
+    if len(link_ids) > 500:
+        idx = 0
+        extent = 500
+        while idx < len(link_ids):
+            log.info("Querying %s links", len(link_ids[idx:extent]))
+            rs = DBSession.query(Link).options(joinedload_all('attributes')).filter(Link.link_id.in_(link_ids[idx:extent])).all()
+            log.info("Retrieved %s links", len(rs))
+            links.extend(rs)
+            idx = idx + 500
+            
+            if idx + 500 > len(link_ids):
+                extent = len(link_ids)
+            else:
+                extent = extent + 500
+    else:
+        links = DBSession.query(Link).filter(Link.link_id.in_(link_ids))
+    
+    link_dict = {}
+
+    for l in links:
+        l.ref_id = l.link_id
+        l.ref_key = 'LINK'
+        link_dict[l.link_id] = l
+    
+    return link_dict
+
+def _get_nodes(node_ids):
+    nodes = []
+    if len(node_ids) > 500:
+        idx = 0
+        extent = 500
+        while idx < len(node_ids):
+            log.info("Querying %s nodes", len(node_ids[idx:extent]))
+
+            rs = DBSession.query(Node).options(joinedload_all('attributes')).filter(Node.node_id.in_(node_ids[idx:extent])).all()
+
+            log.info("Retrieved %s nodes", len(rs))
+            
+            nodes.extend(rs)
+            idx = idx + 500
+            
+            if idx + 500 > len(node_ids):
+                extent = len(node_ids)
+            else:
+                extent = extent + 500
+    else:
+        nodes = DBSession.query(Node).filter(Node.node_id.in_(node_ids))
+
+    node_dict = {}
+
+    for n in nodes:
+        n.ref_id = n.node_id
+        n.ref_key = 'NODE'
+        node_dict[n.node_id] = n
+
+    return node_dict
+
+def _get_groups(group_ids):
+    groups = []
+    if len(group_ids) > 100:
+        idx = 0
+        extent = 99
+        while idx < len(group_ids):
+            log.info("Querying %s groups", len(group_ids[idx:extent]))
+            rs = DBSession.query(ResourceGroup).options(joinedload_all('attributes')).filter(ResourceGroup.group_id.in_(group_ids[idx:extent])).all()
+            log.info("Retrieved %s groups", len(rs))
+            groups.extend(rs)
+            idx = idx + 100
+            
+            if idx + 100 > len(group_ids):
+                extent = len(group_ids)
+            else:
+                extent = extent + 100
+    else:
+        groups = DBSession.query(ResourceGroup).filter(ResourceGroup.group_id.in_(group_ids))
+    group_dict = {}
+
+    for g in groups:
+        g.ref_id = g.group_id
+        g.ref_key = 'GROUP'
+        group_dict[g.group_id] = g
+
+    return group_dict
 
 def assign_type_to_resource(type_id, resource_type, resource_id,**kwargs):
     """Assign new type to a resource. This function checks if the necessary
@@ -486,7 +591,7 @@ def set_resource_type(resource, type_id, types={}, **kwargs):
     if type_id in types.keys():
         type_i = types[type_id]
     else:
-        type_i = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).one()
+        type_i = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).options(joinedload_all('typeattrs')).one()
 
     type_attrs = dict()
     for typeattr in type_i.typeattrs:

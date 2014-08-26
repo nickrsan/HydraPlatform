@@ -23,7 +23,7 @@ import time
 from util.permissions import check_perm
 import template
 from db.model import Project, Network, Scenario, Node, Link, ResourceGroup,\
-        ResourceAttr, ResourceType, ResourceGroupItem, Dataset, DatasetOwner,\
+        ResourceAttr, ResourceType, ResourceGroupItem, Dataset, Metadata, DatasetOwner,\
         ResourceScenario, TemplateType, TypeAttr
 from sqlalchemy.orm import noload, joinedload, joinedload_all
 from db import DBSession
@@ -568,13 +568,12 @@ def get_network(network_id, summary=False, include_data='N', scenario_ids=None, 
 
         log.debug("Network Retrieved")
          
-        scen_qry = DBSession.query(Scenario).filter(Scenario.network_id == net_i.network_id).options(joinedload(Scenario.resourcescenarios)).options(noload('resourcescenarios.dataset')).options(joinedload('resourcegroupitems')).filter(Scenario.status == 'A')
+        scen_qry = DBSession.query(Scenario).filter(Scenario.network_id == net_i.network_id).options(joinedload(Scenario.resourcescenarios)).options(joinedload('resourcescenarios.resourceattr')).options(noload('resourcescenarios.dataset')).options(joinedload('resourcegroupitems')).filter(Scenario.status == 'A')
         if scenario_ids:
             logging.info("Filtering by scenario_ids %s",scenario_ids)
             scen_qry = scen_qry.join(Network.scenarios).filter(Scenario.scenario_id.in_(scenario_ids))
         if include_data == 'N':
             scen_qry = scen_qry.options(noload('resourcescenarios').noload('dataset'))
-
 
         log.debug("Querying Scenarios")
         scens = scen_qry.all()
@@ -1244,7 +1243,6 @@ def clean_up_network(network_id, **kwargs):
     DBSession.flush()
     return 'OK'
 
-
 def get_attributes_for_resource(network_id, scenario_id, ref_key, **kwargs):
 
     try:
@@ -1257,9 +1255,38 @@ def get_attributes_for_resource(network_id, scenario_id, ref_key, **kwargs):
     except NoResultFound:
         raise HydraError("Scenario %s not found."%scenario_id)
 
-    resource_attrs = DBSession.query(ResourceAttr).filter(
+    resource_attrs = DBSession.query(ResourceAttr).join(ResourceScenario).join(ResourceScenario.dataset).filter(
                             ResourceScenario.scenario_id==scenario_id,
-                            ResourceScenario.resource_attr_id==ResourceAttr.resource_attr_id,
-                            ResourceAttr.ref_key==ref_key).all()
+                            ResourceAttr.ref_key==ref_key).options(joinedload_all('resourcescenario.dataset', innerjoin=True)).options(noload('resourcescenario.dataset.metadata')).all()
+
+    metadata = DBSession.query(Metadata).filter(
+                            ResourceAttr.ref_key==ref_key,
+                            ResourceScenario.resource_attr_id == ResourceAttr.resource_attr_id,
+                            ResourceScenario.scenario_id==scenario_id,
+                            Dataset.dataset_id==ResourceScenario.dataset_id,
+                            Metadata.dataset_id==Dataset.dataset_id).all()
     
+    metadata = []
+    metadata_dict = {}
+    for m in metadata:
+        if metadata_dict.get(m.dataset_id):
+            metadata_dict[m.dataset_id].append(m)
+        else:
+            metadata_dict[m.dataset_id] = [m]
+
+    for ra in resource_attrs:
+        d = ra.resourcescenario.dataset
+        if d.locked == 'Y':
+           try:
+                d.check_read_permission(kwargs.get('user_id'))
+           except:
+               d.value      = None
+               d.frequency  = None
+               d.start_time = None
+               if d.data_type == 'timeseries':
+                   d.timeseriesdata = []
+               d.metadata = []
+        else:
+            ra.resourcescenario.dataset.metadata = metadata_dict.get(d.dataset_id, [])
+
     return resource_attrs

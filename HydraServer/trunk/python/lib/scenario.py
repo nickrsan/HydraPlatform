@@ -28,7 +28,7 @@ from db.model import Scenario,\
         Attr
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import or_
-from sqlalchemy.orm import joinedload_all
+from sqlalchemy.orm import joinedload_all, joinedload
 import data
 from HydraLib.util import timestamp_to_ordinal
 from collections import namedtuple
@@ -623,7 +623,7 @@ def get_attribute_data(attr_ids, node_ids, **kwargs):
         ra_ids.append(ra.resource_attr_id)
 
 
-    resource_scenarios = DBSession.query(ResourceScenario).filter(ResourceScenario.resource_attr_id.in_(ra_ids)).options(joinedload_all('dataset.metadata')).options(joinedload_all('dataset.timeseriesdata')).order_by(ResourceScenario.scenario_id).all()
+    resource_scenarios = DBSession.query(ResourceScenario).filter(ResourceScenario.resource_attr_id.in_(ra_ids)).options(joinedload('resourceattr')).options(joinedload_all('dataset.metadata')).options(joinedload_all('dataset.timeseriesdata')).order_by(ResourceScenario.scenario_id).all()
 
 
     for rs in resource_scenarios:
@@ -667,7 +667,7 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
                 ResourceAttr.link_id==ref_id,
                 ResourceAttr.group_id==ref_id
             ),
-            ResourceAttr.attr_id in attr_ids).options(joinedload_all('dataset.timeseriesdata')).options(joinedload_all('dataset.metadata')).distinct().all()
+            ResourceAttr.attr_id in attr_ids).options(joinedload('resourceattr')).options(joinedload_all('dataset.timeseriesdata')).options(joinedload_all('dataset.metadata')).distinct().all()
     else:
         resource_data = DBSession.query(ResourceScenario).filter(
         ResourceScenario.dataset_id   == Dataset.dataset_id,
@@ -679,7 +679,7 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
             ResourceAttr.node_id==ref_id,
             ResourceAttr.link_id==ref_id,
             ResourceAttr.group_id==ref_id
-        )).distinct().options(joinedload_all('dataset.timeseriesdata')).options(joinedload_all('dataset.metadata')).all()
+        )).distinct().options(joinedload('resourceattr')).options(joinedload_all('dataset.timeseriesdata')).options(joinedload_all('dataset.metadata')).all()
 
 
     for rs in resource_data:

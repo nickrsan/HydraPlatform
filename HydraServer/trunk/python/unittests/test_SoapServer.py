@@ -30,7 +30,7 @@ global CLIENT
 CLIENT = None
 
 log = logging.getLogger(__name__)
-
+log.setLevel(logging.ERROR)
 class FixNamespace(MessagePlugin):
     def marshalled(self, context):
         self.fix_ns(context.envelope)
@@ -284,7 +284,7 @@ class SoapServerTest(unittest.TestCase):
         net = self.create_network_with_data()
         s = net.scenarios.Scenario[0]
         rs = s.resourcescenarios.ResourceScenario[0]
-
+        
 
     def build_network(self, project_id=None, num_nodes=10):
 

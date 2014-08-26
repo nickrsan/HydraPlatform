@@ -27,6 +27,9 @@ from hydra_complexmodels import Network,\
     ResourceScenario
 from lib import network, scenario
 from hydra_base import HydraService
+import datetime
+import logging
+log = logging.getLogger(__name__)
 
 class NetworkService(HydraService):
     """
@@ -459,11 +462,14 @@ class NetworkService(HydraService):
             attribute, containing the actual value for the scenario specified.
         """
         node_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'NODE')
+        start = datetime.datetime.now()
         return_ras = []
         for nodeattr in node_resourceattrs:
             ra = ResourceAttr(nodeattr)
-            ra.resourcescenario = ResourceScenario(nodeattr.resourcescenario)
+            x = ResourceScenario(nodeattr.resourcescenario, ra.attr_id)
+            ra.resourcescenario = x
             return_ras.append(ra)
+        log.info("Done in %s", (datetime.datetime.now() - start))
 
         return return_ras
 
@@ -479,7 +485,7 @@ class NetworkService(HydraService):
         return_ras = []
         for linkattr in link_resourceattrs:
             ra = ResourceAttr(linkattr)
-            ra.resourcescenario = ResourceScenario(linkattr.resourcescenario)
+            ra.resourcescenario = ResourceScenario(linkattr.resourcescenario, ra.attr_id)
             return_ras.append(ra)
 
         return return_ras
@@ -501,5 +507,3 @@ class NetworkService(HydraService):
             return_ras.append(ra)
 
         return return_ras
-
-

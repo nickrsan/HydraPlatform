@@ -125,22 +125,25 @@ class Dataset(HydraComplexModel):
         self.unit      = parent.data_units
         if parent.value is not None: 
             if parent.data_type == 'descriptor':
-                self.value = Descriptor(parent.value)
+                self.value = {'desc_val': [parent.value]}
             elif parent.data_type == 'array':
                 self.value = Array(parent.value)
             elif parent.data_type == 'scalar':
-                self.value = Scalar(parent.value)
+                self.value = {'param_value': [parent.value]}
             elif parent.data_type == 'eqtimeseries':
                 self.value = EqTimeSeries(parent.start_time, parent.frequency, parent.value)
         if parent.data_type == 'timeseries':
             if parent.value is not None:
-                self.value = TimeSeries(val = parent.value)
+                self.value = TimeSeries(parent.value)
+                #self.value = _make_timeseries(parent.value)
             else:
                 if len(parent.timeseriesdata) > 0:
                     self.value = TimeSeries(val = parent.timeseriesdata)
-        
-        if self.value:
+
+        if self.value and type(self.value) is not dict:
             self.value = self.value.__dict__
+        elif self.value is None:
+            self.value = {}
         
         metadata = []
         for m in parent.metadata:
@@ -334,6 +337,41 @@ class TimeSeriesData(HydraComplexModel):
         else:
             self.ts_value = [ts_val]
 
+def _make_timeseries(val):
+    log.debug("Creating timeseries complexmodels")
+
+    if  val is None or len(val) == 0:
+        return {}
+
+    ts_vals = []
+    timeseries = pd.read_json(val)
+    for t in timeseries.index:
+        ts_val = timeseries.loc[t].values
+        ts_data = {}
+        try:
+            ts_data['ts_time'] = [str(get_datetime(t.to_pydatetime()))]
+        except AttributeError:
+            try:
+                ts_data['ts_time'] = [eval(t)]
+            except:
+                ts_data['ts_time'] = [t]
+        try:
+            ts_val = list(ts_val)
+            ts_data['ts_value'] = [create_dict(ts_val)]
+        except:
+            ts_data['ts_value'] = [ts_val]
+        ts_vals.append(ts_data)
+    freq = None
+    if type(timeseries.index) == DatetimeIndex:
+        freq = [timeseries.index.inferred_freq]
+        ts = {'periods'   : [len(timeseries.index)],
+              'frequency' : freq,
+              'ts_values' : ts_vals,
+         }
+
+    return ts
+
+
 class TimeSeries(HydraComplexModel):
     _type_info = [
         ('ts_values', SpyneArray(TimeSeriesData)),
@@ -352,26 +390,27 @@ class TimeSeries(HydraComplexModel):
             timeseries = pd.read_json(val)
             for ts in timeseries.index:
                 ts_val = timeseries.loc[ts].values
-                ts_data = TimeSeriesData()
+                ts_data = {}
                 try:
-                    ts_data.ts_time = [get_datetime(ts.to_pydatetime())]
+                    ts_data['ts_time'] = [str(get_datetime(ts.to_pydatetime()))]
                 except AttributeError:
                     try:
-                        ts_data.ts_time = [eval(ts)]
+                        ts_data['ts_time'] = [eval(ts)]
                     except:
-                        ts_data.ts_time = [ts]
+                        ts_data['ts_time'] = [ts]
                 try:
                     ts_val = list(ts_val)
-                    ts_data.ts_value = [create_dict(ts_val)]
+                    ts_data['ts_value'] = [create_dict(ts_val)]
                 except:
-                    ts_data.ts_value = [ts_val]
-                ts_vals.append(ts_data.__dict__)
+                    ts_data['ts_value'] = [ts_val]
+                ts_vals.append(ts_data)
 
             if type(timeseries.index) == DatetimeIndex:
                 self.frequency = [timeseries.index.inferred_freq]
             self.periods = [len(timeseries.index)]
             log.debug("Timeseries complexmodels created")
         else:
+            log.info("IN HERE!")
             for ts in val:
                 ts_vals.append(TimeSeriesData(ts).__dict__)
         self.ts_values = ts_vals
@@ -463,12 +502,12 @@ class ResourceScenario(HydraComplexModel):
         ('source',           Unicode),
     ]
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, attr_id=None):
         super(ResourceScenario, self).__init__()
         if parent is None:
             return
         self.resource_attr_id = parent.resource_attr_id
-        self.attr_id          = parent.resourceattr.attr_id
+        self.attr_id          = attr_id if attr_id is not None else parent.resourceattr.attr_id
 
         self.value = Dataset(parent.dataset)
         self.source = parent.source
