@@ -1135,6 +1135,7 @@ W: delayed  eval hack detected at line 0 - logging.config (C:\Python27\lib\loggi
 W: delayed  eval hack detected at line 0 - logging.config (C:\Python27\lib\logging\config.pyc)
 W: delayed  __import__ hack detected at line 0 - logging.config (C:\Python27\lib\logging\config.pyc)
 W: delayed conditional __import__ hack detected at line 0 - logging.config (C:\Python27\lib\logging\config.pyc)
+W: delayed conditional eval hack detected at line 0 - HydraLib.PluginLib (C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\PluginLib.pyc)
 W: delayed  eval hack detected at line 0 - pudb.var_view (C:\Python27\lib\site-packages\pudb\var_view.pyc)
 W: __all__ is built strangely at line 0 - sqlalchemy.dialects (C:\Python27\lib\site-packages\sqlalchemy\dialects\__init__.pyc)
 W: delayed  __import__ hack detected at line 0 - sqlalchemy.dialects (C:\Python27\lib\site-packages\sqlalchemy\dialects\__init__.pyc)
