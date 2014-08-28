@@ -119,7 +119,7 @@ class ObjectNotFoundError(HydraServiceError):
 class LogoutService(HydraService):
     __tns__      = 'hydra.authentication'
     
-    @rpc(Mandatory.String, Mandatory.String, _returns=String,
+    @rpc(Mandatory.String, _returns=String,
                                                     _throws=AuthenticationError)
     def logout(ctx, username):
         del(_session_db[ctx.in_header.session_id])
@@ -132,6 +132,9 @@ class AuthenticationService(ServiceBase):
                                                    _throws=AuthenticationError)
     def login(username, password):
         try:
+            username = username.encode('utf-8')
+            password = password.encode('utf-8')
+
             user_id, session_id = login_user(username, password)
         except HydraError, e:
             raise AuthenticationError(e)

@@ -391,14 +391,15 @@ def assign_types_to_resources(resource_types,**kwargs):
         function can also be used to update resources, when a resource type has
         changed.
     """
+    #Remove duplicate values from types by turning it into a set
+    type_ids = list(set([rt.type_id for rt in resource_types]))
+    
+    db_types = DBSession.query(TemplateType).filter(TemplateType.type_id.in_(type_ids)).options(joinedload_all('typeattrs')).all()
 
     types = {}
-    for resource_type in resource_types:
-        ref_id = resource_type.ref_id
-        type_id = resource_type.type_id
-        if types.get(resource_type.type_id) is None:
-            t = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).options(joinedload_all('typeattrs')).one()
-            types[resource_type.type_id] = t
+    for db_type in db_types:
+        if types.get(db_type.type_id) is None:
+            types[db_type.type_id] = db_type
     log.info("Retrieved all the appropriate template types")
     res_types = []
     res_attrs = []
@@ -457,7 +458,7 @@ def _get_links(link_ids):
         extent = 500
         while idx < len(link_ids):
             log.info("Querying %s links", len(link_ids[idx:extent]))
-            rs = DBSession.query(Link).options(joinedload_all('attributes')).filter(Link.link_id.in_(link_ids[idx:extent])).all()
+            rs = DBSession.query(Link).options(joinedload_all('attributes')).options(joinedload_all('types')).filter(Link.link_id.in_(link_ids[idx:extent])).all()
             log.info("Retrieved %s links", len(rs))
             links.extend(rs)
             idx = idx + 500
@@ -486,7 +487,7 @@ def _get_nodes(node_ids):
         while idx < len(node_ids):
             log.info("Querying %s nodes", len(node_ids[idx:extent]))
 
-            rs = DBSession.query(Node).options(joinedload_all('attributes')).filter(Node.node_id.in_(node_ids[idx:extent])).all()
+            rs = DBSession.query(Node).options(joinedload_all('attributes')).options(joinedload_all('types')).filter(Node.node_id.in_(node_ids[idx:extent])).all()
 
             log.info("Retrieved %s nodes", len(rs))
             
@@ -511,20 +512,20 @@ def _get_nodes(node_ids):
 
 def _get_groups(group_ids):
     groups = []
-    if len(group_ids) > 100:
+    if len(group_ids) > 500:
         idx = 0
-        extent = 99
+        extent = 500
         while idx < len(group_ids):
             log.info("Querying %s groups", len(group_ids[idx:extent]))
             rs = DBSession.query(ResourceGroup).options(joinedload_all('attributes')).filter(ResourceGroup.group_id.in_(group_ids[idx:extent])).all()
             log.info("Retrieved %s groups", len(rs))
             groups.extend(rs)
-            idx = idx + 100
+            idx = idx + 500
             
-            if idx + 100 > len(group_ids):
+            if idx + 500 > len(group_ids):
                 extent = len(group_ids)
             else:
-                extent = extent + 100
+                extent = extent + 500
     else:
         groups = DBSession.query(ResourceGroup).filter(ResourceGroup.group_id.in_(group_ids))
     group_dict = {}
@@ -677,23 +678,24 @@ def add_template(template,**kwargs):
 
     DBSession.add(tmpl)
 
-    for templatetype in template.types:
-        ttype = TemplateType()
-        ttype.type_name = templatetype.name
-        ttype.layout    = templatetype.layout
-        ttype.resource_type = templatetype.resource_type
-        ttype.alias         = templatetype.alias
-        DBSession.add(ttype)
-
-        for typeattr in templatetype.typeattrs:
-            ta = TypeAttr(attr_id=typeattr.attr_id)
-            ta.data_restriction = _parse_data_restriction(typeattr.data_restriction)
-            ta.data_type        = typeattr.data_type
-            ta.dimension        = typeattr.dimension
-            ta.attr_is_var      = typeattr.is_var
-            ttype.typeattrs.append(ta)
-            DBSession.add(ta)
-        tmpl.templatetypes.append(ttype)
+    if template.types is not None:
+        for templatetype in template.types:
+            ttype = TemplateType()
+            ttype.type_name = templatetype.name
+            ttype.layout    = templatetype.layout
+            ttype.resource_type = templatetype.resource_type
+            ttype.alias         = templatetype.alias
+            DBSession.add(ttype)
+            if templatetype.typeattrs is not None:
+                for typeattr in templatetype.typeattrs:
+                    ta = TypeAttr(attr_id=typeattr.attr_id)
+                    ta.data_restriction = _parse_data_restriction(typeattr.data_restriction)
+                    ta.data_type        = typeattr.data_type
+                    ta.dimension        = typeattr.dimension
+                    ta.attr_is_var      = typeattr.is_var
+                    ttype.typeattrs.append(ta)
+                    DBSession.add(ta)
+            tmpl.templatetypes.append(ttype)
     DBSession.flush()
     return tmpl
 
@@ -704,40 +706,40 @@ def update_template(template,**kwargs):
     tmpl = DBSession.query(Template).filter(Template.template_id==template.id).one()
     tmpl.template_name = template.name
     tmpl.layout        = str(template.layout)
-
-    for templatetype in template.types:
-        if templatetype.id is not None:
-            for type_i in tmpl.templatetypes:
-                if type_i.template_id == templatetype.id:
-                    type_i.type_name = templatetype.name
-                    type_i.alias     = templatetype.alias
-                    type_i.layout    = templatetype.layout
-                    break
-        else:
-            type_i = TemplateType()
-            type_i.type_name = templatetype.name
-            type_i.layout    = templatetype.layout
-            type_i.resource_type = templatetype.resource_type
-            type_i.alias         = templatetype.alias
-            DBSession.add(type_i)
-
-        for typeattr in templatetype.typeattrs:
-            for typeattr_i in type_i.typeattrs:
-                if typeattr_i.attr_id == typeattr.attr_id:
-                    typeattr_i.data_restriction = _parse_data_restriction(typeattr.data_restriction)
-                    typeattr_i.data_type        = typeattr.data_type
-                    typeattr_i.dimension        = typeattr.dimension
-                    typeattr_i.attr_is_var      = typeattr.is_var
-
-                    break
+    if template.types is not None:
+        for templatetype in template.types:
+            if templatetype.id is not None:
+                for type_i in tmpl.templatetypes:
+                    if type_i.template_id == templatetype.id:
+                        type_i.type_name = templatetype.name
+                        type_i.alias     = templatetype.alias
+                        type_i.layout    = templatetype.layout
+                        break
             else:
-                ta = TypeAttr(attr_id=typeattr.attr_id)
-                ta.data_restriction = _parse_data_restriction(typeattr.data_restriction)
-                ta.data_type        = typeattr.data_type
-                ta.dimension        = typeattr.dimension
-                ta.attr_is_var      = typeattr.is_var
-                type_i.typeattrs.append(ta)
-                DBSession.add(ta)
+                type_i = TemplateType()
+                type_i.type_name = templatetype.name
+                type_i.layout    = templatetype.layout
+                type_i.resource_type = templatetype.resource_type
+                type_i.alias         = templatetype.alias
+                DBSession.add(type_i)
+
+            if templatetype.typeattrs is not None:
+                for typeattr in templatetype.typeattrs:
+                    for typeattr_i in type_i.typeattrs:
+                        if typeattr_i.attr_id == typeattr.attr_id:
+                            typeattr_i.data_restriction = _parse_data_restriction(typeattr.data_restriction)
+                            typeattr_i.data_type        = typeattr.data_type
+                            typeattr_i.dimension        = typeattr.dimension
+                            typeattr_i.attr_is_var      = typeattr.is_var
+                            break
+                    else:
+                        ta = TypeAttr(attr_id=typeattr.attr_id)
+                        ta.data_restriction = _parse_data_restriction(typeattr.data_restriction)
+                        ta.data_type        = typeattr.data_type
+                        ta.dimension        = typeattr.dimension
+                        ta.attr_is_var      = typeattr.is_var
+                        type_i.typeattrs.append(ta)
+                        DBSession.add(ta)
 
     DBSession.flush()
  
@@ -803,10 +805,11 @@ def add_templatetype(templatetype,**kwargs):
     tmpltype.layout     = templatetype.layout
     tmpltype.template_id = templatetype.template_id
 
-    for typeattr in templatetype.typeattrs:
-        ta = TypeAttr(attr_id=typeattr.attr_id)
-        tmpltype.typeattrs.append(ta)
-        DBSession.add(ta)
+    if templatetype.typeattrs is not None:
+        for typeattr in templatetype.typeattrs:
+            ta = TypeAttr(attr_id=typeattr.attr_id)
+            tmpltype.typeattrs.append(ta)
+            DBSession.add(ta)
     
     DBSession.add(tmpltype)
     DBSession.flush()
@@ -824,14 +827,15 @@ def update_templatetype(templatetype,**kwargs):
     tmpltype.alias      = templatetype.alias
     tmpltype.layout     = templatetype.layout
 
-    for typeattr in templatetype.typeattrs:
-        for typeattr_i in tmpltype.typeattrs:
-            if typeattr_i.attr_id == typeattr.attr_id:
-                break
-        else:
-            ta = TypeAttr(attr_id=typeattr.attr_id)
-            tmpltype.typeattrs.append(ta)
-            DBSession.add(ta)
+    if templatetype.typeattrs is not None:
+        for typeattr in templatetype.typeattrs:
+            for typeattr_i in tmpltype.typeattrs:
+                if typeattr_i.attr_id == typeattr.attr_id:
+                    break
+            else:
+                ta = TypeAttr(attr_id=typeattr.attr_id)
+                tmpltype.typeattrs.append(ta)
+                DBSession.add(ta)
 
     DBSession.flush()
 

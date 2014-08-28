@@ -102,7 +102,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         scenario.description = 'Updated Scenario Description'
         scenario.start_time = datetime.datetime.now()
         scenario.end_time = scenario.start_time + datetime.timedelta(hours=10)
-        scenario.time_step = "1 day" #measured in seconds
+        scenario.time_step = "1 day"
       
         #Identify 2 nodes to play around with -- the first and last in the list.
         node1 = network.nodes.Node[0]
@@ -139,7 +139,82 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
 
         for data in updated_scenario.resourcescenarios.ResourceScenario: 
             if data.attr_id == descriptor['attr_id']:
-                assert data.value.value.desc_val == descriptor['value']['value']['desc_val'] 
+                assert data.value.value.desc_val == descriptor['value']['value']['desc_val']
+
+    def test_get_dataset_scenarios(self):
+        """
+            Test to get the scenarios attached to a dataset
+        """
+
+        network = self.create_network_with_data()
+
+        #Create the new scenario
+        scenario = network.scenarios.Scenario[0] 
+        rs = scenario.resourcescenarios.ResourceScenario
+  
+        dataset_id_to_check = rs[0].value.id
+
+        dataset_scenarios = self.client.service.get_dataset_scenarios(dataset_id_to_check)
+
+        assert len(dataset_scenarios.Scenario) == 1
+
+        assert dataset_scenarios.Scenario[0].id == scenario.id
+
+    def test_update_resourcedata(self):
+        """
+            Test updating an existing scenario data.
+            2 main points to test: 1: setting a value to null should remove
+            the resource scenario
+            2: changing the value should create a new dataset
+        """
+        network = self.create_network_with_data()
+
+        #Create the new scenario
+        scenario = network.scenarios.Scenario[0] 
+        num_old_rs = len(scenario.resourcescenarios.ResourceScenario)
+      
+        #Identify 2 nodes to play around with -- the first and last in the list.
+        node1 = network.nodes.Node[0]
+        node2 = network.nodes.Node[-1]
+
+        descriptor = self.create_descriptor(node1.attributes.ResourceAttr[0], 
+                                                "updated_descriptor")
+
+        val_to_delete = node2.attributes.ResourceAttr[0]
+        
+        rs_to_update = self.client.factory.create('ns1:ResourceScenarioArray')
+        updated_dataset_id = None
+        for resourcescenario in scenario.resourcescenarios.ResourceScenario:
+            ra_id = resourcescenario.resource_attr_id
+            if ra_id == descriptor['resource_attr_id']:
+                updated_dataset_id = resourcescenario.value['id']
+                resourcescenario.value = descriptor['value']
+                rs_to_update.ResourceScenario.append(resourcescenario)
+            elif ra_id == val_to_delete['id']:
+                resourcescenario.value = None
+                rs_to_update.ResourceScenario.append(resourcescenario)
+       
+        assert updated_dataset_id is not None
+
+        new_resourcescenarios = self.client.service.update_resourcedata(scenario.id, rs_to_update)
+
+        assert len(new_resourcescenarios.ResourceScenario) == 1
+
+        for rs in new_resourcescenarios.ResourceScenario: 
+            if rs.resource_attr_id == descriptor['resource_attr_id']:
+                assert rs.value.value.desc_val == descriptor['value']['value']['desc_val']
+
+        updated_scenario = self.client.service.get_scenario(scenario.id)
+
+        num_new_rs = len(updated_scenario.resourcescenarios.ResourceScenario)
+        assert num_new_rs == num_old_rs - 1
+
+
+        for u_rs in updated_scenario.resourcescenarios.ResourceScenario:
+            for rs in new_resourcescenarios.ResourceScenario:
+                if u_rs.resource_attr_id == rs.resource_attr_id:
+                    assert str(u_rs.value) == str(rs.value)
+                    break
 
     def test_bulk_add_data(self):
 

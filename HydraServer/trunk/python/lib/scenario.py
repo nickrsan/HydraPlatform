@@ -27,7 +27,7 @@ from db.model import Scenario,\
         Node,\
         Attr
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import or_
+from sqlalchemy import or_, distinct
 from sqlalchemy.orm import joinedload_all, joinedload
 import data
 from HydraLib.util import timestamp_to_ordinal
@@ -414,9 +414,20 @@ def unlock_scenario(scenario_id, **kwargs):
     DBSession.flush()
     return 'OK'
 
+def get_dataset_scenarios(dataset_id, **kwargs):
 
+    try:
+        DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id)
+    except NoResultFound:
+        raise ResourceNotFoundError("Dataset %s not found"%dataset_id)
 
-def update_resourcedata(scenario_id, resource_scenario,**kwargs):
+    scenarios = DBSession.query(Scenario).filter(
+        ResourceScenario.scenario_id==Scenario.scenario_id,
+        ResourceScenario.dataset_id == dataset_id).distinct().all()
+
+    return scenarios
+
+def update_resourcedata(scenario_id, resource_scenarios,**kwargs):
     """
         Update the data associated with a scenario.
         Data missing from the resource scenario will not be removed
@@ -428,12 +439,16 @@ def update_resourcedata(scenario_id, resource_scenario,**kwargs):
     _check_can_edit_scenario(scenario_id, kwargs['user_id'])
 
     scen_i = _get_scenario(scenario_id)
+    
+    res = []
+    for rs in resource_scenarios:
+        if rs.value is not None:
+            updated_rs = _update_resourcescenario(scen_i, rs, user_id=user_id, source=kwargs.get('app_name'))
+            res.append(updated_rs)
+        else:
+            _delete_resourcescenario(scenario_id, rs)
 
-    if resource_scenario.value is not None:
-        res = _update_resourcescenario(scen_i, resource_scenario, user_id=user_id, source=kwargs.get('app_name'))
-        if res is None:
-            raise HydraError("Could not update resource data. No value "
-                "sent with data. Check privilages.")
+    DBSession.flush()
 
     return res
 
@@ -468,6 +483,7 @@ def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=Non
         scenario = DBSession.query(Scenario).filter(Scenario.scenario_id==1).one()
 
     ra_id = resource_scenario.resource_attr_id
+
     logging.info("Assigning resource attribute: %s",ra_id)
     for rs in scenario.resourcescenarios:
         if rs.resource_attr_id == ra_id:
@@ -477,22 +493,21 @@ def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=Non
         r_scen_i = ResourceScenario()
         scenario.resourcescenarios.append(r_scen_i)
 
-    data_type = resource_scenario.value.type.lower()
+    dataset = resource_scenario.value
 
-    value = resource_scenario.value.parse_value()
+    value = dataset.parse_value()
 
     if value is None:
         log.info("Cannot set data on resource attribute %s",ra_id)
         return None
 
     metadata  = {}
-    if resource_scenario.value.metadata:
-        for m in resource_scenario.value.metadata:
+    if dataset.metadata:
+        for m in dataset.metadata:
             metadata[m.name]  = m.value
-    name      = resource_scenario.value.name
 
-    dimension = resource_scenario.value.dimension
-    data_unit = resource_scenario.value.unit
+    dimension = dataset.dimension
+    data_unit = dataset.unit
 
     unit = units.Units()
 
@@ -508,8 +523,16 @@ def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=Non
 
     data_hash = resource_scenario.value.get_hash()
 
-    assign_value(r_scen_i, data_type, value, data_unit, name, dimension, 
-                          metadata=metadata, data_hash=data_hash, user_id=user_id, source=source)
+    assign_value(r_scen_i,
+                 dataset.type.lower(),
+                 value,
+                 data_unit,
+                 dataset.name,
+                 dataset.dimension,
+                 metadata=metadata,
+                 data_hash=data_hash,
+                 user_id=user_id,
+                 source=source)
    
     return r_scen_i 
 

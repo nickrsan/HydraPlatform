@@ -113,17 +113,30 @@ class ScenarioService(HydraService):
         result = scenario.unlock_scenario(scenario_id, **ctx.in_header.__dict__)
         return result
 
-    @rpc(Integer, ResourceScenario, _returns=ResourceScenario)
-    def update_resourcedata(ctx,scenario_id, resource_scenario):
+    @rpc(Integer, _returns=SpyneArray(Scenario))
+    def get_dataset_scenarios(ctx, dataset_id):
+        """
+            Get all the scenarios attached to a dataset
+            @returns a list of scenario_ids
+        """
+        
+        scenarios = scenario.get_dataset_scenarios(dataset_id, **ctx.in_header.__dict__)
+
+        return [Scenario(s) for s in scenarios]
+
+    @rpc(Integer, SpyneArray(ResourceScenario), _returns=SpyneArray(ResourceScenario))
+    def update_resourcedata(ctx,scenario_id, resource_scenarios):
         """
             Update the data associated with a scenario.
             Data missing from the resource scenario will not be removed
             from the scenario. Use the remove_resourcedata for this task.
         """
         res = scenario.update_resourcedata(scenario_id,
-                                           resource_scenario,
+                                           resource_scenarios,
                                            **ctx.in_header.__dict__)
-        return ResourceScenario(res)
+        ret = [ResourceScenario(r) for r in res]
+
+        return ret
 
     @rpc(Integer, ResourceScenario, _returns=Unicode)
     def delete_resourcedata(ctx,scenario_id, resource_scenario):

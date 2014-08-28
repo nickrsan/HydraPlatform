@@ -175,8 +175,11 @@ def _bulk_insert_data(bulk_data, user_id=None, source=None):
 
     start_time=datetime.datetime.now()
     log.info("Starting data insert (%s datasets) %s", len(bulk_data), get_timing(start_time))
+    
     datasets, incoming_data  = _process_incoming_data(bulk_data, user_id, source)
+    log.info("Incoming data processed.")
     existing_data = _get_existing_data(incoming_data.keys())
+    log.info("Existing data retrieved.")
 
     #A list of all the dataset objects
     all_dataset_objects = []
@@ -244,7 +247,6 @@ def _bulk_insert_data(bulk_data, user_id=None, source=None):
     return dataset_hashes 
 
 def _process_incoming_data(data, user_id=None, source=None):
-
     unit = units.Units()
 
     datasets = {}
@@ -271,17 +273,14 @@ def _process_incoming_data(data, user_id=None, source=None):
 
         scenario_datum.set_val(d.type, val)
 
-        dataset_metadata = {}
         if user_id is not None:
-            dataset_metadata['user_id'] = str(user_id)
+            scenario_datum.metadata.append(Metadata(metadata_name='user_id',metadata_val=str(user_id)))
         if source is not None:
-            dataset_metadata['source'] = str(source)
+            scenario_datum.metadata.append(Metadata(metadata_name='source',metadata_val=str(source)))
         if d.metadata is not None:
             for m in d.metadata:
-                dataset_metadata[m.name] = m.value
+                scenario_datum.metadata.append(Metadata(metadata_name=m.name,metadata_val=m.value))
         
-        scenario_datum.set_metadata(dataset_metadata)
-
         data_hash = scenario_datum.set_hash()
 
         datasets[data_hash] = scenario_datum 
@@ -352,19 +351,19 @@ def _get_existing_data(hashes):
     hash_dict = {}
 
     datasets = []
-    if len(str_hashes) > 100:
+    if len(str_hashes) > 500:
         idx = 0
-        extent = 100
+        extent = 500
         while idx < len(str_hashes):
             log.info("Querying %s datasets", len(str_hashes[idx:extent]))
             rs = DBSession.query(Dataset).filter(Dataset.data_hash.in_(str_hashes[idx:extent])).all()
             datasets.extend(rs)
-            idx = idx + 100
+            idx = idx + 500
             
-            if idx + 100 > len(str_hashes):
+            if idx + 500 > len(str_hashes):
                 extent = len(str_hashes)
             else:
-                extent = extent + 100
+                extent = extent + 500
     else:
         datasets = DBSession.query(Dataset).filter(Dataset.data_hash.in_(str_hashes))
 
@@ -509,12 +508,3 @@ def delete_dataset(dataset_id,**kwargs):
     d = DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).one()
     DBSession.delete(d)
     DBSession.flush()
-
-def get_dataset_scenarios(dataset_id, **kwargs):
-    d = DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).one()
-    scenarios = {}
-    for rs in d.resourcescenarios:
-        if rs.scenario.scenario_id not in scenarios.keys():
-            scenarios[rs.scenario.scenario_id] = rs.scenario
-
-    return scenarios.items()

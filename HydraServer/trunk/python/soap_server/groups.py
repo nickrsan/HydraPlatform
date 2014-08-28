@@ -36,7 +36,7 @@ class ResourceGroupService(HydraService):
                                                    **ctx.in_header.__dict__)
         return ResourceGroup(group_i)
 
-    @rpc(Integer, ResourceGroup, _returns=Unicode)
+    @rpc(Integer, _returns=Unicode)
     def delete_resourcegroup(ctx, group_id):
         """
             Add a new group to a scenario.

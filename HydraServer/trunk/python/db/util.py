@@ -94,7 +94,7 @@ def login_user(username, password):
     except NoResultFound:
        raise HydraError(username)
 
-    if bcrypt.hashpw(password, user_i.password) == user_i.password:
+    if bcrypt.hashpw(password.encode('utf-8'), user_i.password.encode('utf-8')) == user_i.password.encode('utf-8'):
         session_id = '%x' % random.randint(1<<124, (1<<128)-1)
     else:
        raise HydraError(username)

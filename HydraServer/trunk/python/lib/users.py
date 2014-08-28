@@ -52,7 +52,7 @@ def add_user(user,**kwargs):
     if user_id is not None:
         raise HydraError("User %s already exists!"%user.username)
 
-    u.password = bcrypt.hashpw(user.password, bcrypt.gensalt())
+    u.password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
     
     DBSession.add(u)
     DBSession.flush()
@@ -76,7 +76,7 @@ def update_user_password(new_pwd_user_id, new_password,**kwargs):
     #check_perm(kwargs.get('user_id'), 'edit_user')
     try:
         user_i = DBSession.query(User).filter(User.user_id==new_pwd_user_id).one()
-        user_i.password = bcrypt.hashpw(new_password, bcrypt.gensalt())
+        user_i.password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
         return user_i
     except InvalidRequestError:
         raise ResourceNotFoundError("User (id=%s) not found"%(new_pwd_user_id))

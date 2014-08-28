@@ -917,11 +917,16 @@ class Scenario(Base):
 
     def add_resource_scenario(self, resource_attr, dataset=None, source=None):
         rs_i = ResourceScenario()
-        rs_i.resource_attr_id = resource_attr.resource_attr_id
-        rs_i.dataset_id       = dataset.dataset_id
-        rs_i.dataset = dataset
+        if resource_attr.resource_attr_id is None:
+            rs_i.resourceattr = resource_attr 
+        else:
+            rs_i.resource_attr_id = resource_attr.resource_attr_id
+
+        if dataset.dataset_id is None:
+            rs_i.dataset = dataset
+        else:
+            rs_i.dataset_id = dataset.dataset_id
         rs_i.source = source
-        rs_i.resourceattr = resource_attr 
         self.resourcescenarios.append(rs_i)
 
     def add_resourcegroup_item(self, ref_key, resource, group_id):

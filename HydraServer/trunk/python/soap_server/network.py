@@ -169,7 +169,7 @@ class NetworkService(HydraService):
             ret_group = ResourceGroup(group)
             return ret_group
 
-    @rpc(Integer, Boolean, _returns=Unicode)
+    @rpc(Integer, _returns=Unicode)
     def delete_network(ctx, network_id):
         """
         Set status of network for delete or un-delete
@@ -178,7 +178,7 @@ class NetworkService(HydraService):
         network.set_network_status(network_id, 'X', **ctx.in_header.__dict__)
         return 'OK'
 
-    @rpc(Integer, Boolean, _returns=Unicode)
+    @rpc(Integer, _returns=Unicode)
     def activate_network(ctx, network_id):
         """
         Deletes a network. This does not remove the network from the DB. It
@@ -354,7 +354,7 @@ class NetworkService(HydraService):
         network.set_link_status(link_id, 'X', **ctx.in_header.__dict__)
         return 'OK'
 
-    @rpc(Integer, Boolean, _returns=Unicode)
+    @rpc(Integer, _returns=Unicode)
     def activate_link(ctx, link_id):
         """
             Set the status of a link to 'X'

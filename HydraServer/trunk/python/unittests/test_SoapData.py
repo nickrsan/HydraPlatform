@@ -248,7 +248,7 @@ class DataGroupTest(test_SoapServer.SoapServerTest):
 
         group = self.client.factory.create('ns1:DatasetGroup')
 
-        grp_dataset_ids = self.client.factory.create("integerArray")
+        grp_dataset_ids = self.client.factory.create("ns1:integerArray")
         dataset_id = scenario_data.Dataset[0].id
         grp_dataset_ids.integer.append(dataset_id)
         for d in scenario_data.Dataset:
@@ -573,9 +573,9 @@ class RetrievalTest(test_SoapServer.SoapServerTest):
     def test_get_node_attribute_data(self):
         net = self.create_network_with_data()
         nodes = net.nodes.Node
-        nodearray = self.client.factory.create('integerArray')
+        nodearray = self.client.factory.create("integerArray")
         nodearray.integer = [n.id for n in nodes]
-        attrarray = self.client.factory.create('integerArray')
+        attrarray = self.client.factory.create("integerArray")
         attrarray.integer = [nodes[0].attributes.ResourceAttr[0].attr_id]
 
         attr_data = self.client.service.get_node_attribute_data(nodearray, attrarray)
