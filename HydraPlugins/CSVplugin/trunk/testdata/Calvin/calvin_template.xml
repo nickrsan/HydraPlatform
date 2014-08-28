@@ -1,5 +1,5 @@
 <template_definition>
-    <template_name>TemplateType from Network Calvin</template_name>
+    <template_name>Calvin Model</template_name>
 	<layout>	    
         <item>
             <name>grouping</name>
@@ -22,7 +22,7 @@
 								<name>Surface storage</name>
 								<description>Surface storage</description>
 								<displayname>Surface storage</displayname>
-								<image>Storage16.png</image>
+								<image>Reservoir16.png</image>
 							</group>
 							<group>
 								<name>Sink</name>
@@ -101,7 +101,7 @@
 								<name>Diversion</name>
 								<description>Diversion</description>
 								<displayname>Diversion</displayname>
-								<image>RedSolidline.png</image>
+								<image>RedSolidline16.png</image>
 							</group>
 						</groups>				
 				    </category>	
@@ -117,6 +117,7 @@
                 <name>Model</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -144,111 +145,133 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactor</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorName_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Categories_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -276,111 +299,133 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
-            <attribute>
+			<attribute>
                 <name>InitialStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactor</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorName_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Categories_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -408,111 +453,133 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactor</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorName_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Categories_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -540,111 +607,133 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactor</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorName_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Categories_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -672,111 +761,133 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactor</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorName_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Categories_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -804,111 +915,133 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactor</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorName_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Categories_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -936,111 +1069,133 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactor</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorName_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Categories_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -1068,111 +1223,133 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactor</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorName_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Categories_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -1200,111 +1377,133 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactor</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorName_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Categories_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -1332,111 +1531,133 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>InitialStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactor</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AreaCapFactorMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorage</name>
                 <dimension>Volume</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EndingStorageMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>EvaporationRatePathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ElevationAreaCapacityPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorName_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Categories_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
         <resource>
@@ -1464,41 +1685,49 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Inflow</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Inflow_path</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Inflow_TS</name>
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
+				<data_type>timeseries</data_type>
             </attribute>
             <attribute>
                 <name>Inflow_MID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Info</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Inflow_Author</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -1526,41 +1755,49 @@
                 <name>PRMName</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Inflow</name>
                 <dimension/>
                 <is_var>N</is_var>
-            </attribute>
+				<data_type>scalar</data_type>
+			</attribute>
             <attribute>
                 <name>Inflow_path</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Inflow_TS</name>
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
+				<data_type>timeseries</data_type>
             </attribute>
             <attribute>
                 <name>Inflow_MID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Info</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
-            <attribute>
+             <attribute>
                 <name>Inflow_Author</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
         </resource>
         <resource>
@@ -1588,156 +1825,187 @@
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>OriginNode</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>TerminalNode</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Amplitude</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AmplitudeMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AmplitudeMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Unit cost</name>
                 <dimension>Unit price (volume)</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>CostMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>CostMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>CostMethod</name>
 				<dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>CostMethod_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>LowerBound</name>
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>UpperBound</name>
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMonthlyID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMonthlyMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMonthlyMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMonthlyID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMonthlyMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMonthlyMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ConstrainedFlowPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ConstrainedFlowPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ConstrainedFlowPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundPathnameMID_text</name>
@@ -1748,31 +2016,37 @@
                 <name>ConstraintMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ConstraintMethod_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Boundary</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -1800,161 +2074,193 @@
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>OriginNode</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>TerminalNode</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Amplitude</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AmplitudeMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AmplitudeMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Cost</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>CostMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>CostMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>CostMethod</name>
 				<dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>CostMethod_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>LowerBound</name>
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>UpperBound</name>
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMonthlyID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMonthlyMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMonthlyMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMonthlyID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMonthlyMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMonthlyMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ConstrainedFlowPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ConstrainedFlowPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ConstrainedFlowPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ConstraintMethod</name>
@@ -1965,11 +2271,13 @@
                 <name>ConstraintMethod_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID_text</name>
@@ -1980,11 +2288,13 @@
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Boundary</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
         </resource>
 		<resource>
@@ -2012,176 +2322,211 @@
                 <name>Type_ID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>OriginNode</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>TerminalNode</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Amplitude</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AmplitudeMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AmplitudeMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>Cost</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>CostMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>CostMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>CostMethod</name>
 				<dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>CostMethod_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>LowerBound</name>
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>UpperBound</name>
                 <dimension>Volumetric flow rate</dimension>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMonthlyID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMonthlyMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundMonthlyMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMonthlyID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMonthlyMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundMonthlyMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ConstrainedFlowPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ConstrainedFlowPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ConstrainedFlowPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>LowerBoundPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundPathname</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundPathnameMID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>UpperBoundPathnameMID_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>
             </attribute>
             <attribute>
                 <name>ConstraintMethod</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>ConstraintMethod_text</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>descriptor</data_type>			
             </attribute>
             <attribute>
                 <name>AuthorID</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>AuthorID_text</name>
@@ -2192,11 +2537,13 @@
                 <name>Categories</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Boundary</name>
                 <dimension/>
                 <is_var>N</is_var>
+				<data_type>scalar</data_type>
             </attribute>
         </resource>
     </resources>
