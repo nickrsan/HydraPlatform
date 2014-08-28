@@ -110,6 +110,9 @@ class ImportWML(object):
         nodes = self.call('get_all_node_data', {'network_id':2,'scenario_id': 2})
         links = self.call('get_all_link_data', {'network_id':2,'scenario_id': 2})
 
+        nodes = self.call('get_all_node_data', {'network_id':3,'scenario_id': 3})
+        links = self.call('get_all_link_data', {'network_id':3,'scenario_id': 3})
+
         timeseries_xml_data=None
         if file == None:
             log.warn("No file specified")

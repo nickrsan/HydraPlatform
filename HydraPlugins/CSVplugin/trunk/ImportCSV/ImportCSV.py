@@ -1134,13 +1134,13 @@ class ImportCSV(object):
                     else:
                         filedata = self.file_dict[full_file_path]
 
-
-                    if filedata[0].lower().replace(' ', '').startswith('arraydescription'):
+                    value_header = filedata[0].lower().replace(' ', '')
+                    if value_header.startswith('arraydescription') or value_header == '':
                         arr_struct = filedata[0].strip()
                         arr_struct = arr_struct.split(',')
-                        arr_struct = "|".join(arr_struct[2:])
+                        arr_struct = "|".join(arr_struct[3:])
                         filedata = filedata[1:]
-                    elif filedata[0].lower().replace(' ', '').startswith('timeseriesdescription'):
+                    elif filedata[0].lower().replace(' ', '').startswith('timeseriesdescription') or value_header == '':
                         arr_struct = filedata[0].strip()
                         arr_struct = arr_struct.split(',')
                         arr_struct = "|".join(arr_struct[3:])

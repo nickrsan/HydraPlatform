@@ -1274,12 +1274,11 @@ def get_attributes_for_resource(network_id, scenario_id, ref_key, **kwargs):
 
     metadata = DBSession.query(Metadata).filter(
                             ResourceAttr.ref_key==ref_key,
-                            ResourceScenario.resource_attr_id == ResourceAttr.resource_attr_id,
+                            ResourceScenario.resource_attr_id==ResourceAttr.resource_attr_id,
                             ResourceScenario.scenario_id==scenario_id,
                             Dataset.dataset_id==ResourceScenario.dataset_id,
                             Metadata.dataset_id==Dataset.dataset_id).all()
     
-    metadata = []
     metadata_dict = {}
     for m in metadata:
         if metadata_dict.get(m.dataset_id):
