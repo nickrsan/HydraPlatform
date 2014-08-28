@@ -1128,16 +1128,12 @@ class ImportCSV(object):
                         with open(full_file_path) as f:
                             filedata = []
                             for l in f:
-                                #The name of the resource is how to identify the data for it.
-                                #Once this the correct line(s) has been identified, remove the
-                                #name from the start of the line
                                 l = l.strip().replace('\n', '').replace('\r', '')
-                                if l.startswith(resource_name):
-                                    l = l[l.find(',')+1:]
-                                    filedata.append(l)
+                                filedata.append(l)
                             self.file_dict[full_file_path] = filedata
                     else:
                         filedata = self.file_dict[full_file_path]
+
 
                     if filedata[0].lower().replace(' ', '').startswith('arraydescription'):
                         arr_struct = filedata[0].strip()
@@ -1150,6 +1146,14 @@ class ImportCSV(object):
                         arr_struct = "|".join(arr_struct[3:])
                         filedata = filedata[1:]
                     
+                    #The name of the resource is how to identify the data for it.
+                    #Once this the correct line(s) has been identified, remove the
+                    #name from the start of the line
+                    data = []
+                    for l in filedata:
+                        if l.startswith("%s,"%resource_name):
+                            data.append(l[l.find(',')+1:])
+
                     if len(filedata) == 0:
                         log.info('%s: No data found in file %s' %
                                      (resource_name, full_file_path))
@@ -1157,14 +1161,17 @@ class ImportCSV(object):
                                              (resource_name, full_file_path))
                         return None
                     else:
-                        if self.is_timeseries(filedata):
-                            ts_type, ts = self.create_timeseries(filedata, restriction_dict)
+                        if self.is_timeseries(data):
+                            ts_type, ts = self.create_timeseries(data, restriction_dict)
                             dataset['type'] = ts_type 
                             dataset['value'] = ts
                         else:
                             dataset['type'] = 'array'
                             if len(filedata) > 0:
-                                dataset['value'] = self.create_array(filedata[0], restriction_dict)
+                                try:
+                                    dataset['value'] = self.create_array(data[0], restriction_dict)
+                                except Exception, e:
+                                    raise HydraPluginError("There is a value error in %s. Please check value %s is correct."%(value, data[0]))
                             else:
                                 dataset['value'] = None
                 else:
@@ -1306,7 +1313,12 @@ class ImportCSV(object):
 
         #Reshape the array back to its correct dimensions
         arr = array(dataset)
-        arr = reshape(arr, array_shape)
+        try:
+            arr = reshape(arr, array_shape)
+        except:
+            raise HydraPluginError("You have an error with your array data."
+                                   " Please ensure that the dimension is correct."
+                                   " (array = %s, dimension = %s)" %(arr, array_shape))
 
         self.validate_value(arr.tolist(), restriction_dict)
 
