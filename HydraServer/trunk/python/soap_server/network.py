@@ -465,7 +465,9 @@ class NetworkService(HydraService):
             Returns a list of ResourceAttr objects, each with a resourcescenario
             attribute, containing the actual value for the scenario specified.
         """
+        start = datetime.datetime.now()
         node_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'NODE', node_ids)
+        log.info("Qry done in %s", (datetime.datetime.now() - start))
         start = datetime.datetime.now()
         return_ras = []
         for nodeattr in node_resourceattrs:
@@ -473,7 +475,7 @@ class NetworkService(HydraService):
             x = ResourceScenario(nodeattr.resourcescenario, ra.attr_id)
             ra.resourcescenario = x
             return_ras.append(ra)
-        log.info("Done in %s", (datetime.datetime.now() - start))
+        log.info("Return vals built in %s", (datetime.datetime.now() - start))
 
         return return_ras
 
@@ -485,13 +487,16 @@ class NetworkService(HydraService):
             Returns a list of ResourceAttr objects, each with a resourcescenario
             attribute, containing the actual value for the scenario specified.
         """
+        start = datetime.datetime.now()
         link_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'LINK', link_ids)
+        log.info("Qry done in %s", (datetime.datetime.now() - start))
+        start = datetime.datetime.now()
         return_ras = []
         for linkattr in link_resourceattrs:
             ra = ResourceAttr(linkattr)
             ra.resourcescenario = ResourceScenario(linkattr.resourcescenario, ra.attr_id)
             return_ras.append(ra)
-
+        log.info("Return vals built in %s", (datetime.datetime.now() - start))
         return return_ras
 
     @rpc(Integer(), Integer(), Integer(max_occurs='unbounded'), _returns=SpyneArray(ResourceAttr))

@@ -1268,19 +1268,43 @@ def get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=None, 
     except NoResultFound:
         raise HydraError("Scenario %s not found."%scenario_id)
 
-    rs_qry = DBSession.query(ResourceAttr).join(ResourceScenario).join(ResourceScenario.dataset).filter(
+    rs_qry = DBSession.query(ResourceAttr).join(ResourceScenario)\
+            .join(ResourceScenario.dataset).filter(
                             ResourceScenario.scenario_id==scenario_id,
-                            ResourceAttr.ref_key==ref_key).options(joinedload_all('resourcescenario.dataset', innerjoin=True)).options(noload('resourcescenario.dataset.metadata'))
+                            ResourceAttr.ref_key==ref_key)\
+            .options(joinedload_all('resourcescenario.dataset', innerjoin=True))\
+            .options(noload('resourcescenario.dataset.metadata'))
 
+    log.info("Querying %s data",ref_key)
+    all_resource_attrs = rs_qry.all()
+    log.info("Data retrieved")
+    resource_attrs   = []
+    dataset_ids      = []
     if ref_ids is not None:
-        if ref_key == 'NODE':
-            rs_qry = rs_qry.filter(ResourceAttr.node_id.in_(ref_ids))
-        elif ref_key == 'LINK':
-            rs_qry = rs_qry.filter(ResourceAttr.link_id.in_(ref_ids))
-        elif ref_key == 'GROUP':
-            rs_qry = rs_qry.filter(ResourceAttr.group_id.in_(ref_ids))
+        log.info("Pulling out requested info")
+        for r in all_resource_attrs:
+            if ref_key == 'NODE':
+                if r.node_id in ref_ids:
+                    resource_attrs.append(r)
+                    if r.resourcescenario.dataset_id not in dataset_ids:
+                        dataset_ids.append(r.resourcescenario.dataset_id)
+            elif ref_key == 'LINK':
+                if r.link_id in ref_ids:
+                    resource_attrs.append(r)
+                    if r.resourcescenario.dataset_id not in dataset_ids:
+                        dataset_ids.append(r.resourcescenario.dataset_id)
+            elif ref_key == 'GROUP':
+                if r.group_id in ref_ids:
+                    resource_attrs.append(r)
+                    if r.resourcescenario.dataset_id not in dataset_ids:
+                        dataset_ids.append(r.resourcescenario.dataset_id)
+            else:
+                resource_attrs.append(r)
+        log.info("Requested info pulled out.")
+    else:
+        resource_attrs = all_resource_attrs
 
-    resource_attrs = rs_qry.all()
+    log.info("Retrieved %s resource attrs", len(resource_attrs))
 
     metadata_qry = DBSession.query(Metadata).filter(
                             ResourceAttr.ref_key==ref_key,
@@ -1289,16 +1313,19 @@ def get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=None, 
                             Dataset.dataset_id==ResourceScenario.dataset_id,
                             Metadata.dataset_id==Dataset.dataset_id)
     
+    log.info("Querying node metadata")
+    all_metadata = metadata_qry.all()
+    log.info("Node metadata retrieved")
+
+    metadata   = []
     if ref_ids is not None:
-        if ref_key == 'NODE':
-            metadata_qry = metadata_qry.filter(ResourceAttr.node_id.in_(ref_ids))
-        elif ref_key == 'LINK':
-            metadata_qry = metadata_qry.filter(ResourceAttr.link_id.in_(ref_ids))
-        elif ref_key == 'GROUP':
-            metadata_qry = metadata_qry.filter(ResourceAttr.group_id.in_(ref_ids))
-
-    metadata = metadata_qry.all()
-
+        for m in all_metadata:
+            if m.dataset_id in dataset_ids:
+                metadata.append(m)
+    else:
+       metadata = all_metadata
+    
+    log.info("%s metadata items retrieved", len(metadata))
     metadata_dict = {}
     for m in metadata:
         if metadata_dict.get(m.dataset_id):
