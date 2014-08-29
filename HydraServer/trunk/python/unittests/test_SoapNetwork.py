@@ -804,10 +804,27 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             assert ra.resourcescenario is not None
             assert ra.id in node_ras
 
+        node_id_filter = self.client.factory.create('integerArray')
+        node_id_filter.integer.append(net.nodes.Node[0].id)
+        node_id_filter.integer.append(net.nodes.Node[1].id)
+        new_node_ras = self.client.service.get_all_node_data(net.id, s.id, node_id_filter)
+        for ra in new_node_ras.ResourceAttr:
+            assert ra.resourcescenario is not None
+            assert ra.id in node_ras
+
         new_link_ras = self.client.service.get_all_link_data(net.id, s.id)
         for ra in new_link_ras.ResourceAttr:
             assert ra.resourcescenario is not None
             assert ra.id in link_ras
+
+        link_id_filter = self.client.factory.create('integerArray')
+        link_id_filter.integer.append(net.links.Link[0].id)
+        link_id_filter.integer.append(net.links.Link[1].id)
+        new_link_ras = self.client.service.get_all_link_data(net.id, s.id, link_id_filter)
+        for ra in new_link_ras.ResourceAttr:
+            assert ra.resourcescenario is not None
+            assert ra.id in link_ras
+
 
 
 if __name__ == '__main__':

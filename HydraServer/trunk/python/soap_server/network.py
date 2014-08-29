@@ -453,15 +453,15 @@ class NetworkService(HydraService):
         """
         return network.clean_up_network(network_id, **ctx.in_header.__dict__)
 
-    @rpc(Integer, Integer, _returns=SpyneArray(ResourceAttr))
-    def get_all_node_data(ctx, network_id, scenario_id):
+    @rpc(Integer, Integer, SpyneArray(Integer, default=None), _returns=SpyneArray(ResourceAttr))
+    def get_all_node_data(ctx, network_id, scenario_id, node_ids):
         """
             Return all the attributes for all the nodes in a given network and a 
             given scenario.
             Returns a list of ResourceAttr objects, each with a resourcescenario
             attribute, containing the actual value for the scenario specified.
         """
-        node_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'NODE')
+        node_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'NODE', node_ids)
         start = datetime.datetime.now()
         return_ras = []
         for nodeattr in node_resourceattrs:
@@ -473,15 +473,15 @@ class NetworkService(HydraService):
 
         return return_ras
 
-    @rpc(Integer, Integer, _returns=SpyneArray(ResourceAttr))
-    def get_all_link_data(ctx, network_id, scenario_id):
+    @rpc(Integer, Integer, SpyneArray(Integer, default=None), _returns=SpyneArray(ResourceAttr))
+    def get_all_link_data(ctx, network_id, scenario_id, link_ids):
         """
             Return all the attributes for all the links in a given network and a 
             given scenario.
             Returns a list of ResourceAttr objects, each with a resourcescenario
             attribute, containing the actual value for the scenario specified.
         """
-        link_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'LINK')
+        link_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'LINK', link_ids)
         return_ras = []
         for linkattr in link_resourceattrs:
             ra = ResourceAttr(linkattr)
@@ -490,8 +490,8 @@ class NetworkService(HydraService):
 
         return return_ras
 
-    @rpc(Integer, Integer, _returns=SpyneArray(ResourceAttr))
-    def get_all_group_data(ctx, network_id, scenario_id):
+    @rpc(Integer, Integer, SpyneArray(Integer), _returns=SpyneArray(ResourceAttr))
+    def get_all_group_data(ctx, network_id, scenario_id, group_ids):
         """
             Return all the attributes for all the groups in a given network and a 
             given scenario.
@@ -499,7 +499,7 @@ class NetworkService(HydraService):
             attribute, containing the actual value for the scenario specified.
         """
 
-        group_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'GROUP')
+        group_resourceattrs = network.get_attributes_for_resource(network_id, scenario_id, 'GROUP', group_ids)
         return_ras = []
         for groupattr in group_resourceattrs:
             ra = ResourceAttr(groupattr)

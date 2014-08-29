@@ -19,7 +19,7 @@ from HydraLib import config
 from zope.sqlalchemy import ZopeTransactionExtension
 
 import transaction
-
+from sqlalchemy.pool import StaticPool
 import logging
 log = logging.getLogger(__name__)
 
@@ -28,7 +28,8 @@ DeclarativeBase = declarative_base()
 
 db_url = config.get('mysqld', 'url')
 log.info("Connecting to database: %s", db_url)
-engine = create_engine(db_url) 
+engine = create_engine(db_url, connect_args={'check_same_thread':False},
+                    poolclass=StaticPool) 
 from sqlalchemy.orm import sessionmaker
 session = sessionmaker()
 

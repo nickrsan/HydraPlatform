@@ -1256,7 +1256,7 @@ def clean_up_network(network_id, **kwargs):
     DBSession.flush()
     return 'OK'
 
-def get_attributes_for_resource(network_id, scenario_id, ref_key, **kwargs):
+def get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=None, **kwargs):
 
     try:
         DBSession.query(Network).filter(Network.network_id==network_id).one()
@@ -1268,17 +1268,37 @@ def get_attributes_for_resource(network_id, scenario_id, ref_key, **kwargs):
     except NoResultFound:
         raise HydraError("Scenario %s not found."%scenario_id)
 
-    resource_attrs = DBSession.query(ResourceAttr).join(ResourceScenario).join(ResourceScenario.dataset).filter(
+    rs_qry = DBSession.query(ResourceAttr).join(ResourceScenario).join(ResourceScenario.dataset).filter(
                             ResourceScenario.scenario_id==scenario_id,
-                            ResourceAttr.ref_key==ref_key).options(joinedload_all('resourcescenario.dataset', innerjoin=True)).options(noload('resourcescenario.dataset.metadata')).all()
+                            ResourceAttr.ref_key==ref_key).options(joinedload_all('resourcescenario.dataset', innerjoin=True)).options(noload('resourcescenario.dataset.metadata'))
 
-    metadata = DBSession.query(Metadata).filter(
+    if ref_ids is not None:
+        if ref_key == 'NODE':
+            rs_qry = rs_qry.filter(ResourceAttr.node_id.in_(ref_ids))
+        elif ref_key == 'LINK':
+            rs_qry = rs_qry.filter(ResourceAttr.link_id.in_(ref_ids))
+        elif ref_key == 'GROUP':
+            rs_qry = rs_qry.filter(ResourceAttr.group_id.in_(ref_ids))
+
+    resource_attrs = rs_qry.all()
+
+    metadata_qry = DBSession.query(Metadata).filter(
                             ResourceAttr.ref_key==ref_key,
                             ResourceScenario.resource_attr_id==ResourceAttr.resource_attr_id,
                             ResourceScenario.scenario_id==scenario_id,
                             Dataset.dataset_id==ResourceScenario.dataset_id,
-                            Metadata.dataset_id==Dataset.dataset_id).all()
+                            Metadata.dataset_id==Dataset.dataset_id)
     
+    if ref_ids is not None:
+        if ref_key == 'NODE':
+            metadata_qry = metadata_qry.filter(ResourceAttr.node_id.in_(ref_ids))
+        elif ref_key == 'LINK':
+            metadata_qry = metadata_qry.filter(ResourceAttr.link_id.in_(ref_ids))
+        elif ref_key == 'GROUP':
+            metadata_qry = metadata_qry.filter(ResourceAttr.group_id.in_(ref_ids))
+
+    metadata = metadata_qry.all()
+
     metadata_dict = {}
     for m in metadata:
         if metadata_dict.get(m.dataset_id):
