@@ -453,7 +453,11 @@ class NetworkService(HydraService):
         """
         return network.clean_up_network(network_id, **ctx.in_header.__dict__)
 
-    @rpc(Integer, Integer, SpyneArray(Integer, default=None), _returns=SpyneArray(ResourceAttr))
+    @rpc(Integer(), _returns=SpyneArray(Unicode))
+    def test(ctx, test_id):
+        return ["1", "2", "3", "4", "5"]
+        
+    @rpc(Integer(), Integer(), Integer(max_occurs='unbounded'), _returns=SpyneArray(ResourceAttr))
     def get_all_node_data(ctx, network_id, scenario_id, node_ids):
         """
             Return all the attributes for all the nodes in a given network and a 
@@ -473,7 +477,7 @@ class NetworkService(HydraService):
 
         return return_ras
 
-    @rpc(Integer, Integer, SpyneArray(Integer, default=None), _returns=SpyneArray(ResourceAttr))
+    @rpc(Integer(), Integer(), Integer(max_occurs='unbounded'), _returns=SpyneArray(ResourceAttr))
     def get_all_link_data(ctx, network_id, scenario_id, link_ids):
         """
             Return all the attributes for all the links in a given network and a 
@@ -490,7 +494,7 @@ class NetworkService(HydraService):
 
         return return_ras
 
-    @rpc(Integer, Integer, SpyneArray(Integer), _returns=SpyneArray(ResourceAttr))
+    @rpc(Integer(), Integer(), Integer(max_occurs='unbounded'), _returns=SpyneArray(ResourceAttr))
     def get_all_group_data(ctx, network_id, scenario_id, group_ids):
         """
             Return all the attributes for all the groups in a given network and a 
