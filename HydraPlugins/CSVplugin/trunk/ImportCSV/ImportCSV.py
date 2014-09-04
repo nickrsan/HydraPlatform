@@ -1190,11 +1190,14 @@ class ImportCSV(object):
         resourcescenario['value'] = dataset
         
         m = []
-        if metadata:
-            for k, v in metadata.items():
-                m.append(dict(name=k,value=v))
         if arr_struct:
             m.append(dict(name='data_struct',value=arr_struct))
+        if metadata:
+            for k, v in metadata.items():
+                if k == 'data_struct' and arr_struct:
+                    continue
+                m.append(dict(name=k,value=v))
+
 
         dataset['metadata'] = m
 

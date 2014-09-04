@@ -248,7 +248,7 @@ class DataGroupTest(test_SoapServer.SoapServerTest):
 
         group = self.client.factory.create('ns1:DatasetGroup')
 
-        grp_dataset_ids = self.client.factory.create("ns1:integerArray")
+        grp_dataset_ids = self.client.factory.create("integerArray")
         dataset_id = scenario_data.Dataset[0].id
         grp_dataset_ids.integer.append(dataset_id)
         for d in scenario_data.Dataset:

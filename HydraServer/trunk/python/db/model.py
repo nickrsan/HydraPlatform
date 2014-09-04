@@ -25,6 +25,7 @@ from sqlalchemy.sql.expression import case
 from sqlalchemy import UniqueConstraint, and_
 
 import pandas as pd
+from pandas.tseries.index import DatetimeIndex
 
 import logging
 log = logging.getLogger(__name__)
@@ -41,7 +42,8 @@ def get_timestamp(ordinal):
 #***************************************************
 
 class Dataset(Base):
-
+    """
+    """
     __tablename__='tDataset'
 
     dataset_id = Column(Integer(), primary_key=True, index=True, nullable=False)
@@ -303,6 +305,8 @@ class Dataset(Base):
                              (user_id, self.dataset_id))
 
 class DatasetGroup(Base):
+    """
+    """
 
     __tablename__='tDatasetGroup'
 
@@ -311,6 +315,8 @@ class DatasetGroup(Base):
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
     
 class DatasetGroupItem(Base):
+    """
+    """
 
     __tablename__='tDatasetGroupItem'
 
@@ -322,6 +328,8 @@ class DatasetGroupItem(Base):
 
 
 class TimeSeriesData(Base):
+    """
+    """
 
     __tablename__='tTimeSeriesData'
 
@@ -332,6 +340,8 @@ class TimeSeriesData(Base):
     timeseries = relationship('Dataset', backref=backref("timeseriesdata", order_by=dataset_id, cascade="all, delete-orphan"))
 
 class Metadata(Base):
+    """
+    """
 
     __tablename__='tMetadata'
 
@@ -348,6 +358,8 @@ class Metadata(Base):
 #********************************************************
 
 class Attr(Base):
+    """
+    """
 
     __tablename__='tAttr'
 
@@ -357,6 +369,8 @@ class Attr(Base):
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
 
 class AttrMap(Base):
+    """
+    """
 
     __tablename__='tAttrMap'
 
@@ -367,6 +381,8 @@ class AttrMap(Base):
     attr_b = relationship("Attr", foreign_keys=[attr_id_b], backref=backref('maps_from', order_by=attr_id_b))
 
 class Template(Base):
+    """
+    """
 
     __tablename__='tTemplate'
 
@@ -375,6 +391,8 @@ class Template(Base):
     layout = Column(Text(1000))
     
 class TemplateType(Base):
+    """
+    """
 
     __tablename__='tTemplateType'
 
@@ -388,6 +406,8 @@ class TemplateType(Base):
     template = relationship('Template', backref=backref("templatetypes", order_by=type_id, cascade="all, delete-orphan"))
     
 class TypeAttr(Base):
+    """
+    """
 
     __tablename__='tTypeAttr'
 
@@ -405,6 +425,8 @@ class TypeAttr(Base):
     
 
 class ResourceAttr(Base):
+    """
+    """
 
     __tablename__='tResourceAttr'
 
@@ -453,6 +475,8 @@ class ResourceAttr(Base):
             return self.project_id
 
 class ResourceType(Base):
+    """
+    """
 
     __tablename__='tResourceType'
     __table_args__ = (
@@ -509,6 +533,8 @@ class ResourceType(Base):
 #*****************************************************
 
 class Project(Base):
+    """
+    """
 
     __tablename__='tProject'
     ref_key = 'PROJECT'
@@ -602,6 +628,8 @@ class Project(Base):
 
 
 class Network(Base):
+    """
+    """
 
     __tablename__='tNetwork'
     ref_key = 'NETWORK'
@@ -745,6 +773,8 @@ class Network(Base):
                              (user_id, self.network_id))
 
 class Link(Base):
+    """
+    """
 
     __tablename__='tLink'
 
@@ -775,6 +805,8 @@ class Link(Base):
         return attr
 
 class Node(Base):
+    """
+    """
 
     __tablename__='tNode'
     ref_key = 'NODE'
@@ -802,6 +834,8 @@ class Node(Base):
         return attr
 
 class ResourceGroup(Base):
+    """
+    """
 
     __tablename__='tResourceGroup'
 
@@ -826,6 +860,8 @@ class ResourceGroup(Base):
         return attr
     
 class ResourceGroupItem(Base):
+    """
+    """
 
     __tablename__='tResourceGroupItem'
 
@@ -866,6 +902,8 @@ class ResourceGroupItem(Base):
             return self.subgroup_id
 
 class ResourceScenario(Base):
+    """
+    """
 
     __tablename__='tResourceScenario'
 
@@ -898,6 +936,8 @@ class ResourceScenario(Base):
         return dataset
 
 class Scenario(Base):
+    """
+    """
 
     __tablename__='tScenario'
 
@@ -944,6 +984,8 @@ class Scenario(Base):
 #Ownership & Permissions
 #***************************************************
 class ProjectOwner(Base):
+    """
+    """
 
     __tablename__='tProjectOwner'
 
@@ -958,6 +1000,8 @@ class ProjectOwner(Base):
     project = relationship('Project', backref=backref('owners', order_by=user_id, uselist=True, cascade="all, delete-orphan"))
 
 class NetworkOwner(Base):
+    """
+    """
 
     __tablename__='tNetworkOwner'
 
@@ -972,6 +1016,8 @@ class NetworkOwner(Base):
     network = relationship('Network', backref=backref('owners', order_by=user_id, uselist=True, cascade="all, delete-orphan"))
 
 class DatasetOwner(Base):
+    """
+    """
 
     __tablename__='tDatasetOwner'
 
@@ -986,6 +1032,8 @@ class DatasetOwner(Base):
     dataset = relationship('Dataset', backref=backref('owners', order_by=user_id, uselist=True, cascade="all, delete-orphan"))
 
 class Perm(Base):
+    """
+    """
 
     __tablename__='tPerm'
 
@@ -996,6 +1044,8 @@ class Perm(Base):
     roleperms = relationship('RolePerm', lazy='joined')
     
 class Role(Base):
+    """
+    """
 
     __tablename__='tRole'
 
@@ -1007,6 +1057,8 @@ class Role(Base):
     roleusers = relationship('RoleUser', lazy='joined', cascade='all')
     
 class RolePerm(Base):
+    """
+    """
 
     __tablename__='tRolePerm'
 
@@ -1018,6 +1070,8 @@ class RolePerm(Base):
     role = relationship('Role', lazy='joined')
     
 class RoleUser(Base):
+    """
+    """
 
     __tablename__='tRoleUser'
 
@@ -1029,6 +1083,8 @@ class RoleUser(Base):
     role = relationship('Role', lazy='joined')
 
 class User(Base):
+    """
+    """
 
     __tablename__='tUser'
 
