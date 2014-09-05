@@ -147,17 +147,16 @@ class ResourceData(ComplexModel):
        
         ra = resourceattr
 
-        self.attr_id = ra.attr_id
-        self.resource_attr_id = ra.resource_attr_id
-        self.ref_key = ra.ref_key
-        self.ref_id  = getattr(ra, ref_id_map[self.ref_key])
+        self.attr_id = str(ra.attr_id)
+        self.resource_attr_id = str(ra.resource_attr_id)
+        self.ref_key = str(ra.ref_key)
+        self.ref_id  = str(getattr(ra, ref_id_map[self.ref_key]))
 
-        self.resource_attr_id = ra.resource_attr_id
         self.source = ra.source
-        self.scenario_id = ra.scenario_id
+        self.scenario_id = str(ra.scenario_id)
 
         self.dataset_locked    = ra.locked
-        self.dataset_id        = ra.dataset_id
+        self.dataset_id        = str(ra.dataset_id)
         self.dataset_type      = ra.data_type
         self.dataset_name      = ra.data_name
 
@@ -230,14 +229,14 @@ class Dataset(ComplexModel):
             Turn the value of an incoming dataset into a hydra-friendly value.
         """
 
-        is_soap_req = False
         #attr_data.value is a dictionary,
         #but the keys have namespaces which must be stripped.
         data = str(self.value)
         if data.find('{%s}'%NS) >= 0:
             data = data.replace('{%s}'%NS, '')
-            is_soap_req = True
+
         data = eval(data)
+        log.debug("Parsing %s", data)
         
         if data is None:
             log.warn("Cannot parse dataset. No value specified.")
@@ -251,19 +250,20 @@ class Dataset(ComplexModel):
             value.append(data[name])
 
         if data_type == 'descriptor':
-            if is_soap_req:
-                return data['desc_val'][0]
-            else:
-                return data['desc_val']
+            descriptor = data['desc_val'];
+            if type(descriptor) is list:
+                descriptor = descriptor[0]
+            return descriptor
         elif data_type == 'timeseries':
-
+            is_soap_req=False
             # The brand new way to parse time series data:
             ts = []
             for ts_val in data['ts_values']:
                 #The value is a list, so must get index 0
                 timestamp = ts_val['ts_time']
-                if is_soap_req:
+                if type(timestamp) is list:
                     timestamp = timestamp[0]
+                    is_soap_req = True
                 # Check if we have received a seasonal time series first
                 arr_data = ts_val['ts_value']
                 if is_soap_req:
@@ -287,7 +287,7 @@ class Dataset(ComplexModel):
             start_time = data['start_time']
             frequency  = data['frequency']
             arr_data   = data['arr_data']
-            if is_soap_req:
+            if type(start_time) is list:
                 start_time = start_time[0]
                 frequency = frequency[0]
                 arr_data = arr_data[0]
@@ -303,13 +303,13 @@ class Dataset(ComplexModel):
 
             return (start_time, frequency, arr_data)
         elif data_type == 'scalar':
-            if is_soap_req:
-                return data['param_value'][0]
-            else:
-                return data['param_value']
+            scalar = data['param_value']
+            if type(scalar) is list:
+                scalar = scalar[0]
+            return scalar
         elif data_type == 'array':
             arr_data = data['arr_data']
-            if is_soap_req:
+            if type(arr_data) is list:
                 arr_data = arr_data[0]
             if type(arr_data) == dict:
                 val = self.parse_array(arr_data)
