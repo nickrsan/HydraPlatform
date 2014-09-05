@@ -24,7 +24,7 @@ from sqlalchemy.sql.expression import case
 from sqlalchemy import null
 from db import DBSession
 
-from numpy import array
+import pandas as pd
 from HydraLib.HydraException import HydraError, ResourceNotFoundError
 from sqlalchemy import and_
 from HydraLib.util import create_dict
@@ -273,14 +273,17 @@ def _process_incoming_data(data, user_id=None, source=None):
 
         scenario_datum.set_val(d.type, val)
 
-        if user_id is not None:
-            scenario_datum.metadata.append(Metadata(metadata_name='user_id',metadata_val=str(user_id)))
-        if source is not None:
-            scenario_datum.metadata.append(Metadata(metadata_name='source',metadata_val=str(source)))
+        metadata_names = []
         if d.metadata is not None:
             for m in d.metadata:
+                metadata_names.append(m.name)
                 scenario_datum.metadata.append(Metadata(metadata_name=m.name,metadata_val=m.value))
         
+        if user_id is not None and 'user_id' not in metadata_names:
+            scenario_datum.metadata.append(Metadata(metadata_name='user_id',metadata_val=str(user_id)))
+        if source is not None and 'source' not in metadata_names:
+            scenario_datum.metadata.append(Metadata(metadata_name='source',metadata_val=str(source)))
+
         data_hash = scenario_datum.set_hash()
 
         datasets[data_hash] = scenario_datum 
@@ -317,6 +320,9 @@ def _get_timeseriesdata(dataset_ids):
 
     return tsdata 
 
+def get_metadata(dataset_ids, **kwargs):
+    return _get_metadata(dataset_ids)
+
 def _get_metadata(dataset_ids):
     """
         Get all the metadata for a given list of datasets
@@ -326,7 +332,7 @@ def _get_metadata(dataset_ids):
         return []
     if len(dataset_ids) > qry_in_threshold:
         idx = 0
-        extent = qry_in_threshold - 1 
+        extent = qry_in_threshold 
         while idx < len(dataset_ids):
             log.info("Querying %s metadatas", len(dataset_ids[idx:extent]))
             rs = DBSession.query(Metadata).filter(Metadata.dataset_id.in_(dataset_ids[idx:extent])).all()
@@ -351,19 +357,19 @@ def _get_existing_data(hashes):
     hash_dict = {}
 
     datasets = []
-    if len(str_hashes) > 500:
+    if len(str_hashes) > qry_in_threshold:
         idx = 0
-        extent = 500
+        extent =qry_in_threshold 
         while idx < len(str_hashes):
             log.info("Querying %s datasets", len(str_hashes[idx:extent]))
             rs = DBSession.query(Dataset).filter(Dataset.data_hash.in_(str_hashes[idx:extent])).all()
             datasets.extend(rs)
-            idx = idx + 500
+            idx = idx + qry_in_threshold 
             
-            if idx + 500 > len(str_hashes):
+            if idx + qry_in_threshold > len(str_hashes):
                 extent = len(str_hashes)
             else:
-                extent = extent + 500
+                extent = extent + qry_in_threshold 
     else:
         datasets = DBSession.query(Dataset).filter(Dataset.data_hash.in_(str_hashes))
 
@@ -508,3 +514,7 @@ def delete_dataset(dataset_id,**kwargs):
     d = DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).one()
     DBSession.delete(d)
     DBSession.flush()
+
+def read_json(json_string):
+    pd.read_json(json_string)
+

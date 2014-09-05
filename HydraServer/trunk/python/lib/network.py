@@ -27,7 +27,7 @@ from db.model import Project, Network, Scenario, Node, Link, ResourceGroup,\
         ResourceScenario, TemplateType, TypeAttr
 from sqlalchemy.orm import noload, joinedload, joinedload_all
 from db import DBSession
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, distinct
 from sqlalchemy.orm.exc import NoResultFound
 from HydraLib.util import timestamp_to_ordinal
 from db.util import add_attributes, add_resource_types
@@ -1256,7 +1256,7 @@ def clean_up_network(network_id, **kwargs):
     DBSession.flush()
     return 'OK'
 
-def get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=None, **kwargs):
+def get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=None, include_metadata='N', **kwargs):
 
     try:
         DBSession.query(Network).filter(Network.network_id==network_id).one()
@@ -1276,6 +1276,14 @@ def get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=None, 
             .options(noload('resourcescenario.dataset.metadata'))
 
     log.info("Querying %s data",ref_key)
+    if ref_ids is not None and len(ref_ids) < 999:
+        if ref_key == 'NODE':
+            rs_qry = rs_qry.filter(ResourceAttr.node_id.in_(ref_ids))
+        elif ref_key == 'LINK':
+            rs_qry = rs_qry.filter(ResourceAttr.link_id.in_(ref_ids))
+        elif ref_key == 'GROUP':
+            rs_qry = rs_qry.filter(ResourceAttr.group_id.in_(ref_ids))
+
     all_resource_attrs = rs_qry.all()
     log.info("Data retrieved")
     resource_attrs   = []
@@ -1306,32 +1314,33 @@ def get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=None, 
 
     log.info("Retrieved %s resource attrs", len(resource_attrs))
 
-    metadata_qry = DBSession.query(Metadata).filter(
+    if include_metadata == 'Y':
+        metadata_qry = DBSession.query(Metadata).filter(
                             ResourceAttr.ref_key==ref_key,
                             ResourceScenario.resource_attr_id==ResourceAttr.resource_attr_id,
                             ResourceScenario.scenario_id==scenario_id,
                             Dataset.dataset_id==ResourceScenario.dataset_id,
                             Metadata.dataset_id==Dataset.dataset_id)
     
-    log.info("Querying node metadata")
-    all_metadata = metadata_qry.all()
-    log.info("Node metadata retrieved")
+        log.info("Querying node metadata")
+        all_metadata = metadata_qry.all()
+        log.info("Node metadata retrieved")
 
-    metadata   = []
-    if ref_ids is not None:
-        for m in all_metadata:
-            if m.dataset_id in dataset_ids:
-                metadata.append(m)
-    else:
-       metadata = all_metadata
-    
-    log.info("%s metadata items retrieved", len(metadata))
-    metadata_dict = {}
-    for m in metadata:
-        if metadata_dict.get(m.dataset_id):
-            metadata_dict[m.dataset_id].append(m)
+        metadata   = []
+        if ref_ids is not None:
+            for m in all_metadata:
+                if m.dataset_id in dataset_ids:
+                    metadata.append(m)
         else:
-            metadata_dict[m.dataset_id] = [m]
+            metadata = all_metadata
+    
+        log.info("%s metadata items retrieved", len(metadata))
+        metadata_dict = {}
+        for m in metadata:
+            if metadata_dict.get(m.dataset_id):
+                metadata_dict[m.dataset_id].append(m)
+            else:
+                metadata_dict[m.dataset_id] = [m]
 
     for ra in resource_attrs:
         d = ra.resourcescenario.dataset
@@ -1341,11 +1350,127 @@ def get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=None, 
            except:
                d.value      = None
                d.frequency  = None
-               d.start_time = None
                if d.data_type == 'timeseries':
                    d.timeseriesdata = []
                d.metadata = []
         else:
-            ra.resourcescenario.dataset.metadata = metadata_dict.get(d.dataset_id, [])
+            if include_metadata == 'Y':
+                ra.resourcescenario.dataset.metadata = metadata_dict.get(d.dataset_id, [])
+
+    return resource_attrs
+
+def test_get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=None, include_metadata='N', **kwargs):
+    """
+        A test function which returns the data for either all resources or specified resources using a flat structure.
+    """
+    
+    rs_qry = DBSession.query(ResourceAttr.attr_id,
+                           ResourceAttr.resource_attr_id,
+                           ResourceAttr.ref_key,
+                           ResourceAttr.network_id,
+                           ResourceAttr.node_id,
+                           ResourceAttr.link_id,
+                           ResourceAttr.group_id,
+                           ResourceAttr.project_id,
+                           ResourceScenario.scenario_id,
+                           ResourceScenario.source,
+                           Dataset.dataset_id,
+                           Dataset.data_name,
+                           Dataset.value,
+                           Dataset.data_dimen,
+                           Dataset.data_units,
+                           Dataset.frequency,
+                           Dataset.locked,
+                           Dataset.data_type,
+                          ).join(ResourceScenario)\
+                            .join(Dataset).filter(
+                            ResourceScenario.scenario_id==scenario_id,
+                            ResourceAttr.ref_key==ref_key)
+
+    log.info("Querying %s data",ref_key)
+    if ref_ids is not None and len(ref_ids) < 999:
+        if ref_key == 'NODE':
+            rs_qry = rs_qry.filter(ResourceAttr.node_id.in_(ref_ids))
+        elif ref_key == 'LINK':
+            rs_qry = rs_qry.filter(ResourceAttr.link_id.in_(ref_ids))
+        elif ref_key == 'GROUP':
+            rs_qry = rs_qry.filter(ResourceAttr.group_id.in_(ref_ids))
+
+    all_resource_attrs = rs_qry.all()
+
+    log.info("Data retrieved")
+    
+    resource_attrs   = []
+    dataset_ids      = []
+    if ref_ids is not None:
+        log.info("Pulling out requested info")
+        for r in all_resource_attrs:
+            if ref_key == 'NODE':
+                if r.node_id in ref_ids:
+                    resource_attrs.append(r)
+                    if r.dataset_id not in dataset_ids:
+                        dataset_ids.append(r.dataset_id)
+            elif ref_key == 'LINK':
+                if r.link_id in ref_ids:
+                    resource_attrs.append(r)
+                    if r.dataset_id not in dataset_ids:
+                        dataset_ids.append(r.dataset_id)
+            elif ref_key == 'GROUP':
+                if r.group_id in ref_ids:
+                    resource_attrs.append(r)
+                    if r.dataset_id not in dataset_ids:
+                        dataset_ids.append(r.dataset_id)
+            else:
+                resource_attrs.append(r)
+        log.info("Requested info pulled out.")
+    else:
+        resource_attrs = all_resource_attrs
+
+    log.info("Retrieved %s resource attrs", len(resource_attrs))
+
+    if include_metadata == 'Y':
+        metadata_qry = DBSession.query(distinct(Metadata.dataset_id).label('dataset_id'),
+                                      Metadata.metadata_name,
+                                      Metadata.metadata_val).filter(
+                            ResourceAttr.ref_key==ref_key,
+                            ResourceScenario.resource_attr_id==ResourceAttr.resource_attr_id,
+                            ResourceScenario.scenario_id==scenario_id,
+                            Dataset.dataset_id==ResourceScenario.dataset_id,
+                            Metadata.dataset_id==Dataset.dataset_id)
+    
+        log.info("Querying node metadata")
+        all_metadata = metadata_qry.all()
+        log.info("%s metadata retrieved", ref_key)
+
+        metadata   = []
+        if ref_ids is not None:
+            for m in all_metadata:
+                if m.dataset_id in dataset_ids:
+                    metadata.append(m)
+        else:
+            metadata = all_metadata
+    
+        log.info("%s metadata items retrieved", len(metadata))
+        metadata_dict = {}
+        for m in metadata:
+            if metadata_dict.get(m.dataset_id):
+                metadata_dict[m.dataset_id].append(m)
+            else:
+                metadata_dict[m.dataset_id] = [m]
+
+    for ra in resource_attrs:
+        if ra.locked == 'Y':
+           try:
+                d = DBSession.query(Dataset).filter(Dataset.dataset_id==ra.dataset_id).options(noload('metadata')).one()
+                d.check_read_permission(kwargs.get('user_id'))
+           except:
+               ra.value      = None
+               ra.frequency  = None
+               if ra.data_type == 'timeseries':
+                   ra.timeseriesdata = []
+               ra.metadata = []
+        else:
+            if include_metadata == 'Y':
+                ra.metadata = metadata_dict.get(ra.dataset_id, [])
 
     return resource_attrs

@@ -590,6 +590,27 @@ class SoapServerTest(unittest.TestCase):
             assert time in before_times, "%s is incorrect"%(d)
 
 
+    def create_scalar(self, ResourceAttr, val=1.234):
+        #with a resource attribute.
+
+        dataset = dict(
+            id=None,
+            type = 'scalar',
+            name = 'Flow speed',
+            unit = 'm s^-1',
+            dimension = 'Speed',
+            locked = 'N',
+            value = {'param_value':val},
+        )
+
+        scenario_attr = dict(
+            attr_id = ResourceAttr['attr_id'],
+            resource_attr_id = ResourceAttr['id'],
+            value = dataset,
+        )
+
+        return scenario_attr
+
     def create_descriptor(self, ResourceAttr, val="test"):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.

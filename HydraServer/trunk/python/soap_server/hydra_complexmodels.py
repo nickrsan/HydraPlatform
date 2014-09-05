@@ -44,48 +44,27 @@ def get_timestamp(ordinal):
     return timestamp
 
 
+ref_id_map = {
+    'NODE'     : 'node_id',
+    'LINK'     : 'link_id',
+    'GROUP'    : 'group_id',
+    'NETWORK'  : 'network_id',
+    'SCENARIO' : 'scenario_id',
+    'PROJECT'  : 'project_id'
+}
+
 class LoginResponse(ComplexModel):
+    """
+    """
     __namespace__ = 'soap_server.hydra_complexmodels'
     _type_info = [
         ('session_id', Unicode(min_occurs=1)),
         ('user_id',    Integer(min_occurs=1)),
     ]
 
-class HydraComplexModel(ComplexModel):
-    __namespace__ = 'soap_server.hydra_complexmodels'
-
-    error = SpyneArray(Unicode())
-
-    def __init__(self, sa_obj=None):
-        super(HydraComplexModel, self).__init__()
-
-        if sa_obj is None:
-            return
-
-        name = sa_obj.__table__.name[1:]
-        cols = [c.name for c in sa_obj.__table__.columns]
-
-        for col in cols:
-            val = getattr(sa_obj, col)
-            setattr(self, col, val)
-
-            if col == 'cr_date':
-                val = str(val)
-
-            if col == 'layout':
-                if val:
-                    val = eval(val)
-                else:
-                    val = {}
-            #turn someething like 'project_name' into just 'name'
-            #So that it's project.name instead of project.project_name.
-
-            attr_prefix = "%s_"%name.lower()
-            if col.find(attr_prefix) == 0:
-                attr_name = col.replace(attr_prefix, "")
-                setattr(self, attr_name, val)
-
 class Metadata(ComplexModel):
+    """
+    """
     _type_info = [
         ('name'  , Unicode(min_occurs=1, default=None)),
         ('value' , Unicode(min_occurs=1, default=None)),
@@ -97,9 +76,104 @@ class Metadata(ComplexModel):
         self.name    = parent.metadata_name
         self.value   = parent.metadata_val
 
+class ResourceData(ComplexModel):
+    """
+        An object which represents a resource attr, resource scenario and dataset
+        all in one. 
 
+        
+        * **attr_id:** The ID of the attribute to which this data belongs
+        * **scenario_id:** The ID of the scenario in which this data has been assigned
+        * **resource_attr_id:** The unique ID representing the attribute and resource combination
+        * **ref_key:** Indentifies the type of resource to which this dataset is attached. Can be 'NODE', 'LINK', 'GROUP', 'NETWORK' or 'PROJECT'
+        * **ref_id:** The ID of the node, link, group, network, or project in question
+        * **attr_is_var:** Flag to indicate whether this resource's attribute is a variable and hence should be filled in by a model
+        * **dataset_id:** The ID of the dataset which has been assigned to the resource attribute
+        * **dataset_type:** The type of the dataset -- can be scalar, descriptor, array or timeseries
+        * **dataset_dimension:** The dimension of the dataset (This MUST match the dimension of the attribute)
+        * **dataset_unit:** The unit of the dataset.
+        * **dataset_name:** The name of the dataset. Most likely used for distinguishing similar datasets or searching for datasets
+        * **dataset_frequency:** The frequency of the timesteps in a timeseries. Only applicable if the dataset has a type 'timeseries'
+        * **dataset_locked:** Indicates whether the dataset is locked, in which case only authorised users can use the dataset.
+        * **dataset_metadata:**: A dictionary of the metadata associated with the dataset. For example: {'created_by': "User 1", "source":"Import from CSV"}
+        * **dataset_value:**
+            Depending on what the dataset_type is, this can be a decimal value, a freeform
+            string or a JSON string.
+            For a timeseries for example, the datasset_value looks like:
+            '{
+                "H1" : {\n
+                        "2014/09/04 16:46:12:00":1,\n
+                        "2014/09/05 16:46:12:00":2,\n
+                        "2014/09/06 16:46:12:00":3,\n
+                        "2014/09/07 16:46:12:00":4},\n
+    
+                "H2" : {\n
+                        "2014/09/04 16:46:12:00":10,\n
+                        "2014/09/05 16:46:12:00":20,\n
+                        "2014/09/06 16:46:12:00":30,\n
+                        "2014/09/07 16:46:12:00":40},\n
+    
+                "H3" :  {\n
+                        "2014/09/04 16:46:12:00":100,\n
+                        "2014/09/05 16:46:12:00":200,\n
+                        "2014/09/06 16:46:12:00":300,\n
+                        "2014/09/07 16:46:12:00":400}\n
+            }'
 
-class Dataset(HydraComplexModel):
+    """
+    _type_info = [
+        ('attr_id',            Unicode(default=None)),
+        ('scenario_id',        Unicode(default=None)),
+        ('resource_attr_id',   Unicode(default=None)),
+        ('ref_id',             Unicode(default=None)),
+        ('ref_key',            Unicode(default=None)),
+        ('attr_is_var',        Unicode(default=None)),
+        ('dataset_id',         Unicode(default=None)),
+        ('dataset_type',       Unicode(default=None)),
+        ('dataset_dimension',  Unicode(default=None)),
+        ('dataset_unit',       Unicode(default=None)),
+        ('dataset_name',       Unicode(default=None)),
+        ('dataset_value',      Unicode(default=None)),
+        ('dataset_frequency',  Unicode(default=None)),
+        ('dataset_locked',     Unicode(default=None)),
+        ('dataset_metadata',   AnyDict(default=None)),
+    ]
+
+    def __init__(self, resourceattr=None):
+
+        super(ResourceData, self).__init__()
+        if  resourceattr is None:
+            return
+       
+        ra = resourceattr
+
+        self.attr_id = ra.attr_id
+        self.resource_attr_id = ra.resource_attr_id
+        self.ref_key = ra.ref_key
+        self.ref_id  = getattr(ra, ref_id_map[self.ref_key])
+
+        self.resource_attr_id = ra.resource_attr_id
+        self.source = ra.source
+        self.scenario_id = ra.scenario_id
+
+        self.dataset_locked    = ra.locked
+        self.dataset_id        = ra.dataset_id
+        self.dataset_type      = ra.data_type
+        self.dataset_name      = ra.data_name
+
+        self.dataset_dimension = ra.data_dimen
+        self.dataset_unit      = ra.data_units
+        self.dataset_frequency = ra.frequency
+        self.dataset_value     = ra.value
+
+        if hasattr(ra, 'metadata'):
+            self.metadata = {}
+            for m in ra.metadata:
+                self.metadata[m.metadata_name] = m.metadata_val
+
+class Dataset(ComplexModel):
+    """
+    """
     _type_info = [
         ('id',               Integer(min_occurs=1, default=None)),
         ('type',             Unicode),
@@ -153,7 +227,7 @@ class Dataset(HydraComplexModel):
 
     def parse_value(self):
         """
-            Turn a complex model object into a  - friendly value.
+            Turn the value of an incoming dataset into a hydra-friendly value.
         """
 
         is_soap_req = False
@@ -304,7 +378,7 @@ class Dataset(HydraComplexModel):
         self.data_hash = data_hash
         return data_hash
 
-class Descriptor(HydraComplexModel):
+class Descriptor(ComplexModel):
     _type_info = [
         ('desc_val', Unicode),
     ]
@@ -315,7 +389,7 @@ class Descriptor(HydraComplexModel):
             return
         self.desc_val = [val]
 
-class TimeSeriesData(HydraComplexModel):
+class TimeSeriesData(ComplexModel):
     _type_info = [
         #('ts_time', DateTime),
         ('ts_time', Unicode),
@@ -374,7 +448,7 @@ def _make_timeseries(val):
     return ts
 
 
-class TimeSeries(HydraComplexModel):
+class TimeSeries(ComplexModel):
     _type_info = [
         ('ts_values', SpyneArray(TimeSeriesData)),
         ('frequency', Unicode(default=None)),
@@ -417,7 +491,8 @@ class TimeSeries(HydraComplexModel):
                 ts_vals.append(TimeSeriesData(ts).__dict__)
         self.ts_values = ts_vals
 
-class EqTimeSeries(HydraComplexModel):
+class EqTimeSeries(ComplexModel):
+
     """
         An equally spaced timeseries value.
         Frequency is stored in seconds
@@ -437,7 +512,7 @@ class EqTimeSeries(HydraComplexModel):
         self.frequency  = [Dec(frequency)]
         self.arr_data   = [create_dict(eval(val))]
 
-class Scalar(HydraComplexModel):
+class Scalar(ComplexModel):
     _type_info = [
         ('param_value', Float),
     ]
@@ -448,7 +523,7 @@ class Scalar(HydraComplexModel):
             return
         self.param_value = [val]
 
-class Array(HydraComplexModel):
+class Array(ComplexModel):
     _type_info = [
         ('arr_data', AnyDict),
     ]
@@ -466,7 +541,7 @@ class Array(HydraComplexModel):
         else:
             self.arr_data = [val]
 
-class DatasetGroup(HydraComplexModel):
+class DatasetGroup(ComplexModel):
     _type_info = [
         ('group_name', Unicode(default=None)),
         ('group_id'  , Integer(default=None)),
@@ -481,7 +556,9 @@ class DatasetGroup(HydraComplexModel):
         self.group_id   = parent.group_id
         self.dataset_ids = [d.dataset_id for d in parent.items]
 
-class Attr(HydraComplexModel):
+class Attr(ComplexModel):
+    """
+    """
     _type_info = [
         ('id', Integer(default=None)),
         ('name', Unicode(default=None)),
@@ -496,7 +573,9 @@ class Attr(HydraComplexModel):
         self.name = parent.attr_name
         self.dimen = parent.attr_dimen
 
-class ResourceScenario(HydraComplexModel):
+class ResourceScenario(ComplexModel):
+    """
+    """
     _type_info = [
         ('resource_attr_id', Integer(default=None)),
         ('attr_id',          Integer(default=None)),
@@ -514,7 +593,9 @@ class ResourceScenario(HydraComplexModel):
         self.value = Dataset(parent.dataset)
         self.source = parent.source
 
-class ResourceAttr(HydraComplexModel):
+class ResourceAttr(ComplexModel):
+    """
+    """
     _type_info = [
         ('id',      Integer(default=None)),
         ('attr_id', Integer(default=None)),
@@ -545,14 +626,18 @@ class ResourceAttr(HydraComplexModel):
         self.resourcescenario = None
 
 
-class ResourceTypeDef(HydraComplexModel):
+class ResourceTypeDef(ComplexModel):
+    """
+    """
     _type_info = [
         ('ref_key', Unicode(default=None)),
         ('ref_id',  Integer(default=None)),
         ('type_id', Integer(default=None)),
     ]
 
-class TypeAttr(HydraComplexModel):
+class TypeAttr(ComplexModel):
+    """
+    """
     _type_info = [
         ('attr_id',            Integer(min_occurs=1, max_occurs=1)),
         ('attr_name',          Unicode(default=None)),
@@ -584,7 +669,9 @@ class TypeAttr(HydraComplexModel):
             self.data_restriction = {}
         self.is_var = parent.attr_is_var
 
-class TemplateType(HydraComplexModel):
+class TemplateType(ComplexModel):
+    """
+    """
     _type_info = [
         ('id',          Integer(default=None)),
         ('name',        Unicode(default=None)),
@@ -616,7 +703,9 @@ class TemplateType(HydraComplexModel):
 
         self.typeattrs = typeattrs
 
-class Template(HydraComplexModel):
+class Template(ComplexModel):
+    """
+    """
     _type_info = [
         ('id',        Integer(default=None)),
         ('name',      Unicode(default=None)),
@@ -641,7 +730,9 @@ class Template(HydraComplexModel):
             types.append(TemplateType(templatetype))
         self.types = types
 
-class TypeSummary(HydraComplexModel):
+class TypeSummary(ComplexModel):
+    """
+    """
     _type_info = [
         ('name',    Unicode),
         ('id',      Integer),
@@ -660,7 +751,9 @@ class TypeSummary(HydraComplexModel):
         self.template_name = parent.template.template_name
         self.template_id   = parent.template_id
 
-class Resource(HydraComplexModel):
+class Resource(ComplexModel):
+    """
+    """
 
     def get_layout(self):
         if hasattr(self, 'layout') and self.layout is not None:
@@ -669,7 +762,9 @@ class Resource(HydraComplexModel):
             return None
 
 
-class ResourceSummary(HydraComplexModel):
+class ResourceSummary(ComplexModel):
+    """
+    """
     _type_info = [
         ('ref_key', Unicode(default=None)),
         ('id',  Integer(default=None)),
@@ -704,6 +799,8 @@ class ResourceSummary(HydraComplexModel):
         self.types = [TypeSummary(t.templatetype) for t in parent.types]
 
 class Node(Resource):
+    """
+    """
     _type_info = [
         ('id',          Integer(default=None)),
         ('name',        Unicode(default=None)),
@@ -740,6 +837,8 @@ class Node(Resource):
 
 
 class Link(Resource):
+    """
+    """
     _type_info = [
         ('id',          Integer(default=None)),
         ('name',        Unicode(default=None)),
@@ -776,7 +875,7 @@ class Link(Resource):
         self.types = [TypeSummary(t.templatetype) for t in parent.types]
 
 
-class AttributeData(HydraComplexModel):
+class AttributeData(ComplexModel):
     """
         A class which is returned by the server when a request is made
         for the data associated with an attribute.
@@ -786,7 +885,9 @@ class AttributeData(HydraComplexModel):
         ('resourcescenarios', SpyneArray(ResourceScenario)),
     ]
 
-class ResourceGroupItem(HydraComplexModel):
+class ResourceGroupItem(ComplexModel):
+    """
+    """
     _type_info = [
         ('id',       Integer(default=None)),
         ('ref_id',   Integer(default=None)),
@@ -795,7 +896,7 @@ class ResourceGroupItem(HydraComplexModel):
     ]
 
     def __init__(self, parent=None):
-        super(ResourceGroupItem, self).__init__(parent)
+        super(ResourceGroupItem, self).__init__()
         if parent is None:
             return
         self.id = parent.item_id
@@ -808,7 +909,9 @@ class ResourceGroupItem(HydraComplexModel):
         elif self.ref_key == 'GROUP':
             self.ref_id = parent.subgroup_id
 
-class ResourceGroup(HydraComplexModel):
+class ResourceGroup(ComplexModel):
+    """
+    """
     _type_info = [
         ('id',          Integer(default=None)),
         ('network_id',  Integer(default=None)),
@@ -820,7 +923,7 @@ class ResourceGroup(HydraComplexModel):
     ]
 
     def __init__(self, parent=None, summary=False):
-        super(ResourceGroup, self).__init__(parent)
+        super(ResourceGroup, self).__init__()
 
         if parent is None:
             return
@@ -837,6 +940,8 @@ class ResourceGroup(HydraComplexModel):
             self.attributes  = [ResourceAttr(a) for a in parent.attributes]
 
 class Scenario(Resource):
+    """
+    """
     _type_info = [
         ('id',                   Integer(default=None)),
         ('name',                 Unicode(default=None)),
@@ -853,7 +958,7 @@ class Scenario(Resource):
     ]
 
     def __init__(self, parent=None, summary=False):
-        super(Scenario, self).__init__(parent)
+        super(Scenario, self).__init__()
 
         if parent is None:
             return
@@ -879,7 +984,9 @@ class Scenario(Resource):
             self.resourcescenarios = []
             self.resourcegroupitems = []
 
-class ResourceGroupDiff(HydraComplexModel):
+class ResourceGroupDiff(ComplexModel):
+    """
+    """
     _type_info = [
        ('scenario_1_items', SpyneArray(ResourceGroupItem)),
        ('scenario_2_items', SpyneArray(ResourceGroupItem))
@@ -894,7 +1001,9 @@ class ResourceGroupDiff(HydraComplexModel):
         self.scenario_1_items = [ResourceGroupItem(rs) for rs in parent['scenario_1_items']]
         self.scenario_2_items = [ResourceGroupItem(rs) for rs in parent['scenario_2_items']]
 
-class ResourceScenarioDiff(HydraComplexModel):
+class ResourceScenarioDiff(ComplexModel):
+    """
+    """
     _type_info = [
         ('resource_attr_id',     Integer(default=None)),
         ('scenario_1_dataset',   Dataset),
@@ -912,7 +1021,9 @@ class ResourceScenarioDiff(HydraComplexModel):
         self.scenario_1_dataset = Dataset(parent['scenario_1_dataset'])
         self.scenario_2_dataset = Dataset(parent['scenario_2_dataset'])
 
-class ScenarioDiff(HydraComplexModel):
+class ScenarioDiff(ComplexModel):
+    """
+    """
     _type_info = [
         ('resourcescenarios',    SpyneArray(ResourceScenarioDiff)),
         ('groups',               ResourceGroupDiff),
@@ -928,6 +1039,8 @@ class ScenarioDiff(HydraComplexModel):
         self.groups = ResourceGroupDiff(parent['groups'])
 
 class Network(Resource):
+    """
+    """
     _type_info = [
         ('project_id',          Integer(default=None)),
         ('id',                  Integer(default=None)),
@@ -946,7 +1059,7 @@ class Network(Resource):
     ]
 
     def __init__(self, parent=None, summary=False):
-        super(Network, self).__init__(parent)
+        super(Network, self).__init__()
 
         if parent is None:
             return
@@ -970,7 +1083,9 @@ class Network(Resource):
         if summary is False:
             self.attributes  = [ResourceAttr(ra) for ra in parent.attributes]
 
-class NetworkExtents(Resource):
+class NetworkExtents(ComplexModel):
+    """
+    """
     _type_info = [
         ('network_id', Integer(default=None)),
         ('min_x',      Decimal(default=0)),
@@ -980,7 +1095,7 @@ class NetworkExtents(Resource):
     ]
 
     def __init__(self, parent=None):
-        super(NetworkExtents, self).__init__(parent)
+        super(NetworkExtents, self).__init__()
 
         if parent is None:
             return
@@ -992,6 +1107,8 @@ class NetworkExtents(Resource):
         self.max_y = parent.max_y
 
 class Project(Resource):
+    """
+    """
     _type_info = [
         ('id',          Integer(default=None)),
         ('name',        Unicode(default=None)),
@@ -1004,7 +1121,7 @@ class Project(Resource):
     ]
 
     def __init__(self, parent=None):
-        super(Project, self).__init__(parent)
+        super(Project, self).__init__()
 
         if parent is None:
             return
@@ -1019,6 +1136,8 @@ class Project(Resource):
         self.attribute_data  = [ResourceScenario(rs) for rs in parent.attribute_data]
 
 class ProjectSummary(Resource):
+    """
+    """
     _type_info = [
         ('id',          Integer(default=None)),
         ('name',        Unicode(default=None)),
@@ -1028,7 +1147,7 @@ class ProjectSummary(Resource):
     ]
 
     def __init__(self, parent=None):
-        super(ProjectSummary, self).__init__(parent)
+        super(ProjectSummary, self).__init__()
 
         if parent is None:
             return
@@ -1038,7 +1157,9 @@ class ProjectSummary(Resource):
         self.cr_date = str(parent.cr_date)
         self.created_by = parent.created_by
 
-class User(HydraComplexModel):
+class User(ComplexModel):
+    """
+    """
     _type_info = [
         ('id',  Integer),
         ('username', Unicode(default=None)),
@@ -1047,7 +1168,7 @@ class User(HydraComplexModel):
     ]
 
     def __init__(self, parent=None):
-        super(User, self).__init__(parent)
+        super(User, self).__init__()
 
         if parent is None:
             return
@@ -1057,7 +1178,9 @@ class User(HydraComplexModel):
         self.display_name = parent.display_name
         self.password     = parent.password
 
-class Perm(HydraComplexModel):
+class Perm(ComplexModel):
+    """
+    """
     _type_info = [
         ('id',   Integer),
         ('name', Unicode),
@@ -1065,7 +1188,7 @@ class Perm(HydraComplexModel):
     ]
 
     def __init__(self, parent=None):
-        super(Perm, self).__init__(parent)
+        super(Perm, self).__init__()
 
         if parent is None:
             return
@@ -1074,32 +1197,38 @@ class Perm(HydraComplexModel):
         self.name = parent.perm_name
         self.code = parent.perm_code
 
-class RoleUser(HydraComplexModel):
+class RoleUser(ComplexModel):
+    """
+    """
     _type_info = [
         ('user_id',  Integer),
     ]
     def __init__(self, parent=None):
-        super(RoleUser, self).__init__(parent)
+        super(RoleUser, self).__init__()
 
         if parent is None:
             return
 
         self.user_id = parent.user.user_id
 
-class RolePerm(HydraComplexModel):
+class RolePerm(ComplexModel):
+    """
+    """
     _type_info = [
         ('perm_id',   Integer),
     ]
 
     def __init__(self, parent=None):
-        super(RolePerm, self).__init__(parent)
+        super(RolePerm, self).__init__()
 
         if parent is None:
             return
 
         self.perm_id = parent.perm_id
 
-class Role(HydraComplexModel):
+class Role(ComplexModel):
+    """
+    """
     _type_info = [
         ('id',     Integer),
         ('name',   Unicode),
@@ -1109,7 +1238,7 @@ class Role(HydraComplexModel):
     ]
 
     def __init__(self, parent=None):
-        super(Role, self).__init__(parent)
+        super(Role, self).__init__()
 
         if parent is None:
             return
@@ -1120,14 +1249,16 @@ class Role(HydraComplexModel):
         self.roleperms = [RolePerm(rp) for rp in parent.roleperms]
         self.roleusers = [RoleUser(ru) for ru in parent.roleusers]
 
-class PluginParam(HydraComplexModel):
+class PluginParam(ComplexModel):
+    """
+    """
     _type_info = [
         ('name',        Unicode),
         ('value',       Unicode),
     ]
 
     def __init__(self, parent=None):
-        super(PluginParam, self).__init__(parent)
+        super(PluginParam, self).__init__()
 
         if parent is None:
             return
@@ -1136,7 +1267,9 @@ class PluginParam(HydraComplexModel):
         self.value = parent.value
 
 
-class Plugin(HydraComplexModel):
+class Plugin(ComplexModel):
+    """
+    """
     _type_info = [
         ('name',        Unicode),
         ('location',    Unicode),
@@ -1144,7 +1277,7 @@ class Plugin(HydraComplexModel):
     ]
 
     def __init__(self, parent=None):
-        super(Plugin, self).__init__(parent)
+        super(Plugin, self).__init__()
 
         if parent is None:
             return
@@ -1154,7 +1287,9 @@ class Plugin(HydraComplexModel):
         self.params = [PluginParam(pp) for pp in parent.params]
 
 
-class ProjectOwner(HydraComplexModel):
+class ProjectOwner(ComplexModel):
+    """
+    """
     _type_info = [
         ('project_id',   Integer),
         ('user_id',  Integer),
@@ -1162,7 +1297,7 @@ class ProjectOwner(HydraComplexModel):
         ('view',     Unicode)
     ]
     def __init__(self, parent=None):
-        super(ProjectOwner, self).__init__(parent)
+        super(ProjectOwner, self).__init__()
 
         if parent is None:
             return
@@ -1171,7 +1306,9 @@ class ProjectOwner(HydraComplexModel):
         self.edit       = parent.edit
         self.view       = parent.view
 
-class DatasetOwner(HydraComplexModel):
+class DatasetOwner(ComplexModel):
+    """
+    """
     _type_info = [
         ('dataset_id',   Integer),
         ('user_id',  Integer),
@@ -1179,7 +1316,7 @@ class DatasetOwner(HydraComplexModel):
         ('view',     Unicode)
     ]
     def __init__(self, parent=None):
-        super(DatasetOwner, self).__init__(parent)
+        super(DatasetOwner, self).__init__()
 
         if parent is None:
             return
@@ -1188,7 +1325,9 @@ class DatasetOwner(HydraComplexModel):
         self.edit       = parent.edit
         self.view       = parent.view
 
-class NetworkOwner(HydraComplexModel):
+class NetworkOwner(ComplexModel):
+    """
+    """
     _type_info = [
         ('network_id',   Integer),
         ('user_id',  Integer),
@@ -1196,7 +1335,7 @@ class NetworkOwner(HydraComplexModel):
         ('view',     Unicode)
     ]
     def __init__(self, parent=None):
-        super(NetworkOwner, self).__init__(parent)
+        super(NetworkOwner, self).__init__()
 
         if parent is None:
             return
@@ -1205,7 +1344,9 @@ class NetworkOwner(HydraComplexModel):
         self.edit       = parent.edit
         self.view       = parent.view
 
-class Unit(HydraComplexModel):
+class Unit(ComplexModel):
+    """
+    """
     _type_info = [
         ('name', Unicode),
         ('abbr', Unicode),
@@ -1216,7 +1357,7 @@ class Unit(HydraComplexModel):
     ]
 
     def __init__(self, parent=None):
-        super(Unit, self).__init__(parent)
+        super(Unit, self).__init__()
 
         if parent is None:
             return

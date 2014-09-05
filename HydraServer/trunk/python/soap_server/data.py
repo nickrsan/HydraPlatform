@@ -22,7 +22,7 @@ from hydra_complexmodels import Descriptor,\
         Scalar,\
         Array as HydraArray,\
         Dataset,\
-        Scenario,\
+        Metadata,\
         DatasetGroup
 
 from lib import data
@@ -43,6 +43,18 @@ class DataService(HydraService):
         dataset_i = data.get_dataset(dataset_id, **ctx.in_header.__dict__)
         return Dataset(dataset_i)
 
+    @rpc(Integer(max_occurs="unbounded"), _returns=SpyneArray(Metadata))
+    def get_metadata(ctx, dataset_ids):
+        """
+            Get the metadata for a dataset or list of datasets
+        """
+
+        if type(dataset_ids) == int:
+            dataset_ids = [dataset_ids]
+        
+        metadata = data.get_metadata(dataset_ids)
+
+        return [Metadata(m) for m in metadata]
 
     @rpc(SpyneArray(Dataset), _returns=SpyneArray(Integer))
     def bulk_insert_data(ctx, bulk_data):
@@ -159,3 +171,14 @@ class DataService(HydraService):
                                            timestep,
                                            increment,
                                            **ctx.in_header.__dict__)
+
+    @rpc(Unicode, returns=Unicode)
+    def check_json(ctx, json_string):
+        try:
+            data.check_json(json_string)
+        except Exception, e:
+            return "Unable to process JSON string. error was: %s"%e
+
+        return 'OK'
+
+
