@@ -108,10 +108,22 @@ class ImportWML(object):
         """
 
         nodes = self.call('get_all_node_data', {'network_id':2,'scenario_id': 2})
-        links = self.call('get_all_link_data', {'network_id':2,'scenario_id': 2})
+        node_ids = []
+        for ra in nodes:
+            if ra['ref_id'] not in node_ids:
+                node_ids.append(ra['ref_id'])
+        nodes = self.call('get_all_node_data', {'network_id':2,'scenario_id': 2,
+                                                'node_ids':node_ids})
+      #  links = self.call('get_all_link_data', {'network_id':2,'scenario_id': 2})
+      #  link_ids = []
+      #  for ra in links:
+      #      if ra['ref_id'] not in link_ids:
+      #          link_ids.append(ra['ref_id'])
+      #  links = self.call('get_all_link_data', {'network_id':2,'scenario_id': 2,
+      #                                          'link_ids':link_ids})
 
-        nodes = self.call('get_all_node_data', {'network_id':3,'scenario_id': 3})
-        links = self.call('get_all_link_data', {'network_id':3,'scenario_id': 3})
+       # nodes = self.call('get_all_node_data', {'network_id':3,'scenario_id': 3})
+       # links = self.call('get_all_link_data', {'network_id':3,'scenario_id': 3})
 
         timeseries_xml_data=None
         if file == None:
