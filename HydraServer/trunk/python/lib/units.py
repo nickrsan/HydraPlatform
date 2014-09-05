@@ -22,6 +22,7 @@ from HydraLib.util import arr_to_vector
 from HydraLib.util import vector_to_arr
 from db.model import Dataset
 from db import DBSession
+import pandas as pd
 import logging
 log = logging.getLogger(__name__)
 
@@ -116,20 +117,13 @@ def convert_dataset(dataset_id, to_unit,**kwargs):
         if dataset_type == 'scalar':
             new_val = hydra_units.convert(float(dsval), old_unit, to_unit)
         elif dataset_type == 'array':
-            dim = array_dim(dsval)
-            vecdata = arr_to_vector(dsval)
-            newvec = hydra_units.convert(vecdata, old_unit, to_unit)
-            new_val = vector_to_arr(newvec, dim)
+            dsval = pd.read_json(dsval)
+            converted_val = hydra_units.convert(dsval, old_unit, to_unit)
+            new_val = converted_val.to_json()
         elif dataset_type == 'timeseries':
-            new_val = []
-            for ts_time, ts_val in dsval.items():
-                dim = array_dim(ts_val)
-                vecdata = arr_to_vector(ts_val)
-                newvec = hydra_units.convert(vecdata, old_unit, to_unit)
-                newarr = vector_to_arr(newvec, dim)
-                new_val.append(ts_time, newarr)
-        elif dataset_type == 'eqtimeseries':
-            pass
+            dsval = pd.read_json(dsval)
+            converted_val = hydra_units.convert(dsval, old_unit, to_unit)
+            new_val = converted_val.to_json(format='iso', date_unit='ns')
         elif dataset_type == 'descriptor':
             raise HydraError('Cannot convert descriptor.')
 

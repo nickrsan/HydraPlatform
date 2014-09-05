@@ -184,6 +184,9 @@ from numpy import array, reshape
 from lxml import etree
 import requests
 
+import pandas as pd
+import numpy as np
+
 import json
 log = logging.getLogger(__name__)
 
@@ -1113,7 +1116,7 @@ class ImportCSV(object):
             unit = unit.strip()
             if len(unit) == 0:
                 unit = None
-        arr_struct = None
+        cols = None
         try:
             float(value)
             dataset['type'] = 'scalar'
@@ -1134,16 +1137,12 @@ class ImportCSV(object):
                     else:
                         filedata = self.file_dict[full_file_path]
 
-                    value_header = filedata[0].lower().replace(' ', '')
-                    if value_header.startswith('arraydescription') or value_header == '':
-                        arr_struct = filedata[0].strip()
-                        arr_struct = arr_struct.split(',')
-                        arr_struct = "|".join(arr_struct[3:])
+                    value_header = filedata[0].replace(' ', '').split(',')
+                    if value_header[0].lower() in ('arraydescription', ''):
+                        cols = value_header[3:]
                         filedata = filedata[1:]
-                    elif filedata[0].lower().replace(' ', '').startswith('timeseriesdescription') or value_header == '':
-                        arr_struct = filedata[0].strip()
-                        arr_struct = arr_struct.split(',')
-                        arr_struct = "|".join(arr_struct[3:])
+                    elif value_header[0].lower() in ('timeseriesdescription', ''):
+                        cols = value_header[4:]
                         filedata = filedata[1:]
                     
                     #The name of the resource is how to identify the data for it.
@@ -1162,14 +1161,14 @@ class ImportCSV(object):
                         return None
                     else:
                         if self.is_timeseries(data):
-                            ts_type, ts = self.create_timeseries(data, restriction_dict)
-                            dataset['type'] = ts_type 
+                            ts = self.create_timeseries(data, cols, restriction_dict)
+                            dataset['type'] = 'timeseries'
                             dataset['value'] = ts
                         else:
                             dataset['type'] = 'array'
                             if len(filedata) > 0:
                                 try:
-                                    dataset['value'] = self.create_array(data[0], restriction_dict)
+                                    dataset['value'] = self.create_array(data[0], cols, restriction_dict)
                                 except Exception, e:
                                     raise HydraPluginError("There is a value error in %s. Please check value %s is correct."%(value, data[0]))
                             else:
@@ -1190,14 +1189,9 @@ class ImportCSV(object):
         resourcescenario['value'] = dataset
         
         m = []
-        if arr_struct:
-            m.append(dict(name='data_struct',value=arr_struct))
         if metadata:
             for k, v in metadata.items():
-                if k == 'data_struct' and arr_struct:
-                    continue
                 m.append(dict(name=k,value=v))
-
 
         dataset['metadata'] = m
 
@@ -1217,7 +1211,7 @@ class ImportCSV(object):
         )
         return descriptor
 
-    def create_timeseries(self, data, restriction_dict={}):
+    def create_timeseries(self, data, cols, restriction_dict={}):
         if len(data) == 0:
             return None
 
@@ -1227,12 +1221,9 @@ class ImportCSV(object):
         if 'XXXX' in timeformat:
             seasonal = True
 
+        ts_times  = []
         ts_values = []
-        start_time = None
         freq       = None
-        prev_time  = None
-        eq_val     = []
-        is_eq_spaced = False 
         timedata = data
         for line in timedata:
             if line != '':
@@ -1258,49 +1249,22 @@ class ImportCSV(object):
                         ts_val_1d.append(str(dataset[i + 2].strip()))
 
                     ts_arr = array(ts_val_1d)
-                    ts_arr = reshape(ts_arr, array_shape) 
+                    ts_value = reshape(ts_arr, array_shape) 
+                    
+                ts_values.append(ts_value)
+                ts_times.append(ts_time)
 
-                    ts_value = ts_arr.tolist()
+        pd_ts = pd.DataFrame(ts_values, index=pd.Series(ts_times), columns=cols)
+        json_ts = pd_ts.to_json(date_format='iso', date_unit='ns')
 
-                #Check for whether timeseries is equally spaced.
-                if is_eq_spaced:
-                    eq_val.append(ts_value)
-                    if start_time is None:
-                        start_time = tstime
-                    else:
-                        #Get the time diff as the second time minus the first
-                        if freq is None:
-                            freq = tstime - start_time
-                        else:
-                            #Keep checking on each timestamp whether the spaces between
-                            #times is equal.
-                            if (tstime - prev_time) != freq:
-                                is_eq_spaced = False
-                    prev_time = tstime
-
-                ts_values.append({'ts_time': ts_time,
-                                  'ts_value': ts_value
-                                  })
-
-        if is_eq_spaced:
-            ts_type = 'eqtimeseries'
-            timeseries = {'frequency': freq.total_seconds(),
-                          'start_time':PluginLib.date_to_string(start_time, seasonal=seasonal),
-                          'arr_data':str(eq_val)}
-            self.validate_value(timeseries, restriction_dict)
-        else:
-            ts_type = 'timeseries'
-            timeseries = {'ts_values': ts_values}
-            self.validate_value(timeseries, restriction_dict)
-
-            #After validating the data, turn it into the format the server wants.
-            for ts in timeseries['ts_values']:
-                ts['ts_value'] = PluginLib.create_dict(ts['ts_value'])
+        #self.validate_value(json_ts, restriction_dict)
+        
+        timeseries = {'ts_values': json_ts, 'frequency': freq, 'periods':len(ts_values)}
 
 
-        return ts_type, timeseries
+        return  timeseries
 
-    def create_array(self, data, restriction_dict={}):
+    def create_array(self, data, cols, restriction_dict={}):
         #Split the line into a list
         dataset = data.split(',')
         #First column is always the array dimensions

@@ -19,8 +19,9 @@
 import test_SoapServer
 import datetime
 import copy
+import json
+from HydraLib.util import make_json_array
 import suds
-from HydraLib import PluginLib
 import logging
 log = logging.getLogger(__name__)
 
@@ -44,10 +45,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         dataset.unit = 'metres / second'
         dataset.dimension = 'number of units per time unit'
         
-        descriptor = self.client.factory.create('ns1:Descriptor')
-        descriptor.desc_val = 'I am an updated test!'
-
-        dataset.value = descriptor
+        dataset.value = {'desc_val':'I am an updated test!'}
 
         new_resource_scenario = self.client.service.add_data_to_attribute(scenario_id, resource_attr_id, dataset)
 
@@ -228,16 +226,10 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         dataset1.dimension = 'cubic capacity'
 
         dataset1.value = {'ts_values':
-            [
-                {
-                    'ts_time' : datetime.datetime.now(),
-                    'ts_value' : str([1, 2, 3, 4, 5]),
-                },
-                {
-                    'ts_time' : datetime.datetime.now() + datetime.timedelta(hours=1),
-                    'ts_value' : str([2, 3, 4, 5, 6]),
-                }
-            ],
+                json.dumps({
+                    str(datetime.datetime.now()):make_json_array([1, 2, 3, 4, 5]),
+                    str(datetime.datetime.now() + datetime.timedelta(hours=1)) : make_json_array([2, 3, 4, 5, 6]),
+                })
         }
         data.Dataset.append(dataset1)
 
@@ -247,10 +239,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         dataset2.unit = 'metres / second'
         dataset2.dimension = 'number of units per time unit'
         
-        descriptor = self.client.factory.create('ns1:Descriptor')
-        descriptor.desc_val = 'I am an updated test!'
-
-        dataset2.value = descriptor
+        dataset2.value = {'desc_val':'I am an updated test!'}
 
         data.Dataset.append(dataset2)
 
@@ -329,10 +318,7 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         dataset.unit = 'metres / second'
         dataset.dimension = 'number of units per time unit'
  
-        descriptor = self.client.factory.create('ns1:Descriptor')
-        descriptor.desc_val = 'I am an updated test!'
-
-        dataset.value = descriptor
+        dataset.value = {'desc_val':'I am an updated test!'}
 
         self.client.service.add_data_to_attribute(scenario_id, resource_attr_id, dataset)
 
@@ -442,12 +428,8 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         dataset.unit = 'metres / second'
         dataset.dimension = 'number of units per time unit'
  
-        descriptor = self.client.factory.create('ns1:Descriptor')
-        descriptor.desc_val = 'I am an updated test!'
+        dataset.value = {'desc_val':'I am an updated test!'}
 
-        dataset.value = descriptor
-
-        
         locked_resource_scenarios = []
         for rs in locked_scenario.resourcescenarios.ResourceScenario:
             if rs.value.type == 'descriptor':

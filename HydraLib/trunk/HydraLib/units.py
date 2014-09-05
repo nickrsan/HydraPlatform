@@ -128,15 +128,18 @@ class Units(object):
             unit2, factor2 = self.parse_unit(unit2)
             conv_factor1 = self.units[unit1]
             conv_factor2 = self.units[unit2]
-
-            if isinstance(values, float):
-                return (conv_factor1[0] / conv_factor2[0] * (factor1 * values)
-                        + (conv_factor1[1] - conv_factor2[1])
-                        / conv_factor2[0]) / factor2
-            elif isinstance(values, list):
+            
+            if isinstance(values, list):
                 return [(conv_factor1[0] / conv_factor2[0] * (factor1 * value)
                         + (conv_factor1[1] - conv_factor2[1])
                         / conv_factor2[0]) / factor2 for value in values]
+            else:
+                try:
+                    return (conv_factor1[0] / conv_factor2[0] * (factor1 * values)
+                        + (conv_factor1[1] - conv_factor2[1])
+                        / conv_factor2[0]) / factor2
+                except:
+                    raise HydraError("Unit conversion failed")
         else:
             raise HydraError("Unit conversion: dimensions are not consistent.")
 

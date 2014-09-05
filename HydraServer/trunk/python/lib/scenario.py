@@ -249,7 +249,6 @@ def _get_dataset_as_dict(rs, user_id):
     except PermissionError:
            dataset['value']      = None
            dataset['frequency']  = None
-           dataset['start_time'] = None
            if dataset['data_type'] == 'timeseries':
                dataset['timeseriesdata'] = []
            dataset['metadata'] = []
@@ -621,7 +620,6 @@ def get_scenario_data(scenario_id,**kwargs):
            except:
                sd.value      = None
                sd.frequency  = None
-               sd.start_time = None
                if sd.data_type == 'timeseries':
                    sd.timeseriesdata = []
                sd.metadata = []
@@ -656,7 +654,6 @@ def get_attribute_data(attr_ids, node_ids, **kwargs):
            except:
                rs.dataset.value      = None
                rs.dataset.frequency  = None
-               rs.dataset.start_time = None
                if rs.dataset.data_type == 'timeseries':
                    rs.datset.timeseriesdata = []
        DBSession.expunge(rs)
@@ -712,7 +709,6 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
            except:
                rs.dataset.value      = None
                rs.dataset.frequency  = None
-               rs.dataset.start_time = None
                if rs.dataset.data_type == 'timeseries':
                    rs.datset.timeseriesdata = []
     DBSession.expunge_all() 

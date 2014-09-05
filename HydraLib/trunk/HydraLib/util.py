@@ -21,6 +21,8 @@ from operator import mul
 from HydraException import HydraError
 import numpy as np
 import pandas as pd
+import json
+import dateutil.parser
 log = logging.getLogger(__name__)
 
 #"2013-08-13 15:55:43.468886Z"
@@ -31,6 +33,11 @@ def get_datetime(timestamp):
     if isinstance(timestamp, datetime.datetime):
         return timestamp
 
+    try:
+        dt = dateutil.parser.parse(timestamp, ignoretz=True)
+        return dt
+    except Exception, e:
+        pass
 
     if timestamp[0:4] == 'XXXX':
         # Do seasonal time series stuff...
@@ -52,7 +59,28 @@ def get_datetime(timestamp):
 
     return ts_time
 
+def make_json_array(array, columns=None):
+    """
+        turn [1, 2, 3] into {"0" : {"0":1, "1":2, "2":3}}
+        and
+        [[1, 2],[3, 4]] into {"0":{"0":1:"1":3}, "1":{"0":2,"1":4}}
+    """
+    df = pd.DataFrame(array, columns=columns)
+    json_array = json.loads(df.to_json())
+    return json_array
 
+def make_array_from_json(json_array):
+    """
+        turn [1, 2, 3] into {"0" : {"0":1, "1":2, "2":3}}
+        and
+        [[1, 2],[3, 4]] into {"0":{"0":1:"1":3}, "1":{"0":2,"1":4}}
+    """
+    df = pd.read_json(json_array)
+    if df.ndim == 1:
+        array = df.values[0].tolist()
+    else:
+        array = df.values.tolist()
+    return array
 def timestamp_to_ordinal(timestamp):
     """Convert a timestamp as defined in the soap interface to the time format
     stored in the database.

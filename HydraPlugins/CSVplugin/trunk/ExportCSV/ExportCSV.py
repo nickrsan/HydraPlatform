@@ -74,6 +74,7 @@ import pytz
 from HydraLib import PluginLib
 from HydraLib.HydraException import HydraPluginError
 from HydraLib.PluginLib import write_progress, write_output, validate_plugin_xml
+import pandas as pd
 
 from numpy import array
 import os, sys
@@ -533,7 +534,7 @@ class ExportCSV(object):
                 elif rs.value.type == 'scalar':
                     value = rs.value.value.param_value
                 elif rs.value.type == 'timeseries':
-                    value = rs.value.value.ts_values
+                    timeseries = pd.read_json(rs.value.value.ts_values)
                     file_name = "timeseries_%s_%s.csv"%(resource_attr.ref_key, attr_name)
                     file_loc = os.path.join(scenario.target_dir, file_name)
                     if os.path.exists(file_loc):
@@ -546,63 +547,24 @@ class ExportCSV(object):
                                     arr_desc = ",".join(m.value.split('|'))
                                     arr_file.write("array description,,,%s\n"%arr_desc)
 
-                    for ts in value:
-                        ts_time = ts['ts_time'].replace('1900', 'XXXX')
-                        ts_val  = ts['ts_value']
+                    for ts_time in timeseries.index:
+                        ts_val = timeseries.loc[ts_time].values
+                        ts_time = ts_time.replace('1900', 'XXXX')
 
-                        try:
-                            ts_val = float(ts_val)
-                            ts_file.write("%s,%s,%s,%s\n"%
-                                        ( resource_name,
-                                        ts_time,
-                                        '1',
-                                        ts_val))
-
-                        except:
-                            parsed_val = PluginLib.parse_suds_array(ts_val)
-                            np_val = array(parsed_val)
-                            shape = np_val.shape
-                            n = 1
-                            shape_str = []
-                            for x in shape:
-                                n = n * x
-                                shape_str.append(str(x))
-                            one_dimensional_val = np_val.reshape(1, n)
-                            ts_file.write("%s,%s,%s,%s\n"%
-                                        ( resource_name,
-                                        ts_time,
-                                        ' '.join(shape_str),
-                                        ','.join([str(x) for x in one_dimensional_val.tolist()[0]])))
+                        shape = ts_val.shape
+                        n = 1
+                        shape_str = []
+                        for x in shape:
+                            n = n * x
+                            shape_str.append(str(x))
+                        one_dimensional_val = np_val.reshape(1, n)
+                        ts_file.write("%s,%s,%s,%s\n"%
+                                    ( resource_name,
+                                    ts_time,
+                                    ' '.join(shape_str),
+                                    ','.join([str(x) for x in one_dimensional_val.tolist()[0]])))
 
                     ts_file.close()
-                    value = file_name
-
-                elif rs.value.type == 'eqtimeseries':
-                    ts_val = PluginLib.parse_suds_array(rs.value.value.arr_data)
-                    file_name = "eq_timeseries_%s_%s.csv"%(resource_attr.ref_key, attr_name)
-                    file_loc = os.path.join(scenario.target_dir, file_name)
-                    if os.path.exists(file_loc):
-                        arr_file      = open(file_loc, 'a')
-                    else:
-                        arr_file      = open(file_loc, 'w')
-                    np_val = array(ts_val)
-                    shape = np_val.shape
-                    n = 1
-                    shape_str = []
-                    for x in shape:
-                        n = n * x
-                        shape_str.append(str(x))
-                    one_dimensional_val = np_val.reshape(1, n)
-                    arr_file.write("%s,%s,%s,%s,%s\n"%
-                                (
-                                    resource_name,
-                                    rs.value.value.start_time,
-                                    rs.value.value.frequency,
-                                    ' '.join(shape_str),
-                                    ','.join([str(x) for x in one_dimensional_val.tolist()[0]]))
-                                 )
-
-                    arr_file.close()
                     value = file_name
 
                 metadata = self.get_metadata_string(rs.value.metadata)

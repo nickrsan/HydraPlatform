@@ -19,9 +19,9 @@
 import test_SoapServer
 import datetime
 import logging
-from HydraLib.PluginLib import parse_suds_array, create_dict
-from HydraLib.util import parse_array
 from suds import WebFault
+import json
+from HydraLib.util import make_json_array
 log = logging.getLogger(__name__)
 
 class TimeSeriesTest(test_SoapServer.SoapServerTest):
@@ -42,14 +42,9 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
         new_rss = new_s.resourcescenarios.ResourceScenario
         for new_rs in new_rss:
             if new_rs.value.type == 'timeseries':
-                ret_ts_dict = {}
-                for ret_timestep in new_rs.value.value.ts_values:
-                    ret_ts_time = eval(ret_timestep.ts_time)
-                    ret_ts_val  = parse_suds_array(ret_timestep.ts_value)
-                    ret_ts_dict[ret_ts_time] = ret_ts_val
-                for new_timestep in relative_ts['ts_values']:
-                    assert ret_ts_dict.get(new_timestep['ts_time']) is not None
-                    assert ret_ts_dict[new_timestep['ts_time']] == parse_array(new_timestep['ts_value'])
+                ret_timeseries = json.loads(new_rs.value.value.ts_values)
+                new_timeseries = json.loads(new_rs.value.value.ts_values)
+                assert ret_timeseries == new_timeseries
         
         return new_net
 
@@ -61,7 +56,7 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
         s = net['scenarios'].Scenario[0]
         for rs in s['resourcescenarios'].ResourceScenario:
             if rs['value']['type'] == 'timeseries':
-                rs['value']['value'] =arbitrary_ts 
+                rs['value']['value'] = arbitrary_ts 
         
         new_network_summary = self.client.service.add_network(net)
         new_net = self.client.service.get_network(new_network_summary.id)
@@ -70,14 +65,9 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
         new_rss = new_s.resourcescenarios.ResourceScenario
         for new_rs in new_rss:
             if new_rs.value.type == 'timeseries':
-                ret_ts_dict = {}
-                for ret_timestep in new_rs.value.value.ts_values:
-                    ret_ts_time = ret_timestep.ts_time
-                    ret_ts_val  = parse_suds_array(ret_timestep.ts_value)
-                    ret_ts_dict[ret_ts_time] = ret_ts_val
-                for new_timestep in arbitrary_ts['ts_values']:
-                    assert ret_ts_dict.get(new_timestep['ts_time']) is not None
-                    assert ret_ts_dict[new_timestep['ts_time']] == parse_array(new_timestep['ts_value'])
+                ret_ts_val  = json.loads(new_rs.value.value.ts_values)
+                old_val     = json.loads(arbitrary_ts['ts_values'])
+                assert ret_ts_val == old_val
 
     def test_get_relative_data_between_times(self):
         net = self.test_relative_timeseries()
@@ -114,8 +104,10 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
                 val_to_query = d.value
                 break
 
-        val_a = val_to_query.value.ts_values[0].ts_value
-        val_b = val_to_query.value.ts_values[1].ts_value
+        vals = sorted(json.loads(val_to_query.value.ts_values).items())
+
+        val_a = vals[0][1]
+        val_b = vals[1][1]
 
         now = datetime.datetime.now()
 
@@ -127,15 +119,15 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
             1,
             )
 
-        data = vals.data
+        data = sorted(json.loads(vals.data).items())
         assert len(data) == 76
-        for val in data[60:75]:
-            x = parse_suds_array(val_b)
-            y = parse_suds_array(val)
+        for time, val in data[60:75]:
+            x = val_b
+            y = val
             assert x == y
-        for val in data[0:59]:
-            x = parse_suds_array(val_a)
-            y = parse_suds_array(val)
+        for time, val in data[0:59]:
+            x = val_a
+            y = val
             assert x == y
 
     def test_descriptor_get_data_between_times(self):
@@ -163,20 +155,16 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
             Create a timeseries which has relative timesteps:
             1, 2, 3 as opposed to timestamps
         """
-        test_val_1 = create_dict([[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]], [[9,8,7],[6,5,4]]]) 
+        test_val_1 = make_json_array([1, 2, "hello"])
 
-        test_val_2 = create_dict(["1.0", "2.0", "3.0"])
+        test_val_2 = make_json_array([1.0, 2.0, 3.0])
+        test_val_3 = make_json_array([3.0, "", ""])
 
         timeseries = {'ts_values' : 
-            [
-                {'ts_time' : 1,
-                'ts_value' : test_val_1},
-                {'ts_time' : 2,
-                'ts_value' : test_val_2},
-                {'ts_time' : 3,
-                'ts_value' : create_dict(["3.0", "", ""])},
-
-            ]
+            json.dumps(
+                {9:test_val_1,
+                 8:test_val_2,
+                 7:test_val_3})
         }
         return timeseries 
 
@@ -185,44 +173,18 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
             Create a timeseries which has relative timesteps:
             1, 2, 3 as opposed to timestamps
         """
-        test_val_1 = create_dict([[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]], [[9,8,7],[6,5,4]]]) 
+        test_val_1 = make_json_array([1, 2, "hello"])
 
-        test_val_2 = create_dict(["1.0", "2.0", "3.0"])
+        test_val_2 = make_json_array([1.0, 2.0, 3.0])
+        test_val_3 = make_json_array([3.0, "", ""])
 
         timeseries = {'ts_values' : 
-            [
-                {'ts_time' : 'arb',
-                'ts_value' : test_val_1},
-                {'ts_time' : 'it',
-                'ts_value' : test_val_2},
-                {'ts_time' : 'rary',
-                'ts_value' : create_dict(["3.0", "", ""])},
-
-            ]
+             json.dumps(
+                {'arb':test_val_1,
+                'it':test_val_2,
+                'rary':test_val_3})
         }
         return timeseries 
-
-class ArrayTest(test_SoapServer.SoapServerTest):
-    def test_array_format(self):
-        bad_net = self.build_network()
-
-        s = bad_net['scenarios'].Scenario[0]
-        for rs in s['resourcescenarios'].ResourceScenario:
-            if rs['value']['type'] == 'array':
-                rs['value']['value'] = {'arr_data': create_dict([[1, 2] ,[3, 4, 5]])}
-        
-        self.assertRaises(WebFault, self.client.service.add_network,bad_net)
-        
-        net = self.build_network()
-        n = self.client.service.add_network(net)
-        good_net = self.client.service.get_network(n.id)
-        
-        s = good_net.scenarios.Scenario[0]
-        for rs in s.resourcescenarios.ResourceScenario:
-            if rs.value.type == 'array':
-                rs.value.value = {'arr_data': create_dict([[1, 2] ,[3, 4, 5]])}
-                #Get one of the datasets, make it uneven and update it.
-                self.assertRaises(WebFault, self.client.service.update_dataset,rs)
 
 class DataGroupTest(test_SoapServer.SoapServerTest):
 
@@ -410,12 +372,8 @@ class SharingTest(test_SoapServer.SoapServerTest):
                 dataset.dimension = 'cubic capacity'
 
                 dataset.value = {'ts_values' : 
-                    [
-                        {'ts_time' : datetime.datetime.now(),
-                        'ts_value' : str([11, 21, 31, 41, 51])},
-                        {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=1),
-                        'ts_value' : str([12, 22, 32, 42, 52])},
-                    ]
+                        json.dumps({str(datetime.datetime.now()):[11, 21, 31, 41, 51],
+                        str(datetime.datetime.now()+datetime.timedelta(hours=1)):str([12, 22, 32, 42, 52])})
                 }
                 d.value = dataset
             else:
@@ -501,12 +459,8 @@ class SharingTest(test_SoapServer.SoapServerTest):
                 assert d.value.locked == 'Y'
                 #Reassign the value of the dataset to something new.
                 d.value.value = {'ts_values' : 
-                    [
-                        {'ts_time' : datetime.datetime.now(),
-                        'ts_value' : str([11, 21, 31, 41, 51])},
-                        {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=1),
-                        'ts_value' : str([12, 22, 32, 42, 52])},
-                    ]
+                                 json.dumps({str(datetime.datetime.now()):make_json_array([11, 21, 31, 41, 51]),
+                                            str(datetime.datetime.now()+datetime.timedelta(hours=1)):make_json_array([12, 22, 32, 42, 52])})
                 }
             else:
                 #The rest of the data is unlocked, so should be there.
@@ -594,75 +548,6 @@ class RetrievalTest(test_SoapServer.SoapServerTest):
         ra_ids = [r.id for r in res_attrs]
         for rs in res_scenarios:
             assert rs.resource_attr_id in ra_ids
-
-
-class FormatTest(test_SoapServer.SoapServerTest):
-    def test_format_array_data(self):
-        net = self.create_network_with_data(num_nodes=2)
-        
-        scenario = net.scenarios.Scenario[0]
-        uneven_array = self.create_uneven_array()
-        rs_to_update = scenario.resourcescenarios.ResourceScenario[0]
-        rs_to_update.value = uneven_array
-        
-        self.client.service.update_network(net)
-        #logging.info(self.client.last_sent().str())
-        updated_net = self.client.service.get_network(net.id)
-
-        updated_scenario = updated_net.scenarios.Scenario[0]
-        rs_to_update = updated_scenario.resourcescenarios.ResourceScenario[0]
-        
-        #logging.warn(scenario.resourcescenarios.ResourceScenario[0]['value']['value']['arr_data'])
-        old_arr = parse_array(scenario.resourcescenarios.ResourceScenario[0]['value']['value']['arr_data'])
-        #logging.warn(updated_scenario.resourcescenarios.ResourceScenario[0].value.value.arr_data)
-        new_arr = parse_suds_array(updated_scenario.resourcescenarios.ResourceScenario[0].value.value.arr_data)
-        #logging.info("%s == %s ?", old_arr, new_arr) 
-        assert old_arr == new_arr
-        
-    def create_uneven_array(self):
-        #A scenario attribute is a piece of data associated
-        #with a resource attribute.
-        #[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        arr= {'arr_data' :
-              {'array': [
-                    {'array':[
-                        {'array':[
-                        {'item':[1.0, 2.0, 3.0]},
-                        {'item':[4.0, 5.0, 6.0]},
-                        {'item':[7.0, 8.0, 9.0]},
-                        ]}, 
-                    {'array' : [
-                        {'item':[1.0, 2.0, 3.0]},
-                        {'item':[4.0, 5.0, 6.0]},
-                        {'item':[7.0, 8.0, 9.0]},
-                        ]}
-                    ]}
-              ]}
-        }
-
-        same_arr = create_dict([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]])
-        
-        assert arr['arr_data'] == same_arr 
-        
-        metadata_array = self.client.factory.create("hyd:MetadataArray")
-        metadata = self.client.factory.create("hyd:Metadata")
-        metadata.name = 'created_for'
-        metadata.value = 'Test user'
-        metadata_array.Metadata.append(metadata)
-
-        dataset = dict(
-            id=None,
-            type = 'array',
-            name = 'my array',
-            unit = 'bar',
-            dimension = 'Pressure',
-            locked = 'N',
-            value = arr,
-            metadata = metadata_array, 
-        )
-
-        return dataset 
-
 
 if __name__ == '__main__':
     test_SoapServer.run()

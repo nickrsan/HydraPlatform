@@ -60,8 +60,6 @@ def get_dataset(dataset_id,**kwargs):
                 null().label('timeseriesdata'),
                 null().label('metadata'),
                 case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
-                        else_=Dataset.start_time).label('start_time'),
-                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
                         else_=Dataset.frequency).label('frequency'),
                 case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
                         else_=Dataset.value).label('value')).filter(
@@ -271,7 +269,7 @@ def _process_incoming_data(data, user_id=None, source=None):
         else:
             scenario_datum.data_dimen = d.dimension
 
-        scenario_datum.set_val(d.type, val)
+        scenario_datum.set_val(str(d.type), val)
 
         metadata_names = []
         if d.metadata is not None:
@@ -498,7 +496,7 @@ def get_vals_between_times(dataset_id, start_time, end_time, timestep,increment,
     data_to_return = []
     if type(data) is list:
         for d in data:
-            data_to_return.append(create_dict(list(d)))
+            data_to_return.append(d)
     else:
         data_to_return.append(data)
 

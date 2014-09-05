@@ -639,7 +639,6 @@ def get_network(network_id, summary=False, include_data='N', scenario_ids=None, 
             dataset.metadata = metadata_dict.get(dataset.dataset_id, [])
         else:
             dataset.value = None
-            dataset.start_time = None
             dataset.frequency = None
             dataset.timeseriesdata = []
             dataset.metadata = []

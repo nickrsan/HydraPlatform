@@ -17,32 +17,21 @@ from spyne.model.complex import Array as SpyneArray, ComplexModel
 from spyne.model.primitive import Unicode
 from spyne.model.primitive import Integer
 from spyne.model.primitive import Decimal
-from spyne.model.primitive import Float
-from spyne.model.primitive import DateTime
 from spyne.model.primitive import AnyDict
 from spyne.model.primitive import Double
-from decimal import Decimal as Dec
-from HydraLib.util import get_datetime,\
-        timestamp_to_ordinal,\
-        ordinal_to_timestamp,\
-        check_array_struct
-import pandas as pd
-from pandas.tseries.index import DatetimeIndex
 import logging
-from HydraLib.util import create_dict
 
 NS = "soap_server.hydra_complexmodels"
 log = logging.getLogger(__name__)
 
-def get_timestamp(ordinal):
-    if ordinal is None:
-        return None
-
-    if type(ordinal) in (str, unicode):
-        ordinal = Dec(ordinal)
-    timestamp = str(ordinal_to_timestamp(ordinal))
-    return timestamp
-
+ref_id_map = {
+    'NODE'     : 'node_id',
+    'LINK'     : 'link_id',
+    'GROUP'    : 'group_id',
+    'NETWORK'  : 'network_id',
+    'SCENARIO' : 'scenario_id',
+    'PROJECT'  : 'project_id'
+}
 
 ref_id_map = {
     'NODE'     : 'node_id',
@@ -198,32 +187,21 @@ class Dataset(ComplexModel):
         self.dimension = parent.data_dimen
         self.unit      = parent.data_units
         if parent.value is not None: 
-            if parent.data_type == 'descriptor':
-                self.value = {'desc_val': [parent.value]}
+            if parent.data_type == 'timeseries':
+                self.value = _make_timeseries(parent.value, parent.frequency)
             elif parent.data_type == 'array':
-                self.value = Array(parent.value)
+                self.value = {'arr_data': [parent.value]}
+            elif parent.data_type == 'descriptor':
+                self.value = {'desc_val': [parent.value]}
             elif parent.data_type == 'scalar':
                 self.value = {'param_value': [parent.value]}
-            elif parent.data_type == 'eqtimeseries':
-                self.value = EqTimeSeries(parent.start_time, parent.frequency, parent.value)
-        if parent.data_type == 'timeseries':
-            if parent.value is not None:
-                self.value = TimeSeries(parent.value)
-                #self.value = _make_timeseries(parent.value)
-            else:
-                if len(parent.timeseriesdata) > 0:
-                    self.value = TimeSeries(val = parent.timeseriesdata)
 
-        if self.value and type(self.value) is not dict:
-            self.value = self.value.__dict__
-        elif self.value is None:
-            self.value = {}
-        
-        metadata = []
-        for m in parent.metadata:
-            complex_m = Metadata(m)
-            metadata.append(complex_m)
-        self.metadata = metadata
+        if parent.metadata:
+            metadata = []
+            for m in parent.metadata:
+                complex_m = Metadata(m)
+                metadata.append(complex_m)
+            self.metadata = metadata
 
     def parse_value(self):
         """
@@ -257,99 +235,27 @@ class Dataset(ComplexModel):
                 return data['desc_val']
         elif data_type == 'timeseries':
 
-            # The brand new way to parse time series data:
-            ts = []
-            for ts_val in data['ts_values']:
-                #The value is a list, so must get index 0
-                timestamp = ts_val['ts_time']
-                if is_soap_req:
-                    timestamp = timestamp[0]
-                # Check if we have received a seasonal time series first
-                arr_data = ts_val['ts_value']
-                if is_soap_req:
-                    arr_data = arr_data[0]
-                try:
-                    arr_data = dict(arr_data)
-                    try:
-                        ts_value = eval(arr_data)
-                    except:
-                        ts_value = self.parse_array(arr_data)
-                except:
-                    try:
-                        ts_value = float(arr_data)
-                    except:
-                        ts_value = arr_data
-
-                ts.append((timestamp, str(ts_value)))
+            ts = {}
+            if is_soap_req:
+                ts['frequency'] = data.get('frequency', [None])[0]
+                ts['ts_values'] = data['ts_values'][0]
+            else:
+                ts['frequency'] = data.get('frequency', None)
+                ts['ts_values'] = data['ts_values']
 
             return ts
-        elif data_type == 'eqtimeseries':
-            start_time = data['start_time']
-            frequency  = data['frequency']
-            arr_data   = data['arr_data']
-            if is_soap_req:
-                start_time = start_time[0]
-                frequency = frequency[0]
-                arr_data = arr_data[0]
-            start_time = timestamp_to_ordinal(start_time) 
-
-            log.info(arr_data)
-            try:
-                val = eval(arr_data)
-            except:
-                val = self.parse_array(arr_data)
-
-            arr_data   = str(val)
-
-            return (start_time, frequency, arr_data)
         elif data_type == 'scalar':
             if is_soap_req:
                 return data['param_value'][0]
             else:
                 return data['param_value']
         elif data_type == 'array':
-            arr_data = data['arr_data']
+            val = data['arr_data']
             if is_soap_req:
-                arr_data = arr_data[0]
-            if type(arr_data) == dict:
-                val = self.parse_array(arr_data)
-            else:
-                val = eval(arr_data)
+                val = val[0]
 
-            return str(val)
+            return val
 
-
-    def parse_array(self, arr):
-        """
-            Take a list of nested dictionaries and return a python list containing
-            a single value, a string or sub lists.
-        """
-        ret_arr = []
-        arr_data = arr.get('array', None)
-        if arr_data is not None:
-            if len(arr_data) == 1:
-                if arr_data[0].get('item'):
-                    for v in arr_data[0].get('item'):
-                        try:
-                            ret_arr.append(eval(v))
-                        except:
-                            ret_arr.append(v)
-                else:
-                    ret_arr = self.parse_array(arr_data[0])
-            else:
-                for sub_val in arr_data:
-                    if sub_val.get('array'):
-                        ret_arr.append(self.parse_array(sub_val))
-                    elif sub_val.get('item'):
-                        item_arr = []
-                        for v in sub_val.get('item'):
-                            try:
-                                item_arr.append(float(v))
-                            except:
-                                item_arr.append(v)
-                        ret_arr.append(item_arr)
-        check_array_struct(ret_arr)
-        return ret_arr
 
     def get_metadata_as_dict(self):
         
@@ -378,170 +284,9 @@ class Dataset(ComplexModel):
         self.data_hash = data_hash
         return data_hash
 
-class Descriptor(ComplexModel):
-    _type_info = [
-        ('desc_val', Unicode),
-    ]
-
-    def __init__(self, val=None):
-        super(Descriptor, self).__init__()
-        if  val is None:
-            return
-        self.desc_val = [val]
-
-class TimeSeriesData(ComplexModel):
-    _type_info = [
-        #('ts_time', DateTime),
-        ('ts_time', Unicode),
-        ('ts_value', AnyDict),
-    ]
-
-    def __init__(self, val=None):
-        super(TimeSeriesData, self).__init__()
-        if  val is None:
-            return
-
-        self.ts_time  = [val.ts_time]
-        
-        try:
-            ts_val = eval(val.ts_value)
-        except:
-            ts_val = val.ts_value
-
-        if type(ts_val) is list:
-            self.ts_value = [create_dict(ts_val)]
-        else:
-            self.ts_value = [ts_val]
-
-def _make_timeseries(val):
-    log.debug("Creating timeseries complexmodels")
-
-    if  val is None or len(val) == 0:
-        return {}
-
-    ts_vals = []
-    timeseries = pd.read_json(val)
-    for t in timeseries.index:
-        ts_val = timeseries.loc[t].values
-        ts_data = {}
-        try:
-            ts_data['ts_time'] = [str(get_datetime(t.to_pydatetime()))]
-        except AttributeError:
-            try:
-                ts_data['ts_time'] = [eval(t)]
-            except:
-                ts_data['ts_time'] = [t]
-        try:
-            ts_val = list(ts_val)
-            ts_data['ts_value'] = [create_dict(ts_val)]
-        except:
-            ts_data['ts_value'] = [ts_val]
-        ts_vals.append(ts_data)
-    freq = None
-    if type(timeseries.index) == DatetimeIndex:
-        freq = [timeseries.index.inferred_freq]
-        ts = {'periods'   : [len(timeseries.index)],
-              'frequency' : freq,
-              'ts_values' : ts_vals,
-         }
-
-    return ts
-
-
-class TimeSeries(ComplexModel):
-    _type_info = [
-        ('ts_values', SpyneArray(TimeSeriesData)),
-        ('frequency', Unicode(default=None)),
-        ('periods',   Integer(default=None)),
-    ]
-
-    def __init__(self, val=None):
-        super(TimeSeries, self).__init__()
-        if  val is None or len(val) == 0:
-            return
-
-        ts_vals = []
-        if type(val) == str:
-            log.debug("Creating timeseries complexmodels")
-            timeseries = pd.read_json(val)
-            for ts in timeseries.index:
-                ts_val = timeseries.loc[ts].values
-                ts_data = {}
-                try:
-                    ts_data['ts_time'] = [str(get_datetime(ts.to_pydatetime()))]
-                except AttributeError:
-                    try:
-                        ts_data['ts_time'] = [eval(ts)]
-                    except:
-                        ts_data['ts_time'] = [ts]
-                try:
-                    ts_val = list(ts_val)
-                    ts_data['ts_value'] = [create_dict(ts_val)]
-                except:
-                    ts_data['ts_value'] = [ts_val]
-                ts_vals.append(ts_data)
-
-            if type(timeseries.index) == DatetimeIndex:
-                self.frequency = [timeseries.index.inferred_freq]
-            self.periods = [len(timeseries.index)]
-            log.debug("Timeseries complexmodels created")
-        else:
-            log.info("IN HERE!")
-            for ts in val:
-                ts_vals.append(TimeSeriesData(ts).__dict__)
-        self.ts_values = ts_vals
-
-class EqTimeSeries(ComplexModel):
-
-    """
-        An equally spaced timeseries value.
-        Frequency is stored in seconds
-        Value must be an array.
-    """
-    _type_info = [
-        ('start_time', DateTime),
-        ('frequency', Decimal),
-        ('arr_data',  AnyDict),
-    ]
-    def __init__(self, start_time=None, frequency=None, val=None):
-        super(EqTimeSeries, self).__init__()
-        if  val is None:
-            return
-
-        self.start_time = [ordinal_to_timestamp(Dec(start_time))]
-        self.frequency  = [Dec(frequency)]
-        self.arr_data   = [create_dict(eval(val))]
-
-class Scalar(ComplexModel):
-    _type_info = [
-        ('param_value', Float),
-    ]
-
-    def __init__(self, val=None):
-        super(Scalar, self).__init__()
-        if  val is None:
-            return
-        self.param_value = [val]
-
-class Array(ComplexModel):
-    _type_info = [
-        ('arr_data', AnyDict),
-    ]
-
-    def __init__(self, val=None):
-        super(Array, self).__init__()
-        if  val is None:
-            return
-        try:
-           val = eval(val)
-        except:
-            pass
-        if type(val) is list:
-            self.arr_data = [create_dict(val)]
-        else:
-            self.arr_data = [val]
-
 class DatasetGroup(ComplexModel):
+    """
+    """
     _type_info = [
         ('group_name', Unicode(default=None)),
         ('group_id'  , Integer(default=None)),
@@ -589,7 +334,6 @@ class ResourceScenario(ComplexModel):
             return
         self.resource_attr_id = parent.resource_attr_id
         self.attr_id          = attr_id if attr_id is not None else parent.resourceattr.attr_id
-
         self.value = Dataset(parent.dataset)
         self.source = parent.source
 
@@ -612,14 +356,14 @@ class ResourceAttr(ComplexModel):
         self.id = parent.resource_attr_id
         self.attr_id = parent.attr_id
         self.ref_key  = parent.ref_key
-        if parent.ref_key == 'NETWORK':
-            self.ref_id = parent.network_id
+        if parent.ref_key == 'LINK':
+            self.ref_id = parent.link_id
         elif parent.ref_key  == 'NODE':
             self.ref_id = parent.node_id
-        elif parent.ref_key == 'LINK':
-            self.ref_id = parent.link_id
         elif parent.ref_key == 'GROUP':
             parent.ref_id = parent.group_id
+        elif parent.ref_key == 'NETWORK':
+            self.ref_id = parent.network_id
 
         self.attr_is_var = parent.attr_is_var
         #This should be set externally as it is not related to its parent.
@@ -974,8 +718,8 @@ class Scenario(Resource):
         self.network_id = parent.network_id
         self.status = parent.status
         self.locked = parent.locked
-        self.start_time = get_timestamp(parent.start_time)
-        self.end_time = get_timestamp(parent.end_time)
+        self.start_time = parent.start_time
+        self.end_time   = parent.end_time
         self.time_step = parent.time_step
         if summary is False:
             self.resourcescenarios = [ResourceScenario(rs) for rs in parent.resourcescenarios]

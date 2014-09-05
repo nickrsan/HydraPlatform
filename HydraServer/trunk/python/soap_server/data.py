@@ -16,11 +16,7 @@
 from spyne.model.primitive import Integer, Boolean, Unicode, AnyDict, Decimal
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
-from hydra_complexmodels import Descriptor,\
-        TimeSeries,\
-        EqTimeSeries,\
-        Scalar,\
-        Array as HydraArray,\
+from hydra_complexmodels import\
         Dataset,\
         Metadata,\
         DatasetGroup
@@ -136,26 +132,6 @@ class DataService(HydraService):
         success = True
         data.delete_dataset(dataset_id, **ctx.in_header.__dict__)
         return success
-
-    @rpc(Descriptor, _returns=Descriptor)
-    def echo_descriptor(ctx, x):
-        return x
-
-    @rpc(TimeSeries, _returns=TimeSeries)
-    def echo_timeseries(ctx, x):
-        return x
-
-    @rpc(EqTimeSeries, _returns=EqTimeSeries)
-    def echo_eqtimeseries(ctx, x):
-        return x
-
-    @rpc(Scalar, _returns=Scalar)
-    def echo_scalar(ctx, x):
-        return x
-
-    @rpc(HydraArray, _returns=HydraArray)
-    def echo_array(ctx, x):
-        return x
 
     @rpc(Integer, SpyneArray(Unicode), _returns=AnyDict)
     def get_val_at_time(ctx, dataset_id, timestamps):

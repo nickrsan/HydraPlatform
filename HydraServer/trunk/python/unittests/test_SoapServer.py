@@ -20,7 +20,8 @@ import logging
 
 from HydraLib import config
 from HydraLib.util import get_datetime
-from HydraLib.PluginLib import create_dict
+import json
+from HydraLib.util import make_json_array
 
 from suds.client import Client
 from suds.plugin import MessagePlugin
@@ -285,9 +286,7 @@ class SoapServerTest(unittest.TestCase):
         s = net.scenarios.Scenario[0]
         rs = s.resourcescenarios.ResourceScenario[0]
         
-
     def build_network(self, project_id=None, num_nodes=10):
-
     
         start = datetime.datetime.now()
         if project_id is None:
@@ -481,8 +480,8 @@ class SoapServerTest(unittest.TestCase):
                         timeseries = self.create_timeseries(na)
                         scenario_data.ResourceScenario.append(timeseries)
                     elif na['attr_id'] == node_attr3['id']:
-                        eqtimeseries = self.create_eqtimeseries(na)
-                        scenario_data.ResourceScenario.append(eqtimeseries)
+                        scalar = self.create_scalar(na)
+                        scenario_data.ResourceScenario.append(scalar)
 
         for l in links:
             for na in l['attributes'].ResourceAttr:
@@ -571,21 +570,21 @@ class SoapServerTest(unittest.TestCase):
         s = request_net['scenarios'].Scenario[0]
         for rs0 in s['resourcescenarios'].ResourceScenario:
             if rs0['value']['type'] == 'timeseries':
-                val = rs0['value']['value']
-                for v in val['ts_values']:
-                    before_times.append(v['ts_time'])
+                val = json.loads(rs0['value']['value']['ts_values'])
+                for v in val.keys():
+                    before_times.append(get_datetime(v))
 
         after_times = []
         s = response_net.scenarios.Scenario[0]
         for rs0 in s.resourcescenarios.ResourceScenario:
             if rs0.value.type == 'timeseries':
-                val = rs0.value.value
-                for v in val['ts_values']:
-                    after_times.append(v['ts_time'])
+                val = json.loads(rs0['value']['value']['ts_values'])
+                for v in val.keys():
+                    after_times.append(v)
         for d in after_times:
             try:
                 time = get_datetime(d)
-            except:
+            except Exception, e:
                 time = eval(d)
             assert time in before_times, "%s is incorrect"%(d)
 
@@ -637,11 +636,16 @@ class SoapServerTest(unittest.TestCase):
     def create_timeseries(self, ResourceAttr):
         #A scenario attribute is a piece of data associated
         #with a resource attribute.
-        #[[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]]]
 
-        test_val_1 = create_dict([[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]], [[9, 8, 7],[6, 5, 4]]]) 
+        time_1 = datetime.datetime.now()
+        time_2 = datetime.datetime.now()+datetime.timedelta(hours=1)
+        time_3 = datetime.datetime.now()+datetime.timedelta(hours=2)
 
-        test_val_2 = create_dict([1.0, 2.0, 3.0])
+        test_val_1 = make_json_array([1, 2, "hello"])
+
+        test_val_2 = make_json_array(["1.0", "2.0", "3.0"])
+
+        test_val_3 = make_json_array([3.0, None, None])
 
         metadata_array = self.client.factory.create("hyd:MetadataArray")
         metadata = self.client.factory.create("hyd:Metadata")
@@ -657,15 +661,9 @@ class SoapServerTest(unittest.TestCase):
             dimension = 'Volume',
             locked = 'N',
             value = {'ts_values' : 
-            [
-                {'ts_time' : datetime.datetime.now(),
-                'ts_value' : test_val_1},
-                {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=1),
-                'ts_value' : test_val_2},
-                {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=2),
-                'ts_value' : create_dict([3.0, None, None])},
-
-            ]
+            json.dumps({str(time_1):test_val_1,
+                str(time_2): test_val_2,
+                 str(time_3):test_val_3},)
         },
             metadata = metadata_array, 
         )
@@ -683,8 +681,8 @@ class SoapServerTest(unittest.TestCase):
         #with a resource attribute.
         #[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
-        arr_data = create_dict([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
-        arr= {'arr_data' : arr_data}
+        arr_data = make_json_array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
+        arr= {'arr_data' : json.dumps(arr_data)}
         
         metadata_array = self.client.factory.create("hyd:MetadataArray")
         metadata = self.client.factory.create("hyd:Metadata")
@@ -708,35 +706,6 @@ class SoapServerTest(unittest.TestCase):
             resource_attr_id = ResourceAttr['id'],
             value = dataset,
         )
-
-        return scenario_attr
-
-    def create_eqtimeseries(self, ResourceAttr):
-        #A scenario attribute is a piece of data associated
-        #with a resource attribute.
-        #[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        ts_val = {
-            'start_time' : datetime.datetime.now(),
-            'frequency'  : 3600.0,
-            'arr_data': create_dict([9, 210, 11]),
-        }
-
-        dataset = dict(
-            id=None,
-            type = 'eqtimeseries',
-            name = 'my equally spaced timeseries',
-            unit = 'amps',
-            dimension = 'Current',
-            locked = 'N',
-            value = ts_val,
-        )
-
-        scenario_attr = dict(
-            attr_id = ResourceAttr['attr_id'],
-            resource_attr_id = ResourceAttr['id'],
-            value = dataset,
-        )
-
 
         return scenario_attr
 

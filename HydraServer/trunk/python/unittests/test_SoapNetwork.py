@@ -804,7 +804,6 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             assert ra.resourcescenario is not None
             assert ra.id in node_ras
 
-
         node_id_filter = [net.nodes.Node[0].id, net.nodes.Node[1].id]
         new_node_ras = self.client.service.get_all_node_data(net.id, s.id, node_id_filter)
         for ra in new_node_ras.ResourceAttr:

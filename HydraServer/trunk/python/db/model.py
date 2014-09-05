@@ -56,7 +56,6 @@ class Dataset(Base):
     created_by = Column(Integer(), ForeignKey('tUser.user_id'))
     locked = Column(String(1),  nullable=False, server_default=text(u"'N'"))
    
-    start_time = Column(String(),  nullable=True)
     frequency = Column(String(),  nullable=True)
     value = Column('value', LargeBinary(),  nullable=True)
 
@@ -91,11 +90,9 @@ class Dataset(Base):
             for example) or as a single python dictionary
         """
         if self.data_type == 'array':
-            return eval(self.value)
+            return self.value
         elif self.data_type == 'descriptor':
             return str(self.value)
-        elif self.data_type == 'eqtimeseries':
-            return (self.start_time, self.frequency, eval(self.value))
         elif self.data_type == 'scalar':
             return Decimal(str(self.value))
         elif self.data_type == 'timeseries':
@@ -116,9 +113,13 @@ class Dataset(Base):
             else:
 
                 try:
+                    if type(timeseries.index) != DatetimeIndex:
+                        if type(timeseries.columns) == DatetimeIndex:
+                            timeseries = timeseries.transpose()
+
                     pandas_ts = timeseries.reindex(timestamp, method='ffill')
                 
-                    ret_val = list(pandas_ts.loc[timestamp].values)
+                    ret_val = pandas_ts.loc[timestamp].transpose().to_json(date_format='iso', date_unit='ns')
                     return ret_val
                 except Exception, e:
                     log.critical(e)
@@ -154,44 +155,35 @@ class Dataset(Base):
                 return val
 
     def set_val(self, data_type, val):
-        if data_type in ('descriptor','scalar','array'):
+        if data_type in ('descriptor','scalar'):
             self.value = str(val)
-        elif data_type == 'eqtimeseries':
-            self.start_time = str(val[0])
-            self.frequency  = str(val[1])
-            self.value      = str(val[2])
+        elif data_type == 'array':
+            try:
+                arr = pd.read_json(val)
+                self.value = arr.to_json()
+            except Exception, e:
+                raise HydraError("An error has occurred formatting array: %s"%e)
         elif data_type == 'timeseries':
-            existing_vals = {}
-            for datum in self.timeseriesdata:
-                existing_vals[datum.ts_time] = datum
-            for time, value in val:
-                if time in existing_vals.keys():
-                    existing_vals[time].ts_val = value
-                else:
-                    ts_val = TimeSeriesData()
-                    if type(time) == datetime:
-                        ts_val.ts_time = str(timestamp_to_ordinal(time))
-                    else:
-                        ts_val.ts_time = time
-                    ts_val.ts_value = value
-                    self.timeseriesdata.append(ts_val)
-            test_val_keys = []
-            test_vals = []
-            for time, value in val:
-                try:
-                    v = eval(value)
-                except:
-                    v = value
-                try: 
-                    test_val_keys.append(get_datetime(time))
-                except:
-                    test_val_keys.append(time)
-                test_vals.append(v)
+            self.frequency = val.get('frequency')
+            try:
+                ts_val = pd.read_json(val['ts_values'])
 
-            test_pd = pd.DataFrame(test_vals, index=pd.Series(test_val_keys))
-            #Epoch doesn't work here because dates before 1970 are not supported
-            #in read_json. Ridiculous.
-            self.value = test_pd.to_json(date_format='iso', date_unit='ns')
+                #Check if the timeseries is seasonal.
+                if str(ts_val.index[0]).startswith('XXXX'):
+                    new_index = pd.to_datetime([get_datetime(t) for t in ts_val.index])
+                    ts_val.index = new_index
+                
+                #Try to calculate the frequency
+                if self.frequency is None:
+                    if hasattr(ts_val.index, 'inferred_freq'):
+                        self.frequency = ts_val.index.inferred_freq
+                    elif hasattr(ts_val.columns, 'inferred_freq'):
+                        self.frequency = ts_val.columns.inferred_freq
+                    else:
+                        log.warn(HydraError("Could not infer frequency from timeseries %s"% ts_val.index))
+                self.value = ts_val.to_json(date_format='iso', date_unit='ns')
+            except Exception, e:
+                raise HydraError("An error has occurred formatting a timeseries: %s"%e)
         else:
             raise HydraError("Invalid data type %s"%(data_type,))
 
@@ -923,8 +915,6 @@ class ResourceScenario(Base):
                 Dataset.data_dimen,
                 Dataset.data_name,
                 Dataset.locked,
-                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
-                        else_=Dataset.start_time).label('start_time'),
                 case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
                         else_=Dataset.frequency).label('frequency'),
                 case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 

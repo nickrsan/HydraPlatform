@@ -106,14 +106,34 @@ class ImportWML(object):
             Taking a wml file as an argument,
             return an array where each element is a line in the wml.
         """
-
-        nodes = self.call('get_all_node_data', {'network_id':2,'scenario_id': 2})
+        #start=datetime.now()
+        #nodes = self.call('get_all_node_data', {'network_id':3,'scenario_id': 3})
+        #log.info("Node data retrieved in %s"%(datetime.now() - start))
+        start=datetime.now()
+        nodes = self.call('get_all_node_data_summary', {'network_id':3,'scenario_id': 3, 'include_metadata':'Y'})
+        log.info("Test Node data retrieved in %s"%(datetime.now() - start))
         node_ids = []
         for ra in nodes:
             if ra['ref_id'] not in node_ids:
                 node_ids.append(ra['ref_id'])
-        nodes = self.call('get_all_node_data', {'network_id':2,'scenario_id': 2,
-                                                'node_ids':node_ids})
+        start=datetime.now()
+        nodes = self.call('get_all_node_data', {'network_id':3,'scenario_id': 3,
+                                                'node_ids':node_ids[:500]})
+        log.info("Test Node data retrieved in %s"%(datetime.now() - start))
+        start=datetime.now()
+        nodes = self.call('get_all_node_data_summary', {'network_id':3,'scenario_id': 3,
+                                                'node_ids':node_ids[:500]})
+        log.info("Test Node data retrieved in %s"%(datetime.now() - start))
+        #import pudb; pudb.set_trace()
+
+        #dataset_ids = []
+        #for ra in nodes:
+        #    ds_id = ra['resourcescenario']['value']['id']
+        #    if ds_id not in dataset_ids:
+        #        dataset_ids.append(ds_id)
+
+        #metadata = self.call('get_metadata', {'dataset_ids' : dataset_ids})
+        #log.info(len(metadata))
       #  links = self.call('get_all_link_data', {'network_id':2,'scenario_id': 2})
       #  link_ids = []
       #  for ra in links:
@@ -203,11 +223,12 @@ class ImportWML(object):
 
         timesteps = values.get_date_values(utc=True)
 
-        timeseries_val = []
+        timeseries_val = {}
         for timestep in timesteps:
-            timestep_val = {'ts_time' : str(timestep[0]), 'ts_value' : timestep[1]}
-            timeseries_val.append(timestep_val)
+            timeseries_val[str(timestep[0])] = timestep[1]
 
+        timeseries_dict = {"0" : timeseries_val}
+        json_timeseries = json.dumps(timeseries_dict)
 
         metadata_list = []
         if meta:
@@ -220,7 +241,7 @@ class ImportWML(object):
             unit=meta.get('unit_abbreviation'),
             dimension=meta.get('unit_unit_type'),
             name="%s %s %s"%(meta['data_type'],meta['variable_name'], meta['site_codes']),
-            value={'ts_values':timeseries_val},
+            value={'ts_values':json_timeseries, 'frequency':None, 'periods':len(json_timeseries)},
             locked='N',
             metadata=metadata_list,
         )
@@ -249,23 +270,21 @@ class ImportWML(object):
             meta_meta['quality_control_%s'%qc.code] = "%s:%s"%(qc.definition,
                                                          qc.explanation)
 
-        timestep_meta = []
+        timestep_meta = {'method_code' : {}, 'source_code': {}}
         for wml_val in values:
-            timestep_meta.append({'ts_time' : str(wml_val.date_time_utc),
-                                  'ts_value' : [['test', ['testa', 'testb']],
-                                                ['test1', ['test1a', 'test1b']],
-                                                ['7', [wml_val.method_code, wml_val.source_code]]]})
+            timestep_meta['method_code']["%s"%(wml_val.date_time_utc)] = "%s"%wml_val.method_code
+            timestep_meta['source_code']["%s"%(wml_val.date_time_utc)] = "%s"%wml_val.source_code
+
         meta_dataset = dict(
             id=None,
             type='timeseries',
             unit=None,
             dimension=None,
             name="%s %s %s metadata"%(meta['data_type'],meta['variable_name'], meta['site_codes']),
-            value={'ts_values':timestep_meta},
+            value={'ts_values':str(timestep_meta).replace("\'", "\""), 'frequency':None, 'periods':None},
             locked='N',
             metadata=[],
         )
-        logging.warn(meta_dataset)
 
         return meta_dataset
 
