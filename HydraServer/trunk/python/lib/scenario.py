@@ -484,12 +484,11 @@ def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=Non
 
     ra_id = resource_scenario.resource_attr_id
 
-    logging.info("Assigning resource attribute: %s",ra_id)
-    for rs in scenario.resourcescenarios:
-        if rs.resource_attr_id == ra_id:
-            r_scen_i = rs
-            break
-    else:
+    log.info("Assigning resource attribute: %s",ra_id)
+    try:
+        r_scen_i = DBSession.query(ResourceScenario).filter(ResourceScenario.scenario_id==scenario.scenario_id,
+                                                            ResourceScenario.resource_attr_id==ra_id).one()
+    except NoResultFound, e:
         r_scen_i = ResourceScenario()
         scenario.resourcescenarios.append(r_scen_i)
 
