@@ -93,10 +93,11 @@ def parse_typeattr(type_i, attribute):
 
     dimension = attribute.find('dimension').text
 
-    try:
-        typeattr_i = DBSession.query(TypeAttr).filter(TypeAttr.type_id==type_i.type_id,
-                                                      TypeAttr.attr_id==attr.attr_id).one()
-    except NoResultFound:
+    for ta in type_i.typeattrs:
+        if ta.attr_id == attr.attr_id:
+           typeattr_i = ta
+           break
+    else:
         typeattr_i = TypeAttr()
         log.info("Creating type attr: type_id=%s, attr_id=%s", type_i.type_id, attr.attr_id)
         typeattr_i.type_id=type_i.type_id
@@ -162,7 +163,7 @@ def upload_template_xml(template_xml,**kwargs):
 
     try:
 
-        tmpl_i = DBSession.query(Template).filter(Template.template_name==template_name).one()
+        tmpl_i = DBSession.query(Template).filter(Template.template_name==template_name).options(joinedload_all('templatetypes.typeattrs.attr')).one()
         tmpl_i.layout = template_layout
         log.info("Existing template found. name=%s", template_name)
     except NoResultFound:
@@ -171,7 +172,6 @@ def upload_template_xml(template_xml,**kwargs):
         DBSession.add(tmpl_i)
 
     types = xml_tree.find('resources')
-
     #Delete any types which are in the DB but no longer in the XML file
     type_name_map = {r.type_name:r.type_id for r in tmpl_i.templatetypes}
     attr_name_map = {}
@@ -201,7 +201,7 @@ def upload_template_xml(template_xml,**kwargs):
         type_is_new = False
         if type_name in existing_types:
             type_id = type_name_map[type_name]
-            type_i = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).one()
+            type_i = DBSession.query(TemplateType).filter(TemplateType.type_id==type_id).options(joinedload_all('typeattrs.attr')).one()
             
         else:
             log.info("Type %s not found, creating new one.", type_name)
@@ -241,7 +241,7 @@ def upload_template_xml(template_xml,**kwargs):
         for attr_to_delete in attrs_to_delete:
             attr_id, type_id = attr_name_map[attr_to_delete]
             try:
-                attr_i = DBSession.query(TypeAttr).filter(TypeAttr.attr_id==attr_id, TypeAttr.type_id==type_id).one()
+                attr_i = DBSession.query(TypeAttr).filter(TypeAttr.attr_id==attr_id, TypeAttr.type_id==type_id).options(joinedload_all('attr')).one()
                 DBSession.delete(attr_i)
                 log.info("Attr %s in type %s deleted",attr_i.attr.attr_name, attr_i.templatetype.type_name)
             except NoResultFound:
@@ -468,7 +468,7 @@ def _get_links(link_ids):
             else:
                 extent = extent + 500
     else:
-        links = DBSession.query(Link).filter(Link.link_id.in_(link_ids))
+        links = DBSession.query(Link).options(joinedload_all('attributes')).options(joinedload_all('types')).filter(Link.link_id.in_(link_ids)).all()
     
     link_dict = {}
 
@@ -499,7 +499,7 @@ def _get_nodes(node_ids):
             else:
                 extent = extent + 500
     else:
-        nodes = DBSession.query(Node).filter(Node.node_id.in_(node_ids))
+        nodes = DBSession.query(Node).options(joinedload_all('attributes')).options(joinedload_all('types')).filter(Node.node_id.in_(node_ids)).all()
 
     node_dict = {}
 
@@ -527,7 +527,7 @@ def _get_groups(group_ids):
             else:
                 extent = extent + 500
     else:
-        groups = DBSession.query(ResourceGroup).filter(ResourceGroup.group_id.in_(group_ids))
+        groups = DBSession.query(ResourceGroup).options(joinedload_all('types')).options(joinedload_all('attributes')).filter(ResourceGroup.group_id.in_(group_ids))
     group_dict = {}
 
     for g in groups:
