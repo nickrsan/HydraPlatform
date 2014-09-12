@@ -76,10 +76,17 @@ def init(level=None):
                 'class':'HydraLib.hydra_logging.ColorizingStreamHandler',
                 'formatter' : 'hydraFormatter',
             },
+            'file': {
+                'level':'DEBUG',
+                'class':'logging.FileHandler',
+                'formatter' : 'hydraFormatter',
+                'filename'  : 'hydra.log',
+                'mode'      : 'a',
+            },
         },
         'loggers': {
             '': {
-                'handlers': ['default'],
+                'handlers': ['default', 'file'],
                 'level': 'INFO',
                 'propagate': True
             },
