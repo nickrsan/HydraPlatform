@@ -4,12 +4,12 @@
 
 Basics
 ~~~~~~
+This app allows one or multiple WaterML timeseries files to be imported into Hydra.
 
-The plug-in for importing WML files assumes that you have a collection of files
-ready. You need one or several files for nodes (usually one file per node type)
-and files for links (usually on file per link type). One node file and one link
-file are mandatory, additional files are optional. The plug-in also allows you
-to import network attributes.
+The app assumes that you have downloaded timeseries files
+from the cuahsi web service. A single file can be passed to the app or a directory.
+If a directory is passed, the app will find the appropriate timeseries files and import
+all the data it can. 
 
 Basic usage::
 
