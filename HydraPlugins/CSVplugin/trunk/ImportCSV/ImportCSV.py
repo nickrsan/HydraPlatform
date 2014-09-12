@@ -23,49 +23,49 @@ Basic usage::
 Options
 ~~~~~~~
 
-====================== ====== ========= =======================================
-Option                 Short  Parameter Description
-====================== ====== ========= =======================================
-``--help``             ``-h``           show help message and exit.
-``--project``          ``-p`` PROJECT   The ID of an existing project. If no
-                                        project is specified or if the ID
-                                        provided does not belong to an existing
-                                        project, a new one will be created.
-``--scenario``         ``-s`` SCENARIO  Specify the name of the scenario
-                                        created by the import function. Every
-                                        import creates a new scenario. If no
-                                        name is provided a default name will be
-                                        assigned.
-``--network``          ``-t`` NETWORK   Specify the file containing network
-                                        information. If no file is specified, a
-                                        new network will be created using
-                                        default values.
+====================== ====== ============ =======================================
+Option                 Short  Parameter    Description
+====================== ====== ============ =======================================
+``--help``             ``-h``              show help message and exit.
+``--project``          ``-p`` PROJECT      The ID of an existing project. If no
+                                           project is specified or if the ID
+                                           provided does not belong to an existing
+                                           project, a new one will be created.
+``--scenario``         ``-s`` SCENARIO     Specify the name of the scenario
+                                           created by the import function. Every
+                                           import creates a new scenario. If no
+                                           name is provided a default name will be
+                                           assigned.
+``--network``          ``-t`` NETWORK      Specify the file containing network
+                                           information. If no file is specified, a
+                                           new network will be created using
+                                           default values.
 ``--network_id``       ``-i`` NETWORK_ID   Specify the ID of the network to be 
-                                        updated, if not specified,a new network 
-                                        will be created.
-``--nodes``            ``-n`` NODES     One or multiple files containing nodes
-                                        and attributes.
-``--links``            ``-l`` LINKS     One or multiple files containing
-                                        information on links.
-``--groups``           ``-g`` GROUPS    A file or list of files containing
-                                        group name, description,
-                                        attributes and data.
-``--groupmembers``     ``-k`` MEMBERS   A file or list of files containing
-                                        group members.
-``--template``         ``-m`` TEMPLATE  XML file defining the types for the
-                                        network. Required if types are set.
-``--rules``            ``-l`` RULES     File(s) containing rules or constraints
-                                        as mathematical expressions.
-``--timezone``         ``-z`` TIMEZONE  Specify a timezone as a string
-                                        following the Area/Loctation pattern
-                                        (e.g.  Europe/London). This timezone
-                                        will be used for all timeseries data
-                                        that is imported. If you don't specify
-                                        a timezone, it defaults to UTC.
-``--expand-filenames`` ``-x``           If the import function encounters
-                                        something that looks like a filename,
-                                        it tries to read the file.
-====================== ====== ========= =======================================
+                                           updated, if not specified,a new network 
+                                           will be created.
+``--nodes``            ``-n`` NODES        One or multiple files containing nodes
+                                           and attributes.
+``--links``            ``-l`` LINKS        One or multiple files containing
+                                           information on links.
+``--groups``           ``-g`` GROUPS       A file or list of files containing
+                                           group name, description,
+                                           attributes and data.
+``--groupmembers``     ``-k`` MEMBERS      A file or list of files containing
+                                           group members.
+``--template``         ``-m`` TEMPLATE     XML file defining the types for the
+                                           network. Required if types are set.
+``--rules``            ``-l`` RULES        File(s) containing rules or constraints
+                                           as mathematical expressions.
+``--timezone``         ``-z`` TIMEZONE     Specify a timezone as a string
+                                           following the Area/Loctation pattern
+                                           (e.g.  Europe/London). This timezone
+                                           will be used for all timeseries data
+                                           that is imported. If you don't specify
+                                           a timezone, it defaults to UTC.
+``--expand-filenames`` ``-x``              If the import function encounters
+                                           something that looks like a filename,
+                                           it tries to read the file.
+====================== ====== ============ =======================================
 
 
 File structure

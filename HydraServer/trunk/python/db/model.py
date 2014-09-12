@@ -1,3 +1,18 @@
+# (c) Copyright 2013, 2014, University of Manchester
+#
+# HydraPlatform is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# HydraPlatform is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
+#
 from sqlalchemy import Column,\
 ForeignKey,\
 text,\
@@ -25,12 +40,14 @@ from sqlalchemy.sql.expression import case
 from sqlalchemy import UniqueConstraint, and_
 
 import pandas as pd
-from pandas.tseries.index import DatetimeIndex
 
 import logging
 log = logging.getLogger(__name__)
 
 def get_timestamp(ordinal):
+    """
+        Turn an ordinal timestamp into a datetime string.
+    """
     if ordinal is None:
         return None
     timestamp = str(ordinal_to_timestamp(ordinal))
@@ -43,6 +60,7 @@ def get_timestamp(ordinal):
 
 class Dataset(Base):
     """
+        Table holding all the attribute values 
     """
     __tablename__='tDataset'
 
@@ -63,6 +81,13 @@ class Dataset(Base):
     useruser = relationship('User', backref=backref("datasets", order_by=dataset_id))
 
     def set_metadata(self, metadata_dict):
+        """
+            Set the metadata on a dataset
+
+            **metadata_dict**: A dictionary of metadata key-vals.
+            Transforms this dict into an array of metadata objects for
+            storage in the DB.
+        """
         if metadata_dict is None:
             return
         existing_metadata = []

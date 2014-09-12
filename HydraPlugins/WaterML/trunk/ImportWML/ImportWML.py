@@ -18,13 +18,12 @@ Basic usage::
 Options
 ~~~~~~~
 
-====================== ====== ========= =======================================
-Option                 Short  Parameter Description
-====================== ====== ========= =======================================
-``--help``             ``-h``           show help message and exit.
-                                        network. Required if types are set.
-``--file``            ``-t`` Timeseries File  XML file containing a WaterML timeseries
-====================== ====== ========= =======================================
+========== ====== ========== ==============================================
+Option     Short  Parameter  Description
+========== ====== ========== ==============================================
+``--help`` ``-h``            show help message and exit.
+``--file`` ``-t`` Timeseries File  XML file containing a WaterML timeseries
+========== ====== ========== ==============================================
 
 
 File structure
