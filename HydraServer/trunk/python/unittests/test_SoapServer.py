@@ -225,18 +225,6 @@ class SoapServerTest(unittest.TestCase):
         project = self.client.service.add_project(project)
         return project
 
-    def create_network(self, project):
-        network = self.client.factory.create('hyd:Network')
-        network.name = 'Test network @ %s'% datetime.datetime.now()
-        network.description = 'A test network.'
-        network.project_id = project.id
-        network.nodes = []
-        network.links = []
-        network.scenarios = []
-        network.layout = None
-        network = self.client.service.add_network(network)
-        return network
-
     def create_link(self, link_id, node_1_name, node_2_name, node_1_id, node_2_id):
 
         ra_array = self.client.factory.create('hyd:ResourceAttrArray')
