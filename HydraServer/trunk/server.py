@@ -57,6 +57,7 @@ from soap_server.hydra_base import AuthenticationService,\
     ObjectNotFoundError,\
     HydraServiceError,\
     HydraDocument
+import plugins 
 from soap_server.sharing import SharingService
 from spyne.util.wsgi_wrapper import WsgiMounter
 
@@ -77,6 +78,7 @@ applications = [
     SharingService,
     UnitService,
 ]
+applications.extend(plugins.services)
 
 from HydraLib.HydraException import HydraError
 
