@@ -1432,8 +1432,8 @@ def commandline_parser():
     parser = ap.ArgumentParser(
         description="""Import a network saved in a set of CSV files into Hydra.
 
-Written by Philipp Meier <philipp@diemeiers.ch>
-(c) Copyright 2013, University College London.
+        Written by Philipp Meier <philipp@diemeiers.ch> and Stephen Knox <stephen.knox@manchester.ac.uk>
+        (c) Copyright 2013, University of Manchester.
 
         """, epilog="For more information visit www.hydra-network.com",
         formatter_class=ap.RawDescriptionHelpFormatter)

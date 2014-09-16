@@ -386,8 +386,7 @@ def get_dataset_group(group_id,**kwargs):
     try:
         group = DBSession.query(DatasetGroup).filter(DatasetGroup.group_id==group_id).one()
     except NoResultFound:
-        log.info("No dataset group found with id %s"%group_id)
-        return None
+        raise ResourceNotFoundError("No dataset group found with id %s"%group_id)
 
     return group
 
@@ -395,8 +394,7 @@ def get_dataset_group_by_name(group_name,**kwargs):
     try:
         group = DBSession.query(DatasetGroup).filter(DatasetGroup.group_name==group_name).one()
     except NoResultFound:
-        log.info("No dataset group found with name %s"%group_name)
-        return None
+        raise ResourceNotFoundError("No dataset group found with id %s"%group_name)
 
     return group
 
