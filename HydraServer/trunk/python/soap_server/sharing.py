@@ -107,20 +107,32 @@ class SharingService(HydraService):
     @rpc(Integer, String(max_occurs="unbounded"),
          String(pattern="[YN]"), String(pattern="[YN]"), String(pattern="[YN]"),
          _returns=String)
-    def lock_dataset(ctx, dataset_id, exceptions, read, write, share):
+    def hide_dataset(ctx, dataset_id, exceptions, read, write, share):
         """
-            Lock a particular piece of data so it can only be seen by its owner.
-            Only an owner can lock (and unlock) data.
-            Data with no owner cannot be locked.
+            Hide a particular piece of data so it can only be seen by its owner.
+            Only an owner can hide (and unhide) data.
+            Data with no owner cannot be hidden.
             
             The exceptions paramater lists the usernames of those with permission to view the data
             read, write and share indicate whether these users can read, edit and share this data.
         """
-        sharing.lock_dataset(dataset_id,
+        sharing.hide_dataset(dataset_id,
                              exceptions,
                              read,
                              write,
                              share,
+                             **ctx.in_header.__dict__)
+
+        return "OK"
+
+    @rpc(Integer,
+         _returns=String)
+    def unhide_dataset(ctx, dataset_id):
+        """
+            Un Hide a particular piece of data so it can only be seen by its owner.
+            Only an owner can hide (and unhide) data.
+        """
+        sharing.unhide_dataset(dataset_id,
                              **ctx.in_header.__dict__)
 
         return "OK"

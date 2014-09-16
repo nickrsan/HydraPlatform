@@ -634,7 +634,7 @@ def get_network(network_id, summary=False, include_data='N', scenario_ids=None, 
     log.debug("Timeseries Retrieved")
    
     for dataset_id, dataset in dataset_dict.items():
-        if dataset.locked == 'N' or (dataset.locked == 'Y' and dataset.check_user(user_id)):
+        if dataset.hidden == 'N' or (dataset.hidden == 'Y' and dataset.check_user(user_id)):
             dataset.timeseriesdata = ts_dict.get(dataset.dataset_id, [])
             dataset.metadata = metadata_dict.get(dataset.dataset_id, [])
         else:
@@ -1344,7 +1344,7 @@ def get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=None, 
 
     for ra in resource_attrs:
         d = ra.resourcescenario.dataset
-        if d.locked == 'Y':
+        if d.hidden == 'Y':
            try:
                 d.check_read_permission(kwargs.get('user_id'))
            except:
@@ -1380,7 +1380,7 @@ def test_get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=N
                            Dataset.data_dimen,
                            Dataset.data_units,
                            Dataset.frequency,
-                           Dataset.locked,
+                           Dataset.hidden,
                            Dataset.data_type,
                           ).join(ResourceScenario)\
                             .join(Dataset).filter(
@@ -1459,7 +1459,7 @@ def test_get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=N
                 metadata_dict[m.dataset_id] = [m]
 
     for ra in resource_attrs:
-        if ra.locked == 'Y':
+        if ra.hidden == 'Y':
            try:
                 d = DBSession.query(Dataset).filter(Dataset.dataset_id==ra.dataset_id).options(noload('metadata')).one()
                 d.check_read_permission(kwargs.get('user_id'))

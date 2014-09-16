@@ -512,7 +512,7 @@ class ImportCSV(object):
             dimension=None,
             name='Import CSV data',
             value=None,
-            locked='N',
+            hidden='N',
             metadata=None,
         )
 

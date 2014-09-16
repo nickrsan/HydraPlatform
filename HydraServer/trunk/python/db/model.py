@@ -72,7 +72,7 @@ class Dataset(Base):
     data_hash = Column(BigInteger(),  nullable=False)
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
     created_by = Column(Integer(), ForeignKey('tUser.user_id'))
-    locked = Column(String(1),  nullable=False, server_default=text(u"'N'"))
+    hidden = Column(String(1),  nullable=False, server_default=text(u"'N'"))
    
     start_time = Column(String(),  nullable=True)
     frequency = Column(String(),  nullable=True)
@@ -299,7 +299,7 @@ class Dataset(Base):
             Check whether this user can read this dataset 
         """
 
-        if self.locked == 'N':
+        if self.hidden == 'N':
             return True
 
         for owner in self.owners:
@@ -954,12 +954,12 @@ class ResourceScenario(Base):
                 Dataset.data_units,
                 Dataset.data_dimen,
                 Dataset.data_name,
-                Dataset.locked,
-                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                Dataset.hidden,
+                case([(and_(Dataset.hidden=='Y', DatasetOwner.user_id is not None), None)], 
                         else_=Dataset.start_time).label('start_time'),
-                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                case([(and_(Dataset.hidden=='Y', DatasetOwner.user_id is not None), None)], 
                         else_=Dataset.frequency).label('frequency'),
-                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                case([(and_(Dataset.hidden=='Y', DatasetOwner.user_id is not None), None)], 
                         else_=Dataset.value).label('value')).filter(
                 Dataset.dataset_id==self.dataset_id).outerjoin(DatasetOwner, 
                                     and_(Dataset.dataset_id==DatasetOwner.dataset_id, 

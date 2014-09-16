@@ -614,7 +614,7 @@ def get_scenario_data(scenario_id,**kwargs):
     scenario_data = DBSession.query(Dataset).filter(Dataset.dataset_id==ResourceScenario.dataset_id, ResourceScenario.scenario_id==scenario_id).options(joinedload_all('timeseriesdata')).options(joinedload_all('metadata')).distinct().all()
     
     for sd in scenario_data:
-       if sd.locked == 'Y':
+       if sd.hidden == 'Y':
            try:
                 sd.check_read_permission(user_id)
            except:
@@ -649,7 +649,7 @@ def get_attribute_data(attr_ids, node_ids, **kwargs):
 
 
     for rs in resource_scenarios:
-       if rs.dataset.locked == 'Y':
+       if rs.dataset.hidden == 'Y':
            try:
                 rs.dataset.check_read_permission(kwargs.get('user_id'))
            except:
@@ -705,7 +705,7 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
 
 
     for rs in resource_data:
-       if rs.dataset.locked == 'Y':
+       if rs.dataset.hidden == 'Y':
            try:
                 rs.dataset.check_read_permission(user_id)
            except:

@@ -248,7 +248,7 @@ class ImportWML(object):
             dimension=meta.get('unit_unit_type'),
             name="%s %s %s"%(meta['data_type'],meta['variable_name'], meta['site_codes']),
             value={'ts_values':timeseries_val},
-            locked='N',
+            hidden='N',
             metadata=metadata_list,
         )
 
@@ -297,7 +297,7 @@ class ImportWML(object):
             dimension=None,
             name="%s %s %s metadata"%(meta['data_type'],meta['variable_name'], meta['site_codes']),
             value={'ts_values':timestep_meta},
-            locked='N',
+            hidden='N',
             metadata=[],
         )
 

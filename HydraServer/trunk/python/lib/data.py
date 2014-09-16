@@ -55,21 +55,21 @@ def get_dataset(dataset_id,**kwargs):
                 Dataset.data_units,
                 Dataset.data_dimen,
                 Dataset.data_name,
-                Dataset.locked,
+                Dataset.hidden,
                 DatasetOwner.user_id,
                 null().label('timeseriesdata'),
                 null().label('metadata'),
-                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                case([(and_(Dataset.hidden=='Y', DatasetOwner.user_id is not None), None)], 
                         else_=Dataset.start_time).label('start_time'),
-                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                case([(and_(Dataset.hidden=='Y', DatasetOwner.user_id is not None), None)], 
                         else_=Dataset.frequency).label('frequency'),
-                case([(and_(Dataset.locked=='Y', DatasetOwner.user_id is not None), None)], 
+                case([(and_(Dataset.hidden=='Y', DatasetOwner.user_id is not None), None)], 
                         else_=Dataset.value).label('value')).filter(
                 Dataset.dataset_id==dataset_id).outerjoin(DatasetOwner, 
                                     and_(DatasetOwner.dataset_id==Dataset.dataset_id, 
                                     DatasetOwner.user_id==user_id)).one()
 
-        if dataset.data_type == 'timeseries' and (dataset.locked == 'N' or (Dataset.locked == 'Y' and dataset.user_id is not None)):
+        if dataset.data_type == 'timeseries' and (dataset.hidden == 'N' or (Dataset.hidden == 'Y' and dataset.user_id is not None)):
             tsdata = DBSession.query(TimeSeriesData).filter(TimeSeriesData.dataset_id==dataset_id).all()
             metadata = DBSession.query(Metadata).filter(Metadata.dataset_id==dataset_id).all()
             dataset.timeseriesdata = tsdata

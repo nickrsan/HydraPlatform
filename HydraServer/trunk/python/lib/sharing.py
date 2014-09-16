@@ -199,11 +199,11 @@ def set_network_permission(network_id, usernames, read, write, share,**kwargs):
         net_i.set_owner(user_i.user_id, read=read, write=write, share=share)
     DBSession.flush()
 
-def lock_dataset(dataset_id, exceptions, read, write, share,**kwargs):
+def hide_dataset(dataset_id, exceptions, read, write, share,**kwargs):
     """
-        Lock a particular piece of data so it can only be seen by its owner.
-        Only an owner can lock (and unlock) data.
-        Data with no owner cannot be locked.
+        Hide a particular piece of data so it can only be seen by its owner.
+        Only an owner can hide (and unhide) data.
+        Data with no owner cannot be hidden.
         
         The exceptions paramater lists the usernames of those with permission to view the data
         read, write and share indicate whether these users can read, edit and share this data.
@@ -211,15 +211,36 @@ def lock_dataset(dataset_id, exceptions, read, write, share,**kwargs):
 
     user_id = kwargs.get('user_id')
     dataset_i = _get_dataset(dataset_id)
-    #check that I can lock the dataset
+    #check that I can hide the dataset
     if dataset_i.created_by != int(user_id):
         raise HydraError('Permission denied. '
                         'User %s is not the owner of dataset %s'
                         %(user_id, dataset_i.data_name))
 
-    dataset_i.locked = 'Y'
+    dataset_i.hidden = 'Y'
     if exceptions is not None:
         for username in exceptions:
             user_i = _get_user(username)
             dataset_i.set_owner(user_i.user_id, read=read, write=write, share=share)
+    DBSession.flush()
+
+def unhide_dataset(dataset_id,**kwargs):
+    """
+        Hide a particular piece of data so it can only be seen by its owner.
+        Only an owner can hide (and unhide) data.
+        Data with no owner cannot be hidden.
+        
+        The exceptions paramater lists the usernames of those with permission to view the data
+        read, write and share indicate whether these users can read, edit and share this data.
+    """
+
+    user_id = kwargs.get('user_id')
+    dataset_i = _get_dataset(dataset_id)
+    #check that I can unhide the dataset
+    if dataset_i.created_by != int(user_id):
+        raise HydraError('Permission denied. '
+                        'User %s is not the owner of dataset %s'
+                        %(user_id, dataset_i.data_name))
+
+    dataset_i.hidden = 'N'
     DBSession.flush()

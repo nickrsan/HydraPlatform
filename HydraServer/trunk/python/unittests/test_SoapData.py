@@ -266,7 +266,7 @@ class DataGroupTest(test_SoapServer.SoapServerTest):
 
 class SharingTest(test_SoapServer.SoapServerTest):
 
-    def test_lock_data(self):
+    def test_hide_data(self):
         """
             Test for the hiding of data.
             Create a network with some data.
@@ -297,7 +297,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
 
         data_to_hide = data[-1].id
 
-        self.client.service.lock_dataset(data_to_hide, ["UserB"], 'Y', 'Y', 'Y')
+        self.client.service.hide_dataset(data_to_hide, ["UserB"], 'Y', 'Y', 'Y')
 
         self.client.service.logout("UserA")
 
@@ -310,11 +310,11 @@ class SharingTest(test_SoapServer.SoapServerTest):
 
         for d in data:
             if d.id == data_to_hide:
-                assert d.locked == 'Y'
+                assert d.hidden == 'Y'
                 assert d.value is not None
             else:
-                #The rest of the data is unlocked, so should be there.
-                assert d.locked == 'N'
+                #The rest of the data is unhidden, so should be there.
+                assert d.hidden == 'N'
                 assert d.value is not None
 
         #Check user B can see the dataset
@@ -330,21 +330,21 @@ class SharingTest(test_SoapServer.SoapServerTest):
         
         for d in data:
             if d.id == data_to_hide:
-                assert d.locked == 'Y'
+                assert d.hidden == 'Y'
                 assert d.value is None
             else:
-                #The rest of the data is unlocked, so should be there.
-                assert d.locked == 'N'
+                #The rest of the data is unhidden, so should be there.
+                assert d.hidden == 'N'
                 assert d.value is not None
 
         self.client.service.logout("UserC")
 
         self.client = old_client
 
-    def test_replace_locked_data(self):
+    def test_replace_hidden_data(self):
         """
-            test_replace_locked_data
-            Test for the case where one user locks data and another
+            test_replace_hidden_data
+            Test for the case where one user hides data and another
             user sets the data to something else.
             
             User A Creates a network with some data
@@ -352,9 +352,9 @@ class SharingTest(test_SoapServer.SoapServerTest):
             User A shares network with User B
             
             Check user B cannot see timeseries value
-            User B creates a new timeseries, and replaces the locked one.
+            User B creates a new timeseries, and replaces the hidden one.
             Save network.
-            Attribute now should have a new, unlocked dataset assigned to that attribute.
+            Attribute now should have a new, unhidden dataset assigned to that attribute.
         """
 
         self.create_user("UserA")
@@ -384,7 +384,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
                 attr_to_be_changed = d.resource_attr_id
                 data_to_hide = d.value.id
 
-        self.client.service.lock_dataset(data_to_hide, [], 'Y', 'Y', 'Y')
+        self.client.service.hide_dataset(data_to_hide, [], 'Y', 'Y', 'Y')
 
         self.client.service.logout("UserA")
 
@@ -393,13 +393,13 @@ class SharingTest(test_SoapServer.SoapServerTest):
         netA = self.client.service.get_network(network_1.id)
         scenario = netA.scenarios.Scenario[0]
         
-        #Find the locked piece of data and replace it with another
+        #Find the hidden piece of data and replace it with another
         #to simulate a case of two people working on one attribute
         #where one cannot see the value of it.
         for d in scenario.resourcescenarios.ResourceScenario:
             if d.resource_attr_id == attr_to_be_changed:
-                #THis piece of data is indeed the locked one.
-                assert d.value.locked == 'Y'
+                #THis piece of data is indeed the hidden one.
+                assert d.value.hidden == 'Y'
                 #set the value of the attribute to be a different
                 #timeseries.
                 dataset = self.client.factory.create('hyd:Dataset')
@@ -419,8 +419,8 @@ class SharingTest(test_SoapServer.SoapServerTest):
                 }
                 d.value = dataset
             else:
-                #The rest of the data is unlocked, so should be there.
-                assert d.value.locked == 'N'
+                #The rest of the data is unhidden, so should be there.
+                assert d.value.hidden == 'N'
                 assert d.value.value is not None
 
         updated_net = self.client.service.update_network(netA)
@@ -430,22 +430,22 @@ class SharingTest(test_SoapServer.SoapServerTest):
         #has been applied
         for d in scenario.resourcescenarios.ResourceScenario:
             if d.resource_attr_id == attr_to_be_changed:
-                assert d.value.locked == 'N'
+                assert d.value.hidden == 'N'
                 assert d.value.id     != data_to_hide
         #Now validate that the dataset was not overwritten, but replaced
         #by getting the old dataset and ensuring user B can still not see it.
-        locked_dataset = self.client.service.get_dataset(data_to_hide)
-        assert locked_dataset.locked == 'Y'
-        assert locked_dataset.value  == None
+        hidden_dataset = self.client.service.get_dataset(data_to_hide)
+        assert hidden_dataset.hidden == 'Y'
+        assert hidden_dataset.value  == None
 
         self.client.service.logout("UserB")
 
         self.client = old_client
 
-    def test_edit_locked_data(self):
+    def test_edit_hidden_data(self):
         """
-            test_edit_locked_data
-            Test for the case where one user locks data and another
+            test_edit_hidden_data
+            Test for the case where one user hides data and another
             user sets the data to something else.
             
             User A Creates a network with some data
@@ -455,7 +455,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
             Check user B cannot see timeseries value
             User B sets value of timeseries to something else.
             Save network.
-            Attribute now should have a new, unlocked dataset assigned to that attribute.
+            Attribute now should have a new, unhidden dataset assigned to that attribute.
         """
 
         self.create_user("UserA")
@@ -484,7 +484,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
                 data_to_hide = d.value.id
                 break
 
-        self.client.service.lock_dataset(data_to_hide, [], 'Y', 'Y', 'Y')
+        self.client.service.hide_dataset(data_to_hide, [], 'Y', 'Y', 'Y')
         self.client.service.logout("UserA")
 
         self.login("UserB", 'password')
@@ -492,13 +492,13 @@ class SharingTest(test_SoapServer.SoapServerTest):
         netA = self.client.service.get_network(network_1.id)
         scenario = netA.scenarios.Scenario[0]
         
-        #Find the locked piece of data and replace it with another
+        #Find the hidden piece of data and replace it with another
         #to simulate a case of two people working on one attribute
         #where one cannot see the value of it.
         for d in scenario.resourcescenarios.ResourceScenario:
             if d.resource_attr_id == attr_to_be_changed:
-                #THis piece of data is indeed the locked one.
-                assert d.value.locked == 'Y'
+                #THis piece of data is indeed the hidden one.
+                assert d.value.hidden == 'Y'
                 #Reassign the value of the dataset to something new.
                 d.value.value = {'ts_values' : 
                     [
@@ -509,8 +509,8 @@ class SharingTest(test_SoapServer.SoapServerTest):
                     ]
                 }
             else:
-                #The rest of the data is unlocked, so should be there.
-                assert d.value.locked == 'N'
+                #The rest of the data is unhidden, so should be there.
+                assert d.value.hidden == 'N'
                 assert d.value.value is not None
 
         updated_net = self.client.service.update_network(netA)
@@ -520,13 +520,13 @@ class SharingTest(test_SoapServer.SoapServerTest):
         #has been applied
         for d in scenario.resourcescenarios.ResourceScenario:
             if d.resource_attr_id == attr_to_be_changed:
-                assert d.value.locked == 'N'
+                assert d.value.hidden == 'N'
                 assert d.value.id     != data_to_hide
         #Now validate that the dataset was not overwritten, but replaced
         #by getting the old dataset and ensuring user B can still not see it.
-        locked_dataset = self.client.service.get_dataset(data_to_hide)
-        assert locked_dataset.locked == 'Y'
-        assert locked_dataset.value  == None
+        hidden_dataset = self.client.service.get_dataset(data_to_hide)
+        assert hidden_dataset.hidden == 'Y'
+        assert hidden_dataset.value  == None
 
         self.client.service.logout("UserB")
 
@@ -656,7 +656,7 @@ class FormatTest(test_SoapServer.SoapServerTest):
             name = 'my array',
             unit = 'bar',
             dimension = 'Pressure',
-            locked = 'N',
+            hidden = 'N',
             value = arr,
             metadata = metadata_array, 
         )

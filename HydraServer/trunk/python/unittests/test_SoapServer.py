@@ -268,10 +268,10 @@ class SoapServerTest(unittest.TestCase):
             attr = self.client.service.add_attribute(attr)
         return attr
 
-    def test_create_network(self):
-        net = self.create_network_with_data()
-        s = net.scenarios.Scenario[0]
-        rs = s.resourcescenarios.ResourceScenario[0]
+    #def test_create_network(self):
+    #    net = self.create_network_with_data()
+    #    s = net.scenarios.Scenario[0]
+    #    rs = s.resourcescenarios.ResourceScenario[0]
         
 
     def build_network(self, project_id=None, num_nodes=10):
@@ -587,7 +587,7 @@ class SoapServerTest(unittest.TestCase):
             name = 'Flow speed',
             unit = 'm s^-1',
             dimension = 'Speed',
-            locked = 'N',
+            hidden = 'N',
             value = {'param_value':val},
         )
 
@@ -609,7 +609,7 @@ class SoapServerTest(unittest.TestCase):
             name = 'Flow speed',
             unit = 'm s^-1',
             dimension = 'Speed',
-            locked = 'N',
+            hidden = 'N',
             value = {'desc_val':val},
         )
 
@@ -643,7 +643,7 @@ class SoapServerTest(unittest.TestCase):
             name = 'my time series',
             unit = 'cm^3',
             dimension = 'Volume',
-            locked = 'N',
+            hidden = 'N',
             value = {'ts_values' : 
             [
                 {'ts_time' : datetime.datetime.now(),
@@ -686,7 +686,7 @@ class SoapServerTest(unittest.TestCase):
             name = 'my array',
             unit = 'bar',
             dimension = 'Pressure',
-            locked = 'N',
+            hidden = 'N',
             value = arr,
             metadata = metadata_array, 
         )
@@ -715,7 +715,7 @@ class SoapServerTest(unittest.TestCase):
             name = 'my equally spaced timeseries',
             unit = 'amps',
             dimension = 'Current',
-            locked = 'N',
+            hidden = 'N',
             value = ts_val,
         )
 

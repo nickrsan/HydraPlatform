@@ -94,7 +94,7 @@ class ResourceData(ComplexModel):
         * **dataset_unit:** The unit of the dataset.
         * **dataset_name:** The name of the dataset. Most likely used for distinguishing similar datasets or searching for datasets
         * **dataset_frequency:** The frequency of the timesteps in a timeseries. Only applicable if the dataset has a type 'timeseries'
-        * **dataset_locked:** Indicates whether the dataset is locked, in which case only authorised users can use the dataset.
+        * **dataset_hidden:** Indicates whether the dataset is hidden, in which case only authorised users can use the dataset.
         * **dataset_metadata:**: A dictionary of the metadata associated with the dataset. For example: {'created_by': "User 1", "source":"Import from CSV"}
         * **dataset_value:**
             Depending on what the dataset_type is, this can be a decimal value, a freeform
@@ -135,7 +135,7 @@ class ResourceData(ComplexModel):
         ('dataset_name',       Unicode(default=None)),
         ('dataset_value',      Unicode(default=None)),
         ('dataset_frequency',  Unicode(default=None)),
-        ('dataset_locked',     Unicode(default=None)),
+        ('dataset_hidden',     Unicode(default=None)),
         ('dataset_metadata',   AnyDict(default=None)),
     ]
 
@@ -155,7 +155,7 @@ class ResourceData(ComplexModel):
         self.source = ra.source
         self.scenario_id = str(ra.scenario_id)
 
-        self.dataset_locked    = ra.locked
+        self.dataset_hidden    = ra.hidden
         self.dataset_id        = str(ra.dataset_id)
         self.dataset_type      = ra.data_type
         self.dataset_name      = ra.data_name
@@ -180,7 +180,7 @@ class Dataset(ComplexModel):
         ('unit',             Unicode(min_occurs=1, default=None)),
         ('name',             Unicode(min_occurs=1, default=None)),
         ('value',            AnyDict(min_occurs=1, default=None)),
-        ('locked',           Unicode(min_occurs=1, default='N', pattern="[YN]")),
+        ('hidden',           Unicode(min_occurs=1, default='N', pattern="[YN]")),
         ('metadata',         SpyneArray(Metadata, default=None)),
     ]
 
@@ -189,7 +189,7 @@ class Dataset(ComplexModel):
         if  parent is None:
             return
 
-        self.locked    = parent.locked
+        self.hidden    = parent.hidden
         self.id        = parent.dataset_id
         self.type      = parent.data_type
         self.name      = parent.data_name

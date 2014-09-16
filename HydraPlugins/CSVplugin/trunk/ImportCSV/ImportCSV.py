@@ -1101,7 +1101,7 @@ class ImportCSV(object):
             dimension=None,
             name=dataset_name,
             value=None,
-            locked='N',
+            hidden='N',
             metadata=None,
         )
 
