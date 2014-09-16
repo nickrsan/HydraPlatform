@@ -18,12 +18,13 @@ Basic usage::
 Options
 ~~~~~~~
 
-========== ====== ========== ==============================================
-Option     Short  Parameter  Description
-========== ====== ========== ==============================================
-``--help`` ``-h``            show help message and exit.
-``--file`` ``-t`` Timeseries File  XML file containing a WaterML timeseries
-========== ====== ========== ==============================================
+================ ====== =========== ==============================================
+Option           Short  Parameter   Description
+================ ====== =========== ==============================================
+``--help``       ``-h``             show help message and exit.
+``--file``       ``-t`` Timeseries  File  XML file containing a WaterML timeseries
+``--uploadname`` ``-n`` Upload Name Name of the dataset grouping
+================ ====== =========== ==============================================
 
 
 File structure
@@ -45,21 +46,16 @@ API docs
 import argparse as ap
 import logging
 import os, sys
-from datetime import datetime
 import pytz
 
 from HydraLib import PluginLib
 from HydraLib.PluginLib import write_progress, write_output, validate_plugin_xml
-from HydraLib import config, util
+from HydraLib import config
 
-from HydraLib.HydraException import HydraPluginError,HydraError
-
-from suds import WebFault
-from numpy import array, reshape
+from HydraLib.HydraException import HydraPluginError
 
 from owslib.waterml.wml11 import WaterML_1_1 as wml
 
-from lxml import etree
 import requests
 
 import json
@@ -79,50 +75,51 @@ class ImportWML(object):
         self.basepath = ''
 
         self.session_id=None
-        if session_id is not None:
-            log.info("Using existing session %s", session_id)
-            self.session_id=session_id
-        else:
-            self.login()
 
         self.warnings = []
         self.message = ''
         self.files = []
 
-        self.num_steps = 6
-
-    def read_timeseries_data(self, target):
+    def read_timeseries_data(self, target, dataset_group_name):
         """
             Read Water ML timeseries data.
             @target
                 Can be either a directory containing multiple timeseries
                 files or a single timeseries file.
         """
-        self.read_timeseries_file(target)
+        write_progress(1, 2)
+        if os.path.isdir(target):
+            all_dataset_ids = []
+            for i, f in enumerate(os.listdir(target)):
+                try:
+                    write_output("Reading timeseries file %s"%f)
+                    data_import_name, file_dataset_ids = self.read_timeseries_file(f)
+                    all_dataset_ids.extend(file_dataset_ids)
+                except Exception, e:
+                    self.warnings.append("Unable to read timeseries data from file %s"%target)
+            
+            data_import_name = "timeseries from folder %s"%target
+
+        elif os.path.isfile(target):
+            data_import_name, all_dataset_ids = self.read_timeseries_file(target)
+        else:
+            raise HydraPluginError("Unable to recognise file %s. Please check inputs", target)
+
+        write_progress(2, 2)
+        log.info(len(all_dataset_ids))
+        log.info(len(set(all_dataset_ids)))
+        if dataset_group_name is not None:
+            data_import_name = dataset_group_name
+        self.create_dataset_group(data_import_name, all_dataset_ids)
+        write_output("Dataset %s created"%data_import_name)
+        return data_import_name 
+
 
     def read_timeseries_file(self, file):
         """
             Taking a wml file as an argument,
             return an array where each element is a line in the wml.
         """
-
-        nodes = self.call('get_all_node_data', {'network_id':2,'scenario_id': 2})
-        node_ids = []
-        for ra in nodes:
-            if ra['ref_id'] not in node_ids:
-                node_ids.append(ra['ref_id'])
-        nodes = self.call('get_all_node_data', {'network_id':2,'scenario_id': 2,
-                                                'node_ids':node_ids})
-      #  links = self.call('get_all_link_data', {'network_id':2,'scenario_id': 2})
-      #  link_ids = []
-      #  for ra in links:
-      #      if ra['ref_id'] not in link_ids:
-      #          link_ids.append(ra['ref_id'])
-      #  links = self.call('get_all_link_data', {'network_id':2,'scenario_id': 2,
-      #                                          'link_ids':link_ids})
-
-       # nodes = self.call('get_all_node_data', {'network_id':3,'scenario_id': 3})
-       # links = self.call('get_all_link_data', {'network_id':3,'scenario_id': 3})
 
         timeseries_xml_data=None
         if file == None:
@@ -152,7 +149,7 @@ class ImportWML(object):
 
         data_import_name = "%s between %s and %s"%(site, start, end)
 
-        self.create_dataset_group(data_import_name, new_dataset_ids)
+        return data_import_name, new_dataset_ids
 
     def login(self):
         user = config.get('hydra_client', 'user')
@@ -264,7 +261,6 @@ class ImportWML(object):
             locked='N',
             metadata=[],
         )
-        logging.warn(meta_dataset)
 
         return meta_dataset
 
@@ -316,6 +312,8 @@ Written by Philipp Meier <philipp@diemeiers.ch>
         formatter_class=ap.RawDescriptionHelpFormatter)
     parser.add_argument('-t', '--timeseriesfile',
                         help='''The XML file containing a WaterML timeseries.''')
+    parser.add_argument('-n', '--uploadname',
+                        help='''The name of the dataset group into which all the timeseries will be put.''')
     parser.add_argument('-u', '--server_url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
@@ -331,15 +329,23 @@ if __name__ == '__main__':
     importwml = ImportWML(url=args.server_url, session_id=args.session_id)
 
     try:
-        
+        if args.session_id is not None:
+            log.info("Using existing session %s", args.session_id)
+            importwml.session_id=args.session_id
+        else:
+            importwml.login()
+
         validate_plugin_xml(os.path.join(__location__, 'plugin.xml'))
 
-        importwml.read_timeseries_data(args.timeseriesfile)
+        data_import_name = importwml.read_timeseries_data(args.timeseriesfile, args.uploadname)
         write_output("Saving data")
-        importwml.message = 'Data import was successful.'
-	errors = []
+        importwml.message = 'Data import was successful. Timeseries imported into group named "%s"'%data_import_name
+
+        errors = []
     except HydraPluginError as e:
         errors = [e.message]
+    except requests.exceptions.ConnectionError:
+        errors = ["Could not connect to server"]
 
     xml_response = PluginLib.create_xml_response('ImportWML',
                                                  None,
