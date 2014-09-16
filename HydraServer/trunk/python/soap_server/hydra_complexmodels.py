@@ -984,6 +984,40 @@ class Scenario(Resource):
             self.resourcescenarios = []
             self.resourcegroupitems = []
 
+class Rule(ComplexModel):
+    """
+    """
+    _type_info = [
+        ('id', Integer),
+        ('name', Unicode),
+        ('description', Unicode),
+        ('scenario_id', Integer),
+        ('ref_key', Unicode),
+        ('ref_id', Integer),
+        ('text', Unicode),
+    ]
+
+    def __init__(self, parent=None):
+        super(Rule, self).__init__()
+        if parent is None:
+            return
+
+        self.id = parent.rule_id
+        self.name = parent.rule_name
+        self.description = parent.rule_description
+        self.ref_key = parent.ref_key
+        if self.ref_key == 'NETWORK':
+            self.ref_id = parent.network_id
+        elif self.ref_key == 'NODE':
+            self.ref_id = parent.node_id
+        elif self.ref_key == 'LINK':
+            self.ref_id = parent.link_id
+        elif self.ref_key == 'GROUP':
+            self.ref_id = parent.group_id
+
+        self.scenario_id = parent.scenario_id
+        self.text        = parent.rule_text
+
 class ResourceGroupDiff(ComplexModel):
     """
     """

@@ -1012,6 +1012,34 @@ class Scenario(Base):
         elif ref_key == 'LINK':
             group_item_i.link     = resource
         self.resourcegroupitems.append(group_item_i)
+
+class Rule(Base):
+    """
+    """
+
+    __tablename__='tRule'
+
+    rule_id = Column(Integer(), primary_key=True, nullable=False)
+    
+    rule_name = Column(String(60), nullable=False)
+    rule_description = Column(String(1000), nullable=False)
+
+    cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
+    ref_key = Column(String(60),  nullable=False, index=True)
+
+
+    rule_text = Column('value', LargeBinary(),  nullable=True)
+
+    status = Column(String(1),  nullable=False, server_default=text(u"'A'"))
+    scenario_id = Column(Integer(), ForeignKey('tScenario.scenario_id'),  nullable=False)
+    
+    network_id  = Column(Integer(),  ForeignKey('tNetwork.network_id'), index=True, nullable=True,)
+    node_id     = Column(Integer(),  ForeignKey('tNode.node_id'), index=True, nullable=True)
+    link_id     = Column(Integer(),  ForeignKey('tLink.link_id'), index=True, nullable=True)
+    group_id    = Column(Integer(),  ForeignKey('tResourceGroup.group_id'), index=True, nullable=True)
+    
+    scenario = relationship('Scenario', backref=backref('rules', uselist=True, cascade="all, delete-orphan"), uselist=True, lazy='joined')
+
 #***************************************************
 #Ownership & Permissions
 #***************************************************
