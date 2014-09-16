@@ -30,6 +30,7 @@ getcontext().prec = 26
 from spyne.application import Application
 from spyne.protocol.soap import Soap11
 from spyne.protocol.json import JsonDocument
+from spyne.protocol.http import HttpRpc
 
 import spyne.decorator
 
@@ -186,6 +187,14 @@ class HydraServer():
                 )
         return app
 
+    def create_http_application(self):
+
+        app = HydraSoapApplication(applications, tns='hydra.base',
+                    in_protocol=HttpRpc(validator='soft'),
+                    out_protocol=JsonDocument()
+                )
+        return app
+
     def run_server(self):
         
         log.info("home_dir %s",config.get('DEFAULT', 'home_dir'))
@@ -218,10 +227,12 @@ class HydraServer():
 s = HydraServer()
 soap_application = s.create_soap_application()
 json_application = s.create_json_application()
+http_application = s.create_http_application()
 
 root = WsgiMounter({
     'soap': soap_application,
     'json': json_application,
+    'http': http_application,
 })
 
 for server in root.mounts.values():
