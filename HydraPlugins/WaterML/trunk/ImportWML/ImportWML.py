@@ -133,10 +133,22 @@ class ImportWML(object):
             except:
                 raise HydraPluginError("Invalid WaterML XML content.")
 
-        query_info = dict(resp.query_info.criteria.parameters)
-        start = query_info['startDate']
-        end   = query_info['endDate']
-        site  = query_info['site']
+
+        query_info = {} 
+        for param, param_val in resp.query_info.criteria.parameters:
+            if query_info.get(param):
+                if type(query_info[param]) is list:
+                    query_info[param].append(param_val)
+                else:
+                    new_param_vals = [query_info[param], param_val]
+                    query_info[param] = new_param_vals
+            else:
+                query_info[param] = param_val
+
+        start = query_info.get('startDate', 'unknownStart')
+        end   = query_info.get('endDate', 'unknownEnd')
+        site  = query_info.get('site', 'unknownSite')
+        variable  = query_info.get('variable')
          
         all_timeseries = resp.time_series
         
@@ -146,8 +158,17 @@ class ImportWML(object):
             datasets.append(self.create_timeseries_meta(wml_timeseries))
 
         new_dataset_ids = self.call('bulk_insert_data', {'bulk_data':datasets})
+        data_import_name_base = "readings at site %s"
+        params = [site]
+        if start is not None and end is not None:
+            data_import_name_base = data_import_name_base + " between %s and %s"
+            params.append(start)
+            params.append(end)
+        if variable:
+            data_import_name_base = data_import_name_base + " with variable %s"
+            params.append(variable)
 
-        data_import_name = "%s between %s and %s"%(site, start, end)
+        data_import_name = data_import_name_base%tuple(params)
 
         return data_import_name, new_dataset_ids
 
