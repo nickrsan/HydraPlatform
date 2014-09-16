@@ -96,7 +96,7 @@ class ImportWML(object):
                     data_import_name, file_dataset_ids = self.read_timeseries_file(f)
                     all_dataset_ids.extend(file_dataset_ids)
                 except Exception, e:
-                    self.warnings.append("Unable to read timeseries data from file %s"%target)
+                    self.warnings.append("Unable to read timeseries data from file %s"%f)
             
             data_import_name = "timeseries from folder %s"%target
 
@@ -199,11 +199,21 @@ class ImportWML(object):
 
         timesteps = values.get_date_values(utc=True)
 
-        timeseries_val = []
-        for timestep in timesteps:
-            timestep_val = {'ts_time' : str(timestep[0]), 'ts_value' : timestep[1]}
-            timeseries_val.append(timestep_val)
+        ts_dict = {}
+        for ts in timesteps:
+            ts_time = ts[0]
+            ts_val  = ts[1]
+            if ts_dict.get(ts_time):
+                ts_dict[ts_time].append(ts_val)
+            else:
+                ts_dict[ts_time] = [ts_val]
 
+        timeseries_val = []
+        for ts_time, ts_val in ts_dict.items():
+            if len(ts_val) == 1:
+                ts_val = ts_val[0]
+            timestep_val = {'ts_time' : str(ts_time), 'ts_value' : ts_val}
+            timeseries_val.append(timestep_val)
 
         metadata_list = []
         if meta:
@@ -244,13 +254,21 @@ class ImportWML(object):
         for qc in values.qualit_control_levels:
             meta_meta['quality_control_%s'%qc.code] = "%s:%s"%(qc.definition,
                                                          qc.explanation)
-
-        timestep_meta = []
+        
+        meta_ts_dict = {}
         for wml_val in values:
-            timestep_meta.append({'ts_time' : str(wml_val.date_time_utc),
-                                  'ts_value' : [['test', ['testa', 'testb']],
-                                                ['test1', ['test1a', 'test1b']],
-                                                ['7', [wml_val.method_code, wml_val.source_code]]]})
+            meta_ts_time = str(wml_val.date_time_utc)
+            meta_ts_val  = [wml_val.lab_sample_code, wml_val.quality_control_level, wml_val.method_code, wml_val.source_code]
+            if meta_ts_dict.get(meta_ts_time):
+                meta_ts_dict[meta_ts_time].append(meta_ts_val)
+            else:
+                meta_ts_dict[meta_ts_time] = [meta_ts_val]
+        timestep_meta = []
+        for t, v in meta_ts_dict.items():
+            if len(v) == 1:
+                v = v[0]
+            timestep_meta.append({'ts_time' : t,
+                                  'ts_value' : v})
         meta_dataset = dict(
             id=None,
             type='timeseries',
