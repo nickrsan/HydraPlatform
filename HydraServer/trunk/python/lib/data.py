@@ -15,7 +15,7 @@
 #
 import datetime
 import sys
-from HydraLib.util import timestamp_to_ordinal, get_datetime
+from HydraLib.util import get_datetime
 from HydraLib import units
 import logging
 from db.model import Dataset, Metadata, TimeSeriesData, DatasetOwner, DatasetGroup, DatasetGroupItem
@@ -441,7 +441,7 @@ def get_val_at_time(dataset_id, timestamps,**kwargs):
     the last value.  """
     t = []
     for time in timestamps:
-        t.append(timestamp_to_ordinal(time))
+        t.append(get_datetime(time))
     td = DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).one()
     #for time in t:
     #    data.append(td.get_val(timestamp=time))

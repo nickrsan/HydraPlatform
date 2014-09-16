@@ -142,6 +142,13 @@ class Dataset(Base):
 
                 try:
                     pandas_ts = timeseries.reindex(timestamp, method='ffill')
+
+                    #If there are no values at all, just return None
+                    if len(pandas_ts.dropna() == 0):
+                        return None
+
+                    #Replace all numpy NAN values with None
+                    pandas_ts = pandas_ts.where(pandas_ts.notnull(), None)
                 
                     ret_val = list(pandas_ts.loc[timestamp].values)
                     return ret_val
