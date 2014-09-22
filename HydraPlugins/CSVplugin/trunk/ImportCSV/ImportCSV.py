@@ -1044,12 +1044,17 @@ class ImportCSV(object):
                 break
 
         args = []
-        if type_ids[self.networktype]:
+
+        if self.networktype == '':
+            warnings.append("No network type specified")
+        elif type_ids.get(self.networktype):
             args.append(dict(
                 ref_key = 'NETWORK',
                 ref_id  = self.NetworkSummary['id'],
                 type_id = type_ids[self.networktype],
             ))
+        else:
+            warnings.append("Network type %s not found"%(self.networktype))
 
         if self.NetworkSummary.get('nodes', []):
             for node in self.NetworkSummary['nodes']:
@@ -1562,14 +1567,20 @@ if __name__ == '__main__':
             write_progress(5,csv.num_steps) 
             write_output("Saving network")
             csv.commit()
-            if csv.NetworkSummary['scenarios']:
+            if csv.NetworkSummary.get('scenarios') is not None:
                 scen_ids = [s['id'] for s in csv.NetworkSummary['scenarios']]
 
             network_id = csv.NetworkSummary['id']
 
             write_output("Saving types")
             if args.template is not None:
-                csv.set_resource_types(args.template)
+                try:
+                    warnings = csv.set_resource_types(args.template)
+                    csv.warnings.extend(warnings)
+                except Exception, e:
+                    raise HydraPluginError("An error occurred setting the types from the template. "
+                                           "Error relates to \"%s\" "
+                                           "Please check the template and resource types."%(e.message))
             write_progress(6,csv.num_steps)
 
         else:
