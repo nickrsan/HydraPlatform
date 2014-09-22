@@ -635,7 +635,7 @@ class ImportCSV(object):
                                 "Node type %s not specified in the template."%
                                 (node_type))
                     
-                    restrictions = self.Templates['resources']['NODE'][node_type]['attributes']
+                        restrictions = self.Templates['resources']['NODE'][node_type]['attributes']
                     if node_type not in self.nodetype_dict.keys():
                         self.nodetype_dict.update({node_type: (nodename,)})
                     else:
@@ -728,7 +728,7 @@ class ImportCSV(object):
                                 "Link type %s not specified in the template."
                                 %(link_type))
                     
-                    restrictions = self.Templates['resources']['LINK'][link_type]['attributes']
+                        restrictions = self.Templates['resources']['LINK'][link_type]['attributes']
                     if link_type not in self.linktype_dict.keys():
                         self.linktype_dict.update({link_type: (linkname,)})
                     else:
@@ -812,7 +812,7 @@ class ImportCSV(object):
                             raise HydraPluginError(
                                 "Group type %s not specified in the template."
                                 %(group_type))
-                    restrictions = self.Templates['resources']['GROUP'][group_type]['attributes']
+                        restrictions = self.Templates['resources']['GROUP'][group_type]['attributes']
                     if group_type not in self.grouptype_dict.keys():
                         self.grouptype_dict.update({group_type: (group_name,)})
                     else:
