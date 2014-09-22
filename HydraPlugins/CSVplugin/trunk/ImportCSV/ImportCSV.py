@@ -415,6 +415,7 @@ class ImportCSV(object):
             field_idx = {'id': 0,
                          'name': 1,
                          'description': 2,
+                         'projection':3,
                          'type': None,
                          }
             # If the file does not follow the standard, we can at least try to
@@ -436,6 +437,8 @@ class ImportCSV(object):
                     self.Network['name'] = data[field_idx['name']].strip()
                     self.Network['description'] = \
                         data[field_idx['description']].strip()
+                    self.Network['projection'] = \
+                        data[field_idx['projection']].strip()
                     self.update_network_flag = True
                     log.info('Loading existing network (ID=%s)' % network_id)
                     # load existing nodes
@@ -468,6 +471,7 @@ class ImportCSV(object):
                     name = data[field_idx['name']].strip(),
                     description = \
                     data[field_idx['description']].strip(),
+                    projection = data[field_idx['projection']].strip(),
                     nodes = [], 
                     links = [],
                     scenarios = [],
@@ -493,6 +497,7 @@ class ImportCSV(object):
                 description = \
                 "Network created by the %s plug-in, %s." % \
                 (self.__class__.__name__, datetime.now()),
+                projection = "",
                 nodes = [],
                 links = [],
                 scenarios = [],
