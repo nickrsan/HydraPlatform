@@ -137,16 +137,19 @@ class HydraNetwork(HydraResource):
             for res_attr in soap_net.attributes.ResourceAttr:
                 if res_attr.id in resource_scenarios.keys():
                     self.add_attribute(attributes[res_attr.attr_id],
-                                    res_attr,
-                                    resource_scenarios[res_attr.id])
+                                       res_attr,
+                                       resource_scenarios[res_attr.id])
                 else:
                     self.add_attribute(attributes[res_attr.attr_id],
-                                    res_attr,
-                                    None)
+                                       res_attr,
+                                       None)
 
         # build dictionary of group members:
-        groupitems = \
-            soap_net.scenarios.Scenario[0].resourcegroupitems.ResourceGroupItem
+        if soap_net.scenarios.Scenario[0].resourcegroupitems is not None:
+            groupitems = \
+                soap_net.scenarios.Scenario[0].resourcegroupitems.ResourceGroupItem
+        else:
+            groupitems = []
 
         nodegroups = dict()
         linkgroups = dict()
@@ -169,25 +172,26 @@ class HydraNetwork(HydraResource):
                     groupgroups[groupitem.ref_id].append(groupitem.group_id)
 
         # load groups
-        for resgroup in soap_net.resourcegroups.ResourceGroup:
-            new_group = HydraResource()
-            new_group.ID = resgroup.id
-            new_group.name = resgroup.name
-            if resgroup.attributes is not None:
-                for res_attr in resgroup.attributes.ResourceAttr:
-                    if res_attr.id in resource_scenarios.keys():
-                        new_group.add_attribute(attributes[res_attr.attr_id],
-                                                res_attr,
-                                                resource_scenarios[res_attr.id])
-                    else:
-                        new_group.add_attribute(attributes[res_attr.attr_id],
-                                                res_attr,
-                                                None)
-            new_group.set_type(resgroup.types)
-            if new_group.ID in groupgroups.keys():
-                new_group.group(groupgroups[new_group.ID])
-            self.add_group(new_group)
-            del new_group
+        if soap_net.resourcegroups is not None:
+            for resgroup in soap_net.resourcegroups.ResourceGroup:
+                new_group = HydraResource()
+                new_group.ID = resgroup.id
+                new_group.name = resgroup.name
+                if resgroup.attributes is not None:
+                    for res_attr in resgroup.attributes.ResourceAttr:
+                        if res_attr.id in resource_scenarios.keys():
+                            new_group.add_attribute(attributes[res_attr.attr_id],
+                                                    res_attr,
+                                                    resource_scenarios[res_attr.id])
+                        else:
+                            new_group.add_attribute(attributes[res_attr.attr_id],
+                                                    res_attr,
+                                                    None)
+                new_group.set_type(resgroup.types)
+                if new_group.ID in groupgroups.keys():
+                    new_group.group(groupgroups[new_group.ID])
+                self.add_group(new_group)
+                del new_group
 
         # load nodes
         for node in soap_net.nodes.Node:
@@ -444,7 +448,7 @@ def build_response(xml_string):
     resp = etree_obj.getchildren()[0].getchildren()[0]
     res  = resp.getchildren()[0]
     dict_resp = get_as_dict(res)[1]
-    import pudb; pudb.set_trace()
+    #import pudb; pudb.set_trace()
     obj = objectify.fromstring(xml_string)
     resp = obj.Body.getchildren()[0]
     res  = resp.getchildren()[0]
@@ -714,7 +718,7 @@ def set_resource_types(client, xml_template, network,
                     ))
     else:
        warnings.append("No links found when setting template types")
-    
+
     if network.resourcegroups:
         for group in network.resourcegroups.ResourceGroup:
             for typename, group_name_list in grouptype_dict.items():
@@ -765,7 +769,7 @@ def create_dict(arr):
 
 def create_sub_dict(arr):
     if arr is None:
-        return None 
+        return None
 
     #Either the array contains sub-arrays or values
     vals = None
@@ -777,7 +781,7 @@ def create_sub_dict(arr):
         else:
             #if any of the elements of the array is NOT a list,
             #then there are no sub arrays
-            vals = arr 
+            vals = arr
             break
 
     if vals:
@@ -788,7 +792,7 @@ def create_sub_dict(arr):
 
 def write_progress(x, y):
     """
-        Format and print a progress message to stdout so that 
+        Format and print a progress message to stdout so that
         a UI or other can pick it up and use it.
     """
     msg = "!!Progress %s/%s"%(x, y)
@@ -805,16 +809,16 @@ def write_output(text):
 
 def validate_plugin_xml(plugin_xml_file_path):
     log.info('Validating plugin xml file (%s).' % plugin_xml_file_path)
-   
+
     try:
         with open(plugin_xml_file_path) as f:
             plugin_xml = f.read()
     except:
         raise HydraPluginError("Couldn't find plugin.xml.")
-   
+
     try:
         plugin_xsd_path = os.path.expanduser(config.get('plugin', 'plugin_xsd_path'))
-        log.info("Plugin Input xsd: %s",plugin_xsd_path) 
+        log.info("Plugin Input xsd: %s",plugin_xsd_path)
         xmlschema_doc = etree.parse(plugin_xsd_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
         xml_tree = etree.fromstring(plugin_xml)
