@@ -222,14 +222,36 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         assert len(updated_type.typeattrs[0]) == 2, "Resource type template attr did not update correctly"
 
     def test_delete_template(self):
+        
+        network = self.create_network_with_data()
+
         new_template = self.test_add_template()
 
         retrieved_template = self.client.service.get_template(new_template.id)
         assert retrieved_template is not None
 
+
+        self.client.service.apply_template_to_network(retrieved_template.id,
+                                                             network.id)
+        
+        updated_network = self.client.service.get_network(network.id)
+        
+        expected_net_type = None
+        for t in new_template.types.TemplateType:
+            if t.resource_type == 'NETWORK':
+                expected_net_type = t.id
+
+        network_type = updated_network.types.TypeSummary[0].id
+
+        assert expected_net_type == network_type
+
         self.client.service.delete_template(new_template.id)
     
         self.assertRaises(WebFault, self.client.service.get_template, new_template.id)
+        
+        network_deleted_tmpl = self.client.service.get_network(network.id)
+        
+        assert network_deleted_tmpl.types is None
 
     def test_add_type(self):
         
