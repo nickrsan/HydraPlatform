@@ -458,10 +458,6 @@ def connect(**kwargs):
 
     retxml = kwargs.get('retxml', False)
 
-    logging.getLogger('suds').setLevel(logging.ERROR)
-    logging.getLogger('suds.client').setLevel(logging.CRITICAL)
-    #logging.getLogger('suds.metrics').setLevel(logging.INFO)
-
     # Connect
     logging.info("Connecting to : %s",url)
     cli = Client(url, timeout=3600, plugins=[FixNamespace()], retxml=retxml)

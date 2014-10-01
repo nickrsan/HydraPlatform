@@ -23,6 +23,7 @@ Option                 Short  Parameter Description
 from HydraLib import PluginLib
 
 import argparse as ap
+from datetime import datetime
 
 
 def commandline_parser():
@@ -46,16 +47,18 @@ def run(network_id):
     errors   = []
     warnings = []
     message = "The network is not there I'm afraid."
+    start = datetime.now()
+    test = client.service.test_get_all_node_data(16, 8)
+    print "Call took %s"%(datetime.now()-start)
+    #try:
+     #   network = client.service.get_network(int(network_id))
+    #    message = "Yup, network is definitely there."
+    #except Exception, e:
+    #    errors.append(e)    
 
-    try:
-        network = client.service.get_network(int(network_id))
-        message = "Yup, network is definitely there."
-    except Exception, e:
-        errors.append(e)    
+    #xml_result = PluginLib.create_xml_response('Test Plugin', network_id, errors, warnings, message) 
 
-    xml_result = PluginLib.create_xml_response('Test Plugin', network_id, errors, warnings, message) 
-
-    PluginLib.write_xml_result('Test Plugin', xml_result)
+    #PluginLib.write_xml_result('Test Plugin', xml_result)
 
     print "Finished!"
     

@@ -268,7 +268,7 @@ class SoapServerTest(unittest.TestCase):
             attr = self.client.service.add_attribute(attr)
         return attr
 
-    def test_create_network(self):
+    def create_network(self):
         net = self.create_network_with_data()
         s = net.scenarios.Scenario[0]
         rs = s.resourcescenarios.ResourceScenario[0]
