@@ -13,9 +13,8 @@ to import network attributes.
 
 Basic usage::
 
-       ImportCSV.py [-h] -n NODES [NODES ...] -l LINKS [LINKS ...]
-                    [-z TIMEZONE]
-                    [-x]
+       SamplePlugin.py [-h] -n NODES [NODES ...] -l LINKS [LINKS ...]
+                    [-u SERVER URL] [-c SESSION ID]
 
 Options
 ~~~~~~~
@@ -24,20 +23,16 @@ Options
 Option                 Short  Parameter    Description
 ====================== ====== ============ =======================================
 ``--help``             ``-h``              show help message and exit.
-``--project``          ``-p`` PROJECT      The ID of an existing project. If no
-                                           project is specified or if the ID
-                                           provided does not belong to an existing
-                                           project, a new one will be created.
+``--network-name``     ``-t`` NETWORK NAME The name of the network
 ``--nodes``            ``-n`` NODES        One or multiple files containing nodes
                                            and attributes.
 ``--links``            ``-l`` LINKS        One or multiple files containing
                                            information on links.
-``--timezone``         ``-z`` TIMEZONE     Specify a timezone as a string
-                                           following the Area/Loctation pattern
-                                           (e.g.  Europe/London). This timezone
-                                           will be used for all timeseries data
-                                           that is imported. If you don't specify
-                                           a timezone, it defaults to UTC.
+``--server-url``       ``-u`` SERVER URL   URL of the server. If not specified,
+                                           a default from config is used
+``--session-id``       ``-c`` SESSION ID   If user has already logged in, avoid
+                                           doing it again by providing a valid
+                                           session ID.
 ====================== ====== ============ =======================================
 
 
@@ -110,25 +105,19 @@ from datetime import datetime
 import pytz
 
 from HydraLib import PluginLib
-from HydraLib.PluginLib import write_progress, write_output, validate_plugin_xml
-from HydraLib import config, util
+from HydraLib.PluginLib import JsonConnection, write_progress, write_output, validate_plugin_xml
 
-from HydraLib.HydraException import HydraPluginError,HydraError
+from HydraLib.HydraException import HydraPluginError
 
-import requests
-
-import json
 log = logging.getLogger(__name__)
 
 __location__ = os.path.split(sys.argv[0])[0]
 
-class ImportCSV(object):
+class SamplePlugin(object):
     """
     """
 
     def __init__(self, url=None, session_id=None):
-
-        self.url = url
 
         self.Attributes = dict()
 
@@ -137,32 +126,24 @@ class ImportCSV(object):
         self.link_names = []
         self.node_names = []
 
-        self.timezone = pytz.utc
         self.basepath = ''
 
-        self.add_attrs = True
-        
-        self.session_id=None
-        if session_id is not None:
-            log.info("Using existing session %s", session_id)
-            self.session_id=session_id
-        else:
-            self.login()
-
-        self.warnings = []
         self.message = ''
         self.files = []
+        self.warnings = []
 
-        self.num_steps = 6
+        self.num_steps = 4
 
-    def validate_value(self, value, restriction_dict):
-        if restriction_dict is None or restriction_dict == {}:
-            return
+        self.connection = JsonConnection(url)
+        if session_id is not None:
+            log.info("Using existing session %s", session_id)
+            self.connection.session_id=session_id
+        else:
+            self.connection.login()
 
-        try:
-            util.validate_value(restriction_dict, value)
-        except HydraError, e:
-            raise HydraPluginError(e.message)
+        self.node_id = PluginLib.temp_ids()
+        self.link_id = PluginLib.temp_ids()
+        self.attr_id = PluginLib.temp_ids()
 
     def get_file_data(self, file):
         """
@@ -200,202 +181,165 @@ class ImportCSV(object):
 
         return file_data
 
-    def create_project(self, ID=None):
+    def create_project(self):
         project_dict = dict(
             name = "CSV import at %s" % (datetime.now()),
             description = "Project created by the Sample plug-in, %s." % (datetime.now()),
             status = 'A',
         )
-        project = self.call('add_project', {'project':project_dict})
+        project = self.connection.call('add_project', {'project':project_dict})
         return project
 
-    def login(self):
-        user = config.get('hydra_client', 'user')
-        passwd = config.get('hydra_client', 'password')
-        login_params = {'username':user, 'password':passwd}
-
-        resp = self.call('login', login_params)
-        #set variables for use in request headers
-        self.session_id = resp['session_id']
-        log.info("Session ID=%s", self.session_id)
-
-    def call(self, func, args):
-        log.info("Calling: %s"%(func))
-        if self.url is None:
-            port = config.getint('hydra_server', 'port', 8080)
-            domain = config.get('hydra_server', 'domain', '127.0.0.1')
-            self.url = "http://%s:%s/json"%(domain, port)
-            log.info("Setting URL %s", self.url)
-        call = {func:args}
-        headers = {
-                    'Content-Type': 'application/json',       
-                    'session_id':self.session_id,
-                    'app_name' : 'Import CSV'
-                  }
-        r = requests.post(self.url, data=json.dumps(call), headers=headers)
-        if not r.ok:
-            try:
-                resp = json.loads(r.content)
-                err = "%s:%s"%(resp['faultcode'], resp['faultstring'])
-            except:
-                err = r.content
-            raise HydraPluginError(err)
-
-        return json.loads(r.content) 
-
     def read_nodes(self, file):
-        node_data = self.get_file_data(file)
+        node_file_data = self.get_file_data(file)
 
         nodes = []
+        node_data = []
         
-        self.add_attrs = True
-
-        keys  = node_data[0].split(',')
-        units = node_data[1].split(',')
-        data = node_data[2:-1]
+        #The first row is the headings (attribute names and node parameters)
+        headings  = node_file_data[0].split(',')
+        #The second row is units
+        units = node_file_data[1].split(',')
+        #The third row is data
+        data = node_file_data[2:-1]
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
 
-        field_idx = {'name': 0,
-                     'description': -1,
-                     'x': 1,
-                     'y': 2,
-                     'type': None,
-                     }
+        #If the heading is not in the reserved list, it must be an
+        #attribute
+        reserved_headings = ['name', 'description', 'x', 'y', 'type']
         # Guess parameter position:
         attrs = dict()
-        for i, key in enumerate(keys):
+        #Records which are the reserved heading columns
+        heading_idx = dict()
+        for i, key in enumerate(headings):
 
-            if key.lower().strip() in field_idx.keys():
-                field_idx[key.lower().strip()] = i
+            if key.lower().strip() in reserved_headings:
+                heading_idx[key.lower().strip()] = i
             else:
-                attrs.update({i: key.strip()})
+                attrs[i] = key.strip()
 
-        node_names = []
-
+        self.add_attributes(attrs, units)
+        
         for line in data:
             linedata = line.split(',')
-            nodename = linedata[field_idx['name']].strip()
+            nodename = linedata[heading_idx['name']].strip()
 
             if nodename in self.node_names:
                 raise HydraPluginError("Duplicate Node name: %s"%(nodename))
             else:
-                node_names.append(nodename)
+                self.node_names.append(nodename)
 
-            if nodename in node_names:
-                log.info('Node %s exists.' % nodename)
-            else:
-                node = dict(
-                    id = self.node_id.next(),
-                    name = nodename,
-                    description = linedata[field_idx['description']].strip(),
-                    attributes = [],
-                )
-                try:
-                    node['x'] = str(linedata[field_idx['x']])
-                except ValueError:
-                    node['x'] = 0
-                    log.info('X coordinate of node %s is not a number.'
-                                 % node['name'])
-                    self.warnings.append('X coordinate of node %s is not a number.'
-                                         % node['name'])
-                try:
-                    node['y'] = str(linedata[field_idx['y']])
-                except ValueError:
-                    node['y'] = 0
-                    log.info('Y coordinate of node %s is not a number.'
-                                 % node['name'])
-                    self.warnings.append('Y coordinate of node %s is not a number.'
-                                         % node['name'])
+            node = dict(
+                id = self.node_id.next(),
+                name = nodename,
+                description = linedata[heading_idx['description']].strip(),
+                attributes = [],
+            )
+            try:
+                node['x'] = str(linedata[heading_idx['x']])
+            except ValueError:
+                node['x'] = 0
+                log.info('X coordinate of node %s is not a number.'
+                             % node['name'])
+                self.warnings.append('X coordinate of node %s is not a number.'
+                                     % node['name'])
+            try:
+                node['y'] = str(linedata[heading_idx['y']])
+            except ValueError:
+                node['y'] = 0
+                log.info('Y coordinate of node %s is not a number.'
+                             % node['name'])
+                self.warnings.append('Y coordinate of node %s is not a number.'
+                                     % node['name'])
 
             if len(attrs) > 0:
-                node = self.add_data(node, attrs, linedata, units=units)
+                attributes, data = self.add_data(nodename, attrs, linedata, units=units)
+                node['attributes'] = attributes
 
             nodes.append(node)
+            node_data.extend(data)
 
-        return nodes
+        return nodes, node_data
 
     def read_links(self, file, nodes):
-        link_data = self.get_file_data(file)
-        
+        link_file_data = self.get_file_data(file)
+       
+        links = []
+        link_data = []
+
         #Make a dictionary, keyed on the node name
         #to make accessing the correct node a bit easier.
         node_dict = {}
         for n in nodes:
             node_dict[n['name']] = n
-
-        self.add_attrs = True
-
-        keys = link_data[0].split(',')
-        units = link_data[1].split(',')
-        data = link_data[2:-1]
+        
+        #The first row is the headings
+        headings = link_file_data[0].split(',')
+        #The second row is units
+        units = link_file_data[1].split(',')
+        #The third row until the end is actual data.
+        data = link_file_data[2:-1]
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
 
-        field_idx = {'name': 0,
-                     'description': -1,
-                     'from': 1,
-                     'to': 2,
-                     'type': None,
-                     }
+        reserved_headings = ['name', 'description', 'from', 'to', 'type']
+        
         # Guess parameter position:
         attrs = dict()
-        
-        links = []
-        
-        #keep track of all the link names to make sure
-        #there are no duplicates
-        link_names = []
-        
-        for i, key in enumerate(keys):
-            if key.lower().strip() in field_idx.keys():
-                field_idx[key.lower().strip()] = i
+        #Records which are the reserved heading columns
+        heading_idx = dict()
+        for i, key in enumerate(headings):
+
+            if key.lower().strip() in reserved_headings:
+                heading_idx[key.lower().strip()] = i
             else:
-                attrs.update({i: key.strip()})
+                attrs[i] = key.strip()
+
+        self.add_attributes(attrs, units)
 
         for line in data:
             linedata = line.split(',')
-            linkname = linedata[field_idx['name']].strip()
+            linkname = linedata[heading_idx['name']].strip()
 
             if linkname in self.link_names:
                 raise HydraPluginError("Duplicate Link name: %s"%(linkname))
             else:
-                link_names.append(linkname)
+                self.link_names.append(linkname)
 
-            if linkname in link_names:
-                log.info('Link %s exists.' % linkname)
-            else:
-                link = dict(
-                    id = self.link_id.next(),
-                    name = linkname,
-                    description = linedata[field_idx['description']].strip(),
-                    attributes = [], 
-                )
+            link = dict(
+                id = self.link_id.next(),
+                name = linkname,
+                description = linedata[heading_idx['description']].strip(),
+                attributes = [], 
+            )
 
-                try:
-                    fromnode = node_dict[linedata[field_idx['from']].strip()]
-                    tonode = node_dict[linedata[field_idx['to']].strip()]
-                    link['node_1_id'] = fromnode['id']
-                    link['node_2_id'] = tonode['id']
+            try:
+                fromnode = node_dict[linedata[heading_idx['from']].strip()]
+                tonode = node_dict[linedata[heading_idx['to']].strip()]
+                link['node_1_id'] = fromnode['id']
+                link['node_2_id'] = tonode['id']
 
-                except KeyError:
-                    log.info(('Start or end node not found (%s -- %s).' +
-                                  ' No link created.') %
-                                 (linedata[field_idx['from']].strip(),
-                                  linedata[field_idx['to']].strip()))
-                    self.warnings.append(('Start or end node not found (%s -- %s).' +
-                                  ' No link created.') %
-                                 (linedata[field_idx['from']].strip(),
-                                  linedata[field_idx['to']].strip()))
+            except KeyError:
+                log.info(('Start or end node not found (%s -- %s).' +
+                              ' No link created.') %
+                             (linedata[heading_idx['from']].strip(),
+                              linedata[heading_idx['to']].strip()))
+                self.warnings.append(('Start or end node not found (%s -- %s).' +
+                              ' No link created.') %
+                             (linedata[heading_idx['from']].strip(),
+                              linedata[heading_idx['to']].strip()))
 
             if len(attrs) > 0:
-                link = self.add_data(link, attrs, linedata, units=units)
+                attributes, data = self.add_data(linkname, attrs, linedata, units=units)
+                link['attributes'] = attributes
 
             links.append(link)
+            link_data.extend(data)
             
-        return links
+        return links, link_data
 
     def create_attribute(self, name, unit=None):
         """
@@ -406,32 +350,17 @@ class ImportCSV(object):
                 name = name.strip(),
             )
             if unit is not None and len(unit.strip()) > 0:
-                attribute['dimen'] = self.call('get_dimension', {'unit1':unit.strip()})
+                attribute['dimen'] = self.connection.call('get_dimension', {'unit1':unit.strip()})
         except Exception,e:
             raise HydraPluginError("Invalid attribute %s %s: error was: %s"%(name,unit,e))
 
         return attribute
 
-    def add_data(self, resource, attrs, data, metadata, units=None, restrictions={}):
-        '''Add the data read for each resource to the resource. This requires
-        creating the attributes, resource attributes and a scenario which holds
-        the data.'''
-
+    def add_attributes(self, attrs, units):
         attributes = []
-
-        # Collect existing resource attributes:
-        resource_attrs = dict()
-
-        if resource.get('attributes') is None:
-            return resource
-
-        for res_attr in resource['attributes']:
-            resource_attrs.update({res_attr.attr_id: res_attr})
-
         for i in attrs.keys():
             if attrs[i] in self.Attributes.keys():
                 attribute = self.Attributes[attrs[i]]
-                #attribute = self.create_attribute(attrs[i])
             else:
                 if units is not None:
                     attribute = self.create_attribute(attrs[i], units[i])
@@ -440,31 +369,30 @@ class ImportCSV(object):
                 self.Attributes.update({attrs[i]: attribute})
             attributes.append(attribute)
 
-        # Add all attributes. If they exist already, we retrieve the real id.
-        # Also, we add the attributes only once (that's why we use the
-        # add_attrs flag).
-        if self.add_attrs:
-            attributes = self.call('add_attributes', {'attrs':attributes})
-            self.add_attrs = False
-            for attr in attributes:
-                self.Attributes.update({attr['name']: attr})
+        attributes = self.connection.call('add_attributes', {'attrs':attributes})
+        for attr in attributes:
+            self.Attributes.update({attr['name']: attr})
+
+    def add_data(self, resource_name, attrs, data, units=None):
+        '''Add the data read for each resource to the resource. This requires
+        creating the attributes, resource attributes and a scenario which holds
+        the data.'''
+
+        attributes = []
+        resource_data       = []
 
         # Add data to each attribute
         for i in attrs.keys():
             attr = self.Attributes[attrs[i]]
-            # Attribute might already exist for resource, use it if it does
-            if attr['id'] in resource_attrs.keys():
-                res_attr = resource_attrs[attr.id]
-            else:
-                res_attr = dict( 
-                    id = self.attr_id.next(),
-                    attr_id = attr['id'],
-                    attr_is_var = 'N',
-                )
+            res_attr = dict( 
+                id = self.attr_id.next(),
+                attr_id = attr['id'],
+                attr_is_var = 'N',
+            )
             # create dataset and assign to attribute (if not empty)
             if len(data[i].strip()) > 0:
 
-                resource['attributes'].append(res_attr)
+                attributes.append(res_attr)
 
                 if data[i].strip() in ('NULL',
                                        'I AM NOT A NUMBER! I AM A FREE MAN!'):
@@ -472,44 +400,35 @@ class ImportCSV(object):
                     res_attr['attr_is_var'] = 'Y'
 
                 else:
+                    unit      = None
+                    #Are there units in the csv file?
                     if units is not None:
-                        if units[i] is not None and len(units[i].strip()) > 0:
-                            dimension = attr['dimen']
-                        else:
-                            dimension = None
+                        unit = units[i]
+                        #Is there a unit specified for this attribute?
+                        if unit is not None:
+                            if unit.strip() == '':
+                                unit = None
 
-                        dataset = self.create_dataset(data[i],
-                                                      res_attr,
-                                                      units[i],
-                                                      dimension,
-                                                      resource['name'],
-                                                      restrictions.get(attr['name'], {}).get('restrictions', {})
-                                                     )
-                    else:
-                        dataset = self.create_dataset(data[i],
-                                                      res_attr,
-                                                      None,
-                                                      None,
-                                                      resource['name'],
-                                                      restrictions.get(attr['name'], {}).get('restrictions', {})
-                                                     )
-
+                    dataset = self.create_dataset(data[i],
+                                                    res_attr,
+                                                    unit,
+                                                    attr.get('dimen'),
+                                                    resource_name,
+                                                    )
                     if dataset is not None:
-                        self.Scenario['resourcescenarios'].append(dataset)
+                        resource_data.append(dataset)
 
-        #resource.attributes = res_attr_array
+        return attributes, resource_data
 
-        return resource
-
-    def create_dataset(self, value, resource_attr, unit, dimension, resource_name, restriction_dict):
+    def create_dataset(self, value, resource_attr, unit, dimension, resource_name):
  
         resourcescenario = dict()
         
         dataset          = dict(
             id=None,
             type=None,
-            unit=None,
-            dimension=None,
+            unit=unit,
+            dimension=dimension,
             name='Import CSV data',
             value=None,
             hidden='N',
@@ -519,12 +438,6 @@ class ImportCSV(object):
         resourcescenario['attr_id'] = resource_attr['attr_id']
         resourcescenario['resource_attr_id'] = resource_attr['id']
 
-        value = value.strip()
-        if unit is not None:
-            unit = unit.strip()
-            if len(unit) == 0:
-                unit = None
-
         try:
             float(value)
             dataset['type'] = 'scalar'
@@ -533,36 +446,9 @@ class ImportCSV(object):
             dataset['type'] = 'descriptor'
             dataset['value'] = dict(desc_val = str(value))
 
-        dataset['unit'] = unit
-        if unit is not None:
-            dataset['dimension'] = dimension
-
         resourcescenario['value'] = dataset
 
         return resourcescenario
-
-    def create_network(self, network):
-        log.info("Committing Network")
-        
-        log.info("Adding Network")
-        log.info("Network created with %s nodes and %s links. Network ID is %s",
-                 len(self.NetworkSummary['nodes']), 
-                 len(self.NetworkSummary['links']),
-                 self.NetworkSummary['id'])
-
-        self.message = 'Data import was successful.'
-
-    def return_xml(self):
-        """
-            This is a fist version of a possible XML output.
-        """
-        scen_ids = [s['id'] for s in self.NetworkSummary['scenarios']]
-
-        xml_response = PluginLib.create_xml_response('ImportCSV',
-                                                     self.Network['id'],
-                                                     scen_ids)
-
-        print xml_response
 
 def commandline_parser():
     parser = ap.ArgumentParser(
@@ -573,27 +459,14 @@ def commandline_parser():
 
         """, epilog="For more information visit www.hydra-network.com",
         formatter_class=ap.RawDescriptionHelpFormatter)
-    parser.add_argument('-p', '--project',
-                        help='''The ID of an existing project. If no project is
-                        specified or if the ID provided does not belong to an
-                        existing project, a new one will be created.''')
+    parser.add_argument('-t', '--network_name',
+                        help='''The name of the network''')
     parser.add_argument('-n', '--nodes', nargs='+',
                         help='''One or multiple files containing nodes and
                         attributes.''')
     parser.add_argument('-l', '--links', nargs='+',
                         help='''One or multiple files containing information
                         on links.''')
-    parser.add_argument('-z', '--timezone',
-                        help='''Specify a timezone as a string following the
-                        Area/Location pattern (e.g. Europe/London). This
-                        timezone will be used for all timeseries data that is
-                        imported. If you don't specify a timezone, it defaults
-                        to UTC.''')
-    parser.add_argument('-x', '--expand-filenames', action='store_true',
-                        help='''If the import function encounters something
-                        that looks like a filename, it tries to read the file.
-                        It also tries to guess if it contains a number, a
-                        descriptor, an array or a time series.''')
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
@@ -606,76 +479,62 @@ def commandline_parser():
 if __name__ == '__main__':
     parser = commandline_parser()
     args = parser.parse_args()
-    csv = ImportCSV(url=args.server_url, session_id=args.session_id)
+    example = SamplePlugin(url=args.server_url, session_id=args.session_id)
 
     scen_ids = []
     errors = []
+    network_id=None
     try:
         
         validate_plugin_xml(os.path.join(__location__, 'plugin.xml'))
 
-        if args.expand_filenames:
-            csv.expand_filenames = True
-
-        if args.timezone is not None:
-            csv.timezone = pytz.timezone(args.timezone)
-
         if args.nodes is not None:
-            # Validation
-
-            if args.template is not None:
-                try:
-                    csv.validate_template(args.template)
-                except Exception, e:
-                    raise HydraPluginError("An error has occurred with the template. (%s)"%(e))
-
             # Create project and network only when there is actual data to
             # import.
-            project = csv.create_project(ID=args.project)
+            project = example.create_project()
 
+            write_progress(1,example.num_steps) 
+            for nodefile in args.nodes:
+                write_output("Reading Node file %s" % nodefile)
+                nodes, node_data = example.read_nodes(nodefile)
+
+            write_progress(2,example.num_steps) 
+            if args.links is not None:
+                for linkfile in args.links:
+                    write_output("Reading Link file %s" % linkfile)
+                    links, link_data = example.read_links(linkfile, nodes)
+
+
+            write_progress(3,example.num_steps) 
             scenario = dict( 
                 name = 'Sample scenario',
-                description='Default scenario created by the CSV import plug-in.',
-                resourcescenarios = [],
+                description='Default scenario created by the Sample CSV import plug-in.',
+                resourcescenarios = node_data + link_data,
             )
-
+            
             # Create a new network
             network = dict(
                 project_id = project['id'],
-                name = "CSV import",
-                description = "Network created by the test plug-in.",
-                nodes = [],
-                links = [],
+                name = args.network_name,
+                description = "Network created by the example plug-in.",
+                nodes = nodes,
+                links = links,
                 scenarios = [scenario],
                 resourcegroups = [],
                 attributes = [],
             )
             
-            network = csv.call('add_network', {'net':network})
-
-            write_progress(1,csv.num_steps) 
-            for nodefile in args.nodes:
-                write_output("Reading Node file %s" % nodefile)
-                nodes = csv.read_nodes(nodefile)
-
-            write_progress(2,csv.num_steps) 
-            if args.links is not None:
-                for linkfile in args.links:
-                    write_output("Reading Link file %s" % linkfile)
-                    links = csv.read_links(linkfile)
-
-            write_progress(3,csv.num_steps) 
-            write_progress(4,csv.num_steps) 
             write_output("Saving network")
+            network = example.connection.call('add_network', {'net':network})
             
-            csv.create_network(network)
+            if network['scenarios']:
+                scen_ids = [s['id'] for s in network['scenarios']]
 
-            if csv.NetworkSummary['scenarios']:
-                scen_ids = [s['id'] for s in csv.NetworkSummary['scenarios']]
+            network_id = network['id']
+            
+            scen_ids = [s['id'] for s in network['scenarios']]
 
-            network_id = csv.NetworkSummary['id']
-
-            write_progress(6,csv.num_steps)
+            write_progress(4,example.num_steps)
 
         else:
             log.info('No nodes found. Nothing imported.')
@@ -684,12 +543,12 @@ if __name__ == '__main__':
     except HydraPluginError as e:
         errors = [e.message]
 
-    xml_response = PluginLib.create_xml_response('ImportCSV',
+    xml_response = PluginLib.create_xml_response('SamplePlugin',
                                                  network_id,
                                                  scen_ids,
                                                  errors,
-                                                 csv.warnings,
-                                                 csv.message,
-                                                 csv.files)
+                                                 example.warnings,
+                                                 example.message,
+                                                 example.files)
 
     print xml_response

@@ -1,0 +1,56 @@
+<plugin_info>
+    <plugin_name>Example Plugin</plugin_name>
+    <plugin_dir>SamplePlugin.exe</plugin_dir>
+    <plugin_description>A cut-down version of the CSV import plugin, which imports a network saved in a set of CSV files into Hydra.</plugin_description>
+    <plugin_epilog>
+        Written by Stephen Knox (stephen.knox@manchester.ac.uk) 
+        (c) Copyright 2013, University College London.
+        For more information visit www.hydra-network.com
+    </plugin_epilog>
+    <smallicon></smallicon>
+    <largeicon></largeicon>
+    <mandatory_args>
+        <arg>
+            <name>nodes</name>
+            <switch>-n</switch>
+            <multiple>Y</multiple>
+            <argtype>file</argtype>
+            <help>One or multiple files containing nodes and
+                        attributes.</help>
+        </arg>
+        <arg>
+            <name>links</name>
+            <switch>-l</switch>
+            <multiple>Y</multiple>
+            <argtype>file</argtype>
+            <help>One or multiple files containing information
+                        on links.</help>
+        </arg>
+    </mandatory_args>
+   <non_mandatory_args>
+        <arg>
+           <name>network_name</name>
+           <switch>-t</switch>
+           <multiple>N</multiple>
+           <argtype>string</argtype>
+           <help>The name of the network</help>
+        </arg>
+        <arg>
+            <name>session_id</name>
+            <switch>-c</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>Specify the session ID for the connection. If not specified,
+            the plugin will try to connect based on the credentials it finds in config</help>
+        </arg>
+        <arg>
+            <name>server_url</name>
+            <switch>-u</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>The url of the server to connect to if not using the  default</help>
+        </arg>
+    </non_mandatory_args> 
+    <switches>
+    </switches>
+ </plugin_info>

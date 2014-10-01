@@ -22,14 +22,14 @@ from suds.plugin import MessagePlugin
 from datetime import datetime
 import os
 import logging
-from decimal import Decimal
 
 log = logging.getLogger(__name__)
 from lxml import objectify
 from lxml import etree
 from lxml.etree import XMLParser
-import sys
 from HydraException import HydraPluginError
+import requests
+import json
 
 class FixNamespace(MessagePlugin):
     """Hopefully a temporary fix for an unresolved namespace issue.
@@ -400,6 +400,49 @@ class HydraAttribute(object):
             self.dataset_type = res_scen.value.type
             self.value = res_scen.value.value
 
+class JsonConnection(object):
+    url = None
+    session_id = None
+
+    def __init__(self, url=None):
+        if url is None:
+            port = config.getint('hydra_server', 'port', 8080)
+            domain = config.get('hydra_server', 'domain', '127.0.0.1')
+            self.url = "http://%s:%s/json"%(domain, port)
+            log.info("Setting URL %s", self.url)
+
+    def call(self, func, args):
+        log.info("Calling: %s"%(func))
+        call = {func:args}
+        headers = {
+                    'Content-Type': 'application/json',       
+                    'session_id'  : self.session_id,
+                    'app_name'    : 'Import CSV'
+                }
+        r = requests.post(self.url, data=json.dumps(call), headers=headers)
+        if not r.ok:
+            try:
+                resp = json.loads(r.content)
+                err = "%s:%s"%(resp['faultcode'], resp['faultstring'])
+            except:
+                err = r.content
+            raise HydraPluginError(err)
+
+        return json.loads(r.content) 
+
+
+    def login(self, username=None, password=None):
+        if username is None:
+            username = config.get('hydra_client', 'user')
+        if password is None:
+            password = config.get('hydra_client', 'password')
+        login_params = {'username':username, 'password':password}
+
+        resp = self.call('login', login_params)
+        #set variables for use in request headers
+        self.session_id = resp['session_id']
+        log.info("Session ID=%s", self.session_id)
+        return self.session_id
 
 def connect(**kwargs):
     """Establish a connection to the specified server. If the URL of the server

@@ -1,0 +1,19 @@
+Name  , X               , Y               , Type,  maxStor  , minStor,       IC, S   ,  Cost, Consumption, linCoeff           , quadCoeff           ,           BC , test_array        , urBenefits, agBenefits, delivery, infeasQ, Description
+Units ,                 ,                 ,     ,    hm^3 ,   hm^3 ,, hm^3,     $,            ,                    ,                     ,              ,                   ,,           ,         ,        ,
+Ag1   ,494488.136203141,148849.926599253, ag  ,,,,,  NULL,0.7, TS/ag_linCoeff.csv, TS/ag_quadCoeff.csv, TS/BC.csv,             ,, NULL      , NULL    , NULL   ,Agricultural
+Ag2   ,494352.782720372,144315.584926486, ag  ,,,,,  NULL,0.7, TS/ag_linCoeff.csv, TS/ag_quadCoeff.csv,,,, NULL      , NULL    , NULL   ,Agricultural
+EndPt ,501129.818489039,140506.889165248, ag  ,,,,,  NULL,1,    ,,, arr/EndPtArray.csv,, NULL    , NULL    , NULL   ,End point
+WWTP1 ,508767.928635288,149391.34053033, WWTP,,,,,8, NULL       , NULL               , NULL                ,  NULL        , NULL              ,, NULL   , NULL    , NULL      ,Waste Water Treatment Plant
+Desal1,519122.470067129,148443.866150946, desal,100000,0,10000, NULL,,,,,,,,,, NULL   ,Desalination Plant
+GW1   ,518039.642204975,165430.728238476, gw  ,2000,300, TS/IC.csv    ,NULL,,,,, TS/BC.csv    ,,,,, NULL      ,Ground Water
+GW2   ,490359.854978682,146819.624357716, gw  ,2000,300, TS/IC.csv    ,NULL,,,,, TS/BC.csv    ,,,,, NULL   ,Ground Water
+Hp1   ,497262.882599909,156700.428599865, hp  ,,,,,,,,,,,,,,  NULL   ,Hydro Power
+J1    ,507143.686842058,164415.577117707, jn  ,,,,,,,,,0,,,,, NULL   ,Junction
+J2    ,501188.133600215,147022.654581869, jn  ,,,,,,,,,0,,,,, NULL   ,Junction
+J3    ,501120.45685883 ,42217.605943564 , jn  ,,,,,,,,,0,,,,, NULL   ,Junction
+SR1   ,507046.845211248,169181.147656871, sr  ,500,50, TS/IC.csv, NULL,,,,, TS/BC.csv,,,,, NULL,
+SR2   ,507076.010100673,159136.791289709, sr  ,200,20, TS/IC.csv, NULL,,,,, TS/BC.csv,,,,, NULL,
+SR3   ,495097.226875602,158933.761065556, sr  ,300,30, TS/IC.csv, NULL,,,,, TS/BC.csv,,,,, NULL,
+SR4   ,501188.133600215,151827.703220175, sr  ,600,60, TS/IC.csv, NULL,,,,, TS/BC.csv,,,,, NULL,
+Urb1  ,515264.895808208,169559.009462935, ur  ,,,,,,0.5,1500,-5,,,NULL,, NULL    ,NULL,Urban
+Urb2  ,514385.098170208,152775.177599559, ur  ,,,,,,0.5,2500,-7,,,NULL,, NULL    ,NULL,Urban
