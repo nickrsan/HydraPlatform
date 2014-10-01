@@ -417,6 +417,7 @@ def add_network(network,**kwargs):
             scen.start_time           = str(timestamp_to_ordinal(s.start_time)) if s.start_time else None
             scen.end_time             = str(timestamp_to_ordinal(s.end_time)) if s.end_time else None
             scen.time_step            = s.time_step
+            scen.created_by           = user_id
 
             #extract the data from each resourcescenario
             incoming_datasets = []
@@ -811,6 +812,7 @@ def update_network(network,**kwargs):
                     continue
             else:
                 scen = Scenario()
+                scen.created_by = user_id 
                 net_i.scenarios.append(scen)
 
             scen.scenario_name        = s.name
@@ -820,6 +822,7 @@ def update_network(network,**kwargs):
             scen.end_time             = str(timestamp_to_ordinal(s.end_time)) if s.end_time else None
             scen.time_step            = s.time_step
             scen.network_id           = net_i.network_id
+
             if s.resourcescenarios is not None:
                 for r_scen in s.resourcescenarios:
                     r_scen.resourceattr = all_resource_attrs[r_scen.resource_attr_id]

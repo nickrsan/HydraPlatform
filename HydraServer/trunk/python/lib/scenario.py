@@ -83,6 +83,7 @@ def add_scenario(network_id, scenario,**kwargs):
     scen.scenario_description = scenario.description
     scen.scenario_layout      = scenario.get_layout()
     scen.network_id           = network_id
+    scen.created_by           = user_id
     scen.start_time           = str(timestamp_to_ordinal(scenario.start_time)) if scenario.start_time else None
     scen.end_time             = str(timestamp_to_ordinal(scenario.end_time)) if scenario.end_time else None
     scen.time_step            = scenario.time_step
@@ -210,6 +211,7 @@ def clone_scenario(scenario_id,**kwargs):
     cloned_scen.network_id           = scen_i.network_id
     cloned_scen.scenario_name        = "%s (clone)"%(scen_i.scenario_name)
     cloned_scen.scenario_description = scen_i.scenario_description
+    cloned_scen.created_by           = kwargs['user_id']
 
     cloned_scen.start_time           = scen_i.start_time
     cloned_scen.end_time             = scen_i.end_time

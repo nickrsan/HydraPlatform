@@ -174,7 +174,7 @@ class Dataset(ComplexModel):
     """
     """
     _type_info = [
-        ('id',               Integer(min_occurs=1, default=None)),
+        ('id',               Integer(min_occurs=0, default=None)),
         ('type',             Unicode),
         ('dimension',        Unicode(min_occurs=1, default=None)),
         ('unit',             Unicode(min_occurs=1, default=None)),
@@ -952,6 +952,8 @@ class Scenario(Resource):
         ('locked',               Unicode(default='N', pattern="[YN]")),
         ('start_time',           Unicode(default=None)),
         ('end_time',             Unicode(default=None)),
+        ('created_by',           Integer(default=None)),
+        ('cr_date',              Unicode(default=None)),
         ('time_step',            Unicode(default=None)),
         ('resourcescenarios',    SpyneArray(ResourceScenario, default=None)),
         ('resourcegroupitems',   SpyneArray(ResourceGroupItem, default=None)),
@@ -977,6 +979,8 @@ class Scenario(Resource):
         self.start_time = get_timestamp(parent.start_time)
         self.end_time = get_timestamp(parent.end_time)
         self.time_step = parent.time_step
+        self.created_by = parent.created_by
+        self.cr_date    = str(parent.cr_date)
         if summary is False:
             self.resourcescenarios = [ResourceScenario(rs) for rs in parent.resourcescenarios]
             self.resourcegroupitems = [ResourceGroupItem(rgi) for rgi in parent.resourcegroupitems]

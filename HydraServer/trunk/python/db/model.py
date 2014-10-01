@@ -984,6 +984,7 @@ class Scenario(Base):
     locked = Column(String(1),  nullable=False, server_default=text(u"'N'"))
     time_step = Column(String(60))
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
+    created_by = Column(Integer(), ForeignKey('tUser.user_id'))
     
     network = relationship('Network', backref=backref("scenarios", order_by=scenario_id))
 

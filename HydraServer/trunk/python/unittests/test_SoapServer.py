@@ -268,10 +268,10 @@ class SoapServerTest(unittest.TestCase):
             attr = self.client.service.add_attribute(attr)
         return attr
 
-    #def test_create_network(self):
-    #    net = self.create_network_with_data()
-    #    s = net.scenarios.Scenario[0]
-    #    rs = s.resourcescenarios.ResourceScenario[0]
+    def test_create_network(self):
+        net = self.create_network_with_data()
+        s = net.scenarios.Scenario[0]
+        rs = s.resourcescenarios.ResourceScenario[0]
         
 
     def build_network(self, project_id=None, num_nodes=10):
@@ -548,7 +548,10 @@ class SoapServerTest(unittest.TestCase):
     def check_network(self, request_net, response_net):
 
         assert repr(response_net.layout) == repr(request_net['layout'])
-    
+   
+
+        assert response_net.scenarios.Scenario[0].created_by is not None
+
         for n in response_net.nodes.Node:
             assert n.x is not None
             assert n.y is not None
