@@ -1018,6 +1018,41 @@ class Rule(ComplexModel):
         self.scenario_id = parent.scenario_id
         self.text        = parent.rule_text
 
+class Note(ComplexModel):
+    """
+    """
+    _type_info = [
+        ('id', Integer),
+        ('ref_key', Unicode),
+        ('ref_id', Integer),
+        ('text', Unicode),
+        ('created_by', Integer),
+    ]
+
+    def __init__(self, parent=None):
+        super(Note, self).__init__()
+        if parent is None:
+            return
+
+        self.id = parent.note_id
+        self.ref_key = parent.ref_key
+        if self.ref_key == 'NETWORK':
+            self.ref_id = parent.network_id
+        elif self.ref_key == 'NODE':
+            self.ref_id = parent.node_id
+        elif self.ref_key == 'LINK':
+            self.ref_id = parent.link_id
+        elif self.ref_key == 'GROUP':
+            self.ref_id = parent.group_id
+        elif self.ref_key == 'SCENARIO':
+            self.ref_id = parent.scenario_id
+        elif self.ref_key == 'PROJECT':
+            self.ref_id = parent.project_id
+
+        self.text        = parent.note_text
+        self.created_by  = parent.created_by
+
+
 class ResourceGroupDiff(ComplexModel):
     """
     """

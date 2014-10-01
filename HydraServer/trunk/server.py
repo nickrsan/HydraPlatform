@@ -51,6 +51,7 @@ from soap_server.static import ImageService, FileService
 from soap_server.groups import ResourceGroupService
 from soap_server.units import UnitService
 from soap_server.rules import RuleService
+from soap_server.notes import NoteService
 from soap_server.hydra_base import AuthenticationService,\
     LogoutService,\
     get_session_db,\
@@ -79,6 +80,7 @@ applications = [
     SharingService,
     UnitService,
     RuleService,
+    NoteService,
 ]
 applications.extend(plugins.services)
 

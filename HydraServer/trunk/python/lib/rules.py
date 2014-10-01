@@ -64,13 +64,15 @@ def update_rule(rule, **kwargs):
     else:
         raise HydraError("Ref Key %s not recognised.")
 
-    rule_i.sceanrio_id = rule.scenario_id
+    rule_i.scenario_id = rule.scenario_id
     rule_i.rule_name   = rule.name
     rule_i.rule_description = rule.description
 
     rule_i.rule_text = rule.text
 
     DBSession.flush()
+
+    return rule_i
 
 def delete_rule(rule_id, **kwargs):
 
