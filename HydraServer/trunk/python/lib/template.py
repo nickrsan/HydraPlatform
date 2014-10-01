@@ -110,6 +110,9 @@ def parse_typeattr(type_i, attribute):
     if attribute.find('is_var') is not None:
         typeattr_i.attr_is_var = attribute.find('is_var').text
 
+    if attribute.find('data_type') is not None:
+        typeattr_i.data_type = attribute.find('data_type').text
+
     if attribute.find('default') is not None:
         default = attribute.find('default')
         unit = default.find('unit').text

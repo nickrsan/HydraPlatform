@@ -67,6 +67,7 @@
                     <value>100</value>
                     <unit>cubic metre</unit>
                  </default>
+                <data_type>scalar</data_type>
             </attribute>
             <attribute>
                 <name>Throughput</name>
@@ -75,6 +76,7 @@
                     <value>100</value>
                     <unit>cubic metres per second</unit>
                  </default>
+                <data_type>scalar</data_type>
             </attribute>
         </resource>
         <resource>

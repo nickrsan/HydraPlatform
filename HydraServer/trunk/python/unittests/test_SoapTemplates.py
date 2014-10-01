@@ -53,6 +53,11 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         assert new_tmpl is not None, "Adding template from XML was not successful!"
 
+        assert len(new_tmpl.types.TemplateType) == 2
+
+        for ta in new_tmpl.types.TemplateType[0].typeattrs.TypeAttr:
+            assert ta.data_type == 'scalar'
+
     def test_add_template(self):
 
         link_attr_1 = self.create_attr("link_attr_1", dimension='Pressure')
