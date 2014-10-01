@@ -173,7 +173,7 @@ from datetime import datetime
 import pytz
 
 from HydraLib import PluginLib
-from HydraLib.PluginLib import write_progress, write_output, validate_plugin_xml
+from HydraLib.PluginLib import JsonConnection, write_progress, write_output, validate_plugin_xml
 from HydraLib import config, util
 
 from HydraLib.HydraException import HydraPluginError,HydraError
@@ -228,12 +228,13 @@ class ImportCSV(object):
         self.grouptype_dict = dict()
         self.networktype = ''
         
-        self.session_id=None
+        self.connection = JsonConnection(url)
         if session_id is not None:
             log.info("Using existing session %s", session_id)
-            self.session_id=session_id
+            self.connection.session_id=session_id
         else:
-            self.login()
+            self.connection.login()
+
 
         self.node_id  = PluginLib.temp_ids()
         self.link_id  = PluginLib.temp_ids()
@@ -321,7 +322,7 @@ class ImportCSV(object):
             try:
                 ID = int(ID)
                 try:
-                    self.Project = self.call('get_project', {'project_id':ID})
+                    self.Project = self.connection.call('get_project', {'project_id':ID})
                     log.info('Loading existing project (ID=%s)' % ID)
                     return
                 except WebFault:
@@ -339,40 +340,7 @@ class ImportCSV(object):
                 (self.__class__.__name__, datetime.now()),
             status = 'A',
         )
-        self.Project = self.call('add_project', {'project':self.Project})
-
-    def login(self):
-        user = config.get('hydra_client', 'user')
-        passwd = config.get('hydra_client', 'password')
-        login_params = {'username':user, 'password':passwd}
-
-        resp = self.call('login', login_params)
-        #set variables for use in request headers
-        self.session_id = resp['session_id']
-        log.info("Session ID=%s", self.session_id)
-
-    def call(self, func, args):
-        log.info("Calling: %s"%(func))
-        if self.url is None:
-            port = config.getint('hydra_server', 'port', 8080)
-            domain = config.get('hydra_server', 'domain', '127.0.0.1')
-            self.url = "http://%s:%s/json"%(domain, port)
-            log.info("Setting URL %s", self.url)
-        call = {func:args}
-        headers = {
-                    'Content-Type': 'application/json',       
-                    'session_id':self.session_id,
-                    'app_name' : 'Import CSV'
-                  }
-        r = requests.post(self.url, data=json.dumps(call), headers=headers)
-        if not r.ok:
-            try:
-                resp = json.loads(r.content)
-                err = "%s:%s"%(resp['faultcode'], resp['faultstring'])
-            except:
-                err = r.content
-            raise HydraPluginError(err)
-        return json.loads(r.content) 
+        self.Project = self.connection.call('add_project', {'project':self.Project})
 
     def create_scenario(self, name=None):
         self.Scenario = dict() 
@@ -432,7 +400,7 @@ class ImportCSV(object):
                 # Check if network exists on the server.
                 try:
                     self.Network = \
-                            self.call('get_network', {'network_id':data[field_idx['id']]})
+                            self.connection.call('get_network', {'network_id':data[field_idx['id']]})
                     # Assign name and description in case anything has changed
                     self.Network['name'] = data[field_idx['name']].strip()
                     self.Network['description'] = \
@@ -907,7 +875,7 @@ class ImportCSV(object):
                 name = name.strip(),
             )
             if unit is not None and len(unit.strip()) > 0:
-                attribute['dimen'] = self.call('get_dimension', {'unit1':unit.strip()})
+                attribute['dimen'] = self.connection.call('get_dimension', {'unit1':unit.strip()})
         except Exception,e:
             raise HydraPluginError("Invalid attribute %s %s: error was: %s"%(name,unit,e))
 
@@ -945,7 +913,7 @@ class ImportCSV(object):
         # Also, we add the attributes only once (that's why we use the
         # add_attrs flag).
         if self.add_attrs:
-            attributes = self.call('add_attributes', {'attrs':attributes})
+            attributes = self.connection.call('add_attributes', {'attrs':attributes})
             self.add_attrs = False
             for attr in attributes:
                 self.Attributes.update({attr['name']: attr})
@@ -1015,7 +983,7 @@ class ImportCSV(object):
         with open(template_file) as f:
             xml_template = f.read()
 
-        template = self.call('upload_template_xml', {'template_xml':xml_template})
+        template = self.connection.call('upload_template_xml', {'template_xml':xml_template})
 
         type_ids = dict()
         warnings = []
@@ -1091,7 +1059,7 @@ class ImportCSV(object):
                         ))
         else:
            warnings.append("No resourcegroups found when setting template types")
-        self.call('assign_types_to_resources', {'resource_types':args})
+        self.connection.call('assign_types_to_resources', {'resource_types':args})
         return warnings
 
 
@@ -1361,11 +1329,11 @@ class ImportCSV(object):
         log.info("Network created for sending")
 
         if self.update_network_flag:
-            self.Network = self.call('update_network', {'network':self.Network})
+            self.Network = self.connection.call('update_network', {'network':self.Network})
             log.info("Network %s updated.", self.Network['id'])
         else:
             log.info("Adding Network")
-            self.NetworkSummary = self.call('add_network', {'net':self.Network})
+            self.NetworkSummary = self.connection.call('add_network', {'net':self.Network})
             log.info("Network created with %s nodes and %s links. Network ID is %s",
                      len(self.NetworkSummary['nodes']), 
                      len(self.NetworkSummary['links']),

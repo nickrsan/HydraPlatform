@@ -102,7 +102,6 @@ import argparse as ap
 import logging
 import os, sys
 from datetime import datetime
-import pytz
 
 from HydraLib import PluginLib
 from HydraLib.PluginLib import JsonConnection, write_progress, write_output, validate_plugin_xml
