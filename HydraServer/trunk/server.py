@@ -93,7 +93,7 @@ import datetime
 import traceback
 
 from cherrypy.wsgiserver import CherryPyWSGIServer
-from db import commit_transaction 
+from db import commit_transaction, rollback_transaction 
 
 log = logging.getLogger(__name__)
 
@@ -155,18 +155,22 @@ class HydraSoapApplication(Application):
             return res
         except HydraError, e:
             log.critical(e)
+            rollback_transaction()
             traceback.print_exc(file=sys.stdout)
             code = "HydraError %s"%e.code
             raise HydraServiceError(e.message, code)
         except ObjectNotFoundError, e:
             log.critical(e)
+            rollback_transaction()
             raise
         except Fault, e:
             log.critical(e)
+            rollback_transaction()
             raise
         except Exception, e:
             log.critical(e)
             traceback.print_exc(file=sys.stdout)
+            rollback_transaction()
             raise Fault('Server', e.message)
 
 class HydraServer():

@@ -48,3 +48,6 @@ def commit_transaction():
     if DBSession:
         DBSession.close()
 
+def rollback_transaction():
+    transaction.abort()
+
