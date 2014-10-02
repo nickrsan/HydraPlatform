@@ -614,7 +614,7 @@ class FormatTest(test_SoapServer.SoapServerTest):
         
         #logging.warn(scenario.resourcescenarios.ResourceScenario[0]['value']['value']['arr_data'])
         old_arr = parse_array(scenario.resourcescenarios.ResourceScenario[0]['value']['value']['arr_data'])
-        #logging.warn(updated_scenario.resourcescenarios.ResourceScenario[0].value.value.arr_data)
+        #logging.warn(updated_scenario.resourcescenarios.ResourceScenario[0].value)
         new_arr = parse_suds_array(updated_scenario.resourcescenarios.ResourceScenario[0].value.value.arr_data)
         #logging.info("%s == %s ?", old_arr, new_arr) 
         assert old_arr == new_arr
@@ -627,20 +627,20 @@ class FormatTest(test_SoapServer.SoapServerTest):
               {'array': [
                     {'array':[
                         {'array':[
-                        {'item':[1.0, 2.0, 3.0]},
-                        {'item':[4.0, 5.0, 6.0]},
-                        {'item':[7.0, 8.0, 9.0]},
+                        {'item':[10.0, 20.0, 30.0]},
+                        {'item':[40.0, 50.0, 60.0]},
+                        {'item':[70.0, 80.0, 90.0]},
                         ]}, 
                     {'array' : [
-                        {'item':[1.0, 2.0, 3.0]},
-                        {'item':[4.0, 5.0, 6.0]},
-                        {'item':[7.0, 8.0, 9.0]},
+                        {'item':[10.0, 20.0, 30.0]},
+                        {'item':[40.0, 50.0, 60.0]},
+                        {'item':[70.0, 80.0, 90.0]},
                         ]}
                     ]}
               ]}
         }
 
-        same_arr = create_dict([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]])
+        same_arr = create_dict([[[10.0, 20.0, 30.0], [40.0, 50.0, 60.0], [70.0, 80.0, 90.0]],[[10.0, 20.0, 30.0], [40.0, 50.0, 60.0], [70.0, 80.0, 90.0]]])
         
         assert arr['arr_data'] == same_arr 
         

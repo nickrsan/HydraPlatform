@@ -1,4 +1,3 @@
-
 from db.model import Network, Scenario, Project, User, Role, Perm, RolePerm, RoleUser, ResourceAttr, ResourceType
 from sqlalchemy.orm.exc import NoResultFound
 from db import DBSession

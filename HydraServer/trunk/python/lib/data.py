@@ -19,6 +19,7 @@ from HydraLib.util import get_datetime
 from HydraLib import units
 import logging
 from db.model import Dataset, Metadata, TimeSeriesData, DatasetOwner, DatasetGroup, DatasetGroupItem
+from util import generate_data_hash
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import case
 from sqlalchemy import null
@@ -29,10 +30,14 @@ from HydraLib.HydraException import HydraError, ResourceNotFoundError
 from sqlalchemy import and_
 from HydraLib.util import create_dict
 from decimal import Decimal
+import copy
+
+unit = units.Units()
+
 global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 global qry_in_threshold
-qry_in_threshold = 500
+qry_in_threshold = 999 
 #"2013-08-13T15:55:43.468886Z"
 
 current_module = sys.modules[__name__]
@@ -154,7 +159,13 @@ def add_dataset(data_type, val, units, dimension, metadata={}, name="", user_id=
  
     try:
         existing_dataset = DBSession.query(Dataset).filter(Dataset.data_hash==d.data_hash).one()
-        return existing_dataset
+        if existing_dataset.check_user(user_id):
+            return existing_dataset
+        else:
+            d.set_metadata({'created_at': datetime.datetime.now()})
+            d.set_hash()
+            DBSession.add(d)
+            return d 
     except NoResultFound:
         DBSession.add(d)
         return d
@@ -164,6 +175,17 @@ def bulk_insert_data(data, **kwargs):
     DBSession.flush()
     return datasets
 
+def _make_new_dataset(dataset_dict):
+    #If the user is not allowed to use the existing dataset, a new
+    #one must be created. This means a unique hash must be created
+    #To create a unique hash, add a unique piece of metadata.
+    new_dataset = copy.deepcopy(dataset_dict)
+    new_dataset['metadata']['created_at'] = datetime.datetime.now()
+    new_hash = generate_data_hash(new_dataset)
+    new_dataset['data_hash'] = new_hash
+
+    return new_dataset
+
 def _bulk_insert_data(bulk_data, user_id=None, source=None):
     """
         Insert lots of datasets at once to reduce the number of DB interactions.
@@ -172,82 +194,94 @@ def _bulk_insert_data(bulk_data, user_id=None, source=None):
         both user_id and source are added as metadata
     """
     get_timing = lambda x: datetime.datetime.now() - x
-
     start_time=datetime.datetime.now()
-    log.info("Starting data insert (%s datasets) %s", len(bulk_data), get_timing(start_time))
-    
-    datasets, incoming_data  = _process_incoming_data(bulk_data, user_id, source)
-    log.info("Incoming data processed.")
-    existing_data = _get_existing_data(incoming_data.keys())
+   
+    new_data = _process_incoming_data(bulk_data, user_id, source)
+    log.info("Incoming data processed in %s", (get_timing(start_time)))
+
+    existing_data = _get_existing_data(new_data.keys())
     log.info("Existing data retrieved.")
-
-    #A list of all the dataset objects
-    all_dataset_objects = []
-
+    
+    #The list of dataset IDS to be returned.
+    hash_id_map = {}
+    new_datasets = []
     metadata         = {}
-
     #This is what gets returned.
-    dataset_hashes = []
-    log.debug("Processing data %s", get_timing(start_time)) 
     for d in bulk_data:
-        dataset_i = incoming_data[d.data_hash]
+        dataset_dict = new_data[d.data_hash]
         current_hash = d.data_hash
 
         #if this piece of data is already in the DB, then
         #there is no need to insert it!
-        if  existing_data.get(current_hash):
+        if  existing_data.get(current_hash) is not None:
 
-            existing_datum = existing_data[current_hash]
+            dataset = existing_data.get(current_hash)
             #Is this user allowed to use this dataset?
-            if existing_datum.check_user(user_id) == False:
-                #If the user is not allowed to use the existing dataset, a new
-                #one must be created. This means a unique hash must be created
-                #To create a unique hash, add a unique piece of metadata.
-                datum_metadata = existing_datum.get_metadata_as_dict()
-                datum_metadata['created_at'] = datetime.datetime.now()
-                dataset_i.set_metadata(datum_metadata)
-                new_hash = dataset_i.set_hash()
-
-                dataset_hashes.append(new_hash)
-                all_dataset_objects.append(dataset_i)
-                metadata[new_hash] = dataset_i.metadata 
+            if dataset.check_user(user_id) == False:
+                new_dataset = _make_new_dataset(dataset_dict)
+                new_datasets.append(new_dataset)
+                metadata[new_dataset['data_hash']] = dataset_dict['metadata']
             else:
-                dataset_hashes.append(existing_data[current_hash])
-                all_dataset_objects.append(existing_data[current_hash])
-            continue
-        elif current_hash in dataset_hashes:
-            dataset_hashes.append(current_hash)
-            continue
+                hash_id_map[current_hash] = dataset#existing_data[current_hash]
+        elif current_hash in hash_id_map:
+            new_datasets.append(dataset_dict)
         else:
             #set a placeholder for a dataset_id we don't know yet.
             #The placeholder is the hash, which is unique to this object and
             #therefore easily identifiable.
-            dataset_hashes.append(current_hash)
-            all_dataset_objects.append(dataset_i)
-            metadata[current_hash] = dataset_i.metadata
+            new_datasets.append(dataset_dict)
+            hash_id_map[current_hash] = dataset_dict
+            metadata[current_hash] = dataset_dict['metadata']
 
-    log.debug("Isolating new data")
+    log.debug("Isolating new data", get_timing(start_time))
     #Isolate only the new datasets and insert them
-    new_scenario_data = []
+    new_data_for_insert = []
+    #keep track of the datasets that are to be inserted to avoid duplicate
+    #inserts
+    new_data_hashes = []
+    for d in new_datasets:
+        if d['data_hash'] not in new_data_hashes:
+            new_data_for_insert.append(d)
+            new_data_hashes.append(d['data_hash'])
+    
+    if len(new_data_for_insert) > 0:
+        log.debug("Inserting new data", get_timing(start_time))
+        DBSession.execute(Dataset.__table__.insert(), new_data_for_insert)
+        log.debug("New data Inserted", get_timing(start_time))
 
-    for sd in all_dataset_objects:
-        if sd.dataset_id is None and sd not in new_scenario_data:
-            DBSession.add(sd)
-            new_scenario_data.append(sd)
+        new_data = _get_existing_data(new_data_hashes)
+        log.debug("New data retrieved", get_timing(start_time))
+    
+        for k, v in new_data.items():
+            hash_id_map[k] = v
+    
+        _insert_metadata(metadata, hash_id_map)
+        log.debug("Metadata inserted", get_timing(start_time))
 
-    if len(new_scenario_data) > 0:
-        #using the hash of the new datasets, find the placeholders in dataset_ids
-        #and replace it with the dataset_id.
-        log.debug("Putting new data with existing data to complete function")
-        sd_dict = dict([(sd.data_hash, sd) for sd in new_scenario_data])
-        for idx, d in enumerate(dataset_hashes):
-            if type(d) == int:
-                dataset_hashes[idx] = sd_dict[d]
-    log.info("Done bulk inserting data. %s datasets", len(dataset_hashes))
-    return dataset_hashes 
+    returned_ids = []
+    for d in bulk_data:
+        returned_ids.append(hash_id_map[d.data_hash])
+
+    log.info("Done bulk inserting data. %s datasets", len(returned_ids))
+
+    return returned_ids
+
+def _insert_metadata(metadata_hash_dict, dataset_id_hash_dict):
+    if metadata_hash_dict is None or len(metadata_hash_dict) == 0:
+        return
+
+    metadata_list = []
+    for _hash, _metadata_dict in metadata_hash_dict.items():
+        for k, v in _metadata_dict.items():
+            metadata = {}
+            metadata['metadata_name']  = k
+            metadata['metadata_val']  = v
+            metadata['dataset_id']      = dataset_id_hash_dict[_hash].dataset_id
+            metadata_list.append(metadata)
+
+    DBSession.execute(Metadata.__table__.insert(), metadata_list) 
 
 def _process_incoming_data(data, user_id=None, source=None):
-    unit = units.Units()
 
     datasets = {}
 
@@ -259,37 +293,57 @@ def _process_incoming_data(data, user_id=None, source=None):
                          "Value not available.",d)
             continue
 
-        scenario_datum = Dataset()
-        scenario_datum.data_type  = d.type
-        scenario_datum.data_name  = d.name
-        scenario_datum.data_units = d.unit
-        scenario_datum.dataset_id = d.id
-        scenario_datum.created_by = user_id
+        data_dict = {
+            'data_type':d.type,
+             'data_name':d.name,
+            'data_units': d.unit,
+            'created_by' : user_id,
+            'frequency' : None,
+            'start_time': None,
+        }
+
         # Assign dimension if necessary
         if d.unit is not None and d.dimension is None:
-            scenario_datum.data_dimen = unit.get_dimension(d.unit)
+            data_dict['data_dimen'] = unit.get_dimension(d.unit)
         else:
-            scenario_datum.data_dimen = d.dimension
+            data_dict['data_dimen'] = d.dimension
 
-        scenario_datum.set_val(d.type, val)
+        if d.type == 'eqtimeseries':
+            st, f, v = _get_db_val(d.type, val)
+            data_dict['start_time'] = st
+            data_dict['frequency']  = f
+            data_dict['value']      = v
+        else:
+            db_val = _get_db_val(d.type, val)
+            data_dict['value'] = db_val
 
-        metadata_names = []
+        metadata_dict = {}
         if d.metadata is not None:
             for m in d.metadata:
-                metadata_names.append(m.name)
-                scenario_datum.metadata.append(Metadata(metadata_name=m.name,metadata_val=m.value))
+                metadata_dict[str(m.name)]  = str(m.value)
         
-        if user_id is not None and 'user_id' not in metadata_names:
-            scenario_datum.metadata.append(Metadata(metadata_name='user_id',metadata_val=str(user_id)))
-        if source is not None and 'source' not in metadata_names:
-            scenario_datum.metadata.append(Metadata(metadata_name='source',metadata_val=str(source)))
+        if user_id is not None and 'user_id' not in metadata_dict.keys():
+            metadata_dict['user_id'] = str(user_id)
+        if source is not None and 'source' not in metadata_dict.keys():
+            metadata_dict['source'] = str(source)
 
-        data_hash = scenario_datum.set_hash()
+        data_dict['metadata'] = metadata_dict
 
-        datasets[data_hash] = scenario_datum 
-        d.data_hash = data_hash
+        d.data_hash = generate_data_hash(data_dict)
+        data_dict['data_hash'] = d.data_hash
+        datasets[d.data_hash] = data_dict 
 
-    return data, datasets
+    return datasets
+
+def _get_db_val(data_type, val):
+    if data_type in ('descriptor','scalar','array'):
+        return str(val)
+    elif data_type == 'eqtimeseries':
+        return (str(val[0]), str(val[1]), str(val[2]))
+    elif data_type == 'timeseries':
+        return val 
+    else:
+        raise HydraError("Invalid data type %s"%(data_type,))
 
 def _get_timeseriesdata(dataset_ids):
     """

@@ -19,7 +19,7 @@ from spyne.model.complex import ComplexModel
 from spyne.decorator import srpc, rpc
 from hydra_complexmodels import LoginResponse
 import logging
-from db.util import login_user
+from util.hdb import login_user
 from HydraLib.HydraException import HydraError
 from spyne.protocol.json import JsonDocument
 

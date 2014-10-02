@@ -30,6 +30,7 @@ import pandas as pd
 from pandas.tseries.index import DatetimeIndex
 import logging
 from HydraLib.util import create_dict
+from util import generate_data_hash
 
 NS = "soap_server.hydra_complexmodels"
 log = logging.getLogger(__name__)
@@ -258,6 +259,9 @@ class Dataset(ComplexModel):
             is_soap_req=False
             # The brand new way to parse time series data:
             ts = []
+
+            timestamps = []
+            values = []
             for ts_val in data['ts_values']:
                 #The value is a list, so must get index 0
                 timestamp = ts_val['ts_time']
@@ -279,9 +283,13 @@ class Dataset(ComplexModel):
                         ts_value = float(arr_data)
                     except:
                         ts_value = arr_data
-
-                ts.append((timestamp, str(ts_value)))
-
+                timestamps.append(timestamp)
+                values.append(ts_value)
+            
+            timeseries_pd = pd.DataFrame(values, index=pd.Series(timestamps))
+            #Epoch doesn't work here because dates before 1970 are not supported
+            #in read_json. Ridiculous.
+            ts =  timeseries_pd.to_json(date_format='iso', date_unit='ns')
             return ts
         elif data_type == 'eqtimeseries':
             start_time = data['start_time']
@@ -351,31 +359,49 @@ class Dataset(ComplexModel):
         check_array_struct(ret_arr)
         return ret_arr
 
-    def get_metadata_as_dict(self):
+    def get_metadata_as_dict(self, user_id=None, source=None):
         
         if self.metadata is None:
             return {}
         
         metadata_dict = {}
         for m in self.metadata:
-            metadata_dict[m.name] = m.value
+            metadata_dict[str(m.name)] = str(m.value)
+
+        #These should be set on all datasests by default, but we don't
+        #want to enforce this rigidly
+        if user_id is not None and 'user_id' not in metadata_dict.keys():
+            metadata_dict['user_id'] = str(user_id)
+        
+        if source is not None and 'source' not in metadata_dict.keys():
+            metadata_dict['source'] = str(source)
+
         return metadata_dict
 
-    def get_hash(self):
-        
-        metadata = self.get_metadata_as_dict()
-        
-        val = self.parse_value()
+    def get_hash(self, val, metadata):
 
-        hash_string = "%s %s %s %s %s, %s"%(self.name,
-                                       self.unit,
-                                       self.dimension,
-                                       self.type,
-                                       str(val),
-                                       metadata)
-        data_hash  = hash(hash_string)
+        if metadata is None:
+            metadata = self.get_metadata_as_dict()
 
-        self.data_hash = data_hash
+        if val is None:
+            start_time = None
+            frequency  = None
+            if self.type == 'eqtimeseries':
+                start_time, frequency, value = self.parse_value()
+            else:
+                value = self.parse_value()
+        else:
+            value = val
+
+        dataset_dict = {'data_name' : self.name,
+                    'data_units': self.unit,
+                    'data_dimen': self.dimension,
+                    'data_type' : self.type.lower(),
+                    'value'     : value,
+                    'metadata'  : metadata,}
+
+        data_hash = generate_data_hash(dataset_dict)
+
         return data_hash
 
 class Descriptor(ComplexModel):

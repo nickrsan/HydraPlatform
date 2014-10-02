@@ -26,7 +26,7 @@ import cProfile, pstats, StringIO
 class NetworkTest(test_SoapServer.SoapServerTest):
 
     def create_large_network(self):
-        self.create_network_with_data(num_nodes=1000)
+        self.create_network_with_data(num_nodes=1000, ret_full_net=False)
 
     def test_add_large_network(self):
         time = timeit.Timer(self.create_large_network).timeit(number=1)

@@ -96,7 +96,7 @@ class UnitService(HydraService):
         result = units.delete_unit(unitdict, **ctx.in_header.__dict__)
         return result
 
-    @rpc(Decimal(min_occurs="1", max_occurs="unbounded"),
+    @rpc(Decimal(min_occurs=1, max_occurs="unbounded"),
          Unicode, Unicode,
          _returns=Decimal(min_occurs="1", max_occurs="unbounded"))
     def convert_units(ctx, values, unit1, unit2):

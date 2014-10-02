@@ -24,15 +24,16 @@ from db.model import Scenario,\
         ResourceAttr,\
         NetworkOwner,\
         Dataset,\
-        Node,\
         Attr
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import or_, distinct
+from sqlalchemy import or_
 from sqlalchemy.orm import joinedload_all, joinedload
 import data
 from HydraLib.util import timestamp_to_ordinal
 from collections import namedtuple
 from copy import deepcopy
+
+unit = units.Units()
 
 log = logging.getLogger(__name__)
 
@@ -148,9 +149,11 @@ def update_scenario(scenario,**kwargs):
     scen.end_time             = str(timestamp_to_ordinal(scenario.end_time)) if scenario.end_time else None
     scen.time_step            = scenario.time_step
 
-    for r_scen in scenario.resourcescenarios:
-        _update_resourcescenario(scen, r_scen, user_id=user_id, source=kwargs.get('app_name'))
-        DBSession.flush()
+    datasets = [rs.value for rs in scenario.resourcescenarios]
+    updated_datasets = data._bulk_insert_data(datasets, user_id, kwargs.get('app_name')) 
+
+    for i, r_scen in enumerate(scenario.resourcescenarios):
+        _update_resourcescenario(scen, r_scen, dataset=updated_datasets[i], user_id=user_id, source=kwargs.get('app_name'))
 
     #Get all the exiting resource group items for this scenario.
     #THen process all the items sent to this handler.
@@ -473,7 +476,7 @@ def _delete_resourcescenario(scenario_id, resource_scenario):
         raise HydraError("ResourceAttr %s does not exist in scenario %s."%(ra_id, scenario_id))
     DBSession.delete(sd_i)
 
-def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=None, source=None):
+def _update_resourcescenario(scenario, resource_scenario, dataset=None, new=False, user_id=None, source=None):
     """
         Insert or Update the value of a resource's attribute by first getting the
         resource, then parsing the input data, then assigning the value.
@@ -486,31 +489,39 @@ def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=Non
 
     ra_id = resource_scenario.resource_attr_id
 
-    log.info("Assigning resource attribute: %s",ra_id)
+    log.debug("Assigning resource attribute: %s",ra_id)
     try:
         r_scen_i = DBSession.query(ResourceScenario).filter(ResourceScenario.scenario_id==scenario.scenario_id,
                                                             ResourceScenario.resource_attr_id==ra_id).one()
     except NoResultFound, e:
         r_scen_i = ResourceScenario()
+        r_scen_i.resource_attr_id = resource_scenario.resource_attr_id
+
         scenario.resourcescenarios.append(r_scen_i)
+
+
+    if dataset is not None:
+        r_scen_i.dataset = dataset
+
+        return r_scen_i
 
     dataset = resource_scenario.value
 
-    value = dataset.parse_value()
+    start_time = None
+    frequency  = None
+    if dataset.type == 'eqtimeseries':
+        start_time, frequency, value = dataset.parse_value()
+    else:
+        value = dataset.parse_value()
+    log.info("Assigning %s to resource attribute: %s", value, ra_id)
 
     if value is None:
         log.info("Cannot set data on resource attribute %s",ra_id)
         return None
 
-    metadata  = {}
-    if dataset.metadata:
-        for m in dataset.metadata:
-            metadata[m.name]  = m.value
-
+    metadata = dataset.get_metadata_as_dict(source=source, user_id=user_id)
     dimension = dataset.dimension
     data_unit = dataset.unit
-
-    unit = units.Units()
 
     # Assign dimension if necessary
     # It happens that dimension is and empty string. We set it to
@@ -522,7 +533,7 @@ def _update_resourcescenario(scenario, resource_scenario, new=False, user_id=Non
         if dimension is None or len(dimension) == 0:
             dimension = None
 
-    data_hash = resource_scenario.value.get_hash()
+    data_hash = dataset.get_hash(value, metadata)
 
     assign_value(r_scen_i,
                  dataset.type.lower(),
@@ -585,23 +596,24 @@ def add_data_to_attribute(scenario_id, resource_attr_id, dataset,**kwargs):
 
     data_type = dataset.type.lower()
 
-    value = dataset.parse_value()
+    start_time = None
+    frequency  = None
+    if dataset.type == 'eqtimeseries':
+        start_time, frequency, value = dataset.parse_value()
+    else:
+        value = dataset.parse_value()
 
-    dataset_metadata = {}
-    if kwargs.get('user_id') is not None:
-        dataset_metadata = {'user_id':str(kwargs['user_id'])}
-    if kwargs.get('source') is not None:
-        dataset_metadata = {'source': str(kwargs.get('source'))}
-    if dataset.metadata is not None:
-        for m in dataset.metadata:
-            dataset_metadata[m.name] = m.value
 
+    dataset_metadata = dataset.get_metadata_as_dict(user_id=kwargs.get('user_id'),
+                                                    source=kwargs.get('source'))
     if value is None:
         raise HydraError("Cannot set value to attribute. "
             "No value was sent with dataset %s", dataset.id)
 
+    data_hash = dataset.get_hash(value, dataset_metadata)
+
     assign_value(r_scen_i, data_type, value, dataset.unit, dataset.name, dataset.dimension,
-                          metadata=dataset_metadata, data_hash=dataset.get_hash(), user_id=user_id)
+                          metadata=dataset_metadata, data_hash=data_hash, user_id=user_id)
 
     DBSession.flush()
     return r_scen_i
@@ -613,7 +625,7 @@ def get_scenario_data(scenario_id,**kwargs):
     """
     user_id = kwargs.get('user_id')
 
-    scenario_data = DBSession.query(Dataset).filter(Dataset.dataset_id==ResourceScenario.dataset_id, ResourceScenario.scenario_id==scenario_id).options(joinedload_all('timeseriesdata')).options(joinedload_all('metadata')).distinct().all()
+    scenario_data = DBSession.query(Dataset).filter(Dataset.dataset_id==ResourceScenario.dataset_id, ResourceScenario.scenario_id==scenario_id).options(joinedload_all('metadata')).distinct().all()
     
     for sd in scenario_data:
        if sd.hidden == 'Y':

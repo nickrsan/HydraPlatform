@@ -32,9 +32,11 @@ from HydraLib.HydraException import HydraError, PermissionError
 
 from sqlalchemy.orm import relationship, backref
 
-from HydraLib.util import ordinal_to_timestamp, timestamp_to_ordinal, get_datetime
+from HydraLib.util import ordinal_to_timestamp, get_datetime
 
 from db import DeclarativeBase as Base, DBSession
+
+from util import generate_data_hash
 
 from sqlalchemy.sql.expression import case
 from sqlalchemy import UniqueConstraint, and_
@@ -67,9 +69,9 @@ class Dataset(Base):
     dataset_id = Column(Integer(), primary_key=True, index=True, nullable=False)
     data_type = Column(String(60),  nullable=False)
     data_units = Column(String(60))
-    data_dimen = Column(String(60))
+    data_dimen = Column(String(60), server_default=text(u'dimensionless'))
     data_name = Column(String(60),  nullable=False)
-    data_hash = Column(BigInteger(),  nullable=False)
+    data_hash = Column(BigInteger(),  nullable=False, unique=True)
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
     created_by = Column(Integer(), ForeignKey('tUser.user_id'))
     hidden = Column(String(1),  nullable=False, server_default=text(u"'N'"))
@@ -99,7 +101,7 @@ class Dataset(Base):
         
         for k, v in metadata_dict.items():
             if k not in existing_metadata:
-                m_i = Metadata(metadata_name=k,metadata_val=v)
+                m_i = Metadata(metadata_name=str(k),metadata_val=str(v))
                 self.metadata.append(m_i)
 
     def get_val(self, timestamp=None):
@@ -125,19 +127,14 @@ class Dataset(Base):
             return Decimal(str(self.value))
         elif self.data_type == 'timeseries':
             timeseries = pd.read_json(self.value)
-            ts_val_tmp = []
+            ts_val = []
             if timestamp is None:
                 timestamps = list(timeseries.index)
                 for i, ts in enumerate(timestamps):
-                    ts_val_tmp.append({'ts_time':str(ts),
+                    ts_val.append({'ts_time':str(ts),
                                    'ts_value': timeseries.loc[ts].values.tolist()})
 
-                ts_val = []
-                for ts in self.timeseriesdata:
-                    ts_val.append({'ts_time':get_timestamp(Decimal(ts.ts_time)),
-                                   'ts_value': eval(ts.ts_value)})
-                assert ts_val == ts_val_tmp
-                return {'ts_values':ts_val_tmp}
+                return {'ts_values':ts_val}
             else:
 
                 try:
@@ -149,41 +146,17 @@ class Dataset(Base):
 
                     #Replace all numpy NAN values with None
                     pandas_ts = pandas_ts.where(pandas_ts.notnull(), None)
-                
-                    ret_val = list(pandas_ts.loc[timestamp].values)
+                       
+                    if type(timestamp) is list and len(timestamp) == 1:
+                        ret_val = pandas_ts.loc[timestamp[0]].values.tolist()
+                    else:
+                        ret_val = pandas_ts.loc[timestamp].values.tolist()
+
                     return ret_val
+
                 except Exception, e:
                     log.critical(e)
                     raise HydraError("Unable to retrive data. Check timestamps.")
-
-                ts_val_dict = {}
-                for ts in self.timeseriesdata:
-                    ts_val_dict[ts.ts_time] = eval(ts.ts_value)
-                sorted_times = ts_val_dict.keys()
-                sorted_times.sort()
-                sorted_times.reverse()
-
-                if isinstance(timestamp, list):
-                    #return value will now be a list of actual values instead
-                    #of a list of tuples.
-                    val = []
-                    timestamps = [timestamp_to_ordinal(x) for x in timestamp]
-                    for t in timestamp:
-                        for time in sorted_times:
-                            if t >= Decimal(time):
-                                val.append(ts_val_dict[time])
-                                break
-                        else:
-                            val.append(None)
-
-                else:
-                    for time in sorted_times:
-                        if timestamp >= Decimal(time):
-                            val =  ts_val_dict[time]
-                            break
-                    else:
-                        val = None
-                return val
 
     def set_val(self, data_type, val):
         if data_type in ('descriptor','scalar','array'):
@@ -193,71 +166,52 @@ class Dataset(Base):
             self.frequency  = str(val[1])
             self.value      = str(val[2])
         elif data_type == 'timeseries':
-            existing_vals = {}
-            for datum in self.timeseriesdata:
-                existing_vals[datum.ts_time] = datum
-            for time, value in val:
-                if time in existing_vals.keys():
-                    existing_vals[time].ts_val = value
-                else:
-                    ts_val = TimeSeriesData()
-                    if type(time) == datetime:
-                        ts_val.ts_time = str(timestamp_to_ordinal(time))
-                    else:
-                        ts_val.ts_time = time
-                    ts_val.ts_value = value
-                    self.timeseriesdata.append(ts_val)
-            test_val_keys = []
-            test_vals = []
-            for time, value in val:
-                try:
-                    v = eval(value)
-                except:
-                    v = value
-                try: 
-                    test_val_keys.append(get_datetime(time))
-                except:
-                    test_val_keys.append(time)
-                test_vals.append(v)
+            if type(val) == list:
+                test_val_keys = []
+                test_vals = []
+                for time, value in val:
+                    try:
+                        v = eval(value)
+                    except:
+                        v = value
+                    try: 
+                        test_val_keys.append(get_datetime(time))
+                    except:
+                        test_val_keys.append(time)
+                    test_vals.append(v)
 
-            test_pd = pd.DataFrame(test_vals, index=pd.Series(test_val_keys))
-            #Epoch doesn't work here because dates before 1970 are not supported
-            #in read_json. Ridiculous.
-            self.value = test_pd.to_json(date_format='iso', date_unit='ns')
+                timeseries_pd = pd.DataFrame(test_vals, index=pd.Series(test_val_keys))
+                #Epoch doesn't work here because dates before 1970 are not supported
+                #in read_json. Ridiculous.
+                self.value =  timeseries_pd.to_json(date_format='iso', date_unit='ns')
+            else:
+                self.value = val
         else:
             raise HydraError("Invalid data type %s"%(data_type,))
 
-    def set_hash(self, val=None):
+    def set_hash(self,metadata=None):
 
-        if val is None:
-            val = self.value
-        else:
-            val = str(val)
 
-        metadata = self.get_metadata_as_dict()
+        if metadata is None:
+            metadata = self.get_metadata_as_dict()
 
-        hash_string = "%s %s %s %s %s, %s"%(self.data_name,
-                                       self.data_units,
-                                       self.data_dimen,
-                                       self.data_type,
-                                       val,
-                                       metadata)
+        dataset_dict = dict(data_name = self.data_name,
+                           data_units = self.data_units,
+                           data_dimen = self.data_dimen,
+                           data_type  = self.data_type,
+                           value      = self.value,
+                           metadata   = metadata)
 
-        log.debug("Generating data hash from: %s", hash_string)
-
-        data_hash  = hash(hash_string)
-
+        data_hash = generate_data_hash(dataset_dict) 
+        
         self.data_hash = data_hash
+        
         return data_hash
    
     def get_metadata_as_dict(self):
         metadata = {}
         for r in self.metadata:
-            val = r.metadata_val
-            try:
-                val = eval(r.metadata_val)
-            except:
-                val = str(r.metadata_val)
+            val = str(r.metadata_val)
 
             metadata[str(r.metadata_name)] = val
 

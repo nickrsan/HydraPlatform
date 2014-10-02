@@ -30,7 +30,7 @@ from db import DBSession
 from sqlalchemy import func, and_, distinct
 from sqlalchemy.orm.exc import NoResultFound
 from HydraLib.util import timestamp_to_ordinal
-from db.util import add_attributes, add_resource_types
+from util.hdb import add_attributes, add_resource_types
 
 log = logging.getLogger(__name__)
 
@@ -436,8 +436,11 @@ def add_network(network,**kwargs):
                                              )
 
             log.info("Data bulk insert took %s", get_timing(data_start_time))
+            ra_start_time = datetime.datetime.now()
             for i, ra in enumerate(scenario_resource_attrs):
                 scen.add_resource_scenario(ra, datasets[i], source=kwargs.get('app_name'))
+
+            log.info("Resource scenarios added in  %s", get_timing(ra_start_time))
 
             item_start_time = datetime.datetime.now()
             if s.resourcegroupitems is not None:
@@ -800,34 +803,35 @@ def update_network(network,**kwargs):
             if s.id is not None:
                 if s.id > 0:
                     try:
-                        scen = DBSession.query(Scenario).filter(Scenario.scenario_id==s.id).one()
+                        scen_i = DBSession.query(Scenario).filter(Scenario.scenario_id==s.id).one()
                     except NoResultFound:
                         raise ResourceNotFoundError("Scenario %s not found"%(s.id))
                 else:
                     scenario_id = get_scenario_by_name(network.id, s.name)
                     if scenario_id:
                         s.name = s.name + "update" + str(datetime.datetime.now())
-                if scen.locked == 'Y':
+                if scen_i.locked == 'Y':
                     errors.append('Scenario %s was not updated as it is locked'%(s.id)) 
                     continue
             else:
-                scen = Scenario()
-                scen.created_by = user_id 
-                net_i.scenarios.append(scen)
+                scen_i = Scenario()
+                scen_i.created_by = user_id 
+                net_i.scenarios.append(scen_i)
 
-            scen.scenario_name        = s.name
-            scen.scenario_description = s.description
-            scen.scenario_layout      = s.get_layout()
-            scen.start_time           = str(timestamp_to_ordinal(s.start_time)) if s.start_time else None
-            scen.end_time             = str(timestamp_to_ordinal(s.end_time)) if s.end_time else None
-            scen.time_step            = s.time_step
-            scen.network_id           = net_i.network_id
+            scen_i.scenario_name        = s.name
+            scen_i.scenario_description = s.description
+            scen_i.scenario_layout      = s.get_layout()
+            scen_i.start_time           = str(timestamp_to_ordinal(s.start_time)) if s.start_time else None
+            scen_i.end_time             = str(timestamp_to_ordinal(s.end_time)) if s.end_time else None
+            scen_i.time_step            = s.time_step
+            scen_i.network_id           = net_i.network_id
 
             if s.resourcescenarios is not None:
                 for r_scen in s.resourcescenarios:
-                    r_scen.resourceattr = all_resource_attrs[r_scen.resource_attr_id]
-                    scenario._update_resourcescenario(scen, r_scen)
-           
+                    if r_scen.resource_attr_id < 0:
+                        r_scen.resource_attr_id = all_resource_attrs[r_scen.resource_attr_id].resource_attr_id
+                    scenario._update_resourcescenario(scen_i, r_scen, source=kwargs.get('app_name'))
+
             if s.resourcegroupitems is not None:
                 for group_item in s.resourcegroupitems:
 

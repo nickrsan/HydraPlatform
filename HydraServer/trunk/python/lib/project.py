@@ -21,7 +21,7 @@ from db.model import Project, ProjectOwner, Network
 from db import DBSession
 import network
 from sqlalchemy.orm.exc import NoResultFound
-from db.util import add_attributes
+from util.hdb import add_attributes
 
 
 log = logging.getLogger(__name__)

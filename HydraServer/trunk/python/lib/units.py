@@ -21,6 +21,7 @@ from HydraLib.util import array_dim
 from HydraLib.util import arr_to_vector
 from HydraLib.util import vector_to_arr
 from db.model import Dataset
+from datetime import datetime
 from db import DBSession
 import logging
 log = logging.getLogger(__name__)
@@ -135,6 +136,15 @@ def convert_dataset(dataset_id, to_unit,**kwargs):
 
         ds_i.data_units = to_unit
         ds_i.set_val(dataset_type, new_val)
+
+        new_metadata = {
+            'converted_from' : old_unit,
+            'converted_by'   : str(kwargs['user_id']),
+            'converted_at'   : str(datetime.now())
+        }
+
+        ds_i.set_metadata(new_metadata)
+
         ds_i.set_hash(new_val)
         DBSession.flush()
 

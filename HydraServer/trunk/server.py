@@ -36,7 +36,7 @@ import spyne.decorator
 
 from spyne.error import Fault, ArgumentError
 
-from db.util import make_root_user
+from util.hdb import make_root_user
 import db.model
 
 from soap_server.network import NetworkService
@@ -87,7 +87,7 @@ applications.extend(plugins.services)
 from HydraLib.HydraException import HydraError
 
 from HydraLib import config
-from db import util
+from util import hdb
 
 import datetime
 import traceback
@@ -177,8 +177,8 @@ class HydraServer():
 
     def __init__(self):
 
-        util.create_default_users_and_perms()
-        util.create_default_net()
+        hdb.create_default_users_and_perms()
+        hdb.create_default_net()
         make_root_user()
 
     def create_soap_application(self):
@@ -192,7 +192,7 @@ class HydraServer():
     def create_json_application(self):
 
         app = HydraSoapApplication(applications, tns='hydra.base',
-                    in_protocol=HydraDocument(validator='soft'),
+                    in_protocol=HydraDocument(validator=None),
                     out_protocol=JsonDocument()
                 )
         return app
