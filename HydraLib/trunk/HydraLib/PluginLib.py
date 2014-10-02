@@ -75,7 +75,7 @@ class HydraResource(object):
 
     def set_type(self, types):
         if types is not None:
-            for obj_type in types.TypeSummary:
+            for obj_type in types:
                 # Add resource type to template dictionary
                 if obj_type.template_id not in self.template.keys():
                     self.template[obj_type.template_id] = []
@@ -121,39 +121,35 @@ class HydraNetwork(HydraResource):
         # load network
         resource_scenarios = dict()
         for res_scen in \
-                soap_net.scenarios.Scenario[0].resourcescenarios.ResourceScenario:
+                soap_net.scenarios[0].resourcescenarios:
             resource_scenarios.update({res_scen.resource_attr_id: res_scen})
         attributes = dict()
-        for attr in soap_attrs.Attr:
+        for attr in soap_attrs:
             attributes.update({attr.id: attr})
 
         self.name = soap_net.name
         self.ID = soap_net.id
         self.description = soap_net.description
-        self.scenario_id = soap_net.scenarios.Scenario[0].id
+        self.scenario_id = soap_net.scenarios[0].id
         self.set_type(soap_net.types)
 
         if soap_net.attributes is not None:
-            for res_attr in soap_net.attributes.ResourceAttr:
-                if res_attr.id in resource_scenarios.keys():
-                    self.add_attribute(attributes[res_attr.attr_id],
-                                       res_attr,
-                                       resource_scenarios[res_attr.id])
-                else:
-                    self.add_attribute(attributes[res_attr.attr_id],
-                                       res_attr,
-                                       None)
+            for res_attr in soap_net.attributes:
+                self.add_attribute(attributes[res_attr.attr_id],
+                                    res_attr,
+                                    resource_scenarios.get(res_attr.id))
 
         # build dictionary of group members:
-        if soap_net.scenarios.Scenario[0].resourcegroupitems is not None:
+        if soap_net.scenarios[0].resourcegroupitems is not None:
             groupitems = \
-                soap_net.scenarios.Scenario[0].resourcegroupitems.ResourceGroupItem
+                soap_net.scenarios[0].resourcegroupitems
         else:
             groupitems = []
 
         nodegroups = dict()
         linkgroups = dict()
         groupgroups = dict()
+        log.info("Loading group items")
         for groupitem in groupitems:
             if groupitem.ref_key == 'NODE':
                 if groupitem.ref_id not in nodegroups.keys():
@@ -170,44 +166,34 @@ class HydraNetwork(HydraResource):
                     groupgroups.update({groupitem.ref_id: [groupitem.group_id]})
                 else:
                     groupgroups[groupitem.ref_id].append(groupitem.group_id)
-
+        log.info("Loading groups")
         # load groups
         if soap_net.resourcegroups is not None:
-            for resgroup in soap_net.resourcegroups.ResourceGroup:
+            for resgroup in soap_net.resourcegroups:
                 new_group = HydraResource()
                 new_group.ID = resgroup.id
                 new_group.name = resgroup.name
                 if resgroup.attributes is not None:
-                    for res_attr in resgroup.attributes.ResourceAttr:
-                        if res_attr.id in resource_scenarios.keys():
-                            new_group.add_attribute(attributes[res_attr.attr_id],
-                                                    res_attr,
-                                                    resource_scenarios[res_attr.id])
-                        else:
-                            new_group.add_attribute(attributes[res_attr.attr_id],
-                                                    res_attr,
-                                                    None)
+                    for res_attr in resgroup.attributes:
+                        new_group.add_attribute(attributes[res_attr.attr_id],
+                                                res_attr,
+                                                resource_scenarios.get(res_attr.id))
                 new_group.set_type(resgroup.types)
                 if new_group.ID in groupgroups.keys():
                     new_group.group(groupgroups[new_group.ID])
                 self.add_group(new_group)
                 del new_group
-
+        log.info("Loading nodes")
         # load nodes
-        for node in soap_net.nodes.Node:
+        for node in soap_net.nodes:
             new_node = HydraResource()
             new_node.ID = node.id
             new_node.name = node.name
             if node.attributes is not None:
-                for res_attr in node.attributes.ResourceAttr:
-                    if res_attr.id in resource_scenarios.keys():
-                        new_node.add_attribute(attributes[res_attr.attr_id],
-                                               res_attr,
-                                               resource_scenarios[res_attr.id])
-                    else:
-                        new_node.add_attribute(attributes[res_attr.attr_id],
-                                               res_attr,
-                                               None)
+                for res_attr in node.attributes:
+                    new_node.add_attribute(attributes[res_attr.attr_id],
+                                            res_attr,
+                                            resource_scenarios.get(res_attr.id))
 
             new_node.set_type(node.types)
             if new_node.ID in nodegroups.keys():
@@ -217,22 +203,18 @@ class HydraNetwork(HydraResource):
             del new_node
 
         # load links
-        for link in soap_net.links.Link:
+        log.info("Loading links")
+        for link in soap_net.links:
             new_link = HydraResource()
             new_link.ID = link.id
             new_link.name = link.name
             new_link.from_node = self.get_node(node_id=link.node_1_id).name
             new_link.to_node = self.get_node(node_id=link.node_2_id).name
             if link.attributes is not None:
-                for res_attr in link.attributes.ResourceAttr:
-                    if res_attr.id in resource_scenarios.keys():
-                        new_link.add_attribute(attributes[res_attr.attr_id],
-                                               res_attr,
-                                               resource_scenarios[res_attr.id])
-                    else:
-                        new_link.add_attribute(attributes[res_attr.attr_id],
-                                               res_attr,
-                                               None)
+                for res_attr in link.attributes:
+                    new_link.add_attribute(attributes[res_attr.attr_id],
+                                            res_attr,
+                                            resource_scenarios.get(res_attr.id))
             new_link.set_type(link.types)
             if new_link.ID in linkgroups.keys():
                 new_link.group(linkgroups[new_link.ID])
@@ -400,6 +382,15 @@ class HydraAttribute(object):
             self.dataset_type = res_scen.value.type
             self.value = res_scen.value.value
 
+class JSONObject(dict):
+    def __init__(self, obj_dict):
+        for k, v in obj_dict.items():
+            self[k] = v
+            setattr(self, k, v)
+
+def object_hook(x):
+    return JSONObject(x)
+
 class JsonConnection(object):
     url = None
     session_id = None
@@ -425,10 +416,17 @@ class JsonConnection(object):
                 resp = json.loads(r.content)
                 err = "%s:%s"%(resp['faultcode'], resp['faultstring'])
             except:
-                err = r.content
+                if r.content != '':
+                    err = r.content
+                else:
+                    err = "An unknown server has occurred."
             raise HydraPluginError(err)
+        
+        ret_obj = json.loads(r.content, object_hook=object_hook)
 
-        return json.loads(r.content) 
+        log.info('done')
+
+        return ret_obj
 
 
     def login(self, username=None, password=None):
@@ -440,7 +438,7 @@ class JsonConnection(object):
 
         resp = self.call('login', login_params)
         #set variables for use in request headers
-        self.session_id = resp['session_id']
+        self.session_id = resp.session_id
         log.info("Session ID=%s", self.session_id)
         return self.session_id
 
@@ -578,6 +576,12 @@ def guess_timefmt(datestr):
           use a date format that contains commas.
     """
 
+    #replace 'T' with space to handle ISO times.
+    if datestr.find('T') > 0:
+        dt_delim = 'T'
+    else:
+        dt_delim = ' '
+
     delimiters = ['-', '.', ' ']
     formatstrings = [['%Y', '%m', '%d'],
                      ['%d', '%m', '%Y'],
@@ -591,7 +595,7 @@ def guess_timefmt(datestr):
     # Check if a time is indicated or not
     for timefmt in timeformats:
         try:
-            datetime.strptime(datestr.split(' ')[-1].strip(), timefmt)
+            datetime.strptime(datestr.split(dt_delim)[-1].strip(), timefmt)
             usetime = True
             break
         except ValueError:
@@ -603,7 +607,7 @@ def guess_timefmt(datestr):
             datefmt = fmt[0] + delim + fmt[1] + delim + fmt[2]
             if usetime:
                 for timefmt in timeformats:
-                    complfmt = datefmt + ' ' + timefmt
+                    complfmt = datefmt + dt_delim + timefmt
                     try:
                         datetime.strptime(datestr, complfmt)
                         return complfmt
@@ -622,7 +626,7 @@ def guess_timefmt(datestr):
     for fmt in custom_formats:
         if usetime:
             for timefmt in timeformats:
-                complfmt = fmt + ' ' + timefmt
+                complfmt = fmt + dt_delim + timefmt
                 try:
                     datetime.strptime(datestr, complfmt)
                     return complfmt
@@ -661,6 +665,9 @@ def create_xml_response(plugin_name, network_id, scenario_ids,
     error_string = "<error>%s</error>"
     warning_string = "<warning>%s</warning>"
     file_string = "<file>%s<file>"
+
+    if scenario_ids is None:
+        scenario_ids = []
 
     xml_string = xml_string % dict(
         plugin_name  = plugin_name,

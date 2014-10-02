@@ -176,11 +176,11 @@ class Dataset(ComplexModel):
     _type_info = [
         ('id',               Integer(min_occurs=0, default=None)),
         ('type',             Unicode),
-        ('dimension',        Unicode(min_occurs=1, default=None)),
+        ('dimension',        Unicode(min_occurs=0, default='dimensionless')),
         ('unit',             Unicode(min_occurs=1, default=None)),
         ('name',             Unicode(min_occurs=1, default=None)),
         ('value',            AnyDict(min_occurs=1, default=None)),
-        ('hidden',           Unicode(min_occurs=1, default='N', pattern="[YN]")),
+        ('hidden',           Unicode(min_occurs=0, default='N', pattern="[YN]")),
         ('metadata',         SpyneArray(Metadata, default=None)),
     ]
 
