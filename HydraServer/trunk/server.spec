@@ -8,7 +8,7 @@ a = Analysis(['server.py'],
 a.datas += [('HydraLib/static/unit_definitions.xml',
             '../../HydraLib/trunk/HydraLib/static/unit_definitions.xml', 'DATA'), 
             ('HydraLib/static/user_units.xml',
-            '../../HydraLib/trunk/HydraLib/static/user_units.xml', 'DATA')
+            '../../HydraLib/trunk/HydraLib/static/user_units.xml', 'DATA'),
             ]
 
 pyz = PYZ(a.pure)

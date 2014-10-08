@@ -67,4 +67,4 @@ class ResourceGroupService(HydraService):
     def delete_resourcegroupitem(ctx, item_id):
         resourcegroups.delete_resourcegroupitem(item_id,
                                                   **ctx.in_header.__dict__)
-        return 'OK' 
+        return 'OK'
