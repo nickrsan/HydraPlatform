@@ -23,6 +23,7 @@ from HydraLib.util import vector_to_arr
 from db.model import Dataset
 from datetime import datetime
 from db import DBSession
+import copy
 import logging
 log = logging.getLogger(__name__)
 
@@ -104,10 +105,12 @@ def convert_units(values, unit1, unit2,**kwargs):
 
 def convert_dataset(dataset_id, to_unit,**kwargs):
     """Convert a whole dataset (specified by 'dataset_id' to new unit
-    ('to_unit').
+    ('to_unit'). Conversion ALWAYS creates a NEW dataset, so function
+    returns the dataset ID of new dataset.
     """
 
     ds_i = DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).one()
+
     dataset_type = ds_i.data_type
 
     dsval = ds_i.get_val()
@@ -133,22 +136,27 @@ def convert_dataset(dataset_id, to_unit,**kwargs):
             pass
         elif dataset_type == 'descriptor':
             raise HydraError('Cannot convert descriptor.')
+        
+        new_dataset = Dataset()
+        new_dataset.data_units = to_unit
+        new_dataset.set_val(dataset_type, new_val)
+        new_dataset.data_dimen = ds_i.data_dimen
+        new_dataset.data_name  = ds_i.data_name
+        new_dataset.data_type  = ds_i.data_type
+        new_dataset.hidden     = 'N'
+        new_dataset.set_metadata(ds_i.get_metadata_as_dict())
+        new_dataset.set_hash()
 
-        ds_i.data_units = to_unit
-        ds_i.set_val(dataset_type, new_val)
+        existing_ds = DBSession.query(Dataset).filter(Dataset.data_hash==new_dataset.data_hash).first()
 
-        new_metadata = {
-            'converted_from' : old_unit,
-            'converted_by'   : str(kwargs['user_id']),
-            'converted_at'   : str(datetime.now())
-        }
-
-        ds_i.set_metadata(new_metadata)
-
-        ds_i.set_hash()
+        if existing_ds is not None:
+            DBSession.expunge_all()
+            return existing_ds.dataset_id
+        
+        DBSession.add(new_dataset)
         DBSession.flush()
 
-        return ds_i.dataset_id
+        return new_dataset.dataset_id
 
     else:
         raise HydraError('Dataset has no units.')

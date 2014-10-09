@@ -210,15 +210,12 @@ class UnitsTest(test_SoapServer.SoapServerTest):
                 old_val = res_scen.value.value
                 break
         newid = self.client.service.convert_dataset(dataset_id, 'mmHg')
+        
+        assert newid is not None
+        assert newid != dataset_id, "Converting dataset not completed."
 
-        assert newid == dataset_id, "Converting dataset not completed."
-
-        new_scenid = network.scenarios.Scenario[0].id
-        new_scen_data = self.client.service.get_scenario_data(new_scenid)
-        for dataset in new_scen_data.Dataset:
-            if dataset.id == dataset_id:
-                new_val = dataset.value
-                break
+        new_dataset = self.client.service.get_dataset(newid)
+        new_val = new_dataset.value
 
         new_val = arr_to_vector(PluginLib.parse_suds_array(new_val.arr_data))
         old_val = arr_to_vector(PluginLib.parse_suds_array(old_val.arr_data))
