@@ -589,17 +589,19 @@ class ImportCSV(object):
                 attributes = [],
             )
             try:
-                node['x'] = str(linedata[field_idx['x']])
+                float(linedata[field_idx['x']].strip())
+                node['x'] = linedata[field_idx['x']].strip()
             except ValueError:
-                node['x'] = 0
+                node['x'] = None
                 log.info('X coordinate of node %s is not a number.'
                              % node['name'])
                 self.warnings.append('X coordinate of node %s is not a number.'
                                      % node['name'])
             try:
-                node['y'] = str(linedata[field_idx['y']])
+                float(linedata[field_idx['y']].strip())
+                node['y'] = linedata[field_idx['y']].strip()
             except ValueError:
-                node['y'] = 0
+                node['y'] = None
                 log.info('Y coordinate of node %s is not a number.'
                              % node['name'])
                 self.warnings.append('Y coordinate of node %s is not a number.'

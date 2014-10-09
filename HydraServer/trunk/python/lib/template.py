@@ -255,6 +255,8 @@ def upload_template_xml(template_xml,**kwargs):
         for attribute in resource.findall('attribute'):
             parse_typeattr(type_i, attribute)
 
+    DBSession.flush()
+
     return tmpl_i
 
 def apply_template_to_network(template_id, network_id, **kwargs):
@@ -988,7 +990,9 @@ def get_network_as_xml_template(network_id,**kwargs):
         for net_attr in net_i.attributes:
             _make_attr_element(net_resource, net_attr)
 
-    existing_types = {'NODE': [], 'LINK': []}
+        resources.append(net_resource)
+
+    existing_types = {'NODE': [], 'LINK': [], 'GROUP': []}
     for node_i in net_i.nodes:
         node_attributes = node_i.attributes
         attr_ids = [attr.attr_id for attr in node_attributes]
@@ -1035,6 +1039,29 @@ def get_network_as_xml_template(network_id,**kwargs):
 
             existing_types['LINK'].append(attr_ids)
             resources.append(link_resource)
+
+    for group_i in net_i.resourcegroups:
+        group_attributes = group_i.attributes
+        attr_ids = [attr.attr_id for attr in group_attributes]
+        if attr_ids>0 and attr_ids not in existing_types['GROUP']:
+            group_resource    = etree.Element("resource")
+
+            resource_type   = etree.SubElement(group_resource, "type")
+            resource_type.text   = "GROUP"
+
+            resource_name   = etree.SubElement(group_resource, "name")
+            resource_name.text   = group_i.group_name
+
+            layout = _get_layout_as_etree(group_i.group_layout)
+
+            if layout is not None:
+                group_resource.append(layout)
+
+            for group_attr in group_attributes:
+                _make_attr_element(group_resource, group_attr)
+
+            existing_types['GROUP'].append(attr_ids)
+            resources.append(group_resource)
 
     xml_string = etree.tostring(template_xml)
 
