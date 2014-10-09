@@ -97,13 +97,26 @@ def update_project(project,**kwargs):
 
     return proj_i
 
-
 def get_project(project_id,**kwargs):
     """
         get a project complexmodel
     """
     user_id = kwargs.get('user_id') 
     proj_i = _get_project(project_id)
+
+    proj_i.check_read_permission(user_id)
+
+    return proj_i
+
+def get_project_by_name(project_name,**kwargs):
+    """
+        get a project complexmodel
+    """
+    user_id = kwargs.get('user_id') 
+    try:
+        proj_i = DBSession.query(Project).filter(Project.project_name==project_name).one()
+    except NoResultFound:
+        raise ResourceNotFoundError("Project %s not found"%(project_name))
 
     proj_i.check_read_permission(user_id)
 

@@ -58,6 +58,15 @@ class ProjectService(HydraService):
 
         return Project(proj_dict)
  
+    @rpc(Unicode, _returns=Project)
+    def get_project_by_name(ctx, project_name):
+        """
+            get a project complexmodel
+        """
+        proj_dict = project_lib.get_project_by_name(project_name,  **ctx.in_header.__dict__) 
+
+        return Project(proj_dict)
+
     @rpc(Integer, _returns=SpyneArray(ProjectSummary))
     def get_projects(ctx, user_id):
         """
