@@ -335,6 +335,10 @@ class Attr(Base):
 
     __tablename__='tAttr'
 
+    __table_args__ = (
+        UniqueConstraint('attr_name', 'attr_dimen', name="unique name dimension"),
+    )
+
     attr_id = Column(Integer(), primary_key=True, nullable=False)
     attr_name = Column(String(60),  nullable=False)
     attr_dimen = Column(String(60))
@@ -359,7 +363,7 @@ class Template(Base):
     __tablename__='tTemplate'
 
     template_id = Column(Integer(), primary_key=True, nullable=False)
-    template_name = Column(String(60),  nullable=False)
+    template_name = Column(String(60),  nullable=False, unique=True)
     layout = Column(Text(1000))
     
 class TemplateType(Base):
@@ -367,6 +371,9 @@ class TemplateType(Base):
     """
 
     __tablename__='tTemplateType'
+    __table_args__ = (
+        UniqueConstraint('template_id', 'type_name', name="unique type name"),
+    )
 
     type_id = Column(Integer(), primary_key=True, nullable=False)
     type_name = Column(String(60),  nullable=False)
@@ -514,7 +521,7 @@ class Project(Base):
     attribute_data = []
 
     project_id = Column(Integer(), primary_key=True, nullable=False)
-    project_name = Column(String(60),  nullable=False)
+    project_name = Column(String(60),  nullable=False, unique=True)
     project_description = Column(String(1000))
     status = Column(String(1),  nullable=False, server_default=text(u"'A'"))
     cr_date = Column(DateTime(),  nullable=False, server_default=text(u'CURRENT_TIMESTAMP'))
@@ -604,6 +611,9 @@ class Network(Base):
     """
 
     __tablename__='tNetwork'
+    __table_args__ = (
+        UniqueConstraint('network_name', 'project_id', name="unique net name"),
+    )
     ref_key = 'NETWORK'
 
     network_id = Column(Integer(), primary_key=True, nullable=False)
@@ -634,6 +644,11 @@ class Network(Base):
             define the network topology, by associating two already
             existing nodes.
         """
+
+        existing_link = DBSession.query(Link).filter(Link.link_name==name, Link.network_id==self.network_id).first()
+        if existing_link is not None:
+            raise HydraError("A link with name %s is already in network %s"%(name, self.network_id))
+
         l = Link()
         l.link_name        = name
         l.link_description = desc
@@ -652,6 +667,11 @@ class Network(Base):
         """
             Add a node to a network.
         """
+
+        existing_node = DBSession.query(Node).filter(Node.node_name==name, Node.network_id==self.network_id).first()
+        if existing_node is not None:
+            raise HydraError("A node with name %s is already in network %s"%(name, self.network_id))
+
         node = Node()
         node.node_name        = name
         node.node_description = desc
@@ -672,6 +692,11 @@ class Network(Base):
         """
             Add a new group to a network.
         """
+
+        existing_grp = DBSession.query(ResourceGroup).filter(ResourceGroup.group_name==name, ResourceGroup.network_id==self.network_id).first()
+        if existing_grp is not None:
+            raise HydraError("A resource group with name %s is already in network %s"%(name, self.network_id))
+
         group_i                      = ResourceGroup()
         group_i.group_name        = name
         group_i.group_description = desc
@@ -750,6 +775,9 @@ class Link(Base):
 
     __tablename__='tLink'
 
+    __table_args__ = (
+        UniqueConstraint('network_id', 'link_name', name="unique link name"),
+    )
     ref_key = 'LINK'
 
     link_id = Column(Integer(), primary_key=True, nullable=False)
@@ -781,6 +809,9 @@ class Node(Base):
     """
 
     __tablename__='tNode'
+    __table_args__ = (
+        UniqueConstraint('network_id', 'node_name', name="unique node name"),
+    )
     ref_key = 'NODE'
 
     node_id = Column(Integer(), primary_key=True, nullable=False)
@@ -810,6 +841,9 @@ class ResourceGroup(Base):
     """
 
     __tablename__='tResourceGroup'
+    __table_args__ = (
+        UniqueConstraint('network_id', 'group_name', name="unique resourcegroup name"),
+    )
 
     ref_key = 'GROUP'
     group_id = Column(Integer(), primary_key=True, nullable=False)
@@ -912,6 +946,9 @@ class Scenario(Base):
     """
 
     __tablename__='tScenario'
+    __table_args__ = (
+        UniqueConstraint('network_id', 'scenario_name', name="unique scenario name"),
+    )
 
     scenario_id = Column(Integer(), primary_key=True, index=True, nullable=False)
     scenario_name = Column(String(60),  nullable=False)
@@ -962,6 +999,10 @@ class Rule(Base):
     """
 
     __tablename__='tRule'
+    __table_args__ = (
+        UniqueConstraint('scenario_id', 'rule_name', name="unique rule name"),
+    )
+
 
     rule_id = Column(Integer(), primary_key=True, nullable=False)
     
@@ -1183,7 +1224,7 @@ class User(Base):
     __tablename__='tUser'
 
     user_id = Column(Integer(), primary_key=True, nullable=False)
-    username = Column(String(60),  nullable=False)
+    username = Column(String(60),  nullable=False, unique=True)
     password = Column(String(1000),  nullable=False)
     display_name = Column(String(60),  nullable=False, server_default=text(u"''"))
     last_login = Column(DateTime())

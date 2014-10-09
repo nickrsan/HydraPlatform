@@ -79,6 +79,12 @@ class SoapServerTest(unittest.TestCase):
 
         self.login('root', '')
 
+        self.project_id = self.create_project().id
+
+        self.create_user("UserA")
+        self.create_user("UserB")
+        self.create_user("UserC")
+
 
     def tearDown(self):
         log.debug("Tearing down")
@@ -219,11 +225,24 @@ class SoapServerTest(unittest.TestCase):
 
         return new_template
 
-    def create_project(self, name):
-        project = self.client.factory.create('hyd:Project')
-        project.name = 'SOAP test %s'%(datetime.datetime.now())
-        project = self.client.service.add_project(project)
-        return project
+    def create_project(self, name=None):
+
+        if name is None:
+            name = "Unittest Project"
+        
+        try:
+            p = self.client.service.get_project_by_name(name)
+            return p
+        except:
+            project = self.client.factory.create('hyd:Project')
+            project.name = name
+            project.description = "Project which contains all unit test networks"
+            project = self.client.service.add_project(project)
+
+            self.client.service.share_project(project.id, ["UserA", "UserB", "UserC"], 'N', 'Y')
+            
+            return project
+
 
     def create_link(self, link_id, node_1_name, node_2_name, node_1_id, node_2_id):
 
@@ -273,18 +292,17 @@ class SoapServerTest(unittest.TestCase):
         s = net.scenarios.Scenario[0]
         rs = s.resourcescenarios.ResourceScenario[0]
         
-
-    def build_network(self, project_id=None, num_nodes=10):
+    def build_network(self, project_id=None, num_nodes=10, new_proj=False):
 
     
         start = datetime.datetime.now()
         if project_id is None:
-            (project) = {
-                'name'        : 'New Project %s'%(datetime.datetime.now()),
-                'description' : 'New Project Description',
-            }
-            p =  self.client.service.add_project(project)
-            project_id = p.id
+            proj_name = None
+            if new_proj is True:
+                proj_name = "Test Project @ %s"%(datetime.datetime.now())
+                project_id = self.create_project(name=proj_name).id
+            else:
+                project_id = self.project_id 
 
         log.debug("Project creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
@@ -519,14 +537,14 @@ class SoapServerTest(unittest.TestCase):
 
         return network
 
-    def create_network_with_data(self, project_id=None, num_nodes=10, ret_full_net=True):
+    def create_network_with_data(self, project_id=None, num_nodes=10, ret_full_net=True, new_proj=False):
         """
             Test adding data to a network through a scenario.
             This test adds attributes to one node and then assignes data to them.
             It assigns a descriptor, array and timeseries to the
             attributes node.
         """
-        network=self.build_network(project_id, num_nodes)
+        network=self.build_network(project_id, num_nodes, new_proj=new_proj)
 
         #log.debug(network)
         start = datetime.datetime.now()

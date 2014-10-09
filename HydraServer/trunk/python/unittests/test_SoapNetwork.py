@@ -20,6 +20,7 @@ import test_SoapServer
 import copy
 import logging
 import suds
+import datetime
 log = logging.getLogger(__name__)
 
 class NetworkTest(test_SoapServer.SoapServerTest):
@@ -175,7 +176,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             links.Link.append(link)
 
         network.project_id = project.id
-        network.name = 'Test'
+        network.name = 'Test @ %s'%(datetime.datetime.now())
         network.description = 'A network for SOAP unit tests.'
         network.nodes = nodes
         network.links = links
@@ -247,7 +248,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             links.Link.append(link)
 
         network.project_id = project.id
-        network.name = 'Test'
+        network.name = 'Test @ %s'%(datetime.datetime.now())
         network.description = 'A network for SOAP unit tests.'
         network.nodes = nodes
         network.links = links
@@ -321,7 +322,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             links.Link.append(link)
 
         network.project_id = project.id
-        network.name = 'test'
+        network.name = 'Test @ %s'%(datetime.datetime.now())
         network.description = 'a network for soap unit tests.'
         network.nodes = nodes
         network.links = links
@@ -495,7 +496,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             links.Link.append(link)
 
         network.project_id = project.id
-        network.name = 'Test'
+        network.name = 'Test @ %s'%(datetime.datetime.now())
         network.description = 'A network for SOAP unit tests.'
         network.nodes = nodes
         network.links = links
@@ -542,7 +543,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             links.Link.append(link)
 
         network.project_id = project.id
-        network.name = 'Test'
+        network.name = 'Test @ %s'%(datetime.datetime.now())
         network.description = 'A network for SOAP unit tests.'
         network.nodes = nodes
         network.links = links
@@ -669,7 +670,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             links.Link.append(link)
 
         network.project_id = project.id
-        network.name = 'Test'
+        network.name = 'Test @ %s'%(datetime.datetime.now())
         network.description = 'A network for SOAP unit tests.'
         network.nodes = nodes
         network.links = links

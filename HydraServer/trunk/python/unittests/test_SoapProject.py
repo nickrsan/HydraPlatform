@@ -134,7 +134,7 @@ class ProjectTest(test_SoapServer.SoapServerTest):
             'Deleting project did not work correctly.'
 
     def test_purge(self):
-        net = self.create_network_with_data()
+        net = self.create_network_with_data(new_proj=True)
 
         project_id = net.project_id
         log.info("Deleting project %s", project_id)
@@ -159,7 +159,7 @@ class ProjectTest(test_SoapServer.SoapServerTest):
 
     def test_get_networks(self):
         
-        proj = self.create_project('Project with multiple networks')
+        proj = self.create_project('Project with multiple networks @ %s'%(datetime.datetime.now()))
 
         self.create_network_with_data(proj.id)
         self.create_network_with_data(proj.id)

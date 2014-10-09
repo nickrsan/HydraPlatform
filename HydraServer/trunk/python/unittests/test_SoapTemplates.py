@@ -534,7 +534,7 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
             links.Link.append(link)
 
         network.project_id = project.id
-        network.name = 'Test'
+        network.name = 'Test @ %s'%(datetime.datetime.now())
         network.description = 'A network for SOAP unit tests.'
         network.nodes = nodes
         network.links = links

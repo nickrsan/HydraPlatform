@@ -236,6 +236,10 @@ def _add_nodes(net_i, nodes):
    
     iface_nodes = dict()
     for n_i in net_i.nodes:
+        
+        if iface_nodes.get(n_i.node_name) is not None:
+            raise HydraError("Duplicate Node Name: %s"%(n_i.node_name))
+        
         iface_nodes[n_i.node_name] = n_i
 
     for node in nodes:
@@ -284,6 +288,10 @@ def _add_links(net_i, links, node_id_map):
     iface_links = {}
 
     for l_i in net_i.links:
+        
+        if iface_links.get(l_i.link_name) is not None:
+            raise HydraError("Duplicate Link Name: %s"%(l_i.link_name))
+
         iface_links[l_i.link_name] = l_i
 
     for link in links:
@@ -320,6 +328,10 @@ def _add_resource_groups(net_i, resourcegroups):
 
         iface_groups = {}
         for g_i in net_i.resourcegroups:
+            
+            if iface_groups.get(g_i.group_name) is not None:
+                raise HydraError("Duplicate Resource Group: %s"%(g_i.group_name))
+
             iface_groups[g_i.group_name] = g_i
  
         for group in resourcegroups:
@@ -370,6 +382,11 @@ def add_network(network,**kwargs):
     insert_start = datetime.datetime.now()
 
     proj_i = DBSession.query(Project).filter(Project.project_id == network.project_id).one()
+    
+    existing_net = DBSession.query(Network).filter(Network.project_id == network.project_id, Network.network_name==network.name).first()
+    if existing_net is not None:
+        raise HydraError("A network with the name %s is already in project %s"%(network.name, network.project_id))
+    
     proj_i.check_write_permission(user_id)
 
     net_i = Network()
@@ -407,9 +424,14 @@ def add_network(network,**kwargs):
 
     start_time = datetime.datetime.now()
 
+    scenario_names = []
     if network.scenarios is not None:
         log.info("Adding scenarios to network")
         for s in network.scenarios:
+
+            if s.name in scenario_names:
+                raise HydraError("Duplicate scenario name: %s"%(s.name))
+
             scen = Scenario()
             scen.scenario_name        = s.name
             scen.scenario_description = s.description
@@ -418,6 +440,8 @@ def add_network(network,**kwargs):
             scen.end_time             = str(timestamp_to_ordinal(s.end_time)) if s.end_time else None
             scen.time_step            = s.time_step
             scen.created_by           = user_id
+
+            scenario_names.append(s.name)
 
             #extract the data from each resourcescenario
             incoming_datasets = []

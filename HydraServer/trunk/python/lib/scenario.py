@@ -79,6 +79,10 @@ def add_scenario(network_id, scenario,**kwargs):
 
     _check_network_ownership(network_id, user_id) 
 
+    existing_scen = DBSession.query(Scenario).filter(Scenario.scenario_name==scenario.name, Scenario.network_id==network_id).first()
+    if existing_scen is not None:
+        raise HydraError("Scenario with name %s already exists in network %s"%(scenario.name, network_id))
+
     scen = Scenario()
     scen.scenario_name        = scenario.name
     scen.scenario_description = scenario.description

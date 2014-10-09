@@ -331,6 +331,10 @@ class DataGroupTest(test_SoapServer.SoapServerTest):
 
 class SharingTest(test_SoapServer.SoapServerTest):
 
+    def _get_project(self):
+        p = self.client.service.get_project_by_name("Unittest Project")
+        return p
+
     def test_hide_data(self):
         """
             Test for the hiding of data.
@@ -339,10 +343,6 @@ class SharingTest(test_SoapServer.SoapServerTest):
             Share the time series with one users. Check if they can see it but a third user can't.
         """
 
-        self.create_user("UserA")
-        self.create_user("UserB")
-        self.create_user("UserC")
-        
         #One client is for the 'root' user and must remain open so it
         #can be closed correctly in the tear down. 
         old_client = self.client
@@ -422,10 +422,6 @@ class SharingTest(test_SoapServer.SoapServerTest):
             Attribute now should have a new, unhidden dataset assigned to that attribute.
         """
 
-        self.create_user("UserA")
-        self.create_user("UserB")
-        self.create_user("UserC")
-        
         #One client is for the 'root' user and must remain open so it
         #can be closed correctly in the tear down. 
         old_client = self.client
@@ -523,9 +519,6 @@ class SharingTest(test_SoapServer.SoapServerTest):
             Attribute now should have a new, unhidden dataset assigned to that attribute.
         """
 
-        self.create_user("UserA")
-        self.create_user("UserB")
-        
         #One client is for the 'root' user and must remain open so it
         #can be closed correctly in the tear down. 
         old_client = self.client

@@ -70,10 +70,6 @@ class SharingTest(test_SoapServer.SoapServerTest):
 
     def test_share_network(self):
 
-        self.create_user("UserA")
-        self.create_user("UserB")
-        self.create_user("UserC")
-        
         #One client is for the 'root' user and must remain open so it
         #can be closed correctly in the tear down. 
         old_client = self.client
@@ -126,10 +122,6 @@ class SharingTest(test_SoapServer.SoapServerTest):
         self.client = old_client
 
     def test_unshare_network(self):
-        test = datetime.datetime.now()
-        self.create_user("UserA")
-        self.create_user("UserB")
-        print "User creation took: %s" % (datetime.datetime.now() - test)
         
         #One client is for the 'root' user and must remain open so it
         #can be closed correctly in the tear down. 
@@ -169,10 +161,6 @@ class SharingTest(test_SoapServer.SoapServerTest):
 
     def test_share_project(self):
 
-        self.create_user("UserA")
-        self.create_user("UserB")
-        self.create_user("UserC")
-        
         #One client is for the 'root' user and must remain open so it
         #can be closed correctly in the tear down. 
         old_client = self.client
@@ -181,7 +169,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
         self.login("UserA", 'password')
         
         #create a project with two networks.
-        network_1 = self.create_network_with_data()
+        network_1 = self.create_network_with_data(new_proj=True)
         network_2 = self.create_network_with_data(network_1.project_id)
 
         #Share a project which is read only with User B
@@ -230,10 +218,6 @@ class SharingTest(test_SoapServer.SoapServerTest):
 
     def test_unshare_project(self):
 
-        self.create_user("UserA")
-        self.create_user("UserB")
-        self.create_user("UserC")
-        
         #One client is for the 'root' user and must remain open so it
         #can be closed correctly in the tear down. 
         old_client = self.client
@@ -242,8 +226,8 @@ class SharingTest(test_SoapServer.SoapServerTest):
         self.login("UserA", 'password')
         
         #create a project with two networks.
-        network_1 = self.create_network_with_data()
-        network_2 = self.create_network_with_data(network_1.project_id)
+        network_1 = self.create_network_with_data(new_proj=True)
+        self.create_network_with_data(project_id=network_1.project_id)
 
         #Share a project which is read only with User B
         self.client.service.share_project(network_1.project_id, ["UserB"], 'Y')
@@ -276,10 +260,6 @@ class SharingTest(test_SoapServer.SoapServerTest):
 
     def test_sharing_shared_network(self):
 
-        self.create_user("UserA")
-        self.create_user("UserB")
-        self.create_user("UserC")
-        
         #One client is for the 'root' user and must remain open so it
         #can be closed correctly in the tear down. 
         old_client = self.client
@@ -287,7 +267,7 @@ class SharingTest(test_SoapServer.SoapServerTest):
         self.client = new_client
         self.login("UserA", 'password')
         
-        network_1 = self.create_network_with_data()
+        network_1 = self.create_network_with_data(new_proj=True)
 
         #share the whole project with user B, and allow them to share.
         self.client.service.share_project(network_1.project_id, ["UserB"], 'Y', 'Y')
