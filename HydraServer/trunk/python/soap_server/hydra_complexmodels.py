@@ -22,14 +22,13 @@ from spyne.model.primitive import DateTime
 from spyne.model.primitive import AnyDict
 from spyne.model.primitive import Double
 from decimal import Decimal as Dec
-from HydraLib.util import get_datetime,\
+from HydraLib.dateutil import get_datetime,\
         timestamp_to_ordinal,\
-        ordinal_to_timestamp,\
-        check_array_struct
+        ordinal_to_timestamp
 import pandas as pd
 from pandas.tseries.index import DatetimeIndex
 import logging
-from HydraLib.util import create_dict
+from HydraLib.util import create_dict, check_array_struct
 from util import generate_data_hash
 
 NS = "soap_server.hydra_complexmodels"
@@ -268,6 +267,11 @@ class Dataset(ComplexModel):
                 if type(timestamp) is list:
                     timestamp = timestamp[0]
                     is_soap_req = True
+                try:
+                    timestamp = get_datetime(timestamp)
+                except ValueError:
+                    log.warn("Unrecognised timestamp format: %s", timestamp)
+
                 # Check if we have received a seasonal time series first
                 arr_data = ts_val['ts_value']
                 if is_soap_req:

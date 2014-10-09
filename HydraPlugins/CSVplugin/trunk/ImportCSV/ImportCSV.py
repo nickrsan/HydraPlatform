@@ -174,7 +174,7 @@ import pytz
 
 from HydraLib import PluginLib
 from HydraLib.PluginLib import JsonConnection, write_progress, write_output, validate_plugin_xml
-from HydraLib import config, util
+from HydraLib import config, util, dateutil
 
 from HydraLib.HydraException import HydraPluginError,HydraError
 
@@ -1201,7 +1201,7 @@ class ImportCSV(object):
             return None
 
         date = data[0].split(',', 1)[0].strip()
-        timeformat = PluginLib.guess_timefmt(date)
+        timeformat = dateutil.guess_timefmt(date)
         seasonal = False
         if 'XXXX' in timeformat:
             seasonal = True
@@ -1219,7 +1219,7 @@ class ImportCSV(object):
                 tstime = datetime.strptime(dataset[0].strip(), timeformat)
                 tstime = self.timezone.localize(tstime)
 
-                ts_time = PluginLib.date_to_string(tstime, seasonal=seasonal)
+                ts_time = dateutil.date_to_string(tstime, seasonal=seasonal)
 
                 value_length = len(dataset[2:])
                 shape = dataset[1].strip()
@@ -1264,7 +1264,7 @@ class ImportCSV(object):
         if is_eq_spaced:
             ts_type = 'eqtimeseries'
             timeseries = {'frequency': freq.total_seconds(),
-                          'start_time':PluginLib.date_to_string(start_time, seasonal=seasonal),
+                          'start_time':dateutil.date_to_string(start_time, seasonal=seasonal),
                           'arr_data':str(eq_val)}
             self.validate_value(timeseries, restriction_dict)
         else:
@@ -1312,7 +1312,7 @@ class ImportCSV(object):
 
     def is_timeseries(self, data):
         date = data[0].split(',')[0].strip()
-        timeformat = PluginLib.guess_timefmt(date)
+        timeformat = dateutil.guess_timefmt(date)
         if timeformat is None:
             return False
         else:

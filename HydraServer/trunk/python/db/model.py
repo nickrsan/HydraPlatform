@@ -26,13 +26,11 @@ Text
 
 from decimal import Decimal
 
-from datetime import datetime
-
 from HydraLib.HydraException import HydraError, PermissionError
 
 from sqlalchemy.orm import relationship, backref
 
-from HydraLib.util import ordinal_to_timestamp, get_datetime
+from HydraLib.dateutil import ordinal_to_timestamp, get_datetime
 
 from db import DeclarativeBase as Base, DBSession
 
@@ -155,8 +153,8 @@ class Dataset(Base):
                     return ret_val
 
                 except Exception, e:
+                    log.critical("Unable to retrive data. Check timestamps.")
                     log.critical(e)
-                    raise HydraError("Unable to retrive data. Check timestamps.")
 
     def set_val(self, data_type, val):
         if data_type in ('descriptor','scalar','array'):

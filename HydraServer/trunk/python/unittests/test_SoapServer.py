@@ -19,7 +19,7 @@ import unittest
 import logging
 
 from HydraLib import config
-from HydraLib.util import get_datetime
+from HydraLib.dateutil import get_datetime
 from HydraLib.PluginLib import create_dict
 
 from suds.client import Client

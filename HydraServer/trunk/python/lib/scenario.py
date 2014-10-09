@@ -29,7 +29,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload_all, joinedload
 import data
-from HydraLib.util import timestamp_to_ordinal
+from HydraLib.dateutil import timestamp_to_ordinal
 from collections import namedtuple
 from copy import deepcopy
 

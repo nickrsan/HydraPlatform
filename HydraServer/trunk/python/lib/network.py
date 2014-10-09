@@ -29,7 +29,7 @@ from sqlalchemy.orm import noload, joinedload, joinedload_all
 from db import DBSession
 from sqlalchemy import func, and_, distinct
 from sqlalchemy.orm.exc import NoResultFound
-from HydraLib.util import timestamp_to_ordinal
+from HydraLib.dateutil import timestamp_to_ordinal
 from util.hdb import add_attributes, add_resource_types
 
 log = logging.getLogger(__name__)

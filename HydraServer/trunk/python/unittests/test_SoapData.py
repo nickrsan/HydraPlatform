@@ -97,12 +97,55 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
             None,
             0.5,
             )
-        self.assertRaises(WebFault, self.client.service.get_vals_between_times,
+        assert len(x.data) > 0
+        invalid_qry = self.client.service.get_vals_between_times(
             val_to_query.id,
             now,
             now + datetime.timedelta(minutes=75),
             'minutes',
             )
+
+        assert eval(invalid_qry.data) == None
+
+    def test_seasonal_timeseries(self):
+        net = self.build_network()
+
+        relative_ts = self.create_seasonal_timeseries()
+
+        s = net['scenarios'].Scenario[0]
+        for rs in s['resourcescenarios'].ResourceScenario:
+            if rs['value']['type'] == 'timeseries':
+                rs['value']['value'] = relative_ts
+        
+        new_network_summary = self.client.service.add_network(net)
+        new_net = self.client.service.get_network(new_network_summary.id)
+        
+        scenario = new_net.scenarios.Scenario[0]
+        val_to_query = None
+        for d in scenario.resourcescenarios.ResourceScenario:
+            if d.value.type == 'timeseries':
+                val_to_query = d.value
+                break
+
+        val_a = val_to_query.value.ts_values[2].ts_value
+
+        now = datetime.datetime.now()
+
+        vals = self.client.service.get_vals_between_times(
+            val_to_query.id,
+            now,
+            now + datetime.timedelta(minutes=75),
+            'minutes',
+            1,
+            )
+
+        data = vals.data
+        assert len(data) == 76
+        for val in data:
+            x = parse_suds_array(val_a)
+            y = parse_suds_array(val)
+            assert x == y
+
 
 
     def test_get_data_between_times(self):
@@ -157,6 +200,28 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
             )
         #log.info(value)
         assert value.data == 'test'
+
+    def create_seasonal_timeseries(self):
+        """
+            Create a timeseries which has relative timesteps:
+            1, 2, 3 as opposed to timestamps
+        """
+        test_val_1 = create_dict([[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]], [[9,8,7],[6,5,4]]]) 
+
+        test_val_2 = create_dict(["1.0", "2.0", "3.0"])
+
+        timeseries = {'ts_values' : 
+            [
+                {'ts_time' : 'XXXX-01-01',
+                'ts_value' : test_val_1},
+                {'ts_time' : 'XXXX-02-01',
+                'ts_value' : test_val_2},
+                {'ts_time' : 'XXXX-03-01',
+                'ts_value' : create_dict(["3.0", "", ""])},
+
+            ]
+        }
+        return timeseries 
 
     def create_relative_timeseries(self):
         """

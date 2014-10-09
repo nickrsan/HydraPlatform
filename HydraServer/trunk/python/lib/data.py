@@ -15,7 +15,7 @@
 #
 import datetime
 import sys
-from HydraLib.util import get_datetime
+from HydraLib.dateutil import get_datetime
 from HydraLib import units
 import logging
 from db.model import Dataset, Metadata, TimeSeriesData, DatasetOwner, DatasetGroup, DatasetGroupItem

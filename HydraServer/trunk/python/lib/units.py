@@ -145,7 +145,7 @@ def convert_dataset(dataset_id, to_unit,**kwargs):
 
         ds_i.set_metadata(new_metadata)
 
-        ds_i.set_hash(new_val)
+        ds_i.set_hash()
         DBSession.flush()
 
         return ds_i.dataset_id
