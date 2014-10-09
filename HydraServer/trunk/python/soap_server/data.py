@@ -177,7 +177,7 @@ class DataService(HydraService):
     def echo_array(ctx, x):
         return x
 
-    @rpc(Integer, SpyneArray(Unicode), _returns=AnyDict)
+    @rpc(Integer, Unicode(min_occurs=0, max_occurs='unbounded'), _returns=AnyDict)
     def get_val_at_time(ctx, dataset_id, timestamps):
         return data.get_val_at_time(dataset_id, 
                                     timestamps,

@@ -467,10 +467,12 @@ def get_val_at_time(dataset_id, timestamps,**kwargs):
     t = []
     for time in timestamps:
         t.append(get_datetime(time))
-    td = DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).one()
+    dataset_i = DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).one()
     #for time in t:
     #    data.append(td.get_val(timestamp=time))
-    data = td.get_val(timestamp=t)
+    data = dataset_i.get_val(timestamp=t)
+    if type(data) is list:
+        data = create_dict(data)
     dataset = {'data': data}
 
     return dataset

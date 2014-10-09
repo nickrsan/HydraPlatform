@@ -125,6 +125,23 @@ class Dataset(Base):
             return Decimal(str(self.value))
         elif self.data_type == 'timeseries':
             timeseries = pd.read_json(self.value)
+
+            idx = timeseries.index
+            #Seasonal timeseries are stored in the year
+            #1900. Therefore if the timeseries is seasonal, 
+            #the request must be a seasonal request, not a 
+            #standard request
+            if type(idx) == pd.DatetimeIndex:
+                if set(idx.year) == set([1900]):
+                    if type(timestamp) == list:
+                        seasonal_timestamp = []
+                        for t in timestamp:
+                            t_1900 = t.replace(year=1900)
+                            seasonal_timestamp.append(t_1900)
+                        timestamp = seasonal_timestamp
+                    else:
+                        timestamp = timestamp.replace(year=1900)
+
             ts_val = []
             if timestamp is None:
                 timestamps = list(timeseries.index)

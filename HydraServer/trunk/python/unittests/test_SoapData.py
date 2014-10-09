@@ -131,6 +131,27 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
 
         now = datetime.datetime.now()
 
+        jan_val = self.client.service.get_val_at_time(
+            val_to_query.id,
+            datetime.datetime(2000, 01, 10, 00, 00, 00)
+           )
+        feb_val = self.client.service.get_val_at_time(
+            val_to_query.id,
+            datetime.datetime(2000, 02, 10, 00, 00, 00)
+           )
+        mar_val = self.client.service.get_val_at_time(
+            val_to_query.id,
+            datetime.datetime(2000, 03, 10, 00, 00, 00)
+           )
+        oct_val = self.client.service.get_val_at_time(
+            val_to_query.id,
+            datetime.datetime(2000, 10, 10, 00, 00, 00)
+           )
+        parse_suds_array(jan_val.data) == parse_suds_array(val_to_query.value.ts_values[0].ts_value)
+        parse_suds_array(feb_val.data) == parse_suds_array(val_to_query.value.ts_values[1].ts_value)
+        parse_suds_array(mar_val.data) == parse_suds_array(val_to_query.value.ts_values[2].ts_value)
+        parse_suds_array(oct_val.data) == parse_suds_array(val_to_query.value.ts_values[2].ts_value)
+        
         vals = self.client.service.get_vals_between_times(
             val_to_query.id,
             now,
@@ -138,6 +159,7 @@ class TimeSeriesTest(test_SoapServer.SoapServerTest):
             'minutes',
             1,
             )
+
 
         data = vals.data
         assert len(data) == 76
