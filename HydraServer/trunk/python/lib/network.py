@@ -607,7 +607,7 @@ def get_network(network_id, summary=False, include_data='N', scenario_ids=None, 
     if len(scenario_ids) > 0:
         datasets = DBSession.query(Dataset).join(ResourceScenario, ResourceScenario.dataset_id==Dataset.dataset_id).outerjoin(DatasetOwner, 
                                 and_(DatasetOwner.dataset_id==Dataset.dataset_id, 
-                                DatasetOwner.user_id==user_id)).filter(ResourceScenario.scenario_id.in_(scenario_ids)).options(noload('timeseriesdata')).options(noload('metadata')).options(joinedload('owners')).all()
+                                DatasetOwner.user_id==user_id)).filter(ResourceScenario.scenario_id.in_(scenario_ids)).options(noload('metadata')).options(joinedload('owners')).all()
     else:
         datasets = []
     
@@ -627,25 +627,13 @@ def get_network(network_id, summary=False, include_data='N', scenario_ids=None, 
             metadata_dict[m.dataset_id] = [m]
     log.debug("Metadata Retrieved")
 
-    log.debug("Getting Timeseries")
-    timeseries = data._get_timeseriesdata(dataset_dict.keys())
-    ts_dict = {}
-    for ts in timeseries:
-        if ts_dict.get(ts.dataset_id):
-            ts_dict[ts.dataset_id].append(ts)
-        else:
-            ts_dict[ts.dataset_id] = [ts]
-    log.debug("Timeseries Retrieved")
-   
     for dataset_id, dataset in dataset_dict.items():
         if dataset.hidden == 'N' or (dataset.hidden == 'Y' and dataset.check_user(user_id)):
-            dataset.timeseriesdata = ts_dict.get(dataset.dataset_id, [])
             dataset.metadata = metadata_dict.get(dataset.dataset_id, [])
         else:
             dataset.value = None
             dataset.start_time = None
             dataset.frequency = None
-            dataset.timeseriesdata = []
             dataset.metadata = []
 
     log.debug("Datasets Retrieved")
@@ -913,7 +901,6 @@ def add_node(network_id, node,**kwargs):
         net_i.check_write_permission(user_id)
     except NoResultFound:
         raise ResourceNotFoundError("Network %s not found"%(network_id))
-
 
     new_node = net_i.add_node(node.name, node.description, node.layout, node.x, node.y)
 
@@ -1357,8 +1344,6 @@ def get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=None, 
            except:
                d.value      = None
                d.frequency  = None
-               if d.data_type == 'timeseries':
-                   d.timeseriesdata = []
                d.metadata = []
         else:
             if include_metadata == 'Y':
@@ -1473,8 +1458,6 @@ def test_get_attributes_for_resource(network_id, scenario_id, ref_key, ref_ids=N
            except:
                ra.value      = None
                ra.frequency  = None
-               if ra.data_type == 'timeseries':
-                   ra.timeseriesdata = []
                ra.metadata = []
         else:
             if include_metadata == 'Y':

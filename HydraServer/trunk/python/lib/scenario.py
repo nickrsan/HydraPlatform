@@ -255,12 +255,9 @@ def _get_dataset_as_dict(rs, user_id):
            dataset['value']      = None
            dataset['frequency']  = None
            dataset['start_time'] = None
-           if dataset['data_type'] == 'timeseries':
-               dataset['timeseriesdata'] = []
            dataset['metadata'] = []
     
     dataset['metadata'] = [_get_as_obj(m.__dict__, 'Metadata') for m in rs.dataset.metadata]
-    dataset['timeseriesdata'] = [_get_as_obj(m.__dict__, 'TimeSeriesData') for m in rs.dataset.timeseriesdata]
     
     return dataset
 
@@ -635,8 +632,6 @@ def get_scenario_data(scenario_id,**kwargs):
                sd.value      = None
                sd.frequency  = None
                sd.start_time = None
-               if sd.data_type == 'timeseries':
-                   sd.timeseriesdata = []
                sd.metadata = []
 
     DBSession.expunge_all()
@@ -659,7 +654,7 @@ def get_attribute_data(attr_ids, node_ids, **kwargs):
         ra_ids.append(ra.resource_attr_id)
 
 
-    resource_scenarios = DBSession.query(ResourceScenario).filter(ResourceScenario.resource_attr_id.in_(ra_ids)).options(joinedload('resourceattr')).options(joinedload_all('dataset.metadata')).options(joinedload_all('dataset.timeseriesdata')).order_by(ResourceScenario.scenario_id).all()
+    resource_scenarios = DBSession.query(ResourceScenario).filter(ResourceScenario.resource_attr_id.in_(ra_ids)).options(joinedload('resourceattr')).options(joinedload_all('dataset.metadata')).order_by(ResourceScenario.scenario_id).all()
 
 
     for rs in resource_scenarios:
@@ -670,8 +665,6 @@ def get_attribute_data(attr_ids, node_ids, **kwargs):
                rs.dataset.value      = None
                rs.dataset.frequency  = None
                rs.dataset.start_time = None
-               if rs.dataset.data_type == 'timeseries':
-                   rs.datset.timeseriesdata = []
        DBSession.expunge(rs)
 
     return node_attrs, resource_scenarios
@@ -703,7 +696,7 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
                 ResourceAttr.link_id==ref_id,
                 ResourceAttr.group_id==ref_id
             ),
-            ResourceAttr.attr_id in attr_ids).options(joinedload('resourceattr')).options(joinedload_all('dataset.timeseriesdata')).options(joinedload_all('dataset.metadata')).distinct().all()
+            ResourceAttr.attr_id in attr_ids).options(joinedload('resourceattr')).options(joinedload_all('dataset.metadata')).distinct().all()
     else:
         resource_data = DBSession.query(ResourceScenario).filter(
         ResourceScenario.dataset_id   == Dataset.dataset_id,
@@ -715,7 +708,7 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
             ResourceAttr.node_id==ref_id,
             ResourceAttr.link_id==ref_id,
             ResourceAttr.group_id==ref_id
-        )).distinct().options(joinedload('resourceattr')).options(joinedload_all('dataset.timeseriesdata')).options(joinedload_all('dataset.metadata')).all()
+        )).distinct().options(joinedload('resourceattr')).options(joinedload_all('dataset.metadata')).all()
 
 
     for rs in resource_data:
@@ -726,8 +719,6 @@ def get_resource_data(ref_key, ref_id, scenario_id, type_id,**kwargs):
                rs.dataset.value      = None
                rs.dataset.frequency  = None
                rs.dataset.start_time = None
-               if rs.dataset.data_type == 'timeseries':
-                   rs.datset.timeseriesdata = []
     DBSession.expunge_all() 
     return resource_data 
 

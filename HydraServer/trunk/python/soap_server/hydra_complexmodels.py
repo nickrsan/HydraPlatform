@@ -208,10 +208,6 @@ class Dataset(ComplexModel):
         if parent.data_type == 'timeseries':
             if parent.value is not None:
                 self.value = TimeSeries(parent.value)
-                #self.value = _make_timeseries(parent.value)
-            else:
-                if len(parent.timeseriesdata) > 0:
-                    self.value = TimeSeries(val = parent.timeseriesdata)
 
         if self.value and type(self.value) is not dict:
             self.value = self.value.__dict__

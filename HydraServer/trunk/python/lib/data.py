@@ -18,7 +18,7 @@ import sys
 from HydraLib.dateutil import get_datetime
 from HydraLib import units
 import logging
-from db.model import Dataset, Metadata, TimeSeriesData, DatasetOwner, DatasetGroup, DatasetGroupItem
+from db.model import Dataset, Metadata, DatasetOwner, DatasetGroup, DatasetGroupItem
 from util import generate_data_hash
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import case
@@ -62,7 +62,6 @@ def get_dataset(dataset_id,**kwargs):
                 Dataset.data_name,
                 Dataset.hidden,
                 DatasetOwner.user_id,
-                null().label('timeseriesdata'),
                 null().label('metadata'),
                 case([(and_(Dataset.hidden=='Y', DatasetOwner.user_id is not None), None)], 
                         else_=Dataset.start_time).label('start_time'),
@@ -74,13 +73,14 @@ def get_dataset(dataset_id,**kwargs):
                                     and_(DatasetOwner.dataset_id==Dataset.dataset_id, 
                                     DatasetOwner.user_id==user_id)).one()
 
+        #convert the value row into a string as it is returned as a binary
+        if dataset.value is not None:
+            dataset.value = str(dataset.value)
+
         if dataset.data_type == 'timeseries' and (dataset.hidden == 'N' or (Dataset.hidden == 'Y' and dataset.user_id is not None)):
-            tsdata = DBSession.query(TimeSeriesData).filter(TimeSeriesData.dataset_id==dataset_id).all()
             metadata = DBSession.query(Metadata).filter(Metadata.dataset_id==dataset_id).all()
-            dataset.timeseriesdata = tsdata
             dataset.metadata = metadata
         else:
-            dataset.timeseriesdata = []
             dataset.metadata = []
     except NoResultFound:
         raise HydraError("Dataset %s does not exist."%(dataset_id))
@@ -344,35 +344,6 @@ def _get_db_val(data_type, val):
         return val 
     else:
         raise HydraError("Invalid data type %s"%(data_type,))
-
-def _get_timeseriesdata(dataset_ids):
-    """
-        Get all the timeseries data entries for a given list of
-        dataset ids.
-    """
-    if len(dataset_ids) == 0:
-        return []
-
-    tsdata = []
-    if len(dataset_ids) > qry_in_threshold:
-        idx = 0
-        extent = qry_in_threshold - 1
-        while idx < len(dataset_ids):
-            log.info("Querying %s timeseries", len(dataset_ids[idx:extent]))
-            rs = DBSession.query(TimeSeriesData).filter(TimeSeriesData.dataset_id.in_(dataset_ids[idx:extent])).all()
-            tsdata.extend(rs)
-            idx = idx + qry_in_threshold 
-            
-            if idx + qry_in_threshold > len(dataset_ids):
-                extent = len(dataset_ids)
-            else:
-                extent = extent +qry_in_threshold 
-    else:
-        ts_qry = DBSession.query(TimeSeriesData).filter(TimeSeriesData.dataset_id.in_(dataset_ids)).all()
-        for ts in ts_qry:
-            tsdata.append(ts)
-
-    return tsdata 
 
 def get_metadata(dataset_ids, **kwargs):
     return _get_metadata(dataset_ids)

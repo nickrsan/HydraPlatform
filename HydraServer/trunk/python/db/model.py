@@ -311,18 +311,6 @@ class DatasetGroupItem(Base):
     dataset = relationship('Dataset', backref=backref("groupitems", order_by=dataset_id))
 
 
-class TimeSeriesData(Base):
-    """
-    """
-
-    __tablename__='tTimeSeriesData'
-
-    dataset_id = Column(Integer(), ForeignKey('tDataset.dataset_id'), primary_key=True, nullable=False)
-    ts_time = Column(String(), primary_key=True, nullable=False)
-    ts_value = Column(LargeBinary(),  nullable=False)
-    
-    timeseries = relationship('Dataset', backref=backref("timeseriesdata", order_by=dataset_id, cascade="all, delete-orphan"))
-
 class Metadata(Base):
     """
     """
