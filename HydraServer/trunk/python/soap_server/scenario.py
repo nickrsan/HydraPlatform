@@ -186,7 +186,7 @@ class ScenarioService(HydraService):
         ret_data = [ResourceScenario(rs) for rs in node_data]
         return ret_data 
 
-    @rpc(Integer, Integer, Integer, _returns=SpyneArray(ResourceScenario))
+    @rpc(Integer, Integer, Integer(min_occurs=0, max_occurs=1), _returns=SpyneArray(ResourceScenario))
     def get_link_data(ctx, link_id, scenario_id, type_id):
         """
             Get all the resource scenarios for a given link 
@@ -204,7 +204,7 @@ class ScenarioService(HydraService):
         ret_data = [ResourceScenario(rs) for rs in link_data]
         return ret_data
 
-    @rpc(Integer, Integer, Integer, _returns=SpyneArray(ResourceScenario))
+    @rpc(Integer, Integer, Integer(min_occurs=0, max_occurs=1), _returns=SpyneArray(ResourceScenario))
     def get_network_data(ctx, network_id, scenario_id, type_id):
         """
             Get all the resource scenarios for a given network 
@@ -221,7 +221,7 @@ class ScenarioService(HydraService):
         ret_data = [ResourceScenario(rs) for rs in network_data]
         return ret_data
 
-    @rpc(Integer, Integer, Integer, _returns=SpyneArray(ResourceScenario))
+    @rpc(Integer, Integer, Integer(min_occurs=0, max_occurs=1), _returns=SpyneArray(ResourceScenario))
     def get_resourcegroup_data(ctx, resourcegroup_id, scenario_id, type_id):
         """
             Get all the resource scenarios for a given resourcegroup 
