@@ -182,9 +182,8 @@ from suds import WebFault
 from numpy import array, reshape
 
 from lxml import etree
-import requests
+import traceback
 
-import json
 log = logging.getLogger(__name__)
 
 __location__ = os.path.split(sys.argv[0])[0]
@@ -235,7 +234,6 @@ class ImportCSV(object):
         else:
             self.connection.login()
 
-
         self.node_id  = PluginLib.temp_ids()
         self.link_id  = PluginLib.temp_ids()
         self.group_id = PluginLib.temp_ids()
@@ -246,6 +244,8 @@ class ImportCSV(object):
         self.files = []
 
         self.num_steps = 6
+
+        self.ignorelines = ['', '\n', '\r']
 
     def validate_value(self, value, restriction_dict):
         if restriction_dict is None or restriction_dict == {}:
@@ -282,7 +282,7 @@ class ImportCSV(object):
                 #and the column in the line where the bad character has occurred.
                 bad_lines.append((i+1, e.start))
 
-            if len(line) > 0 and line.strip()[0] == '#':
+            if len(line.strip()) > 0 and line.strip()[0] == '#':
                 file_data.pop(i)
 
         #Complain about the lines that the bad characters are on.
@@ -481,12 +481,12 @@ class ImportCSV(object):
         data = metadata[1:-1]
 
         metadata_dict = {}
-        for data_line in data:
+        for line_num, data_line in enumerate(data):
             try:
                 split_data = data_line.split(',')
                 metadata_dict[split_data[0].strip()] = self.get_metadata_as_dict(keys[1:], split_data[1:])
             except Exception, e:
-                raise HydraPluginError("Malformed metadata on line %s in file %s"%(split_data, filename))
+                raise HydraPluginError("Malformed metadata on line %s in file %s"%(line_num+2, filename))
         return metadata_dict
 
     def get_metadata_as_dict(self, keys, metadata):
@@ -516,9 +516,6 @@ class ImportCSV(object):
 
         return metadata_dict
 
-
-
-
     def read_nodes(self, file):
         node_data = self.get_file_data(file)
 
@@ -532,14 +529,12 @@ class ImportCSV(object):
             log.info("No metadata found for node file %s",file)
             metadata = {}
 
-
         self.add_attrs = True
 
         keys  = node_data[0].split(',')
         self.check_header(file, keys)
         units = node_data[1].split(',')
         data = node_data[2:-1]
-        restrictions = {}
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -559,60 +554,76 @@ class ImportCSV(object):
             else:
                 attrs.update({i: key.strip()})
 
-        for line in data:
-            linedata = line.split(',')
-            nodename = linedata[field_idx['name']].strip()
+        for line_num, line in enumerate(data):
 
-            if nodename in self.node_names:
-                raise HydraPluginError("Duplicate Node name: %s"%(nodename))
-            else:
-                self.node_names.append(nodename)
+            #skip any empty lines
+            if line.strip() in self.ignorelines:
+                continue
 
-            if nodename in self.Nodes.keys():
-                node = self.Nodes[nodename]
-                log.info('Node %s exists.' % nodename)
-            else:
-                node = dict(
-                    id = self.node_id.next(),
-                    name = nodename,
-                    description = linedata[field_idx['description']].strip(),
-                    attributes = [],
-                )
-                try:
-                    node['x'] = str(linedata[field_idx['x']])
-                except ValueError:
-                    node['x'] = 0
-                    log.info('X coordinate of node %s is not a number.'
-                                 % node['name'])
-                    self.warnings.append('X coordinate of node %s is not a number.'
-                                         % node['name'])
-                try:
-                    node['y'] = str(linedata[field_idx['y']])
-                except ValueError:
-                    node['y'] = 0
-                    log.info('Y coordinate of node %s is not a number.'
-                                 % node['name'])
-                    self.warnings.append('Y coordinate of node %s is not a number.'
-                                         % node['name'])
-                if field_idx['type'] is not None:
-                    node_type = linedata[field_idx['type']].strip()
-
-                    if len(self.Templates):
-                        if node_type not in self.Templates['resources'].get('NODE', {}).keys():
-                            raise HydraPluginError(
-                                "Node type %s not specified in the template."%
-                                (node_type))
-
-                        restrictions = self.Templates['resources']['NODE'][node_type]['attributes']
-                    if node_type not in self.nodetype_dict.keys():
-                        self.nodetype_dict.update({node_type: (nodename,)})
-                    else:
-                        self.nodetype_dict[node_type] += (nodename,)
-
-            if len(attrs) > 0:
-                node = self.add_data(node, attrs, linedata, metadata, units=units, restrictions=restrictions)
+            try:
+                node = self.read_node_line(line, attrs, field_idx, metadata, units)
+            except Exception, e:
+                raise HydraPluginError("An error has occurred in file %s at line %s: %s"%(file, line_num+3, e))
 
             self.Nodes.update({node['name']: node})
+
+    def read_node_line(self, line, attrs, field_idx, metadata, units):
+        linedata = line.split(',')
+        nodename = linedata[field_idx['name']].strip()
+
+        restrictions = {}
+        
+        if nodename in self.node_names:
+            raise HydraPluginError("Duplicate Node name: %s"%(nodename))
+        else:
+            self.node_names.append(nodename)
+
+        if nodename in self.Nodes.keys():
+            node = self.Nodes[nodename]
+            log.info('Node %s exists.' % nodename)
+        else:
+            node = dict(
+                id = self.node_id.next(),
+                name = nodename,
+                description = linedata[field_idx['description']].strip(),
+                attributes = [],
+            )
+            try:
+                node['x'] = str(linedata[field_idx['x']])
+            except ValueError:
+                node['x'] = 0
+                log.info('X coordinate of node %s is not a number.'
+                             % node['name'])
+                self.warnings.append('X coordinate of node %s is not a number.'
+                                     % node['name'])
+            try:
+                node['y'] = str(linedata[field_idx['y']])
+            except ValueError:
+                node['y'] = 0
+                log.info('Y coordinate of node %s is not a number.'
+                             % node['name'])
+                self.warnings.append('Y coordinate of node %s is not a number.'
+                                     % node['name'])
+            if field_idx['type'] is not None:
+                node_type = linedata[field_idx['type']].strip()
+
+                if len(self.Templates):
+                    if node_type not in self.Templates['resources'].get('NODE', {}).keys():
+                        raise HydraPluginError(
+                            "Node type %s not specified in the template."%
+                            (node_type))
+                
+                    restrictions = self.Templates['resources']['NODE'][node_type]['attributes']
+                if node_type not in self.nodetype_dict.keys():
+                    self.nodetype_dict.update({node_type: (nodename,)})
+                else:
+                    self.nodetype_dict[node_type] += (nodename,)
+
+        if len(attrs) > 0:
+            node = self.add_data(node, attrs, linedata, metadata, units=units, restrictions=restrictions)
+
+        return node
+
 
     def read_links(self, file):
         link_data = self.get_file_data(file)
@@ -633,7 +644,6 @@ class ImportCSV(object):
         self.check_header(file, keys)
         units = link_data[1].split(',')
         data = link_data[2:-1]
-        restrictions = {}
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -652,58 +662,73 @@ class ImportCSV(object):
             else:
                 attrs.update({i: key.strip()})
 
-        for line in data:
-            linedata = line.split(',')
-            linkname = linedata[field_idx['name']].strip()
+        for line_num, line in enumerate(data):
+            #skip any empty lines
+            if line.strip() in self.ignorelines:
+                continue
 
-            if linkname in self.link_names:
-                raise HydraPluginError("Duplicate Link name: %s"%(linkname))
-            else:
-                self.link_names.append(linkname)
+            try:
+                link = self.read_link_line(line, attrs, field_idx, metadata, units)
+            except Exception, e:
+                raise HydraPluginError("An error has occurred in file %s at line %s: %s"%(file, line_num+3, e))
 
-            if linkname in self.Links.keys():
-                link = self.Links[linkname]
-                log.info('Link %s exists.' % linkname)
-            else:
-                link = dict(
-                    id = self.link_id.next(),
-                    name = linkname,
-                    description = linedata[field_idx['description']].strip(),
-                    attributes = [],
-                )
-
-                try:
-                    fromnode = self.Nodes[linedata[field_idx['from']].strip()]
-                    tonode = self.Nodes[linedata[field_idx['to']].strip()]
-                    link['node_1_id'] = fromnode['id']
-                    link['node_2_id'] = tonode['id']
-
-                except KeyError:
-                    log.info(('Start or end node not found (%s -- %s).' +
-                                  ' No link created.') %
-                                 (linedata[field_idx['from']].strip(),
-                                  linedata[field_idx['to']].strip()))
-                    self.warnings.append(('Start or end node not found (%s -- %s).' +
-                                  ' No link created.') %
-                                 (linedata[field_idx['from']].strip(),
-                                  linedata[field_idx['to']].strip()))
-
-                if field_idx['type'] is not None:
-                    link_type = linedata[field_idx['type']].strip()
-                    if len(self.Templates):
-                        if link_type not in self.Templates['resources'].get('LINK', {}).keys():
-                            raise HydraPluginError(
-                                "Link type %s not specified in the template."
-                                %(link_type))
-
-                        restrictions = self.Templates['resources']['LINK'][link_type]['attributes']
-                    if link_type not in self.linktype_dict.keys():
-                        self.linktype_dict.update({link_type: (linkname,)})
-                    else:
-                        self.linktype_dict[link_type] += (linkname,)
-            if len(attrs) > 0:
-                link = self.add_data(link, attrs, linedata, metadata, units=units, restrictions=restrictions)
             self.Links.update({link['name']: link})
+
+    def read_link_line(self, line, attrs, field_idx, metadata, units):
+
+        restrictions = {}
+        linedata = line.split(',')
+        linkname = linedata[field_idx['name']].strip()
+
+        if linkname in self.link_names:
+            raise HydraPluginError("Duplicate Link name: %s"%(linkname))
+        else:
+            self.link_names.append(linkname)
+
+        if linkname in self.Links.keys():
+            link = self.Links[linkname]
+            log.info('Link %s exists.' % linkname)
+        else:
+            link = dict(
+                id = self.link_id.next(),
+                name = linkname,
+                description = linedata[field_idx['description']].strip(),
+                attributes = [], 
+            )
+
+            try:
+                fromnode = self.Nodes[linedata[field_idx['from']].strip()]
+                tonode = self.Nodes[linedata[field_idx['to']].strip()]
+                link['node_1_id'] = fromnode['id']
+                link['node_2_id'] = tonode['id']
+
+            except KeyError:
+                log.info(('Start or end node not found (%s -- %s).' +
+                              ' No link created.') %
+                             (linedata[field_idx['from']].strip(),
+                              linedata[field_idx['to']].strip()))
+                self.warnings.append(('Start or end node not found (%s -- %s).' +
+                              ' No link created.') %
+                             (linedata[field_idx['from']].strip(),
+                              linedata[field_idx['to']].strip()))
+
+            if field_idx['type'] is not None:
+                link_type = linedata[field_idx['type']].strip()
+                if len(self.Templates):
+                    if link_type not in self.Templates['resources'].get('LINK', {}).keys():
+                        raise HydraPluginError(
+                            "Link type %s not specified in the template."
+                            %(link_type))
+                
+                    restrictions = self.Templates['resources']['LINK'][link_type]['attributes']
+                if link_type not in self.linktype_dict.keys():
+                    self.linktype_dict.update({link_type: (linkname,)})
+                else:
+                    self.linktype_dict[link_type] += (linkname,)
+        if len(attrs) > 0:
+            link = self.add_data(link, attrs, linedata, metadata, units=units, restrictions=restrictions)
+        
+        return link
 
     def read_groups(self, file):
         """
@@ -728,7 +753,6 @@ class ImportCSV(object):
         self.check_header(file, keys)
         units = group_data[1].split(',')
         data  = group_data[2:-1]
-        restrictions = {}
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -748,49 +772,61 @@ class ImportCSV(object):
             else:
                 attrs.update({i: key.strip()})
 
-        for line in data:
+        for line_num, line in enumerate(data):
 
-            if line == '':
+            #skip any empty lines
+            if line.strip() in self.ignorelines:
                 continue
-
-            group_data = line.split(',')
-            group_name = group_data[field_idx['name']].strip()
-
-
-            if group_name in self.group_names:
-                raise HydraPluginError("Duplicate Group name: %s"%(group_name))
-            else:
-                self.group_names.append(group_name)
-
-            if group_name in self.Groups.keys():
-                group = self.Groups[group_name]
-                log.info('Group %s exists.' % group_name)
-            else:
-                group = dict(
-                    id = self.group_id.next(),
-                    name = group_name,
-                    description = group_data[field_idx['description']].strip(),
-                    attributes = [],
-                )
-
-                if field_idx['type'] is not None:
-                    group_type = group_data[field_idx['type']].strip()
-                    if len(self.Templates):
-                        if group_type not in self.Templates['resources'].get('GROUP', {}).keys():
-                            raise HydraPluginError(
-                                "Group type %s not specified in the template."
-                                %(group_type))
-                        restrictions = self.Templates['resources']['GROUP'][group_type]['attributes']
-                    if group_type not in self.grouptype_dict.keys():
-                        self.grouptype_dict.update({group_type: (group_name,)})
-                    else:
-                        self.grouptype_dict[group_type] += (group_name,)
-
-
-            if len(attrs) > 0:
-                group = self.add_data(group, attrs, group_data, metadata, units=units, restrictions=restrictions)
-
+            try: 
+                group = self.read_group_line(line, attrs, field_idx, metadata, units)
+            except Exception, e:
+                raise HydraPluginError("An error has occurred in file %s at line %s: %s"%(file, line_num+3, e))
+            
             self.Groups.update({group['name']: group})
+
+    def read_group_line(self, line, attrs, field_idx, metadata, units):
+
+        group_data = line.split(',')
+        group_name = group_data[field_idx['name']].strip()
+
+
+        restrictions = {}
+
+        if group_name in self.group_names:
+            raise HydraPluginError("Duplicate Group name: %s"%(group_name))
+        else:
+            self.group_names.append(group_name)
+
+        if group_name in self.Groups.keys():
+            group = self.Groups[group_name]
+            log.info('Group %s exists.' % group_name)
+        else:
+            group = dict(
+                id = self.group_id.next(),
+                name = group_name,
+                description = group_data[field_idx['description']].strip(),
+                attributes = [],
+            )
+
+            if field_idx['type'] is not None:
+                group_type = group_data[field_idx['type']].strip()
+                if len(self.Templates):
+                    if group_type not in self.Templates['resources'].get('GROUP', {}).keys():
+                        raise HydraPluginError(
+                            "Group type %s not specified in the template."
+                            %(group_type))
+                    restrictions = self.Templates['resources']['GROUP'][group_type]['attributes']
+                if group_type not in self.grouptype_dict.keys():
+                    self.grouptype_dict.update({group_type: (group_name,)})
+                else:
+                    self.grouptype_dict[group_type] += (group_name,)
+
+
+        if len(attrs) > 0:
+            group = self.add_data(group, attrs, group_data, metadata, units=units, restrictions=restrictions)
+
+        return group
+
 
     def read_group_members(self, file):
 
@@ -821,50 +857,63 @@ class ImportCSV(object):
 
         items = []
 
-        for line in data:
+        for line_num, line in enumerate(data):
 
-            if line == '':
+            #skip any empty lines
+            if line.strip() in self.ignorelines:
                 continue
 
-            member_data = line.split(',')
-
-            group_name  = member_data[field_idx['name']].strip()
-            group = self.Groups.get(group_name)
-
-            if group is None:
-                log.info("Group %s has not been specified."%(group_name) +
-                          ' Group item not created.')
-                self.warnings.append("Group %s has not been specified"%(group_name) +
-                          ' Group item not created.')
-                continue
+            try:
+                item = self.read_group_member_line(line, field_idx, type_map)
+                if item is None:
+                    continue
+            except Exception, e:
+                raise HydraPluginError("An error has occurred in file %s at line %s: %s"%(file, line_num+3, e))
 
 
-            member_type = member_data[field_idx['type']].strip().upper()
-
-            if type_map.get(member_type) is None:
-                log.info("Type %s does not exist."%(member_type) +
-                          ' Group item not created.')
-                self.warnings.append("Type %s does not exist"%(member_type) +
-                          ' Group item not created.')
-                continue
-            member_name = member_data[field_idx['member']].strip()
-
-            member = type_map[member_type].get(member_name)
-            if member is None:
-                log.info("%s %s does not exist."%(member_type, member_name) +
-                          ' Group item not created.')
-                self.warnings.append("%s %s does not exist."%(member_type, member_name) +
-                          ' Group item not created.')
-                continue
-
-            item = dict(
-                group_id = group['id'],
-                ref_id   = member['id'],
-                ref_key  = member_type,
-            )
             items.append(item)
 
         self.Scenario['resourcegroupitems'] = items
+
+    def read_group_member_line(self, line, field_idx, type_map):
+
+        member_data = line.split(',')
+        group_name  = member_data[field_idx['name']].strip()
+        group = self.Groups.get(group_name)
+
+        if group is None:
+            log.info("Group %s has not been specified."%(group_name) +
+                      ' Group item not created.')
+            self.warnings.append("Group %s has not been specified"%(group_name) +
+                      ' Group item not created.')
+            return None
+
+
+        member_type = member_data[field_idx['type']].strip().upper()
+
+        if type_map.get(member_type) is None:
+            log.info("Type %s does not exist."%(member_type) +
+                      ' Group item not created.')
+            self.warnings.append("Type %s does not exist"%(member_type) +
+                      ' Group item not created.')
+            return None
+        member_name = member_data[field_idx['member']].strip()
+
+        member = type_map[member_type].get(member_name)
+        if member is None:
+            log.info("%s %s does not exist."%(member_type, member_name) +
+                      ' Group item not created.')
+            self.warnings.append("%s %s does not exist."%(member_type, member_name) +
+                      ' Group item not created.')
+            return None
+
+        item = dict(
+            group_id = group['id'],
+            ref_id   = member['id'],
+            ref_key  = member_type,
+        )
+
+        return item
 
     def create_attribute(self, name, unit=None):
         """
@@ -1098,6 +1147,7 @@ class ImportCSV(object):
             scal = self.create_scalar(value, restriction_dict)
             dataset['value'] = scal
         except ValueError:
+            value = value.replace('\\', '/')
             try:
                 filedata = []
                 if self.expand_filenames:
@@ -1334,8 +1384,6 @@ class ImportCSV(object):
             log.info("Network %s updated.", self.Network['id'])
         else:
             log.info("Adding Network")
-            import pudb
-            pudb.set_trace()
             self.NetworkSummary = self.connection.call('add_network', {'net':self.Network})
             log.info("Network created with %s nodes and %s links. Network ID is %s",
                      len(self.NetworkSummary['nodes']),
@@ -1560,6 +1608,10 @@ if __name__ == '__main__':
 	errors = []
     except HydraPluginError as e:
         errors = [e.message]
+    except Exception, e:
+        log.critical(e)
+        #traceback.print_exc(file=sys.stdout)
+        errors = [e]
 
     xml_response = PluginLib.create_xml_response('ImportCSV',
                                                  network_id,
