@@ -192,7 +192,7 @@ class HydraServer():
     def create_json_application(self):
 
         app = HydraSoapApplication(applications, tns='hydra.base',
-                    in_protocol=HydraDocument(validator=None),
+                    in_protocol=HydraDocument(validator='soft'),
                     out_protocol=JsonDocument()
                 )
         return app
