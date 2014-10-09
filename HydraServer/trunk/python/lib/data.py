@@ -136,7 +136,7 @@ def update_dataset(dataset_id, name, data_type, val, units, dimension, metadata=
     return dataset
 
     
-def add_dataset(data_type, val, units, dimension, metadata={}, name="", user_id=None):
+def add_dataset(data_type, val, units, dimension, metadata={}, name="", user_id=None, flush=False):
     """
         Data can exist without scenarios. This is the mechanism whereby
         single pieces of data can be added without doing it through a scenario.
@@ -160,15 +160,17 @@ def add_dataset(data_type, val, units, dimension, metadata={}, name="", user_id=
     try:
         existing_dataset = DBSession.query(Dataset).filter(Dataset.data_hash==d.data_hash).one()
         if existing_dataset.check_user(user_id):
-            return existing_dataset
+            d = existing_dataset
         else:
             d.set_metadata({'created_at': datetime.datetime.now()})
             d.set_hash()
             DBSession.add(d)
-            return d 
     except NoResultFound:
         DBSession.add(d)
-        return d
+
+    if flush == True:
+        DBSession.flush()
+    return d
 
 def bulk_insert_data(data, **kwargs):
     datasets = _bulk_insert_data(data, user_id=kwargs.get('user_id'), source=kwargs.get('app_name'))

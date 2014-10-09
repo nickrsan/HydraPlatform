@@ -35,6 +35,26 @@ class DataService(HydraService):
         The data SOAP service
     """
 
+    @rpc(Dataset, _returns=Dataset)
+    def add_dataset(ctx, dataset):
+        """
+           Add a single dataset. Return the new dataset with a dataset ID.
+        """
+        value = dataset.parse_value()
+        metadata = dataset.get_metadata_as_dict(user_id=ctx.in_header.user_id)
+        dataset_i = data.add_dataset(dataset.type,
+                                     value,
+                                     dataset.unit,
+                                     dataset.dimension,
+                                     metadata,
+                                     dataset.name,
+                                     ctx.in_header.user_id,
+                                    flush=True)
+        
+        return Dataset(dataset_i)
+
+
+
     @rpc(Integer, _returns=Dataset)
     def get_dataset(ctx, dataset_id):
         """
