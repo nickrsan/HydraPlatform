@@ -1,6 +1,6 @@
 # -*- mode: python -*-
-a = Analysis(['ImportCSV.py'],
-             pathex=['C:\\Users\\steve\\Documents\\svn\\HYDRA\\HydraPlugins\\CSVplugin\\trunk\\ImportCSV'],
+a = Analysis(['ImportWML.py'],
+             pathex=['C:\\Users\\steve\\Documents\\svn\\HYDRA\\HydraPlugins\\WMLplugin\\trunk\\ImportWML'],
              hiddenimports=[],
              hookspath=None,
              runtime_hooks=None)
@@ -8,7 +8,7 @@ pyz = PYZ(a.pure)
 exe = EXE(pyz,
           a.scripts,
           exclude_binaries=True,
-          name='ImportCSV.exe',
+          name='ImportWML.exe',
           debug=False,
           strip=None,
           upx=True,
@@ -19,4 +19,4 @@ coll = COLLECT(exe,
                a.datas,
                strip=None,
                upx=True,
-               name='ImportCSV')
+               name='ImportWML')

@@ -1,0 +1,9 @@
+('C:\\Users\\steve\\Documents\\svn\\HYDRA\\HydraPlugins\\WaterML\\trunk\\ImportWML\\build\\ImportWML\\ImportWML.exe',
+ True,
+ False,
+ None,
+ None,
+ [],
+ None,
+ True,
+ 1413371309L)
