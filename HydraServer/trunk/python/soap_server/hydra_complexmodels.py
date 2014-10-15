@@ -29,6 +29,7 @@ import pandas as pd
 from pandas.tseries.index import DatetimeIndex
 import logging
 from HydraLib.util import create_dict, check_array_struct
+from numpy import array, ndarray
 from util import generate_data_hash
 
 NS = "soap_server.hydra_complexmodels"
@@ -196,23 +197,9 @@ class Dataset(ComplexModel):
 
         self.dimension = parent.data_dimen
         self.unit      = parent.data_units
+        self.value = None
         if parent.value is not None: 
-            if parent.data_type == 'descriptor':
-                self.value = {'desc_val': [parent.value]}
-            elif parent.data_type == 'array':
-                self.value = Array(parent.value)
-            elif parent.data_type == 'scalar':
-                self.value = {'param_value': [parent.value]}
-            elif parent.data_type == 'eqtimeseries':
-                self.value = EqTimeSeries(parent.start_time, parent.frequency, parent.value)
-        if parent.data_type == 'timeseries':
-            if parent.value is not None:
-                self.value = TimeSeries(parent.value)
-
-        if self.value and type(self.value) is not dict:
-            self.value = self.value.__dict__
-        elif self.value is None:
-            self.value = {}
+            self.value = get_return_val(parent.data_type, parent.value, parent.start_time, parent.frequency)
         
         metadata = []
         for m in parent.metadata:
@@ -404,6 +391,21 @@ class Dataset(ComplexModel):
 
         return data_hash
 
+def get_return_val(data_type, value, start_time=None, frequency=None):
+    if data_type == 'descriptor':
+        ret_value = {'desc_val': [value]}
+    elif data_type == 'array':
+        ret_value = Array(value)
+    elif data_type == 'scalar':
+        ret_value = {'param_value': [float(value)]}
+    elif data_type == 'timeseries':
+        ret_value = TimeSeries(value)
+    elif data_type == 'eqtimeseries':
+        ret_value = EqTimeSeries(start_time, frequency, value) 
+    if type(ret_value) is not dict:
+        ret_value = ret_value.__dict__
+    return ret_value
+
 class Descriptor(ComplexModel):
     _type_info = [
         ('desc_val', Unicode),
@@ -486,36 +488,35 @@ class TimeSeries(ComplexModel):
         if  val is None or len(val) == 0:
             return
 
-        ts_vals = []
+        #If not read yet, read value into a pandas dataframe
         if type(val) == str:
-            log.debug("Creating timeseries complexmodels")
             timeseries = pd.read_json(val)
-            for ts in timeseries.index:
-                ts_val = timeseries.loc[ts].values
-                ts_data = {}
-                try:
-                    ts_data['ts_time'] = [str(get_datetime(ts.to_pydatetime()))]
-                except AttributeError:
-                    try:
-                        ts_data['ts_time'] = [eval(ts)]
-                    except:
-                        ts_data['ts_time'] = [ts]
-                try:
-                    ts_val = list(ts_val)
-                    ts_data['ts_value'] = [create_dict(ts_val)]
-                except:
-                    ts_data['ts_value'] = [ts_val]
-                ts_vals.append(ts_data)
-
-            if type(timeseries.index) == DatetimeIndex:
-                self.frequency = [timeseries.index.inferred_freq]
-            self.periods = [len(timeseries.index)]
-            log.debug("Timeseries complexmodels created")
         else:
-            log.info("IN HERE!")
-            for ts in val:
-                ts_vals.append(TimeSeriesData(ts).__dict__)
+            timeseries = val
+
+        ts_vals = []
+        for ts in timeseries.index:
+            ts_val = timeseries.loc[ts].values
+            ts_data = {}
+            try:
+                ts_data['ts_time'] = [str(get_datetime(ts.to_pydatetime()))]
+            except AttributeError:
+                try:
+                    ts_data['ts_time'] = [eval(ts)]
+                except:
+                    ts_data['ts_time'] = [ts]
+            try:
+                ts_val = list(ts_val)
+                ts_data['ts_value'] = [create_dict(ts_val)]
+            except:
+                ts_data['ts_value'] = [ts_val]
+            ts_vals.append(ts_data)
+
+        if type(timeseries.index) == DatetimeIndex:
+            self.frequency = [timeseries.index.inferred_freq]
+        self.periods = [len(timeseries.index)]
         self.ts_values = ts_vals
+        log.debug("Timeseries complexmodels created")
 
 class EqTimeSeries(ComplexModel):
 
@@ -555,6 +556,11 @@ class Array(ComplexModel):
     ]
 
     def __init__(self, val=None):
+        """
+            A 1-D array looks like: {'arr_data': {'array':[{'item': [1, 2, 3]}]}
+            This function takes an array like: [1, 2, 3] or "[1, 2, 3]" and converts it into the correct format.
+        """
+
         super(Array, self).__init__()
         if  val is None:
             return
@@ -563,6 +569,9 @@ class Array(ComplexModel):
         except:
             pass
         if type(val) is list:
+            self.arr_data = [create_dict(val)]
+        elif type(val) in (array, ndarray):
+            val = list(val)
             self.arr_data = [create_dict(val)]
         else:
             self.arr_data = [val]

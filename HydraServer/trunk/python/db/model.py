@@ -34,7 +34,7 @@ from HydraLib.dateutil import ordinal_to_timestamp, get_datetime
 
 from db import DeclarativeBase as Base, DBSession
 
-from util import generate_data_hash
+from util import generate_data_hash, get_val
 
 from sqlalchemy.sql.expression import case
 from sqlalchemy import UniqueConstraint, and_
@@ -115,63 +115,8 @@ class Dataset(Base):
             as they are in the DB (a timeseries being a list of timeseries data objects,
             for example) or as a single python dictionary
         """
-        if self.data_type == 'array':
-            return eval(self.value)
-        elif self.data_type == 'descriptor':
-            return str(self.value)
-        elif self.data_type == 'eqtimeseries':
-            return (self.start_time, self.frequency, eval(self.value))
-        elif self.data_type == 'scalar':
-            return Decimal(str(self.value))
-        elif self.data_type == 'timeseries':
-            timeseries = pd.read_json(self.value)
-
-            idx = timeseries.index
-            #Seasonal timeseries are stored in the year
-            #1900. Therefore if the timeseries is seasonal, 
-            #the request must be a seasonal request, not a 
-            #standard request
-            if type(idx) == pd.DatetimeIndex:
-                if set(idx.year) == set([1900]):
-                    if type(timestamp) == list:
-                        seasonal_timestamp = []
-                        for t in timestamp:
-                            t_1900 = t.replace(year=1900)
-                            seasonal_timestamp.append(t_1900)
-                        timestamp = seasonal_timestamp
-                    else:
-                        timestamp = timestamp.replace(year=1900)
-
-            ts_val = []
-            if timestamp is None:
-                timestamps = list(timeseries.index)
-                for i, ts in enumerate(timestamps):
-                    ts_val.append({'ts_time':str(ts),
-                                   'ts_value': timeseries.loc[ts].values.tolist()})
-
-                return {'ts_values':ts_val}
-            else:
-
-                try:
-                    pandas_ts = timeseries.reindex(timestamp, method='ffill')
-
-                    #If there are no values at all, just return None
-                    if len(pandas_ts.dropna()) == 0:
-                        return None
-
-                    #Replace all numpy NAN values with None
-                    pandas_ts = pandas_ts.where(pandas_ts.notnull(), None)
-                       
-                    if type(timestamp) is list and len(timestamp) == 1:
-                        ret_val = pandas_ts.loc[timestamp[0]].values.tolist()
-                    else:
-                        ret_val = pandas_ts.loc[timestamp].values.tolist()
-
-                    return ret_val
-
-                except Exception, e:
-                    log.critical("Unable to retrive data. Check timestamps.")
-                    log.critical(e)
+        val = get_val(self, timestamp)
+        return val
 
     def set_val(self, data_type, val):
         if data_type in ('descriptor','scalar','array'):
