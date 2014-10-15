@@ -150,6 +150,10 @@ def add_dataset(data_type, val, units, dimension, metadata={}, name="", user_id=
 
     d.set_metadata(metadata)
 
+    # Assign dimension if necessary
+    if units is not None and dimension is None:
+        dimension = unit.get_dimension(units)
+
     d.data_type  = data_type
     d.data_units = units
     d.data_name  = name
