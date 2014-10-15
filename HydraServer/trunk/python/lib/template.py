@@ -1052,10 +1052,10 @@ def get_network_as_xml_template(network_id,**kwargs):
             resource_name   = etree.SubElement(group_resource, "name")
             resource_name.text   = group_i.group_name
 
-            layout = _get_layout_as_etree(group_i.group_layout)
+           # layout = _get_layout_as_etree(group_i.group_layout)
 
-            if layout is not None:
-                group_resource.append(layout)
+           # if layout is not None:
+           #     group_resource.append(layout)
 
             for group_attr in group_attributes:
                 _make_attr_element(group_resource, group_attr)
