@@ -79,11 +79,10 @@ class SoapServerTest(unittest.TestCase):
 
         self.login('root', '')
 
-        self.project_id = self.create_project().id
-
         self.create_user("UserA")
         self.create_user("UserB")
         self.create_user("UserC")
+        self.project_id = self.create_project().id
 
 
     def tearDown(self):
