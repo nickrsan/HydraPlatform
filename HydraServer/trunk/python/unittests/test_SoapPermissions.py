@@ -32,7 +32,7 @@ class LoginTest(test_SoapServer.SoapServerTest):
         try:
             login_response = self.client.service.login('root', 'invalid_password')
         except Exception, e:
-            assert e.fault.faultcode == "senv:Client.AuthenticationError", \
+            assert e.fault.faultcode.find("AuthenticationError") >= 0, \
                                         "An unexpected excepton was thrown!"
 
         assert login_response is None, "Unexpected successful login."
