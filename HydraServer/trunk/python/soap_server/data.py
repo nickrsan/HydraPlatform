@@ -63,6 +63,47 @@ class DataService(HydraService):
         dataset_i = data.get_dataset(dataset_id, **ctx.in_header.__dict__)
         return Dataset(dataset_i)
 
+    @rpc(Integer, Unicode, Unicode, Unicode, Unicode, Unicode,
+         Integer, Unicode, Unicode,
+         Unicode(pattern='[YN]', default='N'), #include metadata flag
+         Unicode(pattern='[YN]', default='N'), # include value flag
+         Integer(default=0),Integer(default=2000), #start, size page flags
+         _returns=SpyneArray(Dataset))
+    def get_datasets(ctx, dataset_id,
+                name,
+                group_name,
+                data_type,
+                dimension,
+                unit,
+                scenario_id,
+                metadata_name,
+                metadata_val,
+                inc_metadata,
+                inc_val,
+                page_start,
+                page_size):
+
+        datasets = data.get_datasets(dataset_id,
+                                     name,
+                                     group_name,
+                                     data_type,
+                                     dimension,
+                                     unit,
+                                     scenario_id,
+                                     metadata_name,
+                                     metadata_val,
+                                     inc_metadata,
+                                     inc_val,
+                                     page_start,
+                                     page_size,
+                                     **ctx.in_header.__dict__)
+
+        cm_datasets = []
+        for d in datasets:
+            cm_datasets.append(Dataset(d))
+
+        return cm_datasets
+
     @rpc(Integer(max_occurs="unbounded"), _returns=SpyneArray(Metadata))
     def get_metadata(ctx, dataset_ids):
         """

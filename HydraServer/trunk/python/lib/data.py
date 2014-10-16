@@ -18,16 +18,18 @@ import sys
 from HydraLib.dateutil import get_datetime
 from HydraLib import units
 import logging
-from db.model import Dataset, Metadata, DatasetOwner, DatasetGroup, DatasetGroupItem
+from db.model import Dataset, Metadata, DatasetOwner, DatasetGroup, DatasetGroupItem, ResourceScenario
 from util import generate_data_hash
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import case
+from sqlalchemy import func
 from sqlalchemy import null
 from db import DBSession
+from HydraLib import config
 
 import pandas as pd
 from HydraLib.HydraException import HydraError, ResourceNotFoundError
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from HydraLib.util import create_dict
 from decimal import Decimal
 import copy
@@ -77,7 +79,7 @@ def get_dataset(dataset_id,**kwargs):
         if dataset.value is not None:
             dataset.value = str(dataset.value)
 
-        if dataset.data_type == 'timeseries' and (dataset.hidden == 'N' or (Dataset.hidden == 'Y' and dataset.user_id is not None)):
+        if dataset.hidden == 'N' or (dataset.hidden == 'Y' and dataset.user_id is not None):
             metadata = DBSession.query(Metadata).filter(Metadata.dataset_id==dataset_id).all()
             dataset.metadata = metadata
         else:
@@ -86,6 +88,152 @@ def get_dataset(dataset_id,**kwargs):
         raise HydraError("Dataset %s does not exist."%(dataset_id))
 
     return dataset 
+
+
+def get_datasets(dataset_id=None,
+                dataset_name=None,
+                group_name=None,
+                data_type=None,
+                dimension=None,
+                unit=None,
+                scenario_id=None,
+                metadata_name=None,
+                metadata_val=None,
+                inc_metadata='N',
+                inc_val = 'N',
+                page_start = 0,
+                page_size   = 2000,
+                **kwargs):
+    """
+        Get multiple datasets, based on several
+        filters. If all filters are set to None, all
+        datasets in the DB (that the user is allowe to see)
+        will be returned.
+    """
+    
+    if page_size is None:
+        page_size = config.get('SEARCH', 'page_size', 2000)
+
+    user_id = int(kwargs.get('user_id'))
+
+    dataset_qry = DBSession.query(Dataset.dataset_id,
+            Dataset.data_type,
+            Dataset.data_units,
+            Dataset.data_dimen,
+            Dataset.data_name,
+            Dataset.hidden,
+            DatasetOwner.user_id,
+            null().label('metadata'),
+            Dataset.start_time,
+            Dataset.frequency,
+            Dataset.value
+    )
+  
+    #Dataset ID is unique, so there's no point using the other filters.
+    #Only use other filters if the datset ID is not specified.
+    if dataset_id is not None:
+        dataset_qry = dataset_qry.filter(
+            Dataset.dataset_id==dataset_id)
+
+    else:
+        if dataset_name is not None:
+            dataset_qry = dataset_qry.filter(
+                func.lower(Dataset.data_name).like("%%%s%%"%dataset_name.lower())
+            )
+
+        if group_name is not None:
+            dataset_qry = dataset_qry.join(DatasetGroup, and_(DatasetGroupItem.group_id   == DatasetGroup.group_id,func.lower(DatasetGroup.group_name).like("%%%s%%"%group_name.lower()))).join(DatasetGroupItem,and_(DatasetGroupItem.dataset_id == Dataset.dataset_id))
+
+        if data_type is not None:
+            dataset_qry = dataset_qry.filter(
+                func.lower(Dataset.data_type) == data_type.lower())
+
+        #null is a valid dimension, so we need a way for the searcher
+        #to specify that they want to search for datasets with a null dimension
+        #rather than ignoring the dimension in the filter. We use 'null' to do this.
+        if dimension is not None:
+            dimension = dimension.lower()
+            if dimension == 'null':
+                dimension = None
+            if dimension is not None:
+                dataset_qry = dataset_qry.filter(
+                    func.lower(Dataset.data_dimen) == dimension)
+            else:
+                dataset_qry = dataset_qry.filter(
+                    Dataset.data_dimen == dimension)
+
+        #null is a valid unit, so we need a way for the searcher
+        #to specify that they want to search for datasets with a null unit
+        #rather than ignoring the unit. We use 'null' to do this.
+        if unit is not None:
+            unit = unit.lower()
+            if unit == 'null':
+                unit = None
+            if unit is not None:
+                dataset_qry = dataset_qry.filter(
+                    func.lower(Dataset.data_units) == unit)
+            else:
+                dataset_qry = dataset_qry.filter(
+                    Dataset.data_units == unit)
+        
+        if scenario_id is not None:
+            dataset_qry = dataset_qry.join(ResourceScenario,
+                                and_(ResourceScenario.dataset_id == Dataset.dataset_id, 
+                                ResourceScenario.scenario_id == scenario_id))
+
+        if metadata_name is not None and metadata_val is not None:
+            dataset_qry = dataset_qry.join(Metadata,
+                                and_(Metadata.dataset_id == Dataset.dataset_id, 
+                                func.lower(Metadata.metadata_name).like("%%%s%%"%metadata_name.lower()),
+                                func.lower(Metadata.metadata_val).like("%%%s%%"%metadata_val.lower())))
+        elif metadata_name is not None and metadata_val is None:
+            dataset_qry = dataset_qry.join(Metadata,
+                                and_(Metadata.dataset_id == Dataset.dataset_id, 
+                                func.lower(Metadata.metadata_name).like("%%%s%%"%metadata_name.lower())))
+        elif metadata_name is None and metadata_val is not None:
+            dataset_qry = dataset_qry.join(Metadata,
+                                and_(Metadata.dataset_id == Dataset.dataset_id, 
+                                func.lower(Metadata.metadata_val).like("%%%s%%"%metadata_val.lower())))
+
+    #All datasets must be joined on dataset owner so only datasets that the
+    #user can see are retrieved.
+    dataset_qry = dataset_qry.outerjoin(DatasetOwner, 
+                                and_(DatasetOwner.dataset_id==Dataset.dataset_id, 
+                                DatasetOwner.user_id==user_id))
+
+    dataset_qry = dataset_qry.filter(or_(Dataset.hidden=='N', (DatasetOwner.user_id is not None and Dataset.hidden=='Y')))
+
+    datasets = dataset_qry.all()
+    
+    log.info("Retrieved %s datasets", len(datasets))
+  
+    #page the datasets:
+    if page_start + page_size > len(datasets):
+        page_end = None
+    else:
+        page_end = page_start + page_size
+
+    datasets = datasets[page_start:page_end] 
+    
+    log.info("Datasets paged from result %s to %s", page_start, page_end)
+
+    datasets_to_return = []
+    for dataset in datasets:
+        if inc_val == 'N':
+            dataset.value = None
+        else:
+            #convert the value row into a string as it is returned as a binary
+            if dataset.value is not None:
+                dataset.value = str(dataset.value)
+
+        if inc_metadata=='Y':
+            metadata = DBSession.query(Metadata).filter(Metadata.dataset_id==dataset.dataset_id).all()
+            dataset.metadata = metadata
+        else:
+            dataset.metadata = []
+        datasets_to_return.append(dataset)
+
+    return datasets_to_return
 
 def update_dataset(dataset_id, name, data_type, val, units, dimension, metadata={}, **kwargs):
     """
@@ -178,7 +326,12 @@ def add_dataset(data_type, val, units, dimension, metadata={}, name="", user_id=
 
 def bulk_insert_data(data, **kwargs):
     datasets = _bulk_insert_data(data, user_id=kwargs.get('user_id'), source=kwargs.get('app_name'))
+    #This line exists to make the DBSession 'dirty',
+    #thereby telling it to flush the bulk insert.
+    datasets[0].data_name = datasets[0].data_name
+
     DBSession.flush()
+    
     return datasets
 
 def _make_new_dataset(dataset_dict):

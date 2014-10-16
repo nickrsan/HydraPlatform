@@ -675,6 +675,314 @@ class RetrievalTest(test_SoapServer.SoapServerTest):
         for rs in res_scenarios:
             assert rs.resource_attr_id in ra_ids
 
+    def _create_scalar(self):
+
+        scalar = dict(
+            id=None,
+            type = 'scalar',
+            name = 'Flow speed',
+            unit = 'm s^-1',
+            dimension = 'Velocity',
+            hidden = 'N',
+            value = {'param_value':0.002},
+        )
+
+        return scalar
+
+    def _create_descriptor(self):
+        descriptor = dict(
+            id        = None,
+            type      = 'descriptor',
+            name      = 'description of water level',
+            unit      = None,
+            dimension = None,
+            hidden    = 'N',
+            value     = {'desc_val':'high'},
+        )
+        
+        return descriptor
+
+    def _create_array(self):
+        arr_data = create_dict([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
+        arr= {'arr_data' : arr_data}
+        
+        metadata_array = self.client.factory.create("hyd:MetadataArray")
+        metadata = self.client.factory.create("hyd:Metadata")
+        metadata.name = 'created_by'
+        metadata.value = 'Test user'
+        metadata_array.Metadata.append(metadata)
+
+        dataset = dict(
+            id=None,
+            type = 'array',
+            name = 'my array',
+            unit = 'bar',
+            dimension = 'Pressure',
+            hidden = 'N',
+            value = arr,
+            metadata = metadata_array, 
+        )
+
+        return dataset
+
+    def _create_timeseries(self):
+
+        metadata_array = self.client.factory.create("hyd:MetadataArray")
+        metadata = self.client.factory.create("hyd:Metadata")
+        metadata.name = 'created_by'
+        metadata.value = 'Test user'
+        metadata2 = self.client.factory.create("hyd:Metadata")
+        metadata2.name = 'is used for'
+        metadata2.value = 'data search'
+        metadata_array.Metadata.append(metadata)
+        metadata_array.Metadata.append(metadata2)
+
+        dataset = dict(
+            id=None,
+            type = 'timeseries',
+            name = 'my time series',
+            unit = 'cm^3',
+            dimension = 'Volume',
+            hidden = 'N',
+            value = {'ts_values' : 
+            [
+                {'ts_time' : datetime.datetime.now(),
+                'ts_value' : 1.234},
+                {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=1),
+                'ts_value' : 2.345},
+                {'ts_time' : datetime.datetime.now()+datetime.timedelta(hours=2),
+                'ts_value' : 3.456},
+            ]
+        },
+            metadata = metadata_array, 
+        )
+
+        return dataset 
+
+    def test_data_search(self):
+        """
+            Test for the 'get_datasets' function.
+
+            This function should retrieve a list of datasets given a set of 
+            filters, including:
+                ID,
+                Name,
+                Group name,
+                Type,
+                Dimension,
+                Unit
+                Scenario,
+                Metadata
+        """
+
+       
+        datasets = self.client.factory.create('ns1:DatasetArray')
+        #create some datasets
+        #Scalar, descriptor, array, 2 * timeseries
+        array = self._create_array() 
+        datasets.Dataset.append(array)
+        scalar = self._create_scalar()
+        datasets.Dataset.append(scalar)
+        descriptor = self._create_descriptor() 
+        datasets.Dataset.append(descriptor)
+        ts_1 = self._create_timeseries() 
+        datasets.Dataset.append(ts_1)
+        ts_2 = self._create_timeseries()
+        datasets.Dataset.append(ts_2)
+
+        dataset_ids = self.client.service.bulk_insert_data(datasets)
+        array['id'] = dataset_ids.integer[0]
+        scalar['id'] = dataset_ids.integer[1]
+        descriptor['id'] = dataset_ids.integer[2]
+        ts_1['id'] = dataset_ids.integer[3]
+        ts_2['id'] = dataset_ids.integer[4]
+
+        #create a dataset group and put one timeseries into it.
+
+        grp_dataset_ids = self.client.factory.create("integerArray")
+        grp_dataset_ids.integer.append(ts_1['id'])
+        grp_dataset_ids.integer.append(ts_2['id'])
+
+        group = dict(
+            dataset_ids = grp_dataset_ids,
+            group_name  = 'timeseries group %s'%(datetime.datetime.now())
+        )
+
+        timeseries_group = self.client.service.add_dataset_group(group)
+        group_name = timeseries_group.group_name
+
+        #search for datset with ID
+
+        res_1 = self.client.service.get_datasets(array['id'])
+        assert len(res_1.Dataset) == 1
+        assert res_1.Dataset[0].id == array['id']
+        assert res_1.Dataset[0].name == array['name']
+        
+        #search for dataset by name
+        res_1 = self.client.service.get_datasets(name=array['name'])
+        assert len(res_1.Dataset) >= 1
+        ids = []
+        for d in res_1.Dataset:
+            ids.append(d.id)
+            assert d.name == array['name']
+        assert array['id'] in ids
+
+        #search for scalars
+        res_1 = self.client.service.get_datasets(data_type='scalar')
+        assert len(res_1.Dataset) >= 1
+        ids = []
+        for d in res_1.Dataset:
+            ids.append(d.id)
+            assert d.type == 'scalar'
+        assert scalar['id'] in ids
+
+        #search for descriptors
+        res_1 = self.client.service.get_datasets(data_type='descriptor')
+        assert len(res_1.Dataset) >= 1
+        for d in res_1.Dataset:
+            ids.append(d.id)
+            assert d.type == 'descriptor'
+        assert descriptor['id'] in ids
+
+        #search for arrays
+        res_1 = self.client.service.get_datasets(data_type='array')
+        assert len(res_1.Dataset) >= 1
+        ids = []
+        for d in res_1.Dataset:
+            ids.append(d.id)
+            assert d.type == 'array'
+        assert array['id'] in ids
+
+        #search for timeseries
+        res_1 = self.client.service.get_datasets(data_type='timeseries', metadata_val='search')
+        assert len(res_1.Dataset) >= 1
+        ids = []
+        for d in res_1.Dataset:
+            ids.append(d.id)
+            assert d.type == 'timeseries'
+        assert ts_1['id'] in ids
+        assert ts_2['id'] in ids
+        #search by non-existant type
+        res_1 = self.client.service.get_datasets(data_type='notadatatype')
+        assert res_1 == ''
+
+        #We have at least 2 timeseries, so let's page to 1
+        res_1 = self.client.service.get_datasets(data_type='timeseries', metadata_val='search', page_size=1, inc_val='Y')
+        assert len(res_1.Dataset) == 1
+        assert res_1.Dataset[0].value.ts_values[0].ts_value.array.item == "1.234"
+        assert res_1.Dataset[0].value.ts_values[1].ts_value.array.item == "2.345"
+        assert res_1.Dataset[0].value.ts_values[2].ts_value.array.item == "3.456"
+
+        res_1 = self.client.service.get_datasets(data_type='timeseries', metadata_val='search', page_start=1000)
+        assert res_1 == ''
+
+        #search by non-existant type
+        res_1 = self.client.service.get_datasets(data_type='notadatatype')
+        assert res_1 == ''
+
+        #search by dimension x 2 (non-exisent dimension, exisiting dimension)
+
+        res_1 = self.client.service.get_datasets(dimension='Volume')
+        for d in res_1.Dataset:
+            assert d.dimension == 'Volume'
+
+        res_1 = self.client.service.get_datasets(dimension='iamnotadimension')
+        assert res_1 == ''
+
+        #search by unit x2 (non-exisent unit, exisiting unit)
+        res_1 = self.client.service.get_datasets(unit='m s^-1')
+        for d in res_1.Dataset:
+            assert d.unit == 'm s^-1'
+
+        res_1 = self.client.service.get_datasets(unit='iamnotaunit')
+        assert res_1 == ''
+
+        #search by scenario
+        net = self.create_network_with_data(num_nodes=5)
+        scenario = net.scenarios.Scenario[0]
+        res_1 = self.client.service.get_datasets(scenario_id=scenario.id)
+        assert len(res_1.Dataset) == len(scenario.resourcescenarios.ResourceScenario)
+
+        #search by metadata
+        res_1 = self.client.service.get_datasets(metadata_name='created_by', inc_metadata='Y')
+        assert res_1 != ''
+        for d in res_1.Dataset:
+            metadata_names = []
+            for m in d.metadata.Metadata:
+               metadata_names.append(m.name)
+            assert 'created_by' in metadata_names
+
+        #search by metadata
+        res_1 = self.client.service.get_datasets(metadata_name='used for', metadata_val='earch', inc_metadata='Y')
+        assert res_1 != ''
+        for d in res_1.Dataset:
+            metadata_names = []
+            for m in d.metadata.Metadata:
+               metadata_names.append(m.name)
+            assert 'is used for' in metadata_names
+
+        res_1 = self.client.service.get_datasets(metadata_val='search', inc_metadata='Y')
+        assert res_1 != ''
+        for d in res_1.Dataset:
+            metadata_names = []
+            for m in d.metadata.Metadata:
+               metadata_names.append(m.name)
+            assert 'is used for' in metadata_names
+
+        res_1 = self.client.service.get_datasets(metadata_name='non-existent', inc_metadata='Y')
+        assert res_1 == ''
+
+        #search by group name (return only one timeseries)
+        res_1 = self.client.service.get_datasets(group_name=group_name)
+        assert len(res_1.Dataset) == 2
+        ts_ids = [ts_1['id'], ts_2['id']]
+        for d in res_1.Dataset:
+            assert d.id in ts_ids
+
+        #combinations:
+        #search by type, dimension
+        res_1 = self.client.service.get_datasets(data_type='scalar', dimension='speed')
+        assert len(res_1.Dataset) >= 1
+        ids = []
+        for d in res_1.Dataset:
+            ids.append(d.id)
+            assert d.type == 'scalar' and d.dimension == 'Speed'
+        #matching unit, dimension
+        res_1 = self.client.service.get_datasets(unit='m s^-1', dimension='speed')
+        assert len(res_1.Dataset) >= 1
+        ids = []
+        for d in res_1.Dataset:
+            ids.append(d.id)
+            assert d.unit == 'm s^-1' and d.dimension == 'Speed'
+
+        #mismatching unit, dimension
+        res_1 = self.client.service.get_datasets(unit='cm^3', dimension='speed')
+        assert res_1 == '' 
+
+        #partial name, dimension
+        res_1 = self.client.service.get_datasets(name='flow sp', dimension='speed')
+        assert len(res_1.Dataset) >= 1
+        ids = []
+        for d in res_1.Dataset:
+            ids.append(d.id)
+            assert d.name == scalar['name'] and d.dimension == 'Speed'
+
+        #name, unit
+        res_1 = self.client.service.get_datasets(name='array', unit='bar')
+        assert len(res_1.Dataset) >= 1
+        ids = []
+        for d in res_1.Dataset:
+            ids.append(d.id)
+            assert d.name == array['name'] and d.unit == 'bar'
+
+        #group name, name
+        res_1 = self.client.service.get_datasets(name='array',group_name=group_name)
+        assert res_1 == ''
+        res_1 = self.client.service.get_datasets(name='time',group_name=group_name)
+        assert len(res_1.Dataset) == 2
+        ts_ids = [ts_1['id'], ts_2['id']]
+        for d in res_1.Dataset:
+            assert d.id in ts_ids
 
 class FormatTest(test_SoapServer.SoapServerTest):
     def test_format_array_data(self):

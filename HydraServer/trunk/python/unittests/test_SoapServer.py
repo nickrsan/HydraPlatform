@@ -486,7 +486,7 @@ class SoapServerTest(unittest.TestCase):
                         timeseries = self.create_timeseries(na)
                         scenario_data.ResourceScenario.append(timeseries)
                     elif na['attr_id'] == node_attr3['id']:
-                        eqtimeseries = self.create_eqtimeseries(na)
+                        eqtimeseries = self.create_scalar(na)
                         scenario_data.ResourceScenario.append(eqtimeseries)
 
         for l in links:
