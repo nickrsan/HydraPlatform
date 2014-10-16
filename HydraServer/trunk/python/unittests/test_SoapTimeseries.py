@@ -263,7 +263,7 @@ class ScalarTest(test_SoapServer.SoapServerTest):
         dataset = dict(
             id=None,
             type = 'scalar',
-            name = 'my array',
+            name = 'my scalar',
             unit = 'cm^3',
             dimension = 'Volume',
             hidden = 'N',
