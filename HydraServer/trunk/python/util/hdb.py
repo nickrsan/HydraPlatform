@@ -6,6 +6,8 @@ import random
 import bcrypt
 from HydraLib.HydraException import HydraError
 import transaction
+import logging
+log = logging.getLogger(__name__)
 
 
 def add_resource_types(resource_i, types):
