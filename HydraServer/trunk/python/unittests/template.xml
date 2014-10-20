@@ -56,7 +56,8 @@
             </layout>
             <attribute>
                 <name>Min Capacity</name>
-                <dimension>Volume</dimension>
+                <!--<dimension>Volume</dimension>-->
+                <unit>m^3</unit>
                 <is_var>Y</is_var>
                 <data_type>scalar</data_type>
             </attribute>
@@ -65,7 +66,7 @@
                 <dimension>Volume</dimension>
                 <default>
                     <value>100</value>
-                    <unit>cubic metre</unit>
+                    <unit>m^3</unit>
                  </default>
                 <data_type>scalar</data_type>
             </attribute>
@@ -74,7 +75,7 @@
                 <dimension>Volumetric flow rate</dimension>
                 <default>
                     <value>100</value>
-                    <unit>cubic metres per second</unit>
+                    <unit>m^3 s^-1</unit>
                  </default>
                 <data_type>scalar</data_type>
             </attribute>
@@ -88,7 +89,7 @@
                 <dimension>Volume</dimension>
                 <default>
                     <value>0</value>
-                    <unit>cubic centimeter</unit>
+                    <unit>cm^3</unit>
                  </default>
             </attribute>
             <attribute>
@@ -96,15 +97,15 @@
                 <dimension>Volumetric flow rate</dimension>
                 <default>
                     <value>100</value>
-                    <unit>cubic metres per second</unit>
+                    <unit>m^3 s^-1</unit>
                  </default>
             </attribute>
             <attribute>
                 <name>Energy Price</name>
-                <dimension>Energy Cost</dimension>
+                <dimension>energy price</dimension>
                 <default>
                     <value>1.25</value>
-                    <unit>USDollars per kilojoule</unit>
+                    <unit>$ kJ^-1</unit>
                  </default>
             </attribute>
         </resource>

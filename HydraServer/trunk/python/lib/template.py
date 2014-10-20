@@ -26,7 +26,26 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload_all
 from sqlalchemy import or_, and_
 import re
+import units
 log = logging.getLogger(__name__)
+
+def _check_dimension(typeattr, unit=None):
+    """
+        Check that the unit and dimension on a type attribute match.
+        Alternatively, pass in a unit manually to check against the dimension
+        of the type attribute
+    """
+    if unit is None:
+        unit = typeattr.unit
+ 
+    dimension = typeattr.get_attr().attr_dimen
+
+    if unit is not None and dimension is not None:
+        unit_dimen = units.get_dimension(unit)
+
+        if unit_dimen.lower() != dimension.lower():
+            raise HydraError("Unit %s has dimension %s, but attribute has dimension %s"%
+                            (unit, unit_dimen, dimension))
 
 def get_types_by_attr(resource, template_id=None):
     """
@@ -61,37 +80,44 @@ def get_types_by_attr(resource, template_id=None):
 
     return resource_type_templates
 
+def _get_attr_by_name_and_dimension(name, dimension):
+    """
+        Search for an attribute with the given name and dimension.
+        If such an attribute does not exist, create one.
+    """
+    
+    attr = DBSession.query(Attr).filter(Attr.attr_name==name, Attr.attr_dimen==dimension).first()
 
-def parse_attribute(attribute):
-
-    dimension = attribute.find('dimension').text
-    name      = attribute.find('name').text
-
-    try:
-        attr = DBSession.query(Attr).filter(Attr.attr_name==name, Attr.attr_dimen==dimension).one()
-    except NoResultFound: 
+    if attr is None: 
         attr         = Attr()
-        attr.attr_dimen = attribute.find('dimension').text
-        attr.attr_name  = attribute.find('name').text
+        attr.attr_dimen = dimension
+        attr.attr_name  = name
 
         log.info("Attribute not found, creating new attribute: name:%s, dimen:%s",
                     attr.attr_name, attr.attr_dimen)
 
         DBSession.add(attr)
-    if attr.attr_dimen != dimension:
-        raise HydraError(
-            "An attribute with name "
-            "%s already exists but with a different"
-            " dimension (%s). Please rename your attribute." %
-            (name, attr.attr_dimen))
+
+    return attr
+
+def parse_attribute(attribute):
+
+    if attribute.find('dimension') is not None:
+        dimension = attribute.find('dimension').text
+    elif attribute.find('unit') is not None:
+        dimension = units.get_dimension(attribute.find('unit').text)
+
+    name      = attribute.find('name').text
+    
+    attr = _get_attr_by_name_and_dimension(name, dimension)
+
     DBSession.flush()
+
     return attr
 
 def parse_typeattr(type_i, attribute):
 
     attr = parse_attribute(attribute)
-
-    dimension = attribute.find('dimension').text
 
     for ta in type_i.typeattrs:
         if ta.attr_id == attr.attr_id:
@@ -104,8 +130,15 @@ def parse_typeattr(type_i, attribute):
         typeattr_i.attr_id=attr.attr_id
         type_i.typeattrs.append(typeattr_i)
         DBSession.add(typeattr_i)
-    
-    typeattr_i.dimension=dimension
+
+    unit = None
+    if attribute.find('unit') is not None:
+        unit = attribute.find('unit').text
+
+    if unit is not None:
+        typeattr_i.unit     = unit
+
+    _check_dimension(typeattr_i)
 
     if attribute.find('is_var') is not None:
         typeattr_i.attr_is_var = attribute.find('is_var').text
@@ -116,6 +149,20 @@ def parse_typeattr(type_i, attribute):
     if attribute.find('default') is not None:
         default = attribute.find('default')
         unit = default.find('unit').text
+
+        if unit is None and typeattr_i.unit is not None:
+            unit = typeattr_i.unit
+
+        dimension = None
+        if unit is not None:
+            _check_dimension(typeattr_i, unit)
+            dimension = units.get_dimension(unit)
+
+        if unit is not None and typeattr_i.unit is not None:
+            if unit != typeattr_i.unit:
+                raise HydraError("Default value has a unit of %s but the attribute"
+                             " says the unit should be: %s"%(typeattr_i.unit, unit))
+
         val  = default.find('value').text
         try:
             Decimal(val)
@@ -165,7 +212,6 @@ def upload_template_xml(template_xml,**kwargs):
         template_layout = str(layout_string)
 
     try:
-
         tmpl_i = DBSession.query(Template).filter(Template.template_name==template_name).options(joinedload_all('templatetypes.typeattrs.attr')).one()
         tmpl_i.layout = template_layout
         log.info("Existing template found. name=%s", template_name)
@@ -685,22 +731,9 @@ def add_template(template,**kwargs):
 
     if template.types is not None:
         for templatetype in template.types:
-            ttype = TemplateType()
-            ttype.type_name = templatetype.name
-            ttype.layout    = templatetype.layout
-            ttype.resource_type = templatetype.resource_type
-            ttype.alias         = templatetype.alias
-            DBSession.add(ttype)
-            if templatetype.typeattrs is not None:
-                for typeattr in templatetype.typeattrs:
-                    ta = TypeAttr(attr_id=typeattr.attr_id)
-                    ta.data_restriction = _parse_data_restriction(typeattr.data_restriction)
-                    ta.data_type        = typeattr.data_type
-                    ta.dimension        = typeattr.dimension
-                    ta.attr_is_var      = typeattr.is_var
-                    ttype.typeattrs.append(ta)
-                    DBSession.add(ta)
+            ttype = _update_templatetype(templatetype)
             tmpl.templatetypes.append(ttype)
+
     DBSession.flush()
     return tmpl
 
@@ -715,36 +748,11 @@ def update_template(template,**kwargs):
         for templatetype in template.types:
             if templatetype.id is not None:
                 for type_i in tmpl.templatetypes:
-                    if type_i.template_id == templatetype.id:
-                        type_i.type_name = templatetype.name
-                        type_i.alias     = templatetype.alias
-                        type_i.layout    = templatetype.layout
+                    if type_i.type_id == templatetype.id:
+                        _update_templatetype(templatetype, type_i)
                         break
             else:
-                type_i = TemplateType()
-                type_i.type_name = templatetype.name
-                type_i.layout    = templatetype.layout
-                type_i.resource_type = templatetype.resource_type
-                type_i.alias         = templatetype.alias
-                DBSession.add(type_i)
-
-            if templatetype.typeattrs is not None:
-                for typeattr in templatetype.typeattrs:
-                    for typeattr_i in type_i.typeattrs:
-                        if typeattr_i.attr_id == typeattr.attr_id:
-                            typeattr_i.data_restriction = _parse_data_restriction(typeattr.data_restriction)
-                            typeattr_i.data_type        = typeattr.data_type
-                            typeattr_i.dimension        = typeattr.dimension
-                            typeattr_i.attr_is_var      = typeattr.is_var
-                            break
-                    else:
-                        ta = TypeAttr(attr_id=typeattr.attr_id)
-                        ta.data_restriction = _parse_data_restriction(typeattr.data_restriction)
-                        ta.data_type        = typeattr.data_type
-                        ta.dimension        = typeattr.dimension
-                        ta.attr_is_var      = typeattr.is_var
-                        type_i.typeattrs.append(ta)
-                        DBSession.add(ta)
+                _update_templatetype(templatetype)
 
     DBSession.flush()
  
@@ -798,28 +806,17 @@ def get_template_by_name(name,**kwargs):
     except NoResultFound:
         log.info("%s is not a valid identifier for a template",name)
         return None
-
+ 
 def add_templatetype(templatetype,**kwargs):
     """
         Add a template type with typeattrs.
     """
-    tmpltype = TemplateType()
-    tmpltype.type_name  = templatetype.name
-    tmpltype.resource_type = templatetype.resource_type
-    tmpltype.alias      = templatetype.alias
-    tmpltype.layout     = templatetype.layout
-    tmpltype.template_id = templatetype.template_id
 
-    if templatetype.typeattrs is not None:
-        for typeattr in templatetype.typeattrs:
-            ta = TypeAttr(attr_id=typeattr.attr_id)
-            tmpltype.typeattrs.append(ta)
-            DBSession.add(ta)
-    
-    DBSession.add(tmpltype)
+    type_i = _update_templatetype(templatetype)
+
     DBSession.flush()
 
-    return tmpltype
+    return type_i
 
 def update_templatetype(templatetype,**kwargs):
     """
@@ -828,24 +825,100 @@ def update_templatetype(templatetype,**kwargs):
         To delete typeattrs, call delete_typeattr
     """
     tmpltype = DBSession.query(TemplateType).filter(TemplateType.type_id == templatetype.id).one()
-    tmpltype.type_name  = templatetype.name
-    tmpltype.alias      = templatetype.alias
-    tmpltype.layout     = templatetype.layout
 
-    if templatetype.typeattrs is not None:
-        for typeattr in templatetype.typeattrs:
-            for typeattr_i in tmpltype.typeattrs:
-                if typeattr_i.attr_id == typeattr.attr_id:
-                    break
-            else:
-                ta = TypeAttr(attr_id=typeattr.attr_id)
-                tmpltype.typeattrs.append(ta)
-                DBSession.add(ta)
+    _update_templatetype(templatetype, tmpltype)
 
     DBSession.flush()
 
     return tmpltype
 
+def _add_typeattr(typeattr, existing_ta = None):
+    """
+        Add or updsate a type attribute.
+        If an existing type attribute is provided, then update.
+
+        Checks are performed to ensure that the dimension provided on the
+        type attr (not updateable) is the same as that on the referring attribute.
+        The unit provided (stored on tattr) must conform to the dimension stored
+        on the referring attribute (stored on tattr).
+
+        This is done so that multiple tempaltes can all use the same attribute,
+        but specify different units.
+
+        If no attr_id is provided, but an attr_name and dimension are provided,
+        then a new attribute can be created (or retrived) and used. I.e., no
+        attribute ID must be specified if attr_name and dimension are specified.
+
+        ***WARNING***
+        Setting attribute ID to null means a new type attribute (and even a new attr)
+        may be added, None are removed or replaced. To remove other type attrs, do it
+        manually using delete_typeattr
+    """
+    if existing_ta is None:
+        ta = TypeAttr(attr_id=typeattr.attr_id)
+    else:
+        ta = existing_ta
+
+    ta.unit = typeattr.unit
+    ta.type_id = typeattr.type_id
+    ta.data_type = typeattr.data_type
+    ta.default_dataset_id = typeattr.default_dataset_id
+    ta.attr_is_var        = typeattr.is_var
+    ta.data_restriction = _parse_data_restriction(typeattr.data_restriction)
+
+    if typeattr.dimension is not None and typeattr.attr_id is not None:
+        attr = ta.get_attr()
+        if attr.attr_dimen != typeattr.dimension:
+            raise HydraError("Cannot set a dimension on type attribute which "
+                            "does not match its attribute. Create a new attribute if "
+                            "you want to use attribute %s with dimension %s"%
+                            (attr.attr_name, typeattr.dimension))
+    elif typeattr.dimension is not None and typeattr.attr_id is None and typeattr.attr_name is not None:
+        attr = _get_attr_by_name_and_dimension(typeattr.attr_name, typeattr.dimension)
+        ta.attr_id = attr.attr_id
+        ta.attr = attr
+
+    _check_dimension(ta)
+
+    if existing_ta is None:
+        DBSession.add(ta)
+
+    return ta
+
+def _update_templatetype(templatetype, existing_tt=None):
+    """
+        Add or update a templatetype. If an existing template type is passed in,
+        update that one. Otherwise search for an existing one. If not found, add.
+    """
+    if existing_tt is None:
+        if templatetype.id is not None:
+            tmpltype = DBSession.query(TemplateType).filter(TemplateType.type_id == templatetype.id).one()
+        else:
+            tmpltype = TemplateType()
+    else:
+        tmpltype = existing_tt
+    
+    tmpltype.template_id = templatetype.template_id
+    tmpltype.type_name  = templatetype.name
+    tmpltype.alias      = templatetype.alias
+    tmpltype.layout     = templatetype.layout
+    tmpltype.resource_type = templatetype.resource_type
+
+    if templatetype.typeattrs is not None:
+        for typeattr in templatetype.typeattrs:
+            for typeattr_i in tmpltype.typeattrs:
+                if typeattr_i.attr_id == typeattr.attr_id:
+                    ta = _add_typeattr(typeattr, typeattr_i)
+                    break
+            else:
+
+                ta = _add_typeattr(typeattr)
+                tmpltype.typeattrs.append(ta)
+
+    if existing_tt is None:
+        DBSession.add(tmpltype)
+
+    return tmpltype
 
 def delete_templatetype(type_id,**kwargs):
     """
@@ -884,16 +957,9 @@ def add_typeattr(typeattr,**kwargs):
     """
         Add an typeattr to an existing type.
     """
-
-    ta = TypeAttr()
-    ta.type_id=typeattr.type_id
-    ta.attr_id=typeattr.attr_id
-    ta.attr_name = typeattr.attr_name
-    ta.data_type = typeattr.data_type
-    ta.dimension = typeattr.dimension
-    ta.attr_is_var = typeattr.is_var
-    ta.default_dataset_id = typeattr.default_dataset_id
-    DBSession.add(ta)
+    
+    ta = _add_typeattr(typeattr)
+    
     DBSession.flush()
 
     updated_template_type = DBSession.query(TemplateType).filter(TemplateType.type_id==ta.type_id).one()

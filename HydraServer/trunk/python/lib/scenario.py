@@ -15,7 +15,6 @@
 #
 import logging
 from HydraLib.HydraException import HydraError, PermissionError, ResourceNotFoundError
-from HydraLib import units
 from db import DBSession
 from db.model import Scenario,\
         ResourceGroupItem,\
@@ -25,6 +24,9 @@ from db.model import Scenario,\
         NetworkOwner,\
         Dataset,\
         Attr
+
+import units as hydra_units
+
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload_all, joinedload
@@ -32,8 +34,6 @@ import data
 from HydraLib.dateutil import timestamp_to_ordinal
 from collections import namedtuple
 from copy import deepcopy
-
-unit = units.Units()
 
 log = logging.getLogger(__name__)
 
@@ -529,7 +529,7 @@ def _update_resourcescenario(scenario, resource_scenario, dataset=None, new=Fals
     # None to achieve consistency in the DB.
     if data_unit is not None and dimension is None or \
             data_unit is not None and len(dimension) == 0:
-        dimension = unit.get_dimension(data_unit)
+        dimension = hydra_units.get_dimension(data_unit)
     else:
         if dimension is None or len(dimension) == 0:
             dimension = None

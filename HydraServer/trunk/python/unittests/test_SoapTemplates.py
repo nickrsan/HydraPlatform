@@ -180,10 +180,14 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         tattr_1 = self.client.factory.create('hyd:TypeAttr')
         tattr_1.attr_id = attr_1.id
+        tattr_1.dimension = 'Pressure'
+        tattr_1.unit      = 'bar'
         tattrs_1.TypeAttr.append(tattr_1)
 
         tattr_2 = self.client.factory.create('hyd:TypeAttr')
         tattr_2.attr_id = attr_2.id
+        tattr_2.dimension = 'Speed'
+        tattr_2.unit = 'mph'
         tattrs_2.TypeAttr.append(tattr_2)
 
         types.TemplateType.append(type_1)
@@ -202,6 +206,8 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
 
         assert len(new_template.types[0]) == 2, "Resource types did not add correctly"
         assert len(new_template.types[0][0].typeattrs[0]) == 1, "Resource type attrs did not add correctly"
+        assert new_template.types[0][0].typeattrs[0][0].dimension == 'Pressure'
+        assert new_template.types[0][0].typeattrs[0][0].unit == 'bar'
 
         #update the name of one of the types
         new_template.types[0][0].name = "Test type 3"
@@ -225,6 +231,19 @@ class TemplatesTest(test_SoapServer.SoapServerTest):
         assert updated_type.name == "Test type 3", "Resource types did not update correctly"
 
         assert len(updated_type.typeattrs[0]) == 2, "Resource type template attr did not update correctly"
+
+
+        updated_template.types[0][0].typeattrs[0][0].dimension = 'Volume'
+        updated_template.types[0][0].typeattrs[0][0].unit = 'm^3'
+        self.assertRaises(WebFault, self.client.service.update_template, updated_template)
+
+        attr_name = updated_template.types[0][0].typeattrs[0][0].attr_name
+        updated_template.types[0][0].typeattrs[0][0].attr_id = None
+        updated_template.types[0][0].typeattrs[0][0].dimension = 'Volume'
+        updated_template.types[0][0].typeattrs[0][0].unit = 'm^3'
+        updated_attr_template = self.client.service.update_template(updated_template)
+        newattr = self.client.service.get_attribute(attr_name, 'Volume')
+        assert updated_attr_template.types[0][0].typeattrs[0][2].attr_id == newattr.id
 
     def test_delete_template(self):
         

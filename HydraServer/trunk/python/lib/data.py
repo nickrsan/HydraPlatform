@@ -16,7 +16,6 @@
 import datetime
 import sys
 from HydraLib.dateutil import get_datetime
-from HydraLib import units
 import logging
 from db.model import Dataset, Metadata, DatasetOwner, DatasetGroup, DatasetGroupItem, ResourceScenario
 from util import generate_data_hash
@@ -34,7 +33,7 @@ from HydraLib.util import create_dict
 from decimal import Decimal
 import copy
 
-unit = units.Units()
+import units as hydra_units
 
 global FORMAT
 FORMAT = "%Y-%m-%d %H:%M:%S.%f"
@@ -300,7 +299,7 @@ def add_dataset(data_type, val, units, dimension, metadata={}, name="", user_id=
 
     # Assign dimension if necessary
     if units is not None and dimension is None:
-        dimension = unit.get_dimension(units)
+        dimension = hydra_units.get_dimension(units)
 
     d.data_type  = data_type
     d.data_units = units
@@ -463,7 +462,7 @@ def _process_incoming_data(data, user_id=None, source=None):
 
         # Assign dimension if necessary
         if d.unit is not None and d.dimension is None:
-            data_dict['data_dimen'] = unit.get_dimension(d.unit)
+            data_dict['data_dimen'] = hydra_units.get_dimension(d.unit)
         else:
             data_dict['data_dimen'] = d.dimension
 

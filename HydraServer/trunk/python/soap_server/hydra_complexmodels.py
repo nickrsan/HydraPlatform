@@ -679,6 +679,7 @@ class TypeAttr(ComplexModel):
         ('type_id',            Integer(default=None)),
         ('data_type',          Unicode(default=None)),
         ('dimension',          Unicode(default=None)),
+        ('unit',               Unicode(default=None)),
         ('default_dataset_id', Integer(default=None)),
         ('data_restriction',   AnyDict(default=None)),
         ('is_var',             Unicode(default=None)),
@@ -690,11 +691,17 @@ class TypeAttr(ComplexModel):
             return
         
         self.attr_id   = parent.attr_id
-        if parent.attr is not None:
-            self.attr_name = parent.attr.attr_name
+        attr = parent.get_attr()
+        if attr is not None:
+            self.attr_name = attr.attr_name
+            self.dimension = attr.attr_dimen
+        else:
+            self.attr_name = None
+            self.dimension = None
+
         self.type_id   = parent.type_id
         self.data_type = parent.data_type
-        self.dimension = parent.dimension
+        self.unit      = parent.unit
         self.default_dataset_id = self.default_dataset_id
         if parent.data_restriction is not None:
             self.data_restriction = eval(parent.data_restriction)

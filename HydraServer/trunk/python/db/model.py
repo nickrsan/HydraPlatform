@@ -358,12 +358,21 @@ class TypeAttr(Base):
     attr_is_var        = Column(String(1), server_default=text(u"'N'"))
     data_type          = Column(String(60))
     data_restriction   = Column(Text(1000))
-    dimension          = Column(String(60))
+    unit               = Column(String(60))
 
     attr = relationship('Attr')
     templatetype = relationship('TemplateType',  backref=backref("typeattrs", order_by=attr_id, cascade="all, delete-orphan"))
     default_dataset = relationship('Dataset')
-    
+   
+    def get_attr(self):
+       
+        if self.attr is None:
+            attr = DBSession.query(Attr).filter(Attr.attr_id==self.attr_id).first()
+        else:
+            attr = self.attr
+
+        return attr
+
 
 class ResourceAttr(Base):
     """

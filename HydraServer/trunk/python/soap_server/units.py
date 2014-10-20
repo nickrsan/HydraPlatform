@@ -23,12 +23,7 @@ from spyne.util.dictdoc import get_object_as_dict
 from hydra_base import HydraService
 from hydra_complexmodels import Unit
 
-from HydraLib import units as unitlib
 from lib import units
-
-global hydra_units
-hydra_units = unitlib.Units()
-
 
 class UnitService(HydraService):
     """

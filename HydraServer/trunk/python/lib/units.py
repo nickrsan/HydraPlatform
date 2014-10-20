@@ -21,9 +21,7 @@ from HydraLib.util import array_dim
 from HydraLib.util import arr_to_vector
 from HydraLib.util import vector_to_arr
 from db.model import Dataset
-from datetime import datetime
 from db import DBSession
-import copy
 import logging
 log = logging.getLogger(__name__)
 
