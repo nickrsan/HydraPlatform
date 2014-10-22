@@ -56,7 +56,7 @@ For links, the following is a valid file::
     Units,           ,      ,        m, ..., m^2 s^-1,
     link1,      node1, node2,      453, ...,     0.34, Water transfer
 
-It is optional to supply a network file. If you decide to do so, it needs to
+It is optional to supply a network file. If you decide to do so, it needs toz
 follow this structure::
 
     # A test network created as a set of CSV files
@@ -101,12 +101,20 @@ API docs
 import argparse as ap
 import logging
 import os, sys
+import pytz
 from datetime import datetime
 
+if "./python" not in sys.path:
+    sys.path.append("./python")
+if "../../../../../HydraLib/trunk/" not in sys.path:
+    sys.path.append("../../../../../HydraLib/trunk/")
+	
+	
 from HydraLib import PluginLib
 from HydraLib.PluginLib import JsonConnection, write_progress, write_output, validate_plugin_xml
 
 from HydraLib.HydraException import HydraPluginError
+from HydraLib import config, util, dateutil
 
 log = logging.getLogger(__name__)
 
@@ -143,6 +151,8 @@ class SamplePlugin(object):
         self.node_id = PluginLib.temp_ids()
         self.link_id = PluginLib.temp_ids()
         self.attr_id = PluginLib.temp_ids()
+        self.file_dict = {}
+        self.timezone = pytz.utc
 
     def get_file_data(self, file):
         """
@@ -420,7 +430,7 @@ class SamplePlugin(object):
         return attributes, resource_data
 
     def create_dataset(self, value, resource_attr, unit, dimension, resource_name):
- 
+        #restriction_dict
         resourcescenario = dict()
         
         dataset          = dict(
@@ -440,14 +450,183 @@ class SamplePlugin(object):
         try:
             float(value)
             dataset['type'] = 'scalar'
-            dataset['value'] = dict(param_value = str(value)) 
+            dataset['value'] = self.create_scalar(value)
         except ValueError:
-            dataset['type'] = 'descriptor'
-            dataset['value'] = dict(desc_val = str(value))
+            ##dataset['type'] = 'descriptor'
+            ##dataset['value'] = dict(desc_val = str(value))
+            value = value.replace('/', '\\')
+            value=value.replace(" ", "")
+            try:
+                filedata = []
+                full_file_path = os.path.join(self.basepath, value)
+                if self.file_dict.get(full_file_path) is None:
+                    with open(full_file_path) as f:
+                        filedata = []
+                        for l in f:
+                            l = l.strip().replace('\n', '').replace('\r', '')
+                            filedata.append(l)
+                        self.file_dict[full_file_path] = filedata
+                else:
+                    filedata = self.file_dict[full_file_path]
+
+                value_header = filedata[0].lower().replace(' ', '')
+                if value_header.startswith('arraydescription') or value_header == '':
+                    arr_struct = filedata[0].strip()
+                    arr_struct = arr_struct.split(',')
+                    arr_struct = "|".join(arr_struct[3:])
+                    filedata = filedata[1:]
+                elif filedata[0].lower().replace(' ', '').startswith('timeseriesdescription') or value_header == '':
+                    arr_struct = filedata[0].strip()
+                    arr_struct = arr_struct.split(',')
+                    arr_struct = "|".join(arr_struct[3:])
+                    filedata = filedata[1:]
+
+                    # The name of the resource is how to identify the data for it.
+                #Once this the correct line(s) has been identified, remove the
+                #name from the start of the line
+                data = []
+                for l in filedata:
+                    l_resource_name = l.split(',', 1)[0].strip()
+                    if l_resource_name == resource_name:
+                        data.append(l[l.find(',') + 1:])
+
+                if len(filedata) == 0:
+                    log.info('%s: No data found in file %s' %
+                             (resource_name, full_file_path))
+                    self.warnings.append('%s: No data found in file %s' %
+                                         (resource_name, full_file_path))
+                    return None
+                else:
+                    if self.is_timeseries(data):
+                        ts_type, ts = self.create_timeseries(data)
+                        dataset['type'] = ts_type
+                        dataset['value'] = ts
+                    else:
+                        dataset['type'] = 'array'
+                        if len(filedata) > 0:
+                            try:
+                                dataset['value'] = self.create_array(data[0], metadata_dict)
+                            except Exception, e:
+                                raise HydraPluginError(
+                                    "There is a value error in %s. Please check value %s is correct." % (
+                                    value, data[0]))
+                        else:
+                            dataset['value'] = None
+
+            except IOError:
+                print "Exception ...."
+                dataset['type'] = 'descriptor'
+                desc = self.create_descriptor(value)
+                dataset['value'] = desc
 
         resourcescenario['value'] = dataset
 
         return resourcescenario
+
+    def is_timeseries(self, data):
+        date = data[0].split(',')[0].strip()
+        timeformat = dateutil.guess_timefmt(date)
+        if timeformat is None:
+            return False
+        else:
+            return True
+
+    def create_descriptor(self, value):
+        #self.validate_value(value, restriction_dict)
+        descriptor = dict(
+             desc_val = value
+        )
+        return descriptor
+
+    def create_scalar(self, value):
+        scalar = dict(param_value = str(value))
+        return scalar
+
+    def create_timeseries(self, data):
+        if len(data) == 0:
+            return None
+
+        date = data[0].split(',', 1)[0].strip()
+        timeformat = dateutil.guess_timefmt(date)
+        seasonal = False
+        if 'XXXX' in timeformat:
+            seasonal = True
+
+        ts_values = []
+        start_time = None
+        freq       = None
+        prev_time  = None
+        eq_val     = []
+        is_eq_spaced = False
+        timedata = data
+        for line in timedata:
+            if line != '':
+                dataset = line.split(',')
+                tstime = datetime.strptime(dataset[0].strip(), timeformat)
+                tstime = self.timezone.localize(tstime)
+
+                ts_time = dateutil.date_to_string(tstime, seasonal=seasonal)
+
+                value_length = len(dataset[2:])
+                shape = dataset[1].strip()
+                if shape != '':
+                    array_shape = tuple([int(a) for a in
+                                         shape.split(" ")])
+                else:
+                    array_shape = (value_length,)
+
+                if array_shape == (1,):
+                    ts_value = dataset[2].strip()
+                else:
+                    ts_val_1d = []
+                    for i in range(value_length):
+                        ts_val_1d.append(str(dataset[i + 2].strip()))
+
+                    ts_arr = array(ts_val_1d)
+                    ts_arr = reshape(ts_arr, array_shape)
+
+                    ts_value = ts_arr.tolist()
+
+                #Check for whether timeseries is equally spaced.
+                if is_eq_spaced:
+                    eq_val.append(ts_value)
+                    if start_time is None:
+                        start_time = tstime
+                    else:
+                        #Get the time diff as the second time minus the first
+                        if freq is None:
+                            freq = tstime - start_time
+                        else:
+                            #Keep checking on each timestamp whether the spaces between
+                            #times is equal.
+                            if (tstime - prev_time) != freq:
+                                is_eq_spaced = False
+                    prev_time = tstime
+
+                ts_values.append({'ts_time': ts_time,
+                                  'ts_value': ts_value
+                                  })
+
+        if is_eq_spaced:
+            ts_type = 'eqtimeseries'
+            timeseries = {'frequency': freq.total_seconds(),
+                          'start_time':dateutil.date_to_string(start_time, seasonal=seasonal),
+                          'arr_data':str(eq_val)}
+          #  self.validate_value(timeseries, restriction_dict)
+        else:
+            ts_type = 'timeseries'
+            timeseries = {'ts_values': ts_values}
+         #   self.validate_value(timeseries, restriction_dict)
+
+            #After validating the data, turn it into the format the server wants.
+            for ts in timeseries['ts_values']:
+                ts['ts_value'] = PluginLib.create_dict(ts['ts_value'])
+
+
+        return ts_type, timeseries
+
+
+
 
 def commandline_parser():
     parser = ap.ArgumentParser(
