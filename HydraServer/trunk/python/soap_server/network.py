@@ -245,6 +245,24 @@ class NetworkService(HydraService):
 
         return new_node
 
+
+    @rpc(Integer,  SpyneArray(Node), _returns=SpyneArray(Node))
+    def add_nodes(ctx, network_id, nodes):
+
+        """
+        Add a nodes to a network
+        """
+
+        node_s = network.add_nodes(network_id, nodes, **ctx.in_header.__dict__)
+        new_nodes=[]
+        for node in nodes:
+            for node_ in node_s:
+                if(node.name==node_.node_name):
+                    new_nodes.append(Node(node_, summary=True))
+                    break
+
+        return new_nodes
+
     @rpc(Node, _returns=Node)
     def update_node(ctx, node):
         """

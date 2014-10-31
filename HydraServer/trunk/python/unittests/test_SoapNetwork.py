@@ -367,6 +367,71 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         
         return new_network
 
+    ######################################
+    def test_add_nodes(self):
+        """
+        Test add new nodes to network
+        """
+
+        project = self.create_project('test')
+        network = self.client.factory.create('hyd:Network')
+        nodes = self.client.factory.create('hyd:NodeArray')
+        links = self.client.factory.create('hyd:LinkArray')
+
+        nnodes = 3
+        nlinks = 2
+        x = [0, 0, 1]
+        y = [0, 1, 0]
+
+        for i in range(nnodes):
+            node = self.client.factory.create('hyd:Node')
+            node.id = i * -1
+            node.name = 'node ' + str(i)
+            node.description = 'test node ' + str(i)
+            node.x = x[i]
+            node.y = y[i]
+
+            nodes.Node.append(node)
+
+        for i in range(nlinks):
+            link = self.client.factory.create('hyd:Link')
+            link.id = i * -1
+            link.name = 'link ' + str(i)
+            link.description = 'test link ' + str(i)
+            link.node_1_id = nodes.Node[i].id
+            link.node_2_id = nodes.Node[i + 1].id
+            links.Link.append(link)
+
+        network.project_id = project.id
+        network.name = 'Test @ %s'%(datetime.datetime.now())
+        network.description = 'a network for soap unit tests.'
+        network.nodes = nodes
+        network.links = links
+
+        network = self.client.service.add_network(network)
+        nodes_ = self.client.factory.create('hyd:NodeArray')
+
+
+        for i in range (1200):
+             node1 = self.client.factory.create('hyd:Node')
+             new_node_num = nnodes + 1
+             node1.id = new_node_num * -1
+             node1.name = 'node1_'+str(i)
+             node1.description = 'test node ' + str(new_node_num)
+             node1.x = 100+i
+             node1.y = 101+i
+             nodes_.Node.append(node1)
+
+        new_nodes=self.client.service.add_nodes(network.id, nodes_)
+        new_network = self.client.service.get_network(network.id)
+
+        assert len(new_nodes.Node) == len(nodes_.Node); "new nodes were not added correctly",
+
+        assert len(network.nodes.Node)+len(nodes_.Node) == len(new_network.nodes.Node); "new nodes were not added correctly_2",
+
+        return  new_network
+    ########################################
+
    
     def test_update_node(self):
         network = self.test_add_node()
