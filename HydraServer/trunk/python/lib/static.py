@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -43,16 +43,15 @@ def add_image(name, file,**kwargs):
         log.critical("Could not open file: %s"%name)
         return False
 
-    f = open(path, 'w') # if this fails, the client will see an
+    f = open(path, 'wb') # if this fails, the client will see an
     # # internal error.
 
     try:
         for data in file:
             f.write(data)
+        f.close()
 
         log.debug("File written: %r" % name)
-
-        f.close()
 
     except:
         log.critical("Error writing to file: %s", name)
@@ -79,23 +78,18 @@ def get_image(name,**kwargs):
     imageFile = f.read()
 
     #encode the contents of the file as a byte array
-    encodedFile = base64.b64encode(imageFile)
+    #encodedFile = base64.b64encode(imageFile)
 
-    return encodedFile
+    return imageFile
 
 def remove_image(name,**kwargs):
     path = config.get('filesys', 'img_src')
 
     path = os.path.join(path, name)
-
-    #The safest way to check if a file exists is to try to open
-    #it. If the open succeeds, then throw an exception to this effect.
-    try:
-        f = open(path)
-    except IOError:
+    if(os.path.exists(path)):
+        os.remove(path)
+    else:
         raise HydraError("File with name (%s) does not exist!"%(name))
-
-    os.remove(path)
 
     return True
 
@@ -107,7 +101,7 @@ def add_file(resource_type, resource_id, name, file,**kwargs):
         os.makedirs(path)
     except OSError:
         pass
-    
+
     path = os.path.join(path, str(resource_id))
     try:
         os.makedirs(path)
@@ -130,7 +124,7 @@ def add_file(resource_type, resource_id, name, file,**kwargs):
         log.critical("Could not open file: %s"%name)
         return False
 
-    f = open(path, 'w') # if this fails, the client will see an
+    f = open(path, 'wb') # if this fails, the client will see an
     # # internal error.
 
     try:
@@ -138,7 +132,6 @@ def add_file(resource_type, resource_id, name, file,**kwargs):
             f.write(data)
 
         log.debug("File written: %r" % name)
-
         f.close()
 
     except:
@@ -164,25 +157,23 @@ def get_file(resource_type, resource_id, name,**kwargs):
 
     #read the contents of the file
     file_to_send = f.read()
+    f.close()
 
     #encode the contents of the file as a byte array
-    encodedFile = base64.b64encode(file_to_send)
 
-    return encodedFile
+    #encodedFile = base64.b64encode(file_to_send)
+
+    return file_to_send
 
 def remove_file(resource_type, resource_id, name,**kwargs):
     path = config.get('filesys', 'file_src')
 
     path = os.path.join(path, resource_type, str(resource_id), name)
 
-    #The safest way to check if a file exists is to try to open
-    #it. If the open succeeds, then throw an exception to this effect.
-    try:
-        f = open(path)
-    except IOError:
+    if(os.path.exists(path)):
+        os.remove(path)
+    else:
         raise HydraError("File with name (%s) does not exist!"%(name))
-
-    os.remove(path)
 
     return True
 
