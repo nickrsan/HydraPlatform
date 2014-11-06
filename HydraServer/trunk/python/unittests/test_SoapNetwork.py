@@ -215,7 +215,70 @@ class NetworkTest(test_SoapServer.SoapServerTest):
        #     'A different network for SOAP unit tests.', \
        #     "Update did not work correctly."
 
+############################################################
+    def test_add_links(self):
 
+        project = self.create_project('test')
+        network = self.client.factory.create('hyd:Network')
+        nodes = self.client.factory.create('hyd:NodeArray')
+        links = self.client.factory.create('hyd:LinkArray')
+
+        nnodes = 3
+        nlinks = 2
+        x = [0, 0, 1]
+        y = [0, 1, 0]
+
+        for i in range(nnodes):
+            node = self.client.factory.create('hyd:Node')
+            node.id = i * -1
+            node.name = 'Node ' + str(i)
+            node.description = 'Test node ' + str(i)
+            node.x = x[i]
+            node.y = y[i]
+
+            nodes.Node.append(node)
+
+        for i in range(nlinks):
+            link = self.client.factory.create('hyd:Link')
+            link.id = i * -1
+            link.name = 'Link ' + str(i)
+            link.description = 'Test link ' + str(i)
+            link.node_1_id = nodes.Node[i].id
+            link.node_2_id = nodes.Node[i + 1].id
+
+            links.Link.append(link)
+
+        network.project_id = project.id
+        network.name = 'Test @ %s'%(datetime.datetime.now())
+        network.description = 'A network for SOAP unit tests.'
+        network.nodes = nodes
+        network.links = links
+
+        network = self.client.service.add_network(network)
+        links_ = self.client.factory.create('hyd:LinkArray')
+
+        link = self.client.factory.create('hyd:Link')
+        link.id = i * -1
+        link.name = 'New Link'
+        link.description = 'Test link ' + str(i)
+        link.node_1_id = network.nodes.Node[0].id
+        link.node_2_id = network.nodes.Node[2].id
+        links_.Link.append(link)
+
+        link2 = self.client.factory.create('hyd:Link')
+        link2.id = i * -2
+        link2.name = 'New Link_2'
+        link2.description = 'Test link ' + str(i)
+        link2.node_1_id = network.nodes.Node[0].id
+        link2.node_2_id = network.nodes.Node[2].id
+        links_.Link.append(link2)
+        new_links=self.client.service.add_links(network.id, links_)
+
+        new_network = self.client.service.get_network(network.id)
+        assert len(new_links.Link) == len(links_.Link); "new nodes were not added correctly",
+        assert len(network.links.Link)+len(links_.Link) == len(new_network.links.Link); "new nodes were not added correctly_2",
+
+############################################################
     def test_add_link(self):
         project = self.create_project('test')
         network = self.client.factory.create('hyd:Network')

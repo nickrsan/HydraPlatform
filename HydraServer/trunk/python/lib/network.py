@@ -254,21 +254,7 @@ def _add_nodes(net_i, nodes):
 
     return node_id_map, node_attrs
 
-def _add_links(net_i, links, node_id_map):
-
-    #check_perm(user_id, 'edit_topology')
-
-    start_time = datetime.datetime.now()
-
-    #List of resource attributes
-    link_attrs = {}
-    #Map negative IDS to their new, positive, counterparts.
-    link_id_map = dict()
-
-    if links is None or len(links) == 0:
-        return link_id_map, link_attrs
-
-    #Then add all the links.
+def _add_links_to_database(net_i, links, node_id_map):
     log.info("Adding links to network")
     link_dicts = []
     for link in links:
@@ -287,6 +273,25 @@ def _add_links(net_i, links, node_id_map):
                           })
     if len(link_dicts) > 0:
         DBSession.execute(Link.__table__.insert(), link_dicts)
+
+def _add_links(net_i, links, node_id_map):
+
+    #check_perm(user_id, 'edit_topology')
+
+    start_time = datetime.datetime.now()
+
+    #List of resource attributes
+    link_attrs = {}
+    #Map negative IDS to their new, positive, counterparts.
+    link_id_map = dict()
+
+    if links is None or len(links) == 0:
+        return link_id_map, link_attrs
+
+    #Then add all the links.
+#################################################################
+    _add_links_to_database(net_i, links, node_id_map)
+###################################################################
     log.info("Links added in %s", get_timing(start_time))
     iface_links = {}
 
@@ -917,12 +922,20 @@ def get_network_extents(network_id,**kwargs):
     return ne
 
 
-#########################################====
+
+#########################################
 def add_nodes(network_id, nodes,**kwargs):
     """
         Add nodes to network
     """
     start_time = datetime.datetime.now()
+
+    names=[]        # used to check uniqueness of node name
+    for n_i in nodes:
+        if n_i.name in names:
+            raise HydraError("Duplicate Node Name: %s"%(n_i.name))
+        names.append(n_i.name)
+
     user_id = kwargs.get('user_id')
     try:
         net_i = DBSession.query(Network).filter(Network.network_id == network_id).one()
@@ -930,7 +943,6 @@ def add_nodes(network_id, nodes,**kwargs):
     except NoResultFound:
         raise ResourceNotFoundError("Network %s not found"%(network_id))
 
-    no=len (net_i.nodes)
     _add_nodes_to_database(net_i, nodes)
 
     net_i.project_id=net_i.project_id
@@ -943,9 +955,6 @@ def add_nodes(network_id, nodes,**kwargs):
 
     iface_nodes = dict()
     for n_i in node_s:
-        if iface_nodes.get(n_i.node_name) is not None:
-            raise HydraError("Duplicate Node Name: %s"%(n_i.node_name))
-
         iface_nodes[n_i.node_name] = n_i
 
     for node in nodes:
@@ -955,7 +964,41 @@ def add_nodes(network_id, nodes,**kwargs):
 
     log.info("Nodes added in %s", get_timing(start_time))
     return node_s
+
 ##########################################################################
+def add_links(network_id, links,**kwargs):
+    '''
+    add links to network
+    '''
+    start_time = datetime.datetime.now()
+    user_id = kwargs.get('user_id')
+    names=[]        # used to check uniqueness of link name before saving links to database
+    for l_i in links:
+        if l_i.name in names:
+            raise HydraError("Duplicate Link Name: %s"%(l_i.name))
+        names.append(l_i.name)
+
+    try:
+        net_i = DBSession.query(Network).filter(Network.network_id == network_id).one()
+        net_i.check_write_permission(user_id)
+    except NoResultFound:
+        raise ResourceNotFoundError("Network %s not found"%(network_id))
+    node_id_map=dict()
+    for node in net_i.nodes:
+       node_id_map[node.node_id]=node
+    _add_links_to_database(net_i, links, node_id_map)
+
+    net_i.project_id=net_i.project_id
+    DBSession.flush()
+    link_s =  DBSession.query(Link).filter(Link.network_id==network_id).all()
+    iface_links = {}
+    for l_i in link_s:
+        iface_links[l_i.link_name] = l_i
+    link_attrs = _bulk_add_resource_attrs(net_i.network_id, 'LINK', links, iface_links)
+    log.info("Nodes added in %s", get_timing(start_time))
+    return link_s
+#########################################
+
 
 def add_node(network_id, node,**kwargs):
 
@@ -991,6 +1034,7 @@ def add_node(network_id, node,**kwargs):
     DBSession.refresh(new_node)
 
     return new_node
+#########################################################################
 
 def update_node(node,**kwargs):
     """
