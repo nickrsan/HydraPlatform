@@ -506,7 +506,7 @@ class TimeSeries(ComplexModel):
                 except:
                     ts_data['ts_time'] = [ts]
             try:
-                ts_val = list(ts_val)
+                ts_val = eval(str(ts_val))
                 ts_data['ts_value'] = [create_dict(ts_val)]
             except:
                 ts_data['ts_value'] = [ts_val]
