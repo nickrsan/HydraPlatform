@@ -17,7 +17,8 @@ import datetime
 import sys
 from HydraLib.dateutil import get_datetime
 import logging
-from db.model import Dataset, Metadata, DatasetOwner, DatasetGroup, DatasetGroupItem, ResourceScenario
+from db.model import Dataset, Metadata, DatasetOwner, DatasetGroup,\
+        DatasetGroupItem, ResourceScenario, ResourceAttr, TypeAttr
 from util import generate_data_hash
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import case
@@ -98,6 +99,9 @@ def get_datasets(dataset_id=None,
                 scenario_id=None,
                 metadata_name=None,
                 metadata_val=None,
+                attr_id = None,
+                type_id = None,
+                unconnected = None,
                 inc_metadata='N',
                 inc_val = 'N',
                 page_start = 0,
@@ -141,7 +145,10 @@ def get_datasets(dataset_id=None,
             )
 
         if group_name is not None:
-            dataset_qry = dataset_qry.join(DatasetGroup, and_(DatasetGroupItem.group_id   == DatasetGroup.group_id,func.lower(DatasetGroup.group_name).like("%%%s%%"%group_name.lower()))).join(DatasetGroupItem,and_(DatasetGroupItem.dataset_id == Dataset.dataset_id))
+            dataset_qry = dataset_qry.join(DatasetGroup,
+                        and_(DatasetGroupItem.group_id == DatasetGroup.group_id,
+                        func.lower(DatasetGroup.group_name).like("%%%s%%"%group_name.lower()))
+                        ).join(DatasetGroupItem,and_(DatasetGroupItem.dataset_id == Dataset.dataset_id))
 
         if data_type is not None:
             dataset_qry = dataset_qry.filter(
@@ -179,6 +186,23 @@ def get_datasets(dataset_id=None,
             dataset_qry = dataset_qry.join(ResourceScenario,
                                 and_(ResourceScenario.dataset_id == Dataset.dataset_id, 
                                 ResourceScenario.scenario_id == scenario_id))
+
+        if attr_id is not None:
+            dataset_qry = dataset_qry.join(
+                ResourceScenario, ResourceScenario.dataset_id == Dataset.dataset_id).join(
+                ResourceAttr, and_(ResourceAttr.resource_attr_id==ResourceScenario.resource_attr_id,
+                                  ResourceAttr.attr_id==attr_id))
+
+        if type_id is not None:
+            dataset_qry = dataset_qry.join(
+                ResourceScenario, ResourceScenario.dataset_id == Dataset.dataset_id).join(
+                ResourceAttr, ResourceAttr.resource_attr_id==ResourceScenario.resource_attr_id).join(
+                TypeAttr, and_(TypeAttr.attr_id==ResourceAttr.attr_id, TypeAttr.type_id==type_id))
+
+        if unconnected == 'Y':
+            dataset_qry = dataset_qry.outerjoin(
+                ResourceScenario, ResourceScenario.dataset_id == Dataset.dataset_id)
+            dataset_qry = dataset_qry.filter(ResourceScenario.scenario_id == None)
 
         if metadata_name is not None and metadata_val is not None:
             dataset_qry = dataset_qry.join(Metadata,

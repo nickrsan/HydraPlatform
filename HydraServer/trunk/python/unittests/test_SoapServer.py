@@ -123,20 +123,21 @@ class SoapServerTest(unittest.TestCase):
         return new_user
 
     def create_template(self):
-        template = self.client.service.get_template_by_name('Test Template')
+        template = self.client.service.get_template_by_name('Default Template')
 
         if template is not None:
             return template
 
-        link_attr_1 = self.create_attr("link_attr_from_tmpl_a", dimension='Pressure')
-        link_attr_2 = self.create_attr("link_attr_from_tmpl_b", dimension='Speed')
-        node_attr_1 = self.create_attr("node_attr_from_tmpl_a", dimension='Volume')
-        node_attr_2 = self.create_attr("node_attr_from_tmpl_b", dimension='Speed')
+        link_attr_1 = self.create_attr("link_attr_a", dimension='Pressure')
+        link_attr_2 = self.create_attr("link_attr_b", dimension='Speed')
+        node_attr_1 = self.create_attr("node_attr_a", dimension='Volume')
+        node_attr_2 = self.create_attr("node_attr_b", dimension='Speed')
+        node_attr_3 = self.create_attr("node_attr_c", dimension='Cost')
         group_attr_1  = self.create_attr("grp_attr_1", dimension='Cost')
         group_attr_2  = self.create_attr("grp_attr_2", dimension='Displacement')
 
         template = self.client.factory.create('hyd:Template')
-        template.name = 'Test Template'
+        template.name = 'Default Template'
 
 
         types = self.client.factory.create('hyd:TemplateTypeArray')
@@ -159,6 +160,10 @@ class SoapServerTest(unittest.TestCase):
         typeattr_2.attr_id = node_attr_2.id
         typeattr_2.data_restriction = {'INCREASING': None}
         typeattrs.TypeAttr.append(typeattr_2)
+
+        typeattr_3 = self.client.factory.create('hyd:TypeAttr')
+        typeattr_3.attr_id = node_attr_3.id
+        typeattrs.TypeAttr.append(typeattr_3)
 
         type1.typeattrs = typeattrs
 
@@ -215,7 +220,7 @@ class SoapServerTest(unittest.TestCase):
 
         assert len(new_template.types) == 1, "Resource types did not add correctly"
         for t in new_template.types.TemplateType[0].typeattrs.TypeAttr:
-            assert t.attr_id in (node_attr_1.id, node_attr_2.id);
+            assert t.attr_id in (node_attr_1.id, node_attr_2.id, node_attr_3.id);
             "Node types were not added correctly!"
 
         for t in new_template.types.TemplateType[1].typeattrs.TypeAttr:
@@ -293,7 +298,7 @@ class SoapServerTest(unittest.TestCase):
         
     def build_network(self, project_id=None, num_nodes=10, new_proj=False):
 
-    
+
         start = datetime.datetime.now()
         if project_id is None:
             proj_name = None
@@ -306,13 +311,6 @@ class SoapServerTest(unittest.TestCase):
         log.debug("Project creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
 
-        link_attr1 = self.create_attr("link_attr_1", dimension='Pressure')
-        link_attr2 = self.create_attr("link_attr_2", dimension='Speed')
-        node_attr1 = self.create_attr("node_attr_1", dimension='Volume')
-        node_attr2 = self.create_attr("node_attr_2", dimension='Speed')
-        node_attr3 = self.create_attr("node_attr_3", dimension='Current')
-        group_attr = self.create_attr("group_attr", dimension='Volume')
-
         template = self.create_template()
 
         log.debug("Attribute creation took: %s"%(datetime.datetime.now()-start))
@@ -324,7 +322,7 @@ class SoapServerTest(unittest.TestCase):
             ref_id  = None,
             ref_key = 'GROUP',
             attr_is_var = 'N',
-            attr_id = group_attr.id,
+            attr_id = template.types.TemplateType[2].typeattrs.TypeAttr[0].attr_id,
             id      = -1
         )
         group_attrs = self.client.factory.create('hyd:ResourceAttrArray')
@@ -335,6 +333,9 @@ class SoapServerTest(unittest.TestCase):
 
         prev_node = None
         ra_index = 2
+
+        node_type = template.types.TemplateType[0]
+        link_type = template.types.TemplateType[1]
         for n in range(num_nodes):
             node = self.create_node(n*-1, node_name="Node %s"%(n))
 
@@ -345,7 +346,7 @@ class SoapServerTest(unittest.TestCase):
             node_ra1         = dict(
                 ref_key = 'NODE',
                 ref_id  = None,
-                attr_id = node_attr1.id,
+                attr_id = node_type.typeattrs.TypeAttr[0].attr_id,
                 id      = ra_index * -1,
                 attr_is_var = 'N',
             )
@@ -353,7 +354,7 @@ class SoapServerTest(unittest.TestCase):
             node_ra2         = dict(
                 ref_key = 'NODE',
                 ref_id  = None,
-                attr_id = node_attr2.id,
+                attr_id = node_type.typeattrs.TypeAttr[1].attr_id,
                 id      = ra_index * -1,
                 attr_is_var = 'Y',
             )
@@ -361,7 +362,7 @@ class SoapServerTest(unittest.TestCase):
             node_ra3         = dict(
                 ref_key = 'NODE',
                 ref_id  = None,
-                attr_id = node_attr3.id,
+                attr_id = node_type.typeattrs.TypeAttr[2].attr_id,
                 id      = ra_index * -1,
                 attr_is_var = 'N',
             )
@@ -397,14 +398,14 @@ class SoapServerTest(unittest.TestCase):
                     ref_id  = None,
                     ref_key = 'LINK',
                     id     = ra_index * -1,
-                    attr_id = link_attr1.id,
+                    attr_id = link_type.typeattrs.TypeAttr[0].attr_id,
                     attr_is_var = 'N',
                 )
                 ra_index = ra_index + 1
                 link_ra2         = dict(
                     ref_id  = None,
                     ref_key = 'LINK',
-                    attr_id = link_attr2.id,
+                    attr_id = link_type.typeattrs.TypeAttr[1].attr_id,
                     id      = ra_index * -1,
                     attr_is_var = 'N',
                 )
@@ -416,8 +417,8 @@ class SoapServerTest(unittest.TestCase):
                     type_summary = self.client.factory.create('hyd:TypeSummary')
                     type_summary.id = template.id
                     type_summary.name = template.name
-                    type_summary.id = template.types.TemplateType[1].id
-                    type_summary.name = template.types.TemplateType[1].name
+                    type_summary.id = link_type.id
+                    type_summary.name = link_type.name
 
                     type_summary_arr.TypeSummary.append(type_summary)
 
@@ -482,19 +483,19 @@ class SoapServerTest(unittest.TestCase):
         for n in nodes:
             for na in n['attributes'].ResourceAttr:
                 if na.get('attr_is_var', 'N') == 'N':
-                    if na['attr_id'] == node_attr1['id']:
+                    if na['attr_id'] == node_type.typeattrs.TypeAttr[0].attr_id:
                         timeseries = self.create_timeseries(na)
                         scenario_data.ResourceScenario.append(timeseries)
-                    elif na['attr_id'] == node_attr3['id']:
-                        eqtimeseries = self.create_scalar(na)
-                        scenario_data.ResourceScenario.append(eqtimeseries)
+                    elif na['attr_id'] == node_type.typeattrs.TypeAttr[2].attr_id:
+                        scalar = self.create_scalar(na)
+                        scenario_data.ResourceScenario.append(scalar)
 
         for l in links:
             for na in l['attributes'].ResourceAttr:
-                if na['attr_id'] == link_attr1['id']:
+                if na['attr_id'] == link_type.typeattrs.TypeAttr[0].attr_id:
                     array      = self.create_array(na)
                     scenario_data.ResourceScenario.append(array)
-                elif na['attr_id'] == link_attr2['id']:
+                elif na['attr_id'] == link_type.typeattrs.TypeAttr[1].attr_id:
                     descriptor = self.create_descriptor(na)
                     scenario_data.ResourceScenario.append(descriptor)
 

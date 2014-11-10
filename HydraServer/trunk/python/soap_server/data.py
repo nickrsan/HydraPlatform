@@ -65,6 +65,7 @@ class DataService(HydraService):
 
     @rpc(Integer, Unicode, Unicode, Unicode, Unicode, Unicode,
          Integer, Unicode, Unicode,
+         Integer, Integer, Unicode,
          Unicode(pattern='[YN]', default='N'), #include metadata flag
          Unicode(pattern='[YN]', default='N'), # include value flag
          Integer(default=0),Integer(default=2000), #start, size page flags
@@ -78,6 +79,9 @@ class DataService(HydraService):
                 scenario_id,
                 metadata_name,
                 metadata_val,
+                attr_id,
+                type_id,
+                unconnected,
                 inc_metadata,
                 inc_val,
                 page_start,
@@ -92,6 +96,9 @@ class DataService(HydraService):
                                      scenario_id,
                                      metadata_name,
                                      metadata_val,
+                                     attr_id,
+                                     type_id,
+                                     unconnected,
                                      inc_metadata,
                                      inc_val,
                                      page_start,

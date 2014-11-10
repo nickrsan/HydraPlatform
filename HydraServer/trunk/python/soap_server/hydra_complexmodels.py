@@ -632,11 +632,11 @@ class ResourceAttr(ComplexModel):
     """
     """
     _type_info = [
-        ('id',      Integer(default=None)),
+        ('id',      Integer(min_occurs=0, default=None)),
         ('attr_id', Integer(default=None)),
-        ('ref_id',  Integer(default=None)),
-        ('ref_key', Unicode(default=None)),
-        ('attr_is_var', Unicode(min_occurs=1, default='N')),
+        ('ref_id',  Integer(min_occurs=0, default=None)),
+        ('ref_key', Unicode(min_occurs=0, default=None)),
+        ('attr_is_var', Unicode(min_occurs=0, default='N')),
         ('resourcescenario', ResourceScenario),
     ]
 

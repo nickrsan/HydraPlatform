@@ -984,6 +984,36 @@ class RetrievalTest(test_SoapServer.SoapServerTest):
         for d in res_1.Dataset:
             assert d.id in ts_ids
 
+        res_1 = self.client.service.get_datasets(unconnected='Y')
+        assert len(res_1.Dataset) >= 1
+        ds_ids = [d.id for d in res_1.Dataset]
+        assert ts_1['id'] in ds_ids
+        assert ts_2['id'] in ds_ids
+        
+        attr_id = net.nodes.Node[0].attributes.ResourceAttr[0].attr_id
+        attr_dataset_ids = []
+        for rs in net.scenarios.Scenario[0].resourcescenarios.ResourceScenario:
+            if rs.attr_id == attr_id:
+                attr_dataset_ids.append(rs.value.id)
+        res_1 = self.client.service.get_datasets(attr_id=attr_id)
+        res_dataset_ids = [d.id for d in res_1.Dataset]
+        for res_id in attr_dataset_ids:
+            assert res_id in res_dataset_ids 
+
+        link = net.links.Link[1]
+        type_id = link.types.TypeSummary[0].id
+        ra_ids = [ra.id for ra in link.attributes.ResourceAttr]
+
+        link_type_dataset_ids = []
+        for rs in net.scenarios.Scenario[0].resourcescenarios.ResourceScenario:
+            if rs.resource_attr_id in ra_ids:
+                link_type_dataset_ids.append(rs.value.id)
+        res_1 = self.client.service.get_datasets(type_id=type_id)
+        assert res_1 != ''
+        res_dataset_ids = [d.id for d in res_1.Dataset]
+        for res_id in link_type_dataset_ids:
+            assert res_id in res_dataset_ids 
+
 class FormatTest(test_SoapServer.SoapServerTest):
     def test_format_array_data(self):
         net = self.create_network_with_data(num_nodes=2)
