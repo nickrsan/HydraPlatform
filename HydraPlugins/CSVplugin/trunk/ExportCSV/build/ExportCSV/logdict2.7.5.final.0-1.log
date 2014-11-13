@@ -1140,8 +1140,7 @@ requests.sys: None -> None
 http: None -> None
   DEL http
 requests.simplejson: None -> None
-simplejson: None -> None
-  DEL simplejson
+simplejson: None -> <PkgModule 'simplejson' C:\Python27\lib\site-packages\simplejson\__init__.pyc imports=[('decoder.JSONDecoder', 0, 0, 1), ('decoder', 0, 0, 1), ('_speedups.make_encoder', 1, 0, 1), ('__future__', 0, 0, 0), ('ordered_dict', 1, 1, 1), ('encoder.JSONEncoder', 0, 0, 1), ('', 1, 1, 1), ('__future__.absolute_import', 0, 0, 0), ('decimal.Decimal', 0, 0, 0), ('decimal', 0, 0, 0), ('_speedups', 1, 0, 1), ('encoder', 0, 0, 1), ('scanner', 0, 0, 1), ('encoder.JSONEncoderForHTML', 0, 0, 1), ('scanner.JSONDecodeError', 0, 0, 1), ('decoder', 1, 0, 1), ('', 1, 0, 1), ('collections', 1, 0, 0), ('scanner', 1, 0, 1), ('encoder', 1, 0, 1)] binaries=[] datas=[]>
 requests.packages.urllib3.packages: None -> <PkgModule 'requests.packages.urllib3.packages' C:\Python27\lib\site-packages\requests\packages\urllib3\packages\__init__.pyc imports=[('', 0, 0, 1), ('__future__.absolute_import', 0, 0, 0), ('ssl_match_hostname', 0, 0, 1), ('__future__', 0, 0, 0)] binaries=[] datas=[]>
 requests.packages.urllib3.packages.ordered_dict: None -> <PyModule 'requests.packages.urllib3.packages.ordered_dict' C:\Python27\lib\site-packages\requests\packages\urllib3\packages\ordered_dict.pyc imports=[('_abcoll', 0, 0, -1), ('dummy_thread.get_ident', 0, 1, -1), ('thread.get_ident', 0, 0, -1), ('_abcoll.ValuesView', 0, 0, -1), ('dummy_thread', 0, 1, -1), ('_abcoll.KeysView', 0, 0, -1), ('thread', 0, 0, -1), ('_abcoll.ItemsView', 0, 0, -1)] binaries=[] datas=[]>
 requests.urlparse: None -> None
@@ -1156,6 +1155,39 @@ http: None -> None
 http: None -> None
   DEL http
 requests.cookielib: None -> None
+simplejson.decoder: None -> <PyModule 'simplejson.decoder' C:\Python27\lib\site-packages\simplejson\decoder.pyc imports=[('compat.unichr', 0, 0, 1), ('sys', 0, 0, 0), ('compat.u', 0, 0, 1), ('__future__', 0, 0, 0), ('struct', 0, 0, 0), ('compat.fromhex', 0, 0, 1), ('compat', 0, 0, 1), ('__future__.absolute_import', 0, 0, 0), ('_speedups', 1, 0, 1), ('compat.PY3', 0, 0, 1), ('scanner', 0, 0, 1), ('_speedups.scanstring', 1, 0, 1), ('re', 0, 0, 0), ('scanner.make_scanner', 0, 0, 1), ('compat.binary_type', 0, 0, 1), ('compat.b', 0, 0, 1), ('compat.text_type', 0, 0, 1), ('scanner.JSONDecodeError', 0, 0, 1)] binaries=[] datas=[]>
+simplejson._speedups: None -> None
+_speedups: None -> None
+  DEL _speedups
+simplejson.ordered_dict: None -> <PyModule 'simplejson.ordered_dict' C:\Python27\lib\site-packages\simplejson\ordered_dict.pyc imports=[('UserDict', 0, 0, -1), ('UserDict.DictMixin', 0, 0, -1)] binaries=[] datas=[]>
+simplejson.encoder: None -> <PyModule 'simplejson.encoder' C:\Python27\lib\site-packages\simplejson\encoder.pyc imports=[('compat.PY3', 0, 0, 1), ('simplejson.decoder', 0, 0, 0), ('compat.u', 0, 0, 1), ('__future__', 0, 0, 0), ('compat.integer_types', 0, 0, 1), ('compat', 0, 0, 1), ('__future__.absolute_import', 0, 0, 0), ('decimal.Decimal', 0, 0, 0), ('decimal', 0, 0, 0), ('_speedups', 1, 0, 1), ('simplejson.decoder.PosInf', 0, 0, 0), ('compat.unichr', 0, 0, 1), ('operator.itemgetter', 0, 0, 0), ('compat.binary_type', 0, 0, 1), ('', 1, 0, 1), ('compat.string_types', 0, 0, 1), ('re', 0, 0, 0), ('operator', 0, 0, 0)] binaries=[] datas=[]>
+decimal: None -> <PyModule 'decimal' C:\Python27\lib\decimal.pyc imports=[('collections', 0, 0, -1), ('threading', 0, 0, -1), ('itertools.chain', 1, 0, -1), ('math', 0, 0, -1), ('copy', 0, 0, -1), ('itertools.repeat', 1, 0, -1), ('doctest', 0, 1, -1), ('re', 0, 0, -1), ('itertools', 1, 0, -1), ('sys', 0, 1, -1), ('collections.namedtuple', 0, 0, -1), ('locale', 0, 0, -1), ('numbers', 0, 0, -1)] binaries=[] datas=[]>
+_speedups: None -> None
+  DEL _speedups
+simplejson.scanner: None -> <PyModule 'simplejson.scanner' C:\Python27\lib\site-packages\simplejson\scanner.pyc imports=[('re', 0, 0, -1), ('simplejson._speedups', 1, 0, -1), ('simplejson._speedups.make_scanner', 1, 0, -1)] binaries=[] datas=[]>
+simplejson.compat: None -> <PyModule 'simplejson.compat' C:\Python27\lib\site-packages\simplejson\compat.pyc imports=[('imp.reload', 0, 1, -1), ('sys', 0, 0, -1), ('codecs', 0, 1, -1), ('imp', 0, 1, -1), ('io', 0, 1, -1), ('cStringIO', 0, 1, -1), ('importlib', 0, 1, -1), ('importlib.reload', 0, 1, -1)] binaries=[] datas=[]>
+_speedups: None -> None
+  DEL _speedups
+_speedups: None -> None
+  DEL _speedups
+simplejson.imp: None -> None
+simplejson.sys: None -> None
+simplejson.codecs: None -> None
+simplejson.io: None -> None
+simplejson.cStringIO: None -> None
+simplejson.importlib: None -> None
+importlib.reload: None -> None
+  DEL importlib.reload
+simplejson.re: None -> None
+simplejson.simplejson: None -> None
+  DEL simplejson._speedups
+simplejson._speedups: None -> None
+  DEL simplejson._speedups
+simplejson.UserDict: None -> None
+simplejson._speedups: None -> None
+_speedups: None -> None
+  DEL _speedups
+numbers: None -> <PyModule 'numbers' C:\Python27\lib\numbers.pyc imports=[('__future__.division', 0, 0, -1), ('abc', 0, 0, -1), ('abc.abstractproperty', 0, 0, -1), ('__future__', 0, 0, -1), ('abc.abstractmethod', 0, 0, -1), ('abc.ABCMeta', 0, 0, -1)] binaries=[] datas=[]>
 requests.packages.urllib3.util.get_host: None -> None
   DEL requests.packages.urllib3.util.get_host
 requests.packages.urllib3.poolmanager: None -> <PyModule 'requests.packages.urllib3.poolmanager' C:\Python27\lib\site-packages\requests\packages\urllib3\poolmanager.pyc imports=[('util.parse_url', 0, 0, 1), ('urlparse', 0, 1, -1), ('connectionpool', 0, 0, 1), ('urllib.parse.urljoin', 0, 0, -1), ('_collections.RecentlyUsedContainer', 0, 0, 1), ('connectionpool.HTTPConnectionPool', 0, 0, 1), ('connectionpool.port_by_scheme', 0, 0, 1), ('_collections', 0, 0, 1), ('logging', 0, 0, -1), ('connectionpool.HTTPSConnectionPool', 0, 0, 1), ('urlparse.urljoin', 0, 1, -1), ('urllib.parse', 0, 0, -1), ('request', 0, 0, 1), ('request.RequestMethods', 0, 0, 1), ('util', 0, 0, 1)] binaries=[] datas=[]>

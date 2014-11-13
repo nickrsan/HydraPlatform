@@ -1026,8 +1026,7 @@ requests.sys: None -> None
 http: None -> None
   DEL http
 requests.simplejson: None -> None
-simplejson: None -> None
-  DEL simplejson
+simplejson: None -> <PkgModule 'simplejson' C:\Python27\lib\site-packages\simplejson\__init__.pyc imports=[('decoder.JSONDecoder', 0, 0, 1), ('decoder', 0, 0, 1), ('_speedups.make_encoder', 1, 0, 1), ('__future__', 0, 0, 0), ('ordered_dict', 1, 1, 1), ('encoder.JSONEncoder', 0, 0, 1), ('', 1, 1, 1), ('__future__.absolute_import', 0, 0, 0), ('decimal.Decimal', 0, 0, 0), ('decimal', 0, 0, 0), ('_speedups', 1, 0, 1), ('encoder', 0, 0, 1), ('scanner', 0, 0, 1), ('encoder.JSONEncoderForHTML', 0, 0, 1), ('scanner.JSONDecodeError', 0, 0, 1), ('decoder', 1, 0, 1), ('', 1, 0, 1), ('collections', 1, 0, 0), ('scanner', 1, 0, 1), ('encoder', 1, 0, 1)] binaries=[] datas=[]>
 requests.packages.urllib3.packages: None -> <PkgModule 'requests.packages.urllib3.packages' C:\Python27\lib\site-packages\requests\packages\urllib3\packages\__init__.pyc imports=[('', 0, 0, 1), ('__future__.absolute_import', 0, 0, 0), ('ssl_match_hostname', 0, 0, 1), ('__future__', 0, 0, 0)] binaries=[] datas=[]>
 requests.packages.urllib3.packages.ordered_dict: None -> <PyModule 'requests.packages.urllib3.packages.ordered_dict' C:\Python27\lib\site-packages\requests\packages\urllib3\packages\ordered_dict.pyc imports=[('_abcoll', 0, 0, -1), ('dummy_thread.get_ident', 0, 1, -1), ('thread.get_ident', 0, 0, -1), ('_abcoll.ValuesView', 0, 0, -1), ('dummy_thread', 0, 1, -1), ('_abcoll.KeysView', 0, 0, -1), ('thread', 0, 0, -1), ('_abcoll.ItemsView', 0, 0, -1)] binaries=[] datas=[]>
 requests.urlparse: None -> None
@@ -1042,6 +1041,41 @@ http: None -> None
 http: None -> None
   DEL http
 requests.cookielib: None -> None
+simplejson.decoder: None -> <PyModule 'simplejson.decoder' C:\Python27\lib\site-packages\simplejson\decoder.pyc imports=[('compat.unichr', 0, 0, 1), ('sys', 0, 0, 0), ('compat.u', 0, 0, 1), ('__future__', 0, 0, 0), ('struct', 0, 0, 0), ('compat.fromhex', 0, 0, 1), ('compat', 0, 0, 1), ('__future__.absolute_import', 0, 0, 0), ('_speedups', 1, 0, 1), ('compat.PY3', 0, 0, 1), ('scanner', 0, 0, 1), ('_speedups.scanstring', 1, 0, 1), ('re', 0, 0, 0), ('scanner.make_scanner', 0, 0, 1), ('compat.binary_type', 0, 0, 1), ('compat.b', 0, 0, 1), ('compat.text_type', 0, 0, 1), ('scanner.JSONDecodeError', 0, 0, 1)] binaries=[] datas=[]>
+simplejson._speedups: None -> None
+_speedups: None -> None
+  DEL _speedups
+simplejson.ordered_dict: None -> <PyModule 'simplejson.ordered_dict' C:\Python27\lib\site-packages\simplejson\ordered_dict.pyc imports=[('UserDict', 0, 0, -1), ('UserDict.DictMixin', 0, 0, -1)] binaries=[] datas=[]>
+simplejson.encoder: None -> <PyModule 'simplejson.encoder' C:\Python27\lib\site-packages\simplejson\encoder.pyc imports=[('compat.PY3', 0, 0, 1), ('simplejson.decoder', 0, 0, 0), ('compat.u', 0, 0, 1), ('__future__', 0, 0, 0), ('compat.integer_types', 0, 0, 1), ('compat', 0, 0, 1), ('__future__.absolute_import', 0, 0, 0), ('decimal.Decimal', 0, 0, 0), ('decimal', 0, 0, 0), ('_speedups', 1, 0, 1), ('simplejson.decoder.PosInf', 0, 0, 0), ('compat.unichr', 0, 0, 1), ('operator.itemgetter', 0, 0, 0), ('compat.binary_type', 0, 0, 1), ('', 1, 0, 1), ('compat.string_types', 0, 0, 1), ('re', 0, 0, 0), ('operator', 0, 0, 0)] binaries=[] datas=[]>
+decimal: None -> <PyModule 'decimal' C:\Python27\lib\decimal.pyc imports=[('collections', 0, 0, -1), ('threading', 0, 0, -1), ('itertools.chain', 1, 0, -1), ('math', 0, 0, -1), ('copy', 0, 0, -1), ('itertools.repeat', 1, 0, -1), ('doctest', 0, 1, -1), ('re', 0, 0, -1), ('itertools', 1, 0, -1), ('sys', 0, 1, -1), ('collections.namedtuple', 0, 0, -1), ('locale', 0, 0, -1), ('numbers', 0, 0, -1)] binaries=[] datas=[]>
+_speedups: None -> None
+  DEL _speedups
+simplejson.scanner: None -> <PyModule 'simplejson.scanner' C:\Python27\lib\site-packages\simplejson\scanner.pyc imports=[('re', 0, 0, -1), ('simplejson._speedups', 1, 0, -1), ('simplejson._speedups.make_scanner', 1, 0, -1)] binaries=[] datas=[]>
+simplejson.compat: None -> <PyModule 'simplejson.compat' C:\Python27\lib\site-packages\simplejson\compat.pyc imports=[('imp.reload', 0, 1, -1), ('sys', 0, 0, -1), ('codecs', 0, 1, -1), ('imp', 0, 1, -1), ('io', 0, 1, -1), ('cStringIO', 0, 1, -1), ('importlib', 0, 1, -1), ('importlib.reload', 0, 1, -1)] binaries=[] datas=[]>
+_speedups: None -> None
+  DEL _speedups
+_speedups: None -> None
+  DEL _speedups
+simplejson.imp: None -> None
+simplejson.sys: None -> None
+simplejson.codecs: None -> None
+simplejson.io: None -> None
+simplejson.cStringIO: None -> None
+simplejson.importlib: None -> None
+importlib: None -> <PkgModule 'importlib' C:\Python27\lib\importlib\__init__.pyc imports=[('sys', 0, 0, -1)] binaries=[] datas=[]>
+importlib.reload: None -> None
+  DEL importlib.reload
+importlib.sys: None -> None
+simplejson.re: None -> None
+simplejson.simplejson: None -> None
+  DEL simplejson._speedups
+simplejson._speedups: None -> None
+  DEL simplejson._speedups
+simplejson.UserDict: None -> None
+simplejson._speedups: None -> None
+_speedups: None -> None
+  DEL _speedups
+numbers: None -> <PyModule 'numbers' C:\Python27\lib\numbers.pyc imports=[('__future__.division', 0, 0, -1), ('abc', 0, 0, -1), ('abc.abstractproperty', 0, 0, -1), ('__future__', 0, 0, -1), ('abc.abstractmethod', 0, 0, -1), ('abc.ABCMeta', 0, 0, -1)] binaries=[] datas=[]>
 requests.packages.urllib3.util.get_host: None -> None
   DEL requests.packages.urllib3.util.get_host
 requests.packages.urllib3.poolmanager: None -> <PyModule 'requests.packages.urllib3.poolmanager' C:\Python27\lib\site-packages\requests\packages\urllib3\poolmanager.pyc imports=[('util.parse_url', 0, 0, 1), ('urlparse', 0, 1, -1), ('connectionpool', 0, 0, 1), ('urllib.parse.urljoin', 0, 0, -1), ('_collections.RecentlyUsedContainer', 0, 0, 1), ('connectionpool.HTTPConnectionPool', 0, 0, 1), ('connectionpool.port_by_scheme', 0, 0, 1), ('_collections', 0, 0, 1), ('logging', 0, 0, -1), ('connectionpool.HTTPSConnectionPool', 0, 0, 1), ('urlparse.urljoin', 0, 1, -1), ('urllib.parse', 0, 0, -1), ('request', 0, 0, 1), ('request.RequestMethods', 0, 0, 1), ('util', 0, 0, 1)] binaries=[] datas=[]>
@@ -1298,7 +1332,6 @@ HydraLib.operator: None -> None
 HydraLib.pandas: None -> None
 pandas: None -> <PkgModule 'pandas' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\__init__.pyc imports=[('pandas.info', 0, 0, -1), ('pandas.util.print_versions.show_versions', 0, 0, -1), ('pandas.core.reshape.melt', 0, 0, -1), ('pandas.tools.pivot.crosstab', 0, 0, -1), ('pandas.tools.merge.ordered_merge', 0, 0, -1), ('pandas.core.reshape', 0, 0, -1), ('lib', 0, 0, 1), ('pandas.util.testing', 0, 0, -1), ('pandas.tools.tile', 0, 0, -1), ('pandas.sparse.api', 0, 0, -1), ('pandas.sparse.api.*', 0, 0, -1), ('pandas.util.print_versions', 0, 0, -1), ('pandas.tools.merge', 0, 0, -1), ('pandas.tools.merge.concat', 0, 0, -1), ('tslib', 0, 0, 1), ('pandas.io.api.*', 0, 0, -1), ('pandas.tools.merge.merge', 0, 0, -1), ('pandas.core.api.*', 0, 0, -1), ('pandas.info.__doc__', 0, 0, -1), ('pandas.tools.pivot.pivot_table', 0, 0, -1), ('pandas.tools.pivot', 0, 0, -1), ('pandas.tools.plotting.plot_params', 0, 0, -1), ('numpy', 0, 0, -1), ('', 0, 0, 1), ('pandas.tools.plotting', 0, 0, -1), ('pandas.tools.describe.value_range', 0, 0, -1), ('pandas.stats.api.*', 0, 0, -1), ('distutils.version.LooseVersion', 0, 0, -1), ('datetime', 0, 0, -1), ('distutils.version', 0, 0, -1), ('pandas.stats.api', 0, 0, -1), ('sys', 0, 1, -1), ('pandas.tools.tile.qcut', 0, 0, -1), ('pandas.core.api', 0, 0, -1), ('pandas.tseries.api.*', 0, 0, -1), ('datetime.datetime', 0, 0, -1), ('hashtable', 0, 0, 1), ('pandas.io.api', 0, 0, -1), ('pandas.computation.api', 0, 0, -1), ('pandas.tools.describe', 0, 0, -1), ('pandas.tools.tile.cut', 0, 0, -1), ('pandas.computation.api.*', 0, 0, -1), ('pandas.tools.plotting.scatter_matrix', 0, 0, -1), ('pandas.tseries.api', 0, 0, -1), ('pandas.version', 0, 0, -1), ('pandas.version.version', 0, 0, -1), ('pandas.core.config_init', 0, 0, -1)] binaries=[] datas=[]>
 HydraLib.decimal: None -> None
-decimal: None -> <PyModule 'decimal' C:\Python27\lib\decimal.pyc imports=[('collections', 0, 0, -1), ('threading', 0, 0, -1), ('itertools.chain', 1, 0, -1), ('math', 0, 0, -1), ('copy', 0, 0, -1), ('itertools.repeat', 1, 0, -1), ('doctest', 0, 1, -1), ('re', 0, 0, -1), ('itertools', 1, 0, -1), ('sys', 0, 1, -1), ('collections.namedtuple', 0, 0, -1), ('locale', 0, 0, -1), ('numbers', 0, 0, -1)] binaries=[] datas=[]>
 HydraLib.numpy: None -> None
 pandas.pandas: None -> None
 pandas.info: None -> <PyModule 'pandas.info' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\info.pyc imports=[] binaries=[] datas=[]>
@@ -1344,12 +1377,8 @@ pandas.util.struct: None -> None
 pandas.util.imp: None -> None
 pandas.util.subprocess: None -> None
 pandas.util.importlib: None -> None
-importlib: None -> <PkgModule 'importlib' C:\Python27\lib\importlib\__init__.pyc imports=[('sys', 0, 0, -1)] binaries=[] datas=[]>
 pandas.util.simplejson: None -> None
-simplejson: None -> None
-  DEL simplejson
 pandas.util.codecs: None -> None
-importlib.sys: None -> None
 pandas.core.pandas: None -> None
 pandas.core.frame: None -> <PyModule 'pandas.core.frame' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\core\frame.pyc imports=[('pandas.core.sparse.SparseDataFrame', 1, 0, -1), ('pandas.compat.raise_with_traceback', 0, 0, -1), ('pandas.core.panel.Panel', 1, 0, -1), ('sys', 0, 0, -1), ('pandas.tools.merge.concat', 1, 0, -1), ('__future__.division', 0, 0, -1), ('pandas.tseries.index', 0, 0, -1), ('pandas.io.excel.ExcelWriter', 1, 0, -1), ('pandas.compat', 0, 0, -1), ('pandas.tools.plotting', 0, 0, -1), ('pandas.core.reshape', 1, 0, -1), ('pandas.computation.eval', 0, 0, -1), ('collections', 0, 0, -1), ('pandas.core.indexing._check_bool_indexer', 0, 0, -1), ('pandas.core.common._values_from_object', 0, 0, -1), ('pandas.compat.OrderedDict', 0, 0, -1), ('pandas.computation.eval.eval', 0, 0, -1), ('pandas.tools.merge', 1, 0, -1), ('pandas.tseries.index.DatetimeIndex', 0, 0, -1), ('pandas.core.common.notnull', 0, 0, -1), ('pandas.core.groupby._lexsort_indexer', 1, 0, -1), ('pandas.compat.u', 0, 0, -1), ('pandas.core.internals', 0, 0, -1), ('pandas.core.format', 1, 0, -1), ('pandas.core.series.Series', 0, 0, -1), ('pandas.io.gbq', 1, 0, -1), ('pandas.core.reshape.stack', 1, 0, -1), ('pandas.core.indexing._convert_to_index_sliceable', 0, 0, -1), ('pandas.core.common.PandasError', 0, 0, -1), ('pandas.core.series', 1, 0, -1), ('pandas.compat.range', 0, 0, -1), ('pandas.tools.merge.concat', 1, 1, -1), ('numpy.ma', 0, 0, -1), ('pandas.core.common._try_sort', 0, 0, -1), ('pandas.core.common.is_list_like', 0, 0, -1), ('pandas.core.format._put_lines', 1, 0, -1), ('itertools', 0, 0, -1), ('pandas.core.groupby._nargsort', 1, 0, -1), ('numpy', 0, 0, -1), ('pandas.core.panel', 1, 0, -1), ('pandas.core.index._union_indexes', 1, 0, -1), ('pandas.core.common._is_sequence', 0, 0, -1), ('pandas.core.index', 0, 0, -1), ('types', 0, 0, -1), ('pandas.core.sparse', 1, 0, -1), ('pandas.core.reshape.pivot', 1, 0, -1), ('pandas.core.reshape.block2d_to_blocknd', 1, 0, -1), ('pandas.core.common', 1, 0, -1), ('pandas.core.groupby', 1, 0, -1), ('pandas.io.excel', 1, 0, -1), ('pandas.core.internals.BlockManager', 0, 0, -1), ('pandas.core.common._get_dtype', 0, 0, -1), ('pandas.core.internals.create_block_manager_from_arrays', 0, 0, -1), ('pandas.core.indexing', 0, 0, -1), ('pandas.core.nanops', 0, 0, -1), ('pandas.tools.plotting', 1, 0, -1), ('pandas.core.indexing._maybe_droplevels', 0, 0, -1), ('pandas.tools.merge.merge', 1, 0, -1), ('__future__', 0, 0, -1), ('numpy.nan', 0, 0, -1), ('pandas.core.config', 0, 0, -1), ('pandas.compat.lmap', 0, 0, -1), ('pandas.tseries.period.PeriodIndex', 0, 0, -1), ('pandas.core.reshape.unstack', 1, 0, -1), ('pandas.core.ops', 0, 0, -1), ('nose', 0, 1, -1), ('pandas.lib', 0, 0, -1), ('pandas.core.algorithms', 0, 0, -1), ('pandas.computation.expressions', 0, 0, -1), ('pandas.tseries.period', 0, 0, -1), ('pandas.core.generic', 0, 0, -1), ('pandas.compat.lzip', 0, 0, -1), ('pandas.core.format', 0, 0, -1), ('pandas.util.decorators.deprecate', 0, 0, -1), ('pandas.tools.merge', 1, 1, -1), ('pandas.core.series', 0, 0, -1), ('pandas.util.decorators', 0, 0, -1), ('collections', 1, 1, -1), ('functools', 0, 0, -1), ('pandas.core.generic.NDFrame', 0, 0, -1), ('pandas.core.common._maybe_upcast', 0, 0, -1), ('pandas.core.index._ensure_index', 0, 0, -1), ('pandas.core.index._get_combined_index', 1, 0, -1), ('pandas.core.index.MultiIndex', 0, 0, -1), ('pandas.io.parsers.read_table', 1, 0, -1), ('collections.defaultdict', 1, 1, -1), ('pandas.algos', 0, 0, -1), ('warnings', 0, 0, -1), ('pandas.core.config.get_option', 0, 0, -1), ('numpy.percentile', 0, 0, -1), ('pandas.core.index.Index', 0, 0, -1), ('pandas.compat.zip', 0, 0, -1), ('pandas', 0, 0, -1), ('pandas.core.common', 0, 0, -1), ('numpy.ma.mrecords', 1, 1, -1), ('pandas.io.stata', 1, 0, -1), ('pandas.core.internals.create_block_manager_from_blocks', 0, 0, -1), ('pandas.io.parsers', 1, 0, -1), ('pandas.util.decorators.Substitution', 0, 0, -1), ('pandas.core.common._unpickle_array', 1, 0, -1), ('pandas.compat.StringIO', 0, 0, -1), ('pandas.core.common._default_index', 0, 0, -1), ('pandas.core.series._sanitize_array', 1, 0, -1), ('pandas.compat.lrange', 0, 0, -1), ('pandas.core.generic._shared_docs', 0, 0, -1), ('pandas.io.stata.StataWriter', 1, 0, -1), ('pandas.core.common._infer_dtype_from_scalar', 0, 0, -1), ('pandas.util.decorators.Appender', 0, 0, -1), ('pandas.core.index', 1, 0, -1), ('pandas.core.common.isnull', 0, 0, -1), ('pandas.util.decorators.deprecate_kwarg', 0, 0, -1), ('matplotlib.pyplot', 1, 0, -1), ('pandas.io', 1, 0, -1)] binaries=[] datas=[]>
 pandas.algos: None -> <ExtensionModule 'pandas.algos' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\algos.pyd imports=[] binaries=[] datas=[]>
@@ -3083,7 +3112,6 @@ pandas.compat.u: None -> None
 pandas.compat.BytesIO: None -> None
   DEL pandas.compat.BytesIO
 pandas.core.numbers: None -> None
-numbers: None -> <PyModule 'numbers' C:\Python27\lib\numbers.pyc imports=[('__future__.division', 0, 0, -1), ('abc', 0, 0, -1), ('abc.abstractproperty', 0, 0, -1), ('__future__', 0, 0, -1), ('abc.abstractmethod', 0, 0, -1), ('abc.ABCMeta', 0, 0, -1)] binaries=[] datas=[]>
 pandas.core.base: None -> <PyModule 'pandas.core.base' C:\Python27\lib\site-packages\pandas-0.14.1-py2.7-win32.egg\pandas\core\base.pyc imports=[('pandas.core.nanops.unique1d', 1, 0, -1), ('pandas.lib', 1, 0, -1), ('pandas.tseries.index', 1, 0, -1), ('pandas.core.nanops', 0, 0, -1), ('pandas.core.algorithms.value_counts', 1, 0, -1), ('pandas.util.decorators.cache_readonly', 0, 0, -1), ('pandas.tseries.period', 1, 0, -1), ('pandas.core.algorithms.factorize', 1, 0, -1), ('pandas.tslib', 0, 0, -1), ('pandas', 0, 0, -1), ('pandas.core.common', 0, 0, -1), ('pandas.core.algorithms', 1, 0, -1), ('pandas.core.index', 1, 0, -1), ('pandas.compat', 0, 0, -1), ('pandas.core.nanops', 1, 0, -1), ('pandas.core.config.get_option', 1, 0, -1), ('pandas.core.common.pprint_thing', 1, 0, -1), ('numpy', 0, 0, -1), ('pandas.tseries.period.PeriodIndex', 1, 0, -1), ('pandas.core.index.Index', 1, 0, -1), ('pandas.core.common', 1, 0, -1), ('pandas.util.decorators', 0, 0, -1), ('pandas.core.config', 1, 0, -1), ('pandas.tseries.index.DatetimeIndex', 1, 0, -1), ('pandas.core', 0, 0, -1)] binaries=[] datas=[]>
 pandas.compat.reduce: None -> None
   DEL pandas.compat.reduce
