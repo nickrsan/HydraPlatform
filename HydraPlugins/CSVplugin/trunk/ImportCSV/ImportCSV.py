@@ -200,6 +200,7 @@ class ImportCSV(object):
         self.Network  = None
         self.NetworkSummary  = None
         self.Scenario = None
+        self.scenario_names = []
         self.Nodes    = dict()
         self.Links    = dict()
         self.Groups   = dict()
@@ -362,10 +363,6 @@ class ImportCSV(object):
 
     def create_scenario(self, name=None):
 
-        for s in self.Network['scenarios']:
-            if s['name'] == name:
-                raise HydraPluginError("Network already has a scenario called %s. Chooses another scenario name for this network."%(name,))
-
         self.Scenario = dict()
         if name is not None:
             self.Scenario['name'] = name
@@ -376,8 +373,6 @@ class ImportCSV(object):
             'Default scenario created by the CSV import plug-in.'
         self.Scenario['id'] = -1
         self.Scenario['resourcescenarios'] = []
-
-        self.Network['scenarios'] = [self.Scenario]
 
     def create_network(self, file=None, network_id=None):
 
@@ -425,7 +420,11 @@ class ImportCSV(object):
                 # Check if network exists on the server.
                 try:
                     self.Network = \
-                            self.connection.call('get_network', {'network_id':int(network_id)})
+                            self.connection.call('get_network', {'network_id':int(network_id), 'include_data':'N'})
+
+                    if self.Scenario['name'] in [s['name'] for s in self.Network['scenarios']]:
+                        raise HydraPluginError("Network already has a scenario called %s. Chooses another scenario name for this network."%(self.Scenario['name'],))
+
                     # Assign name and description in case anything has changed
                     self.Network['name'] = data[field_idx['name']].strip()
                     self.Network['description'] = \
@@ -451,7 +450,7 @@ class ImportCSV(object):
                     self.Network['resourcegroups'] = []
                     # The scenario loaded with the network will be deleted as
                     # well, we create a new one.
-                    #self.Network['scenarios'] = []
+                    self.Network['scenarios'] = []
                 except WebFault:
                     log.info('Network %s not found. Creating new network.', network_id)
                     self.warnings.append('Network %s not found. Creating new network.'%(network_id,))
@@ -611,7 +610,7 @@ class ImportCSV(object):
 
         if nodename in self.Nodes.keys():
             node = self.Nodes[nodename]
-            log.info('Node %s exists.' % nodename)
+            log.debug('Node %s exists.' % nodename)
         else:
             node = dict(
                 id = self.node_id.next(),
@@ -720,7 +719,7 @@ class ImportCSV(object):
 
         if linkname in self.Links.keys():
             link = self.Links[linkname]
-            log.info('Link %s exists.' % linkname)
+            log.debug('Link %s exists.' % linkname)
         else:
             link = dict(
                 id = self.link_id.next(),
@@ -832,7 +831,7 @@ class ImportCSV(object):
 
         if group_name in self.Groups.keys():
             group = self.Groups[group_name]
-            log.info('Group %s exists.' % group_name)
+            log.debug('Group %s exists.' % group_name)
         else:
             group = dict(
                 id = self.group_id.next(),
@@ -1409,7 +1408,7 @@ class ImportCSV(object):
             self.Network['links'].append(link)
         for group in self.Groups.values():
             self.Network['resourcegroups'].append(group)
-        #self.Network['scenarios'].append(self.Scenario)
+        self.Network['scenarios'].append(self.Scenario)
         log.info("Network created for sending")
 
         if self.update_network_flag:
@@ -1587,8 +1586,8 @@ if __name__ == '__main__':
             # Create project and network only when there is actual data to
             # import.
             csv.create_project(ID=args.project, network_id=args.network_id)
-            csv.create_network(file=args.network, network_id=args.network_id)
             csv.create_scenario(name=args.scenario)
+            csv.create_network(file=args.network, network_id=args.network_id)
 
             write_progress(1,csv.num_steps)
             for nodefile in args.nodes:
@@ -1643,7 +1642,7 @@ if __name__ == '__main__':
         errors = [e.message]
     except Exception, e:
         log.critical(e)
-        #traceback.print_exc(file=sys.stdout)
+        traceback.print_exc(file=sys.stdout)
         errors = [e]
 
     xml_response = PluginLib.create_xml_response('ImportCSV',

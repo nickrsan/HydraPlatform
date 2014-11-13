@@ -125,7 +125,7 @@ def parse_typeattr(type_i, attribute):
            break
     else:
         typeattr_i = TypeAttr()
-        log.info("Creating type attr: type_id=%s, attr_id=%s", type_i.type_id, attr.attr_id)
+        log.debug("Creating type attr: type_id=%s, attr_id=%s", type_i.type_id, attr.attr_id)
         typeattr_i.type_id=type_i.type_id
         typeattr_i.attr_id=attr.attr_id
         type_i.typeattrs.append(typeattr_i)
