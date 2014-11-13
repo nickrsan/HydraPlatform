@@ -130,7 +130,7 @@ def add_scenario(network_id, scenario,**kwargs):
             elif group_item.ref_key == 'GROUP':
                 group_item_i.subgroup_id  = group_item.ref_id
             scen.resourcegroupitems.append(group_item_i)
-
+    DBSession.add(scen)
     DBSession.flush()
     return scen
 
