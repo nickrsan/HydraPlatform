@@ -62,18 +62,19 @@ class NetworkService(HydraService):
          Unicode(pattern="[YN]", default='Y'),
          Integer(),
          SpyneArray(Integer()),
+         Unicode(pattern="[YN]", default='N'),
          _returns=Network)
-    def get_network(ctx, network_id, include_data, template_id, scenario_ids):
+    def get_network(ctx, network_id, include_data, template_id, scenario_ids, summary):
         """
             Return a whole network as a complex model.
         """
         net  = network.get_network(network_id,
-                                   False,
+                                   True if summary=='Y' else False,
                                    include_data,
                                    scenario_ids,
                                    template_id,
                                    **ctx.in_header.__dict__)
-        ret_net = Network(net)
+        ret_net = Network(net, True if summary=='Y' else False)
         return ret_net
 
     @rpc(Integer, Unicode, _returns=Network)

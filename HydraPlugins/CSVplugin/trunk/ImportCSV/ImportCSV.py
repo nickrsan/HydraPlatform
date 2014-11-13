@@ -420,7 +420,7 @@ class ImportCSV(object):
                 # Check if network exists on the server.
                 try:
                     self.Network = \
-                            self.connection.call('get_network', {'network_id':int(network_id), 'include_data':'N'})
+                            self.connection.call('get_network', {'network_id':int(network_id), 'include_data':'N', 'summary':'Y'})
 
                     if self.Scenario['name'] in [s['name'] for s in self.Network['scenarios']]:
                         raise HydraPluginError("Network already has a scenario called %s. Chooses another scenario name for this network."%(self.Scenario['name'],))
