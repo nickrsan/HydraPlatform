@@ -63,7 +63,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         #The type has only 2 attributes, so these are the only
         #ones which should be returned.
         for n in net.nodes.Node:
-            assert len(n.attributes.ResourceAttr) == 5
+            assert len(n.attributes.ResourceAttr) == 3
         #only 4 of the links in the network have a type, so only these
         #4 should be returned.
         logging.info("%s links before"%(len(net.links.Link)))
@@ -71,7 +71,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         #of the 4 links returned, ensure the two attributes are on each one.
         for l in net.links.Link:
             if l.types is not None:
-                assert len(l.attributes.ResourceAttr) == 4
+                assert len(l.attributes.ResourceAttr) == 2
             else:
                 assert len(l.attributes.ResourceAttr) == 2
         assert len(net.resourcegroups.ResourceGroup) == 1
@@ -85,7 +85,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         #The type has only 2 attributes, so these are the only
         #ones which should be returned.
         for n in filtered_net.nodes.Node:
-            assert len(n.attributes.ResourceAttr) == 2
+            assert len(n.attributes.ResourceAttr) == 3
         #only 4 of the links in the network have a type, so only these
         #4 should be returned.
         logging.info("%s links after"%(len(filtered_net.links.Link)))

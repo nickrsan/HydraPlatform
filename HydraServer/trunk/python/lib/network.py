@@ -53,7 +53,7 @@ def _update_attributes(resource_i, attributes):
 
 def get_scenario_by_name(network_id, scenario_name,**kwargs):
     try:
-        scen = DBSession.query(Scenario).filter(and_(Scenario.network_id==network_id, func.lower(Scenario.scenario_id.lower) == scenario_name.lower())).one()
+        scen = DBSession.query(Scenario).filter(and_(Scenario.network_id==network_id, func.lower(Scenario.scenario_id) == scenario_name.lower())).one()
         return scen.scenario_id
     except NoResultFound:
         log.info("No scenario in network %s with name %s"\
@@ -816,7 +816,7 @@ def update_network(network,**kwargs):
             all_resource_attrs.update(_update_attributes(g_i, group.attributes))
             add_resource_types(g_i, group.types)
 
-        group_id_map[group.id] = g_i
+            group_id_map[group.id] = g_i
     errors = []
     if network.scenarios is not None:
         for s in network.scenarios:
@@ -824,15 +824,18 @@ def update_network(network,**kwargs):
                 if s.id > 0:
                     try:
                         scen_i = DBSession.query(Scenario).filter(Scenario.scenario_id==s.id).one()
+                        if scen_i.locked == 'Y':
+                            errors.append('Scenario %s was not updated as it is locked'%(s.id))
+                            continue
                     except NoResultFound:
                         raise ResourceNotFoundError("Scenario %s not found"%(s.id))
                 else:
+                    scen_i = Scenario()
+                    scen_i.created_by = user_id
                     scenario_id = get_scenario_by_name(network.id, s.name)
                     if scenario_id:
-                        s.name = s.name + "update" + str(datetime.datetime.now())
-                if scen_i.locked == 'Y':
-                    errors.append('Scenario %s was not updated as it is locked'%(s.id))
-                    continue
+                        scen_i.name = s.name + "update" + str(datetime.datetime.now())
+                    net_i.scenarios.append(scen_i)
             else:
                 scen_i = Scenario()
                 scen_i.created_by = user_id
@@ -850,7 +853,7 @@ def update_network(network,**kwargs):
                 for r_scen in s.resourcescenarios:
                     if r_scen.resource_attr_id < 0:
                         r_scen.resource_attr_id = all_resource_attrs[r_scen.resource_attr_id].resource_attr_id
-                    scenario._update_resourcescenario(scen_i, r_scen, source=kwargs.get('app_name'))
+                    scenario._update_resourcescenario(scen_i, r_scen, user_id=user_id, source=kwargs.get('app_name'))
 
             if s.resourcegroupitems is not None:
                 for group_item in s.resourcegroupitems:
@@ -859,8 +862,8 @@ def update_network(network,**kwargs):
                         group_item_i = DBSession.query(ResourceGroupItem).filter(ResourceGroupItem.item_id==group_item.id).one()
                     else:
                         group_item_i = ResourceGroupItem()
-                        group_item_i.group_id = group_id_map[group_item.group_id]
-                        scenario.resourcegroupitems.append(group_item_i)
+                        group_item_i.group_id = group_id_map[group_item.group_id].group_id
+                        scen_i.resourcegroupitems.append(group_item_i)
 
                     group_item_i.ref_key = group_item.ref_key
                     if group_item.ref_key == 'NODE':

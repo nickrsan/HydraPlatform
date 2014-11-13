@@ -489,12 +489,15 @@ def assign_types_to_resources(resource_types,**kwargs):
             resource = groups[ref_id]
 
         ra, rt = set_resource_type(resource, type_id, types)
-        res_types.append(rt)
-        res_attrs.extend(ra)
+        if rt is not None:
+            res_types.append(rt)
+        if len(ra) > 0:
+            res_attrs.extend(ra)
     log.info("Retrieved all the appropriate resources")
-    DBSession.execute(ResourceType.__table__.insert(), res_types)
-    DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
-    resource.attributes
+    if len(res_types) > 0:
+        DBSession.execute(ResourceType.__table__.insert(), res_types)
+    if len(res_attrs) > 0:
+        DBSession.execute(ResourceAttr.__table__.insert(), res_attrs)
 
     #Make DBsession 'dirty' to pick up the inserts by doing a fake delete. 
     DBSession.query(Attr).filter(Attr.attr_id==None).delete()
@@ -504,6 +507,10 @@ def assign_types_to_resources(resource_types,**kwargs):
 
 def _get_links(link_ids):
     links = []
+
+    if len(link_ids) == 0:
+        return links
+
     if len(link_ids) > 500:
         idx = 0
         extent = 500
@@ -532,6 +539,10 @@ def _get_links(link_ids):
 
 def _get_nodes(node_ids):
     nodes = []
+    
+    if len(node_ids) == 0:
+        return nodes
+    
     if len(node_ids) > 500:
         idx = 0
         extent = 500
@@ -563,6 +574,10 @@ def _get_nodes(node_ids):
 
 def _get_groups(group_ids):
     groups = []
+
+    if len(group_ids) == 0:
+        return groups
+
     if len(group_ids) > 500:
         idx = 0
         extent = 500

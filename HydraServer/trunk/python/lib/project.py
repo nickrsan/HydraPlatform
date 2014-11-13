@@ -16,11 +16,12 @@
 from HydraLib.HydraException import ResourceNotFoundError
 import scenario
 import logging
-from HydraLib.HydraException import PermissionError
+from HydraLib.HydraException import PermissionError, HydraError
 from db.model import Project, ProjectOwner, Network
 from db import DBSession
 import network
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import and_
 from util.hdb import add_attributes
 
 
@@ -183,3 +184,14 @@ def get_networks(project_id, include_data='N', **kwargs):
 
     return networks
 
+def get_network_project(network_id, **kwargs):
+    """
+        get the project that a network is in
+    """
+
+    net_proj = DBSession.query(Project).join(Network, and_(Project.project_id==Network.network_id, Network.network_id==network_id)).first()
+
+    if net_proj is None:
+        raise HydraError("Network %s not found"% network_id)
+
+    return net_proj

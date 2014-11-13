@@ -105,3 +105,11 @@ class ProjectService(HydraService):
         networks = [Network(n, summary=True) for n in net_dicts]
         return networks
 
+    @rpc(Integer, _returns=Project)
+    def get_network_project(ctx, network_id):
+        """
+            Get the project of a specified network
+        """
+        proj = project_lib.get_network_project(network_id, **ctx.in_header.__dict__)
+
+        return Project(proj)

@@ -97,37 +97,39 @@ def add_scenario(network_id, scenario,**kwargs):
     if scenario.id < 0:
         scenario.id = None
 
-    #extract the data from each resourcescenario so it can all be
-    #inserted in one go, rather than one at a time
-    all_data = [r.value for r in scenario.resourcescenarios]
+    if scenario.resourcescenarios is not None:
+        #extract the data from each resourcescenario so it can all be
+        #inserted in one go, rather than one at a time
+        all_data = [r.value for r in scenario.resourcescenarios]
 
-    datasets = data._bulk_insert_data(all_data, user_id=user_id)
+        datasets = data._bulk_insert_data(all_data, user_id=user_id)
 
-    #record all the resource attribute ids
-    resource_attr_ids = [r.resource_attr_id for r in scenario.resourcescenarios]
+        #record all the resource attribute ids
+        resource_attr_ids = [r.resource_attr_id for r in scenario.resourcescenarios]
 
-    #get all the resource scenarios into a list and bulk insert them
-    for i, ra_id in enumerate(resource_attr_ids):
-        rs_i = ResourceScenario()
-        rs_i.resource_attr_id = ra_id
-        rs_i.dataset_id       = datasets[i].dataset_id
-        rs_i.scenario_id      = scen.scenario_id
-        rs_i.dataset = datasets[i]
-        scen.resourcescenarios.append(rs_i)
+        #get all the resource scenarios into a list and bulk insert them
+        for i, ra_id in enumerate(resource_attr_ids):
+            rs_i = ResourceScenario()
+            rs_i.resource_attr_id = ra_id
+            rs_i.dataset_id       = datasets[i].dataset_id
+            rs_i.scenario_id      = scen.scenario_id
+            rs_i.dataset = datasets[i]
+            scen.resourcescenarios.append(rs_i)
 
-    #Again doing bulk insert.
-    for group_item in scenario.resourcegroupitems:
-        group_item_i = ResourceGroupItem()
-        group_item_i.scenario_id = scen.scenario_id
-        group_item_i.group_id    = group_item.group_id
-        group_item_i.ref_key     = group_item.ref_key
-        if group_item.ref_key == 'NODE':
-            group_item_i.node_id      = group_item.ref_id
-        elif group_item.ref_key == 'LINK':
-            group_item_i.link_id      = group_item.ref_id
-        elif group_item.ref_key == 'GROUP':
-            group_item_i.subgroup_id  = group_item.ref_id
-        scen.resourcegroupitems.append(group_item_i)
+    if scenario.resourcegroupitems is not None:
+        #Again doing bulk insert.
+        for group_item in scenario.resourcegroupitems:
+            group_item_i = ResourceGroupItem()
+            group_item_i.scenario_id = scen.scenario_id
+            group_item_i.group_id    = group_item.group_id
+            group_item_i.ref_key     = group_item.ref_key
+            if group_item.ref_key == 'NODE':
+                group_item_i.node_id      = group_item.ref_id
+            elif group_item.ref_key == 'LINK':
+                group_item_i.link_id      = group_item.ref_id
+            elif group_item.ref_key == 'GROUP':
+                group_item_i.subgroup_id  = group_item.ref_id
+            scen.resourcegroupitems.append(group_item_i)
 
     DBSession.flush()
     return scen

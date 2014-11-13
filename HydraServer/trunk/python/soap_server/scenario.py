@@ -35,32 +35,41 @@ class ScenarioService(HydraService):
         about negative IDS
     """
 
-    @rpc(Integer, _returns=Scenario)
-    def get_scenario(ctx, scenario_id):
+    @rpc(Integer, Unicode(pattern="['YN']", default='N'), _returns=Scenario)
+    def get_scenario(ctx, scenario_id, return_summary):
         """
             Get the specified scenario
         """
         scen = scenario.get_scenario(scenario_id, **ctx.in_header.__dict__)
-        return Scenario(scen)
 
-    @rpc(Integer, Scenario, _returns=Scenario)
-    def add_scenario(ctx, network_id, scen):
+        if return_summary=='Y':
+            return Scenario(scen, summary=True)
+        else:
+            return Scenario(scen, summary=False)
+
+    @rpc(Integer, Scenario, Unicode(pattern="['YN']", default='N'), _returns=Scenario)
+    def add_scenario(ctx, network_id, scen, return_summary):
         """
             Add a scenario to a specified network.
         """
         new_scen = scenario.add_scenario(network_id, scen, **ctx.in_header.__dict__)
+        if return_summary=='Y':
+            return Scenario(new_scen, summary=True)
+        else:
+            return Scenario(new_scen, summary=False)
 
-        return Scenario(new_scen)
-
-    @rpc(Scenario, _returns=Scenario)
-    def update_scenario(ctx, scen):
+    @rpc(Scenario, Unicode(pattern="['YN']", default='N'), _returns=Scenario)
+    def update_scenario(ctx, scen, return_summary):
         """
             Update a single scenario
             as all resources already exist, there is no need to worry
             about negative IDS
         """
         updated_scen = scenario.update_scenario(scen, **ctx.in_header.__dict__)
-        return Scenario(updated_scen)
+        if return_summary=='Y':
+            return Scenario(updated_scen, summary=True)
+        else:
+            return Scenario(updated_scen, summary=False)
 
     @rpc(Integer, _returns=Unicode)
     def purge_scenario(ctx, scenario_id):

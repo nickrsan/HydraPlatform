@@ -317,13 +317,30 @@ class ImportCSV(object):
                                    dupe_headings)
 
 
-    def create_project(self, ID=None):
+    def create_project(self, ID=None, network_id=None):
         if ID is not None:
             try:
                 ID = int(ID)
                 try:
                     self.Project = self.connection.call('get_project', {'project_id':ID})
+                    networks = self.connection.call('get_networks', {'project_id':ID,
+                                                                     'include_data':'N'})
+                    self.Project['networks'] = networks
                     log.info('Loading existing project (ID=%s)' % ID)
+                    return
+                except WebFault:
+                    log.info('Project ID not found. Creating new project')
+
+            except ValueError:
+                log.info('Project ID not valid. Creating new project')
+                self.warnings.append(
+                    'Project ID not valid. Creating new project')
+        elif network_id is not None:
+            try:
+                network_id = int(network_id)
+                try:
+                    self.Project = self.connection.call('get_network_project', {'network_id':network_id})
+                    log.info('Loading existing project with network ID(ID=%s)' % network_id)
                     return
                 except WebFault:
                     log.info('Project ID not found. Creating new project')
@@ -341,8 +358,14 @@ class ImportCSV(object):
             status = 'A',
         )
         self.Project = self.connection.call('add_project', {'project':self.Project})
+        self.Project['networks']=[]
 
     def create_scenario(self, name=None):
+
+        for s in self.Network['scenarios']:
+            if s['name'] == name:
+                raise HydraPluginError("Network already has a scenario called %s. Chooses another scenario name for this network."%(name,))
+
         self.Scenario = dict()
         if name is not None:
             self.Scenario['name'] = name
@@ -353,6 +376,8 @@ class ImportCSV(object):
             'Default scenario created by the CSV import plug-in.'
         self.Scenario['id'] = -1
         self.Scenario['resourcescenarios'] = []
+
+        self.Network['scenarios'] = [self.Scenario]
 
     def create_network(self, file=None, network_id=None):
 
@@ -400,7 +425,7 @@ class ImportCSV(object):
                 # Check if network exists on the server.
                 try:
                     self.Network = \
-                            self.connection.call('get_network', {'network_id':data[field_idx['id']]})
+                            self.connection.call('get_network', {'network_id':int(network_id)})
                     # Assign name and description in case anything has changed
                     self.Network['name'] = data[field_idx['name']].strip()
                     self.Network['description'] = \
@@ -426,17 +451,23 @@ class ImportCSV(object):
                     self.Network['resourcegroups'] = []
                     # The scenario loaded with the network will be deleted as
                     # well, we create a new one.
-                    self.Network['scenarios'] = []
+                    #self.Network['scenarios'] = []
                 except WebFault:
                     log.info('Network %s not found. Creating new network.', network_id)
                     self.warnings.append('Network %s not found. Creating new network.'%(network_id,))
                     network_id = None
 
             if network_id is None:
+
+                network_name = data[field_idx['name']].strip()
+                for n in self.Project['networks']:
+                    if network_name == n['name']:
+                        raise HydraPluginError("Project %s already has a network called %s"%(self.Project['name'], network_name))
+
                 # Create a new network
                 self.Network = dict(
                     project_id = self.Project['id'],
-                    name = data[field_idx['name']].strip(),
+                    name = network_name,
                     description = \
                     data[field_idx['description']].strip(),
                     projection = data[field_idx['projection']].strip(),
@@ -1378,11 +1409,11 @@ class ImportCSV(object):
             self.Network['links'].append(link)
         for group in self.Groups.values():
             self.Network['resourcegroups'].append(group)
-        self.Network['scenarios'].append(self.Scenario)
+        #self.Network['scenarios'].append(self.Scenario)
         log.info("Network created for sending")
 
         if self.update_network_flag:
-            self.Network = self.connection.call('update_network', {'network':self.Network})
+            self.NetworkSummary = self.connection.call('update_network', {'net':self.Network})
             log.info("Network %s updated.", self.Network['id'])
         else:
             log.info("Adding Network")
@@ -1555,9 +1586,9 @@ if __name__ == '__main__':
 
             # Create project and network only when there is actual data to
             # import.
-            csv.create_project(ID=args.project)
-            csv.create_scenario(name=args.scenario)
+            csv.create_project(ID=args.project, network_id=args.network_id)
             csv.create_network(file=args.network, network_id=args.network_id)
+            csv.create_scenario(name=args.scenario)
 
             write_progress(1,csv.num_steps)
             for nodefile in args.nodes:
