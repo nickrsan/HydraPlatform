@@ -131,7 +131,7 @@ class ScenarioService(HydraService):
         
         scenarios = scenario.get_dataset_scenarios(dataset_id, **ctx.in_header.__dict__)
 
-        return [Scenario(s) for s in scenarios]
+        return [Scenario(s, summary=True) for s in scenarios]
 
     @rpc(Integer, SpyneArray(ResourceScenario), _returns=SpyneArray(ResourceScenario))
     def update_resourcedata(ctx,scenario_id, resource_scenarios):

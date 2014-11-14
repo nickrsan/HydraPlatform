@@ -425,13 +425,17 @@ def unlock_scenario(scenario_id, **kwargs):
 def get_dataset_scenarios(dataset_id, **kwargs):
 
     try:
-        DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id)
+        DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).one()
     except NoResultFound:
         raise ResourceNotFoundError("Dataset %s not found"%dataset_id)
+
+    log.info("dataset %s exists", dataset_id)
 
     scenarios = DBSession.query(Scenario).filter(
         ResourceScenario.scenario_id==Scenario.scenario_id,
         ResourceScenario.dataset_id == dataset_id).distinct().all()
+
+    log.info("%s scenarios retrieved", len(scenarios))
 
     return scenarios
 
