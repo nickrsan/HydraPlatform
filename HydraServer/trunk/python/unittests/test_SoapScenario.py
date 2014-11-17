@@ -557,7 +557,92 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
             if ra_dict.get(rs.resource_attr_id):
                 matching_rs = ra_dict[rs.resource_attr_id].resourcescenario
                 assert str(rs) == str(matching_rs)
-            
+    
+    def test_copy_data_from_scenario(self):
+
+        """
+            Test copy_data_from_scenario : test that one scenario
+            can be updated to contain the data of another with the same
+            resource attrs.
+        """
+
+        network =  self.create_network_with_data()
+       
+
+        network = self.client.service.get_network(network.id)
+
+        scenario = network.scenarios.Scenario[0]
+        source_scenario_id = scenario.id
+
+        cloned_scenario = self.client.service.clone_scenario(source_scenario_id)
+
+        resource_scenario = cloned_scenario.resourcescenarios.ResourceScenario[0]
+        resource_attr_id = resource_scenario.resource_attr_id
+
+        dataset = self.client.factory.create('ns1:Dataset')
+        dataset.type = 'descriptor'
+        dataset.name = 'Max Capacity'
+        dataset.unit = 'metres / second'
+        dataset.dimension = 'number of units per time unit'
+ 
+        descriptor = self.client.factory.create('ns1:Descriptor')
+        descriptor.desc_val = 'I am an updated test!'
+
+        dataset.value = descriptor
+
+        self.client.service.add_data_to_attribute(source_scenario_id, resource_attr_id, dataset)
+
+        scenario_diff = self.client.service.compare_scenarios(source_scenario_id, cloned_scenario.id)
+        
+        assert len(scenario_diff.resourcescenarios.ResourceScenarioDiff) == 1, "Data comparison was not successful!"
+
+        self.client.service.copy_data_from_scenario(resource_attr_id, cloned_scenario.id, source_scenario_id)
+
+        scenario_diff = self.client.service.compare_scenarios(source_scenario_id, cloned_scenario.id)
+        
+        assert scenario_diff.resourcescenarios == None, "Scenario update was not successful!"
+
+    def test_set_resourcescenario_dataset(self):
+
+        """
+            Test the direct setting of a dataset id on a resource scenario    
+        """
+
+        network =  self.create_network_with_data()
+       
+
+        network = self.client.service.get_network(network.id)
+
+        scenario = network.scenarios.Scenario[0]
+        source_scenario_id = scenario.id
+
+        cloned_scenario = self.client.service.clone_scenario(source_scenario_id)
+
+        resource_scenario = cloned_scenario.resourcescenarios.ResourceScenario[0]
+        resource_attr_id = resource_scenario.resource_attr_id
+
+        dataset = self.client.factory.create('ns1:Dataset')
+        dataset.type = 'descriptor'
+        dataset.name = 'Max Capacity'
+        dataset.unit = 'metres / second'
+        dataset.dimension = 'number of units per time unit'
+ 
+        descriptor = self.client.factory.create('ns1:Descriptor')
+        descriptor.desc_val = 'I am an updated test!'
+
+        dataset.value = descriptor
+
+        new_ds = self.client.service.add_dataset(dataset)
+
+        self.client.service.set_resourcescenario_dataset(resource_attr_id, source_scenario_id, new_ds.id)
+
+        updated_net = self.client.service.get_network(network.id)
+
+        updated_scenario = updated_net.scenarios.Scenario[0]
+        scenario_rs = updated_scenario.resourcescenarios.ResourceScenario
+        for rs in scenario_rs:
+            if rs.resource_attr_id == resource_attr_id:
+                assert rs.value.value.desc_val == 'I am an updated test!'
 
 
 if __name__ == '__main__':

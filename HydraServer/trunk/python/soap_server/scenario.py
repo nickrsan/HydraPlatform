@@ -288,3 +288,30 @@ class ScenarioService(HydraService):
             ra_cms.append(res_attr_cm)
 
         return ra_cms
+
+    @rpc(Integer(min_occurs=1, max_occurs='unbounded'), Integer, Integer, _returns=SpyneArray(ResourceScenario))
+    def copy_data_from_scenario(ctx, resource_attr_ids, source_scenario_id, target_scenario_id):
+        """
+            Copy the datasets from a source scenario into the equivalent resource scenarios
+            in the target scenario. Parameters are a list of resource attribute IDS, the
+            ID of the source scenario and the ID of the target scenario.
+        """
+        updated_resourcescenarios = scenario.copy_data_from_scenario(resource_attr_ids,
+                                                                    source_scenario_id,
+                                                                    target_scenario_id,
+                                                                    **ctx.in_header.__dict__)
+
+        ret_resourcescenarios=[ResourceScenario(rs) for rs in updated_resourcescenarios]
+
+        return ret_resourcescenarios 
+
+    @rpc(Integer, Integer, Integer, _returns=ResourceScenario)
+    def set_resourcescenario_dataset(ctx, resource_attr_id, scenario_id, dataset_id):
+        
+        rs = scenario.set_rs_dataset(resource_attr_id,
+                                     scenario_id,
+                                     dataset_id,
+                                     **ctx.in_header.__dict__)
+        
+        return ResourceScenario(rs)
+        

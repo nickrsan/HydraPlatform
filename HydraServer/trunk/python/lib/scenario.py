@@ -55,6 +55,66 @@ def _get_scenario(scenario_id):
     except NoResultFound:
         raise ResourceNotFoundError("Scenario %s does not exist."%(scenario_id))
 
+def set_rs_dataset(resource_attr_id, scenario_id, dataset_id, **kwargs):
+    rs = DBSession.query(ResourceScenario).filter(
+        ResourceScenario.resource_attr_id==resource_attr_id,
+        ResourceScenario.scenario_id==scenario_id).first()
+
+    if rs is None:
+        raise ResourceNotFoundError("Resource scenario for resource attr %s not found in scenario %s"%(resource_attr_id, scenario_id))
+
+    dataset = DBSession.query(Dataset).filter(Dataset.dataset_id==dataset_id).first()
+
+    if dataset is None:
+        raise ResourceNotFoundError("Dataset %s not found"%(dataset_id,))
+
+    rs.dataset_id=dataset_id
+
+    DBSession.flush()
+
+    rs = DBSession.query(ResourceScenario).filter(
+        ResourceScenario.resource_attr_id==resource_attr_id,
+        ResourceScenario.scenario_id==scenario_id).first()
+
+    return rs
+
+def copy_data_from_scenario(resource_attrs, source_scenario_id, target_scenario_id, **kwargs):
+    """
+        For a given list of resource attribute IDS copy the dataset_ids from
+        the resource scenarios in the source scenario to those in the 'target' scenario.
+    """
+    
+    #Get all the resource scenarios we wish to update
+    target_resourcescenarios = DBSession.query(ResourceScenario).filter(
+            ResourceScenario.scenario_id==target_scenario_id,
+            ResourceScenario.resource_attr_id.in_(resource_attrs)).all()
+
+    target_rs_dict = {}
+    for target_rs in target_resourcescenarios:
+        target_rs_dict[target_rs.resource_attr_id] = target_rs
+
+    #get all the resource scenarios we are using to get our datsets source.
+    source_resourcescenarios = DBSession.query(ResourceScenario).filter(
+            ResourceScenario.scenario_id==source_scenario_id,
+            ResourceScenario.resource_attr_id.in_(resource_attrs)).all()
+
+    #If there is an RS in scenario 'source' but not in 'target', then create
+    #a new one in 'target'
+    for source_rs in source_resourcescenarios:
+        target_rs = target_rs_dict.get(source_rs.resource_attr_id)
+        if target_rs is not None:
+            target_rs.dataset_id = source_rs.dataset_id
+        else:
+            target_rs = ResourceScenario()
+            target_rs.scenario_id      = target_scenario_id
+            target_rs.dataset_id       = source_rs.dataset_id
+            target_rs.resource_attr_id = source_rs.resource_attr_id
+            DBSession.add(target_rs)
+    
+    DBSession.flush()
+
+    return target_resourcescenarios
+
 def get_scenario(scenario_id,**kwargs):
     """
         Get the specified scenario
@@ -67,7 +127,7 @@ def get_scenario(scenario_id,**kwargs):
     if owner.view == 'N':
         raise PermissionError("Permission denied."
                               " User %s cannot view scenario %s"%(user_id, scenario_id))
-    #TODO: need to filter out data here...
+
     return scen
 
 def add_scenario(network_id, scenario,**kwargs):
