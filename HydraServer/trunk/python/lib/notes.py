@@ -26,7 +26,7 @@ def get_notes(ref_key, ref_id, **kwargs):
     elif ref_key == 'PROJECT':
         notes = notes.filter(Note.project_id == ref_id)
     elif ref_key == 'SCENARIO':
-        notes = notes.filter(Note.scenraio_id == ref_id)
+        notes = notes.filter(Note.scenario_id == ref_id)
     else:
         raise HydraError("Ref Key %s not recognised.")
 
