@@ -182,6 +182,8 @@ class Dataset(ComplexModel):
         ('name',             Unicode(min_occurs=1, default=None)),
         ('value',            AnyDict(min_occurs=1, default=None)),
         ('hidden',           Unicode(min_occurs=0, default='N', pattern="[YN]")),
+        ('created_by',       Integer(min_occurs=0, default=None)),
+        ('created_at',       Unicode(min_occurs=0, default=None)),
         ('metadata',         SpyneArray(Metadata, default=None)),
     ]
 
@@ -194,6 +196,8 @@ class Dataset(ComplexModel):
         self.id        = parent.dataset_id
         self.type      = parent.data_type
         self.name      = parent.data_name
+        self.created_by = parent.created_by
+        self.created_at = str(parent.cr_date)
 
         self.dimension = parent.data_dimen
         self.unit      = parent.data_units
@@ -506,9 +510,9 @@ class TimeSeries(ComplexModel):
                 except:
                     ts_data['ts_time'] = [ts]
             try:
-                ts_val = list(ts_val)
-                ts_val = eval(str(ts_val))
-                ts_data['ts_value'] = [create_dict(ts_val)]
+                ts_val_list = list(ts_val)
+                ts_val_eval = eval(str(ts_val_list))
+                ts_data['ts_value'] = [create_dict(ts_val_eval)]
             except:
                 ts_data['ts_value'] = [ts_val]
             ts_vals.append(ts_data)
