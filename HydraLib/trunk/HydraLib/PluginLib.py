@@ -399,7 +399,9 @@ class JsonConnection(object):
             port = config.getint('hydra_server', 'port', 8080)
             domain = config.get('hydra_server', 'domain', '127.0.0.1')
             self.url = "http://%s:%s/json"%(domain, port)
-            log.info("Setting URL %s", self.url)
+        else:
+            self.url = url
+        log.info("Setting URL %s", self.url)
 
     def call(self, func, args):
         log.info("Calling: %s"%(func))
