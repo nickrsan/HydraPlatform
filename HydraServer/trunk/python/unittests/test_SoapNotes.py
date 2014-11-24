@@ -36,10 +36,12 @@ class NoteTest(test_SoapServer.SoapServerTest):
         )
 
         n_note = self.client.service.add_node_note(node.id, note)
-        l_note = self.client.service.add_link_note(s.id, note)
-        s_note = self.client.service.add_scenario_note(link.id, note)
+        l_note = self.client.service.add_link_note(link.id, note)
+        s_note = self.client.service.add_scenario_note(s.id, note)
         g_note = self.client.service.add_resourcegroup_note(grp.id, note)
         net_note = self.client.service.add_network_note(net.id, note)
+
+        
 
         assert n_note.id is not None
         assert n_note.ref_key     == 'NODE'
@@ -47,8 +49,11 @@ class NoteTest(test_SoapServer.SoapServerTest):
         assert n_note.text        == note['text']
 
         node_notes = self.client.service.get_node_notes(node.id)
-
         assert len(node_notes) == 1
+        scenario_notes = self.client.service.get_scenario_notes(s.id)
+        assert len(scenario_notes) == 1
+        assert scenario_notes.Note[0].ref_id == s.id
+        assert scenario_notes.Note[0].id is not None
 
     def test_update_note(self):
         net = self.create_network_with_data()
