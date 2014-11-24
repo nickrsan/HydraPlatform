@@ -78,9 +78,10 @@ class SoapTest(unittest.TestCase):
         r_dict = json.loads(r.content)
         headers = { 'content-type': 'application/json' , 'username':'root',
                    'user_id':r_dict['user_id'], 'session_id':r_dict['session_id']}
-        network_call = {'get_network':{'network_id':117, 'include_data':'Y', 'scenario_id':None}}
-        r = requests.get('http://localhost:12346', data=json.dumps(network_call), headers=headers)
-        net = json.loads(r.content)
+        network_call = {'get_node_data':{'node_id':67, 'scenario_id':2}}
+        r = requests.get('http://localhost:8080/json', data=json.dumps(network_call), headers=headers)
+        data = json.loads(r.content)
+        import pudb; pudb.set_trace()
 
 def run():
 
