@@ -216,6 +216,39 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
                     assert str(u_rs.value) == str(rs.value)
                     break
 
+    def test_update_resourcedata2(self):
+        """
+            Test to check leng's questions about this not working correctly.
+        """
+        network = self.create_network_with_data()
+
+        #Create the new scenario
+        scenario = network.scenarios.Scenario[0] 
+        node1 = network.nodes.Node[0]
+
+        ra_to_update = node1.attributes.ResourceAttr[0].id
+        
+        updated_val = None
+
+        rs_to_update = self.client.factory.create('ns1:ResourceScenarioArray')
+        for resourcescenario in scenario.resourcescenarios.ResourceScenario:
+            ra_id = resourcescenario.resource_attr_id
+            if ra_id == ra_to_update:
+                updated_val = resourcescenario.value.value
+                resourcescenario.value.name = 'I am an updated dataset name'
+                rs_to_update.ResourceScenario.append(resourcescenario)
+       
+        self.client.service.get_all_node_data(network.id, scenario.id, [node1.id])
+
+        self.client.service.update_resourcedata(scenario.id, rs_to_update)
+
+        new_node_data = self.client.service.get_all_node_data(network.id, scenario.id, [node1.id])
+
+        for new_val in new_node_data.ResourceAttr:
+            if new_val.resourcescenario.value.value == updated_val:
+                assert new_val.name == 'I am an updated dataset name'
+
+
     def test_bulk_add_data(self):
 
         data = self.client.factory.create('ns1:DatasetArray')
