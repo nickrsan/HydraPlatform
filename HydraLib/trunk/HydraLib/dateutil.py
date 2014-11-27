@@ -165,7 +165,7 @@ def guess_timefmt(datestr):
     else:
         dt_delim = ' '
 
-    delimiters = ['-', '.', ' ']
+    delimiters = ['-', '.', ' ', '/']
     formatstrings = [['%Y', '%m', '%d'],
                      ['%d', '%m', '%Y'],
                      ['%d', '%b', '%Y'],
