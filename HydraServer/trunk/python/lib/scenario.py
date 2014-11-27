@@ -276,9 +276,20 @@ def purge_scenario(scenario_id, **kwargs):
 def clone_scenario(scenario_id,**kwargs):
     scen_i = _get_scenario(scenario_id)
 
+    cloned_name = "%s (clone)"%(scen_i.scenario_name)
+
+    existing_scenarios = DBSession.query(Scenario).filter(Scenario.network_id==scen_i.network_id).all()
+    num_cloned_scenarios = 0
+    for existing_sceanrio in existing_scenarios:
+        if existing_sceanrio.scenario_name.find('clone') >= 0:
+            num_cloned_scenarios = num_cloned_scenarios + 1
+
+    if num_cloned_scenarios > 0:
+        cloned_name = cloned_name + " %s"%(num_cloned_scenarios)
+
     cloned_scen = Scenario()
     cloned_scen.network_id           = scen_i.network_id
-    cloned_scen.scenario_name        = "%s (clone)"%(scen_i.scenario_name)
+    cloned_scen.scenario_name        = cloned_name 
     cloned_scen.scenario_description = scen_i.scenario_description
     cloned_scen.created_by           = kwargs['user_id']
 
