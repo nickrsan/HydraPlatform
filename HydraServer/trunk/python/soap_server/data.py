@@ -133,6 +133,15 @@ class DataService(HydraService):
 
         return [d.dataset_id for d in datasets]
 
+    @rpc(_returns=SpyneArray(DatasetGroup))
+    def get_all_dataset_groups(ctx):
+
+        dataset_grps = data.get_all_dataset_groups(**ctx.in_header.__dict__)
+        all_grps = []
+        for d_g in dataset_grps:
+            all_grps.append(DatasetGroup(d_g))
+        return all_grps
+
     @rpc(Integer, _returns=DatasetGroup)
     def get_dataset_group(ctx, group_id):
 

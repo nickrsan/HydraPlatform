@@ -592,6 +592,11 @@ def _get_existing_data(hashes):
 
     return hash_dict
 
+def get_all_dataset_groups(**kwargs):
+    all_groups = DBSession.query(DatasetGroup).all()
+
+    return all_groups
+
 
 def get_dataset_group(group_id,**kwargs):
     try:
