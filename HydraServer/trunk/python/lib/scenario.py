@@ -503,6 +503,7 @@ def get_dataset_scenarios(dataset_id, **kwargs):
     log.info("dataset %s exists", dataset_id)
 
     scenarios = DBSession.query(Scenario).filter(
+        Scenario.status == 'A',
         ResourceScenario.scenario_id==Scenario.scenario_id,
         ResourceScenario.dataset_id == dataset_id).distinct().all()
 
