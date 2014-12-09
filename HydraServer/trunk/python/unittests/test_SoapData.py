@@ -351,6 +351,32 @@ class DataGroupTest(test_SoapServer.SoapServerTest):
         assert newly_added_group.group_id is not None, "Dataset group does not have an ID!"
         assert len(newly_added_group.dataset_ids.integer) == 2, "Dataset group does not have any items!"  
 
+    def test_get_all_groups(self):
+        
+        network = self.create_network_with_data(ret_full_net = False)
+
+        scenario_id = network.scenarios.Scenario[0].id
+        
+        scenario_data = self.client.service.get_scenario_data(scenario_id)
+
+        group = self.client.factory.create('ns1:DatasetGroup')
+
+        grp_dataset_ids = self.client.factory.create("integerArray")
+        dataset_id = scenario_data.Dataset[0].id
+        grp_dataset_ids.integer.append(dataset_id)
+        for d in scenario_data.Dataset:
+            if d.type == 'timeseries' and d.id != dataset_id:
+                grp_dataset_ids.integer.append(d.id)
+                break
+
+        group.dataset_ids = grp_dataset_ids 
+        group.group_name  = 'test soap group %s'%(datetime.datetime.now())
+
+        newly_added_group = self.client.service.add_dataset_group(group)
+        groups = self.client.service.get_all_dataset_groups(group)
+        assert newly_added_group.group_id in [g.group_id for g in groups.DatasetGroup]
+
+
 class SharingTest(test_SoapServer.SoapServerTest):
 
     def _get_project(self):
