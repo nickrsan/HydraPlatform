@@ -20,7 +20,6 @@ import test_SoapServer
 import datetime
 import copy
 import suds
-from HydraLib import PluginLib
 import logging
 log = logging.getLogger(__name__)
 
@@ -159,6 +158,15 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
         assert len(dataset_scenarios.Scenario) == 1
 
         assert dataset_scenarios.Scenario[0].id == scenario.id
+        
+        new_scenario = self.client.service.clone_scenario(scenario.id)
+
+        dataset_scenarios = self.client.service.get_dataset_scenarios(dataset_id_to_check)
+
+        assert len(dataset_scenarios.Scenario) == 2
+
+        assert dataset_scenarios.Scenario[0].id == scenario.id
+        assert dataset_scenarios.Scenario[1].id == new_scenario.id
 
     def test_update_resourcedata(self):
         """
