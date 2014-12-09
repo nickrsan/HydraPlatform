@@ -256,6 +256,61 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
             if new_val.resourcescenario.value.value == updated_val:
                 assert new_val.name == 'I am an updated dataset name'
 
+    def test_bulk_update_resourcedata(self):
+        """
+            Test updating scenario data in a number of scenarios at once.
+            2 main points to test: 1: setting a value to null should remove
+            the resource scenario
+            2: changing the value should create a new dataset
+        """
+        network1 = self.create_network_with_data()
+        scenario1_to_update = network1.scenarios.Scenario[0] 
+        scenario2_to_update = self.client.service.clone_scenario(network1.scenarios.Scenario[0].id)
+
+        #Identify 2 nodes to play around with -- the first and last in the list.
+        node1 = network1.nodes.Node[0]
+        node2 = network1.nodes.Node[-1]
+
+        descriptor = self.create_descriptor(node1.attributes.ResourceAttr[0], 
+                                                "updated_descriptor")
+
+        val_to_delete = node2.attributes.ResourceAttr[0]
+        
+        rs_to_update = self.client.factory.create('ns1:ResourceScenarioArray')
+        updated_dataset_id = None
+        for resourcescenario in scenario1_to_update.resourcescenarios.ResourceScenario:
+            ra_id = resourcescenario.resource_attr_id
+            if ra_id == descriptor['resource_attr_id']:
+                updated_dataset_id = resourcescenario.value['id']
+                resourcescenario.value = descriptor['value']
+                rs_to_update.ResourceScenario.append(resourcescenario)
+            elif ra_id == val_to_delete['id']:
+                resourcescenario.value = None
+                rs_to_update.ResourceScenario.append(resourcescenario)
+       
+        assert updated_dataset_id is not None
+        
+        scenario_ids = self.client.factory.create('integerArray')
+        scenario_ids.integer.append(scenario1_to_update.id)
+        scenario_ids.integer.append(scenario2_to_update.id)
+
+        result = self.client.service.bulk_update_resourcedata(scenario_ids, rs_to_update)
+
+        assert result == "OK" 
+
+        updated_scenario1_data = self.client.service.get_scenario(scenario1_to_update.id)
+        updated_scenario2_data = self.client.service.get_scenario(scenario2_to_update.id)
+        
+        for rs in updated_scenario1_data.resourcescenarios.ResourceScenario:
+            ra_id = resourcescenario.resource_attr_id
+            if ra_id == descriptor['resource_attr_id']:
+                assert rs.value == descriptor['value']
+        for rs in updated_scenario2_data.resourcescenarios.ResourceScenario:
+            ra_id = resourcescenario.resource_attr_id
+            if ra_id == descriptor['resource_attr_id']:
+                assert rs.value == descriptor['value']
+
+
 
     def test_bulk_add_data(self):
 

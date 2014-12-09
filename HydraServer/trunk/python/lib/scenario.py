@@ -511,6 +511,36 @@ def get_dataset_scenarios(dataset_id, **kwargs):
 
     return scenarios
 
+def bulk_update_resourcedata(scenario_ids, resource_scenarios,**kwargs):
+    """
+        Update the data associated with a list of scenarios.
+    """
+    user_id = kwargs.get('user_id')
+    res = None
+    
+    res = {}
+    
+    net_ids = DBSession.query(Scenario.network_id).filter(Scenario.scenario_id.in_(scenario_ids)).all()
+
+    if len(set(net_ids)) != 1:
+        raise HydraError("Scenario IDS are not in the same network")
+
+    for scenario_id in scenario_ids:
+        _check_can_edit_scenario(scenario_id, kwargs['user_id'])
+
+        scen_i = _get_scenario(scenario_id)
+        res[scenario_id] = []
+        for rs in resource_scenarios:
+            if rs.value is not None:
+                updated_rs = _update_resourcescenario(scen_i, rs, user_id=user_id, source=kwargs.get('app_name'))
+                res[scenario_id].append(updated_rs)
+            else:
+                _delete_resourcescenario(scenario_id, rs)
+
+        DBSession.flush()
+
+    return res
+
 def update_resourcedata(scenario_id, resource_scenarios,**kwargs):
     """
         Update the data associated with a scenario.

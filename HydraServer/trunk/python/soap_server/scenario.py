@@ -144,8 +144,21 @@ class ScenarioService(HydraService):
                                            resource_scenarios,
                                            **ctx.in_header.__dict__)
         ret = [ResourceScenario(r) for r in res]
-
         return ret
+
+    @rpc(SpyneArray(Integer), SpyneArray(ResourceScenario), _returns=Unicode)
+    def bulk_update_resourcedata(ctx, scenario_ids, resource_scenarios):
+        """
+            Update the data associated with a scenario.
+            Data missing from the resource scenario will not be removed
+            from the scenario. Use the remove_resourcedata for this task.
+        """
+
+        scenario.bulk_update_resourcedata(scenario_ids,
+                                          resource_scenarios,
+                                         **ctx.in_header.__dict__)
+
+        return 'OK'
 
     @rpc(Integer, ResourceScenario, _returns=Unicode)
     def delete_resourcedata(ctx,scenario_id, resource_scenario):
