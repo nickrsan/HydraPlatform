@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -93,7 +93,7 @@ class SoapServerTest(unittest.TestCase):
         login_response = self.client.service.login(username, password)
 
         token = self.client.factory.create('RequestHeader')
-        token.session_id = login_response.session_id 
+        token.session_id = login_response.session_id
         token.app_name = "Unit Test"
 
         self.client.set_options(cache=None, soapheaders=token)
@@ -233,7 +233,7 @@ class SoapServerTest(unittest.TestCase):
 
         if name is None:
             name = "Unittest Project"
-        
+
         try:
             p = self.client.service.get_project_by_name(name)
             return p
@@ -244,7 +244,7 @@ class SoapServerTest(unittest.TestCase):
             project = self.client.service.add_project(project)
 
             self.client.service.share_project(project.id, ["UserA", "UserB", "UserC"], 'N', 'Y')
-            
+
             return project
 
 
@@ -295,9 +295,9 @@ class SoapServerTest(unittest.TestCase):
         net = self.create_network_with_data()
         s = net.scenarios.Scenario[0]
         rs = s.resourcescenarios.ResourceScenario[0]
-        
-    def build_network(self, project_id=None, num_nodes=10, new_proj=False):
 
+    def build_network(self, project_id=None, num_nodes=10, new_proj=False,
+                      map_projection='EPSG:4326'):
 
         start = datetime.datetime.now()
         if project_id is None:
@@ -306,7 +306,7 @@ class SoapServerTest(unittest.TestCase):
                 proj_name = "Test Project @ %s"%(datetime.datetime.now())
                 project_id = self.create_project(name=proj_name).id
             else:
-                project_id = self.project_id 
+                project_id = self.project_id
 
         log.debug("Project creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
@@ -316,7 +316,7 @@ class SoapServerTest(unittest.TestCase):
         log.debug("Attribute creation took: %s"%(datetime.datetime.now()-start))
         start = datetime.datetime.now()
 
-       
+
         #Put an attribute on a group
         group_ra = dict(
             ref_id  = None,
@@ -368,7 +368,7 @@ class SoapServerTest(unittest.TestCase):
             )
             ra_index = ra_index + 1
 
-            node['attributes'].ResourceAttr = [node_ra1, node_ra2, node_ra3] 
+            node['attributes'].ResourceAttr = [node_ra1, node_ra2, node_ra3]
 
             type_summary_arr = self.client.factory.create('hyd:TypeSummaryArray')
 
@@ -410,9 +410,9 @@ class SoapServerTest(unittest.TestCase):
                     attr_is_var = 'N',
                 )
                 ra_index = ra_index + 1
-                
-                link['attributes'].ResourceAttr = [link_ra1, link_ra2] 
-                if link['id'] % 2 == 0: 
+
+                link['attributes'].ResourceAttr = [link_ra1, link_ra2]
+                if link['id'] % 2 == 0:
                     type_summary_arr = self.client.factory.create('hyd:TypeSummaryArray')
                     type_summary = self.client.factory.create('hyd:TypeSummary')
                     type_summary.id = template.id
@@ -425,7 +425,7 @@ class SoapServerTest(unittest.TestCase):
                     link['types'] = type_summary_arr
                 links.append(link)
 
-            prev_node = node 
+            prev_node = node
 
         #A network must contain an array of links. In this case, the array
 
@@ -471,7 +471,7 @@ class SoapServerTest(unittest.TestCase):
         scenario.resourcegroupitems = group_item_array
 
         #This is an example of 3 diffent kinds of data
-        
+
         #For Links use the following:
         #A simple string (Descriptor)
         #A multi-dimensional array.
@@ -479,7 +479,7 @@ class SoapServerTest(unittest.TestCase):
         #For nodes, use the following:
         #A time series, where the value may be a 1-D array
 
-    
+
         for n in nodes:
             for na in n['attributes'].ResourceAttr:
                 if na.get('attr_is_var', 'N') == 'N':
@@ -533,18 +533,22 @@ class SoapServerTest(unittest.TestCase):
             'layout'      : layout,
             'scenarios'   : scenario_array,
             'resourcegroups' : group_array,
+            'projection'  : map_projection,
         }
 
         return network
 
-    def create_network_with_data(self, project_id=None, num_nodes=10, ret_full_net=True, new_proj=False):
+    def create_network_with_data(self, project_id=None, num_nodes=10,
+                                 ret_full_net=True, new_proj=False,
+                                 map_projection='EPSG:4326'):
         """
             Test adding data to a network through a scenario.
             This test adds attributes to one node and then assignes data to them.
             It assigns a descriptor, array and timeseries to the
             attributes node.
         """
-        network=self.build_network(project_id, num_nodes, new_proj=new_proj)
+        network=self.build_network(project_id, num_nodes, new_proj=new_proj,
+                                   map_projection=map_projection)
 
         #log.debug(network)
         start = datetime.datetime.now()
@@ -560,13 +564,13 @@ class SoapServerTest(unittest.TestCase):
             self.check_network(network, response_net)
             return response_net
         else:
-           return response_network_summary 
+           return response_network_summary
 
 
     def check_network(self, request_net, response_net):
 
         assert repr(response_net.layout) == repr(request_net['layout'])
-   
+
 
         assert response_net.scenarios.Scenario[0].created_by is not None
 
@@ -575,7 +579,7 @@ class SoapServerTest(unittest.TestCase):
             assert n.y is not None
             assert len(n.attributes.ResourceAttr) > 0
 
-        before_times = [] 
+        before_times = []
 
         s = request_net['scenarios'].Scenario[0]
         for rs0 in s['resourcescenarios'].ResourceScenario:
@@ -648,7 +652,7 @@ class SoapServerTest(unittest.TestCase):
         #with a resource attribute.
         #[[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]]]
 
-        test_val_1 = create_dict([[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]], [[9, 8, 7],[6, 5, 4]]]) 
+        test_val_1 = create_dict([[[1, 2, "hello"], [5, 4, 6]], [[10, 20, 30], [40, 50, 60]], [[9, 8, 7],[6, 5, 4]]])
 
         test_val_2 = create_dict([1.0, 2.0, 3.0])
 
@@ -665,7 +669,7 @@ class SoapServerTest(unittest.TestCase):
             unit = 'cm^3',
             dimension = 'Volume',
             hidden = 'N',
-            value = {'ts_values' : 
+            value = {'ts_values' :
             [
                 {'ts_time' : datetime.datetime.now(),
                 'ts_value' : test_val_1},
@@ -676,7 +680,7 @@ class SoapServerTest(unittest.TestCase):
 
             ]
         },
-            metadata = metadata_array, 
+            metadata = metadata_array,
         )
 
         scenario_attr = dict(
@@ -694,7 +698,7 @@ class SoapServerTest(unittest.TestCase):
 
         arr_data = create_dict([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
         arr= {'arr_data' : arr_data}
-        
+
         metadata_array = self.client.factory.create("hyd:MetadataArray")
         metadata = self.client.factory.create("hyd:Metadata")
         metadata.name = 'created_by'
@@ -709,7 +713,7 @@ class SoapServerTest(unittest.TestCase):
             dimension = 'Pressure',
             hidden = 'N',
             value = arr,
-            metadata = metadata_array, 
+            metadata = metadata_array,
         )
 
         scenario_attr = dict(

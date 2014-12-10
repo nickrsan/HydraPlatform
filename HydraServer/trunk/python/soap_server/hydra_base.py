@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -118,7 +118,7 @@ class ObjectNotFoundError(HydraServiceError):
 
 class LogoutService(HydraService):
     __tns__      = 'hydra.authentication'
-    
+
     @rpc(Mandatory.String, _returns=String,
                                                     _throws=AuthenticationError)
     def logout(ctx, username):
@@ -138,12 +138,12 @@ class AuthenticationService(ServiceBase):
             user_id, session_id = login_user(username, password)
         except HydraError, e:
             raise AuthenticationError(e)
-       
+
         _session_db[session_id] = (user_id, username)
         loginresponse = LoginResponse()
         loginresponse.session_id = session_id
         loginresponse.user_id    = user_id
 
-        return loginresponse 
+        return loginresponse
 
 

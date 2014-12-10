@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -42,7 +42,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
         resources_of_type = self.client.service.get_resources_of_type(net.id, type_id)
 
-        assert len(resources_of_type[0]) == 4 
+        assert len(resources_of_type[0]) == 4
 
         for r in resources_of_type[0]:
             assert r.ref_key == 'LINK'
@@ -75,7 +75,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             else:
                 assert len(l.attributes.ResourceAttr) == 2
         assert len(net.resourcegroups.ResourceGroup) == 1
-        
+
         template_id = net.nodes.Node[0].types.TypeSummary[0].template_id
 
         filtered_net = self.client.service.get_network(net.id, 'N', template_id=template_id)
@@ -102,7 +102,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             the scenarios, then querying for the network with data but in only
             a select few scenarios.
         """
-        net = self.create_network_with_data()
+        net = self.create_network_with_data(map_projection='EPSG:21781')
         scenario_id = net.scenarios.Scenario[0].id
 
         new_scenario = self.client.service.clone_scenario(scenario_id)
@@ -111,7 +111,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 
         for s in full_network.scenarios.Scenario:
             assert s.resourcescenarios is None
-       
+
         scen_ids = self.client.factory.create("integerArray")
         scen_ids.integer.append(scenario_id)
         partial_network = self.client.service.get_network(new_scenario.network_id, 'Y', None, scen_ids)
@@ -129,6 +129,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         assert no_net_exists == 'N'
         net_exists = self.client.service.network_exists(net.project_id, net.name)
         assert net_exists == 'Y'
+        assert full_network.projection == 'EPSG:21781'
 
     def test_get_extents(self):
         """
@@ -185,7 +186,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         net = self.client.service.get_network(new_net.id)
 
         new_network = copy.deepcopy(net)
-        
+
         link_id = new_network.links.Link[1].id
         old_node_1_id = new_network.links.Link[1].node_1_id
         old_node_2_id = new_network.links.Link[1].node_2_id
@@ -400,7 +401,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         node.x = 100
         node.y = 101
 
-        
+
         tmpl = self.create_template()
 
         type_summary_arr = self.client.factory.create('hyd:TypeSummaryArray')
@@ -427,7 +428,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         new_network = self.client.service.get_network(network.id)
 
         assert len(new_network.nodes.Node) == len(network.nodes.Node)+1; "new node was not added correctly"
-        
+
         return new_network
 
     ######################################
@@ -495,7 +496,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         return  new_network
     ########################################
 
-   
+
     def test_update_node(self):
         network = self.test_add_node()
 
@@ -510,7 +511,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         for n in new_network.nodes.Node:
             if n.id == node_to_update.id:
                 updated_node = n
-        assert updated_node.name == "Updated Node Name" 
+        assert updated_node.name == "Updated Node Name"
 
     def test_delete_node(self):
         network = self.test_add_node()
@@ -520,17 +521,17 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         self.client.service.delete_node(node_to_delete.id)
 
         new_network = self.client.service.get_network(network.id)
-        
+
         node_ids = []
         for n in new_network.nodes.Node:
             node_ids.append(n.id)
         for l in new_network.links.Link:
             node_ids.append(l.node_1_id)
             node_ids.append(l.node_2_id)
-        assert node_to_delete.id not in node_ids 
+        assert node_to_delete.id not in node_ids
 
         self.client.service.activate_node(node_to_delete.id)
-        
+
         new_network = self.client.service.get_network(network.id)
 
         node_ids = []
@@ -540,9 +541,9 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         for l in new_network.links.Link:
             link_node_ids.append(l.node_1_id)
             link_node_ids.append(l.node_2_id)
-        assert node_to_delete.id in link_node_ids 
-        assert node_to_delete.id in link_node_ids 
-        assert node_to_delete.id in node_ids 
+        assert node_to_delete.id in link_node_ids
+        assert node_to_delete.id in link_node_ids
+        assert node_to_delete.id in node_ids
 
     def test_update_link(self):
         network = self.test_add_link()
@@ -558,7 +559,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         for l in new_network.links.Link:
             if l.id == link_to_update.id:
                 updated_link = l
-        assert updated_link.name == "Updated link Name" 
+        assert updated_link.name == "Updated link Name"
 
     def test_delete_link(self):
         network = self.test_add_link()
@@ -568,11 +569,11 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         self.client.service.delete_link(link_to_delete.id)
 
         new_network = self.client.service.get_network(network.id)
-        
+
         link_ids = []
         for l in new_network.links.Link:
             link_ids.append(l.id)
-        assert link_to_delete.id not in link_ids 
+        assert link_to_delete.id not in link_ids
 
         self.client.service.activate_link(link_to_delete.id)
         new_network = self.client.service.get_network(network.id)
@@ -590,7 +591,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
 #
 #            new_node = self.client.service.update_node(node_to_update)
 #
-#        assert open('~/.hydra/audit/tNodeaud', mode='r') 
+#        assert open('~/.hydra/audit/tNodeaud', mode='r')
 
     def test_load(self):
         project = self.create_project('test')
@@ -699,10 +700,10 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             assert not hasattr(ra, 'resourcescenario')
 
         node_with_data = self.client.service.get_node(n.id, s.id)
-        
+
         attrs_with_data = []
         for ra in node_with_data.attributes.ResourceAttr:
-            if hasattr(ra, 'resourcescenario'): 
+            if hasattr(ra, 'resourcescenario'):
                 if ra.resourcescenario:
                     attrs_with_data.append(ra.id)
         assert len(attrs_with_data) == 2
@@ -718,10 +719,10 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             assert not hasattr(ra, 'resourcescenario')
 
         link_with_data = self.client.service.get_link(n.id, s.id)
-        
+
         attrs_with_data = []
         for ra in link_with_data.attributes.ResourceAttr:
-            if hasattr(ra, 'resourcescenario'): 
+            if hasattr(ra, 'resourcescenario'):
                 if ra.resourcescenario:
                     attrs_with_data.append(ra.id)
         assert len(attrs_with_data) == 2
@@ -737,10 +738,10 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             assert not hasattr(ra, 'resourcescenario')
 
         resourcegroup_with_data = self.client.service.get_resourcegroup(n.id, s.id)
-        
+
         attrs_with_data = []
         for ra in resourcegroup_with_data.attributes.ResourceAttr:
-            if hasattr(ra, 'resourcescenario'): 
+            if hasattr(ra, 'resourcescenario'):
                 if ra.resourcescenario:
                     attrs_with_data.append(ra.id)
         assert len(attrs_with_data) > 0
@@ -804,7 +805,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         network.links = links
 
         network = self.client.service.add_network(network)
-        
+
         result = self.client.service.validate_network_topology(network.id)
         assert len(result.integer) == 1#This means orphan nodes are present
 
@@ -857,7 +858,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         group.id = -1
         group.name = 'test new group'
         group.description = 'test new group'
-        
+
         tmpl = self.create_template()
 
         type_summary_arr = self.client.factory.create('hyd:TypeSummaryArray')
@@ -884,7 +885,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         new_network = self.client.service.get_network(network.id)
 
         assert len(new_network.resourcegroups.ResourceGroup) == len(network.resourcegroups.ResourceGroup)+1; "new resource group was not added correctly"
-        
+
         return new_network
 
     def test_delete_resourcegroup(self):
@@ -905,14 +906,14 @@ class NetworkTest(test_SoapServer.SoapServerTest):
         self.client.service.activate_group(group_to_delete.id)
 
         updated_net = self.client.service.get_network(net.id)
-        
+
         group_ids = []
         for g in updated_net.resourcegroups.ResourceGroup:
             group_ids.append(g.id)
 
         assert group_to_delete.id in group_ids
 
-    
+
     def test_get_attribute_data(self):
         net = self.create_network_with_data()
         s = net.scenarios.Scenario[0]
@@ -927,7 +928,7 @@ class NetworkTest(test_SoapServer.SoapServerTest):
             for ra in link.attributes.ResourceAttr:
                 link_ras.append(ra.id)
 
-        
+
         new_node_ras = self.client.service.get_all_node_data(net.id, s.id)
         for ra in new_node_ras.ResourceAttr:
             assert ra.resourcescenario is not None

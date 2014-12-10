@@ -402,6 +402,7 @@ def add_network(network,**kwargs):
     net_i.network_name        = network.name
     net_i.network_description = network.description
     net_i.created_by          = user_id
+    net_i.projection          = network.projection
 
     if network.layout is not None:
         net_i.network_layout = network.get_layout()

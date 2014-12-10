@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -80,9 +80,9 @@ class Metadata(ComplexModel):
 class ResourceData(ComplexModel):
     """
         An object which represents a resource attr, resource scenario and dataset
-        all in one. 
+        all in one.
 
-        
+
         * **attr_id:** The ID of the attribute to which this data belongs
         * **scenario_id:** The ID of the scenario in which this data has been assigned
         * **resource_attr_id:** The unique ID representing the attribute and resource combination
@@ -107,13 +107,13 @@ class ResourceData(ComplexModel):
                         "2014/09/05 16:46:12:00":2,\n
                         "2014/09/06 16:46:12:00":3,\n
                         "2014/09/07 16:46:12:00":4},\n
-    
+
                 "H2" : {\n
                         "2014/09/04 16:46:12:00":10,\n
                         "2014/09/05 16:46:12:00":20,\n
                         "2014/09/06 16:46:12:00":30,\n
                         "2014/09/07 16:46:12:00":40},\n
-    
+
                 "H3" :  {\n
                         "2014/09/04 16:46:12:00":100,\n
                         "2014/09/05 16:46:12:00":200,\n
@@ -145,7 +145,7 @@ class ResourceData(ComplexModel):
         super(ResourceData, self).__init__()
         if  resourceattr is None:
             return
-       
+
         ra = resourceattr
 
         self.attr_id = str(ra.attr_id)
@@ -202,9 +202,9 @@ class Dataset(ComplexModel):
         self.dimension = parent.data_dimen
         self.unit      = parent.data_units
         self.value = None
-        if parent.value is not None: 
+        if parent.value is not None:
             self.value = get_return_val(parent.data_type, parent.value, parent.start_time, parent.frequency)
-        
+
         metadata = []
         for m in parent.metadata:
             complex_m = Metadata(m)
@@ -224,11 +224,11 @@ class Dataset(ComplexModel):
 
         data = eval(data)
         log.debug("Parsing %s", data)
-        
+
         if data is None:
             log.warn("Cannot parse dataset. No value specified.")
             return None
-       
+
         data_type = self.type
 
         val_names = data.keys()
@@ -276,7 +276,7 @@ class Dataset(ComplexModel):
                         ts_value = arr_data
                 timestamps.append(timestamp)
                 values.append(ts_value)
-            
+
             timeseries_pd = pd.DataFrame(values, index=pd.Series(timestamps))
             #Epoch doesn't work here because dates before 1970 are not supported
             #in read_json. Ridiculous.
@@ -290,7 +290,7 @@ class Dataset(ComplexModel):
                 start_time = start_time[0]
                 frequency = frequency[0]
                 arr_data = arr_data[0]
-            start_time = timestamp_to_ordinal(start_time) 
+            start_time = timestamp_to_ordinal(start_time)
 
             log.info(arr_data)
             try:
@@ -351,10 +351,10 @@ class Dataset(ComplexModel):
         return ret_arr
 
     def get_metadata_as_dict(self, user_id=None, source=None):
-        
+
         if self.metadata is None:
             return {}
-        
+
         metadata_dict = {}
         for m in self.metadata:
             metadata_dict[str(m.name)] = str(m.value)
@@ -363,7 +363,7 @@ class Dataset(ComplexModel):
         #want to enforce this rigidly
         if user_id is not None and 'user_id' not in metadata_dict.keys():
             metadata_dict['user_id'] = str(user_id)
-        
+
         if source is not None and 'source' not in metadata_dict.keys():
             metadata_dict['source'] = str(source)
 
@@ -405,7 +405,7 @@ def get_return_val(data_type, value, start_time=None, frequency=None):
     elif data_type == 'timeseries':
         ret_value = TimeSeries(value)
     elif data_type == 'eqtimeseries':
-        ret_value = EqTimeSeries(start_time, frequency, value) 
+        ret_value = EqTimeSeries(start_time, frequency, value)
     if type(ret_value) is not dict:
         ret_value = ret_value.__dict__
     return ret_value
@@ -434,7 +434,7 @@ class TimeSeriesData(ComplexModel):
             return
 
         self.ts_time  = [val.ts_time]
-        
+
         try:
             ts_val = eval(val.ts_value)
         except:
@@ -694,7 +694,7 @@ class TypeAttr(ComplexModel):
         super(TypeAttr, self).__init__()
         if  parent is None:
             return
-        
+
         self.attr_id   = parent.attr_id
         attr = parent.get_attr()
         if attr is not None:
@@ -904,7 +904,7 @@ class Link(Resource):
         if parent is None:
             return
 
-        
+
         self.id = parent.link_id
         self.name = parent.link_name
         self.node_1_id = parent.node_1_id
@@ -1154,7 +1154,7 @@ class ScenarioDiff(ComplexModel):
 
         if parent is None:
             return
-        
+
         self.resourcescenarios = [ResourceScenarioDiff(rd) for rd in parent['resourcescenarios']]
         self.groups = ResourceGroupDiff(parent['groups'])
 
@@ -1176,6 +1176,7 @@ class Network(Resource):
         ('links',               SpyneArray(Link)),
         ('resourcegroups',      SpyneArray(ResourceGroup)),
         ('types',               SpyneArray(TypeSummary)),
+        ('projection',          Unicode(default=None)),
     ]
 
     def __init__(self, parent=None, summary=False):
@@ -1188,7 +1189,7 @@ class Network(Resource):
         self.name       = parent.network_name
         self.description = parent.network_description
         self.created_by  = parent.created_by
-        self.cr_date     = str(parent.cr_date) 
+        self.cr_date     = str(parent.cr_date)
         if parent.network_layout is not None:
             self.layout    = eval(parent.network_layout)
         else:
@@ -1199,6 +1200,7 @@ class Network(Resource):
         self.links       = [Link(l, summary) for l in parent.links]
         self.resourcegroups = [ResourceGroup(rg, summary) for rg in parent.resourcegroups]
         self.types          = [TypeSummary(t.templatetype) for t in parent.types]
+        self.projection  = parent.projection
 
         if summary is False:
             self.attributes  = [ResourceAttr(ra) for ra in parent.attributes]

@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -115,9 +115,9 @@ class NetworkService(HydraService):
 
         if scenario_id is not None:
             ret_node = Node(node)
-            
+
             res_scens = scenario.get_resource_data('NODE', node_id, scenario_id, None)
-        
+
             rs_dict = {}
             for rs in res_scens:
                 rs_dict[rs.resource_attr_id] = rs
@@ -137,7 +137,7 @@ class NetworkService(HydraService):
 
         if scenario_id is not None:
             ret_link = Link(link)
-            res_scens = scenario.get_resource_data('LINK', link_id, scenario_id, None) 
+            res_scens = scenario.get_resource_data('LINK', link_id, scenario_id, None)
             rs_dict = {}
             for rs in res_scens:
                 rs_dict[rs.resource_attr_id] = rs
@@ -157,7 +157,7 @@ class NetworkService(HydraService):
 
         if scenario_id is not None:
             ret_group = ResourceGroup(group)
-            res_scens = scenario.get_resource_data('GROUP', group_id, scenario_id, None) 
+            res_scens = scenario.get_resource_data('GROUP', group_id, scenario_id, None)
             rs_dict = {}
             for rs in res_scens:
                 rs_dict[rs.resource_attr_id] = rs
@@ -203,7 +203,7 @@ class NetworkService(HydraService):
         @returns NetworkExtents object
         """
         extents = network.get_network_extents(network_id, **ctx.in_header.__dict__)
-        
+
         ne = NetworkExtents()
         ne.network_id = extents['network_id']
         ne.min_x = extents['min_x']
@@ -271,7 +271,7 @@ class NetworkService(HydraService):
         Add a nodes to a network
         """
         link_s = network.add_links(network_id, links, **ctx.in_header.__dict__)
-  
+
         new_links=[]
         for link in links:
             for link_ in link_s:
@@ -319,7 +319,7 @@ class NetworkService(HydraService):
              }
 
         """
-            
+
         node_dict = network.update_node(node, **ctx.in_header.__dict__)
         updated_node = Node(node_dict)
 
@@ -341,7 +341,7 @@ class NetworkService(HydraService):
         """
         #check_perm('edit_topology')
         network.set_node_status(node_id, 'X', **ctx.in_header.__dict__)
-        return 'OK' 
+        return 'OK'
     @rpc(Integer, _returns=Unicode)
     def activate_node(ctx, node_id):
         """
@@ -349,7 +349,7 @@ class NetworkService(HydraService):
         """
         #check_perm('edit_topology')
         network.set_node_status(node_id, 'A', **ctx.in_header.__dict__)
-        return 'OK' 
+        return 'OK'
 
     @rpc(Integer, Boolean, _returns=Unicode)
     def purge_node(ctx, node_id, purge_data):
@@ -382,7 +382,7 @@ class NetworkService(HydraService):
         link_dict = network.update_link(link, **ctx.in_header.__dict__)
         updated_link = Link(link_dict)
 
-        return updated_link 
+        return updated_link
 
     @rpc(Integer, _returns=Unicode)
     def delete_link(ctx, link_id):
@@ -472,7 +472,7 @@ class NetworkService(HydraService):
         """
 
         nodes, links, groups = network.get_resources_of_type(network_id, type_id, **ctx.in_header.__dict__)
-        
+
         resources = []
         for n in nodes:
             resources.append(ResourceSummary(n))
@@ -486,7 +486,7 @@ class NetworkService(HydraService):
     @rpc(Integer, _returns=Unicode)
     def clean_up_network(ctx, network_id):
         """
-            Purge all nodes, links, groups and scenarios from a network which 
+            Purge all nodes, links, groups and scenarios from a network which
             have previously been deleted.
         """
         return network.clean_up_network(network_id, **ctx.in_header.__dict__)
@@ -494,7 +494,7 @@ class NetworkService(HydraService):
     @rpc(Integer, Integer, Integer(max_occurs="unbounded"), Unicode(pattern="['YN']", default='N'), _returns=SpyneArray(ResourceAttr))
     def get_all_node_data(ctx, network_id, scenario_id, node_ids, include_metadata):
         """
-            Return all the attributes for all the nodes in a given network and a 
+            Return all the attributes for all the nodes in a given network and a
             given scenario.
             Returns a list of ResourceAttr objects, each with a resourcescenario
             attribute, containing the actual value for the scenario specified.
@@ -512,7 +512,7 @@ class NetworkService(HydraService):
             x = ResourceScenario(nodeattr.resourcescenario, ra.attr_id)
             ra.resourcescenario = x
             return_ras.append(ra)
-        
+
         log.info("Return vals built in %s", (datetime.datetime.now() - start))
 
         return return_ras
@@ -520,17 +520,17 @@ class NetworkService(HydraService):
     @rpc(Integer, Integer, Integer(max_occurs="unbounded"), Unicode(pattern="['YN']", default='N'), _returns=SpyneArray(ResourceData))
     def test_get_all_node_data(ctx, network_id, scenario_id, node_ids, include_metadata):
         """
-        Return all the attributes for all the nodes in a given network and a 
+        Return all the attributes for all the nodes in a given network and a
         given scenario.
 
         :returns: An array of soap_server.hydra_complexmodels.ResourceData
 
         In this function array data and timeseries data are returned as JSON strings.
-        
+
         If your data structure looks like:
 
         +----+----+-----+
-        | H1 | H2 | H3  |    
+        | H1 | H2 | H3  |
         +====+====+=====+
         | 1  | 10 | 100 |
         +----+----+-----+
@@ -542,7 +542,7 @@ class NetworkService(HydraService):
         +----+----+-----+
 
         Then hydra will provide the data in the following format:
-        
+
         '{
             "H1" : {"0":1, "1":2, "3":3, "4":4},\n
             "H2"  : {"0":10, "1":20, "3":30, "4":40},\n
@@ -552,7 +552,7 @@ class NetworkService(HydraService):
         For a timeseries:
 
         +-------------------------+----+----+-----+
-        | Time                    | H1 | H2 | H3  |    
+        | Time                    | H1 | H2 | H3  |
         +=========================+====+====+=====+
         | 2014/09/04 16:46:12:00  | 1  | 10 | 100 |
         +-------------------------+----+----+-----+
@@ -564,7 +564,7 @@ class NetworkService(HydraService):
         +-------------------------+----+----+-----+
 
         Then hydra will provide the data in the following format:
-        
+
         '{
             "H1" : {\n
                     "2014/09/04 16:46:12:00":1,\n
@@ -590,14 +590,14 @@ class NetworkService(HydraService):
         node_resourceattrs = network.test_get_attributes_for_resource(network_id, scenario_id, 'NODE', node_ids, include_metadata)
 
         log.info("Qry done in %s", (datetime.datetime.now() - start))
-        
+
         start = datetime.datetime.now()
 
         return_ras = []
         for nodeattr in node_resourceattrs:
             ra = ResourceData(nodeattr)
             return_ras.append(ra)
-        
+
         log.info("Test Return vals built in %s", (datetime.datetime.now() - start))
 
         return return_ras
@@ -605,7 +605,7 @@ class NetworkService(HydraService):
     @rpc(Integer, Integer, Integer(max_occurs="unbounded"), Unicode(pattern="['YN']", default='N'), _returns=SpyneArray(ResourceData))
     def test_get_all_link_data(ctx, network_id, scenario_id, link_ids, include_metadata):
         """
-        Return all the attributes for all the nodes in a given network and a 
+        Return all the attributes for all the nodes in a given network and a
         given scenario.
 
         :returns: An array of soap_server.hydra_complexmodels.ResourceData
@@ -619,14 +619,14 @@ class NetworkService(HydraService):
         node_resourceattrs = network.test_get_attributes_for_resource(network_id, scenario_id, 'LINK', link_ids, include_metadata)
 
         log.info("Qry done in %s", (datetime.datetime.now() - start))
-        
+
         start = datetime.datetime.now()
 
         return_ras = []
         for linkattr in node_resourceattrs:
             ra = ResourceData(linkattr)
             return_ras.append(ra)
-        
+
         log.info("Test Return vals built in %s", (datetime.datetime.now() - start))
 
         return return_ras
@@ -635,7 +635,7 @@ class NetworkService(HydraService):
     @rpc(Integer, Integer, Integer(max_occurs="unbounded"), Unicode(pattern="['YN']", default='N'), _returns=SpyneArray(ResourceAttr))
     def get_all_link_data(ctx, network_id, scenario_id, link_ids, include_metadata):
         """
-            Return all the attributes for all the links in a given network and a 
+            Return all the attributes for all the links in a given network and a
             given scenario.
             Returns a list of ResourceAttr objects, each with a resourcescenario
             attribute, containing the actual value for the scenario specified.
@@ -646,21 +646,21 @@ class NetworkService(HydraService):
 
         log.info("Qry done in %s", (datetime.datetime.now() - start))
         start = datetime.datetime.now()
-        
+
         return_ras = []
         for linkattr in link_resourceattrs:
             ra = ResourceAttr(linkattr)
             ra.resourcescenario = ResourceScenario(linkattr.resourcescenario, ra.attr_id)
             return_ras.append(ra)
-        
+
         log.info("Return vals built in %s", (datetime.datetime.now() - start))
-        
+
         return return_ras
 
     @rpc(Integer, Integer, Integer(max_occurs="unbounded"), Unicode(pattern="['YN']", default='N'), _returns=SpyneArray(ResourceAttr))
     def get_all_group_data(ctx, network_id, scenario_id, group_ids, include_metadata):
         """
-            Return all the attributes for all the groups in a given network and a 
+            Return all the attributes for all the groups in a given network and a
             given scenario.
             Returns a list of ResourceAttr objects, each with a resourcescenario
             attribute, containing the actual value for the scenario specified.
