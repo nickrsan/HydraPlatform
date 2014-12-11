@@ -1194,14 +1194,13 @@ class ImportCSV(object):
                     else:
                         filedata = self.file_dict[full_file_path]
 
-                    import pudb; pudb.set_trace()
                     value_header = filedata[0].lower().replace(' ', '')
                     if value_header.startswith('arraydescription,') or value_header.startswith(','):
                         arr_struct = filedata[0].strip()
                         arr_struct = arr_struct.split(',')
                         arr_struct = "|".join(arr_struct[3:])
                         filedata = filedata[1:]
-                    elif value_header.startswith('timeseriesdescription') or value_header.startswith(''):
+                    elif value_header.startswith('timeseriesdescription') or value_header.startswith(','):
                         arr_struct = filedata[0].strip()
                         arr_struct = arr_struct.split(',')
                         arr_struct = "|".join(arr_struct[3:])
@@ -1247,7 +1246,7 @@ class ImportCSV(object):
         if unit is not None:
             dataset['dimension'] = dimension
 
-        dataset['name'] = "Import CSV data"
+        dataset['name'] = self.Scenario['name']
 
         resourcescenario['value'] = dataset
 
