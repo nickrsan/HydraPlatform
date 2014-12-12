@@ -609,6 +609,11 @@ def _update_resourcescenario(scenario, resource_scenario, dataset=None, new=Fals
         scenario.resourcescenarios.append(r_scen_i)
 
 
+    if scenario.locked == 'Y':
+        log.info("Scenario %s is locked",scenario.scenario_id)
+        return r_scen_i
+
+
     if dataset is not None:
         r_scen_i.dataset = dataset
 
