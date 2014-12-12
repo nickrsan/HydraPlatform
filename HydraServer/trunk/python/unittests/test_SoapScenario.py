@@ -290,9 +290,9 @@ class ScenarioTest(test_SoapServer.SoapServerTest):
        
         assert updated_dataset_id is not None
         
-        scenario_ids = self.client.factory.create('integerArray')
-        scenario_ids.integer.append(scenario1_to_update.id)
-        scenario_ids.integer.append(scenario2_to_update.id)
+        scenario_ids = self.client.factory.create('intArray')
+        scenario_ids.int.append(scenario1_to_update.id)
+        scenario_ids.int.append(scenario2_to_update.id)
 
         result = self.client.service.bulk_update_resourcedata(scenario_ids, rs_to_update)
 

@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
-from spyne.model.primitive import Integer, Unicode
+from spyne.model.primitive import Integer, Integer32, Unicode
 from spyne.model.complex import Array as SpyneArray
 from spyne.decorator import rpc
 from hydra_complexmodels import Scenario,\
@@ -146,7 +146,7 @@ class ScenarioService(HydraService):
         ret = [ResourceScenario(r) for r in res]
         return ret
 
-    @rpc(SpyneArray(Integer), SpyneArray(ResourceScenario), _returns=Unicode)
+    @rpc(SpyneArray(Integer32), SpyneArray(ResourceScenario), _returns=Unicode)
     def bulk_update_resourcedata(ctx, scenario_ids, resource_scenarios):
         """
             Update the data associated with a scenario.
