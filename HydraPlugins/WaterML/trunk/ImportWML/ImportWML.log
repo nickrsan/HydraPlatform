@@ -1,0 +1,11 @@
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 18:08:05,163 - INFO - Calling: login
+2014-12-12 18:08:05,163 - INFO - Setting URL http://127.0.0.1:8080/json
+2014-12-12 18:08:05,194 - INFO - Starting new HTTP connection (1): 127.0.0.1

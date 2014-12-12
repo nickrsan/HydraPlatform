@@ -1,0 +1,16 @@
+2014-12-12 18:11:13,608 - INFO - Connecting to database: None
+INFO - Using logging config at C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Connecting to database: sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - Custom unit conversion file 'C:\Users\Public\Documents/Hydra Modeller/.config/hydra/unit_conversion.xml' does not exist, falling back to default file (C:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAS~1\trunk\dist\HYDRAS~1\HydraLib\static\user_units.xml).
+INFO - home_dir C:\Users\Public\Documents/Hydra Modeller
+INFO - hydra_base_dir C:\Users\steve/Documents/svn/HYDRA
+INFO - common_app_data_folder C:\ProgramData
+INFO - win_common_documents C:\Users\Public\Documents
+INFO - sqlite url sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - layout_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraServer/trunk/static/xml/resource_layout.xsd
+INFO - default_directory C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/
+INFO - result_file C:\Users\Public\Documents/Hydra Modeller/.hydra/plugin_result/
+INFO - plugin_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - log_config_path C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - listening to http://127.0.0.1:8080/soap
+INFO - wsdl is at: http://127.0.0.1:8080/soap/?wsdl
