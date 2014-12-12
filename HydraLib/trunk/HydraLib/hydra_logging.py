@@ -18,6 +18,7 @@ import logging.config
 import config
 import os
 import ctypes
+import inspect
 
 def init(level=None):
  #   if level is None:
@@ -43,13 +44,21 @@ def init(level=None):
  #   logging.addLevelName( logging.CRITICAL, "\033[0;35m%s\033[0;35m" % logging.getLevelName(logging.CRITICAL))
 
  #   logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s\033[0m', level=level)
-
+    log_file = "%s.log"%inspect.stack()[-1][1].split('/')[-1].split('.')[0]
+    log_base_path = config.get('logging_conf', 'log_file_path', '.')
+    log_loc = os.path.expanduser(os.path.join(log_base_path, log_file))
     use_default = False
     try:
         config_file = os.path.expanduser(config.get('logging_conf', 'log_config_path'))
         #check the config file exists...
         if os.path.isfile(config_file):
             logging.config.fileConfig(config_file)
+            logger = logging.getLogger()
+            handler = logging.FileHandler(os.path.join(log_base_path, log_file),"a")
+            handler.setLevel(logging.DEBUG)
+            formatter = logging.Formatter("%(levelname)s - %(message)s")
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
             use_default=False
             logging.info("Using logging config at %s", config_file)
         else:
@@ -80,7 +89,7 @@ def init(level=None):
                 'level':'DEBUG',
                 'class':'logging.FileHandler',
                 'formatter' : 'hydraFormatter',
-                'filename'  : 'hydra.log',
+                'filename'  : log_loc,
                 'mode'      : 'a',
             },
         },
