@@ -16,6 +16,11 @@
 # along with HydraPlatform.  If not, see <http://www.gnu.org/licenses/>
 #
 
+import cffi
+import bcrypt
+bcrypt.hashpw('', bcrypt.gensalt())
+
+
 import sys
 import spyne.service #Needed for build script.
 #if "./python" not in sys.path:

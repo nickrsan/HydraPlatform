@@ -9,3 +9,33 @@ INFO - Starting new HTTP connection (1): 127.0.0.1
 2014-12-12 18:08:05,163 - INFO - Calling: login
 2014-12-12 18:08:05,163 - INFO - Setting URL http://127.0.0.1:8080/json
 2014-12-12 18:08:05,194 - INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Session ID=490f0b03e429a78b0096ca49b80cf250
+INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\IMPORT~1\dist\IMPORT~1\plugin.xml).
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Session ID=2c0f489157ee60aa63e1f7f2573a5162
+INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\IMPORT~1\dist\IMPORT~1\plugin.xml).
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Session ID=f752758aa4ee622ad38e6254c4faaea2
+INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\IMPORT~1\dist\IMPORT~1\plugin.xml).
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Session ID=1086aa6acc5a4f511ac898a480ae744a
+INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\IMPORT~1\dist\IMPORT~1\plugin.xml).
+INFO - Plugin Input xsd: c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - Plugin XML OK

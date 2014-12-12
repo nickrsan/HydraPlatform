@@ -1,0 +1,112 @@
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Session ID=96e42811359ac84e9e9b6f407bf22a2c
+INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\WATERM~1\plugins\IMPORT~1\plugin.xml).
+INFO - Plugin Input xsd: c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - Plugin XML OK
+INFO - Calling: bulk_insert_data
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - 2
+INFO - 2
+INFO - Calling: add_dataset_group
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Session ID=c868038a8f6c877014895b4de5c1f14e
+INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\WATERM~1\plugins\IMPORT~1\plugin.xml).
+INFO - Plugin Input xsd: c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - Plugin XML OK
+INFO - Calling: bulk_insert_data
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - 2
+INFO - 2
+INFO - Calling: add_dataset_group
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Session ID=b3927fa72c11e11951d8b4b80273d184
+INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\WATERM~1\plugins\IMPORT~1\plugin.xml).
+INFO - Plugin Input xsd: c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - Plugin XML OK
+INFO - Calling: bulk_insert_data
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - 2
+INFO - 2
+INFO - Calling: add_dataset_group
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Calling: login
+INFO - Setting URL http://127.0.0.1:8080/json
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - Session ID=6eb7c988e10932a806205944d62f8ec6
+INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\WATERM~1\plugins\IMPORT~1\plugin.xml).
+INFO - Plugin Input xsd: c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - Plugin XML OK
+INFO - Calling: bulk_insert_data
+INFO - Starting new HTTP connection (1): 127.0.0.1
+INFO - 2
+INFO - 2
+INFO - Calling: add_dataset_group
+INFO - Starting new HTTP connection (1): 127.0.0.1

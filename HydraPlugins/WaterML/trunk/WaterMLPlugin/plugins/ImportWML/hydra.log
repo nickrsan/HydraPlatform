@@ -1,0 +1,78 @@
+2014-12-12 20:03:33,582 - INFO - Calling: login
+2014-12-12 20:03:33,582 - INFO - Setting URL http://127.0.0.1:8080/json
+2014-12-12 20:03:33,609 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:03:33,801 - INFO - Session ID=d6235ba880d9893cb7b438cbba112c7f
+2014-12-12 20:03:33,809 - INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\IMPORT~1\dist\IMPORT~1\plugin.xml).
+2014-12-12 20:03:53,865 - INFO - Calling: login
+2014-12-12 20:03:53,865 - INFO - Setting URL http://127.0.0.1:8080/json
+2014-12-12 20:03:53,890 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:03:54,155 - INFO - Session ID=1ec0cd5792c0d2c9219a20a49c31c9e2
+2014-12-12 20:03:54,167 - INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\IMPORT~1\dist\IMPORT~1\plugin.xml).
+2014-12-12 20:04:04,480 - INFO - Calling: login
+2014-12-12 20:04:04,480 - INFO - Setting URL http://127.0.0.1:8080/json
+2014-12-12 20:04:04,507 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:04:04,801 - INFO - Session ID=5043315c6c0d7c95dff334f8351c487d
+2014-12-12 20:04:04,801 - INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\IMPORT~1\dist\IMPORT~1\plugin.xml).
+2014-12-12 20:04:04,801 - INFO - Plugin Input xsd: c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+2014-12-12 20:04:04,801 - INFO - Plugin XML OK
+2014-12-12 20:04:04,813 - INFO - Calling: bulk_insert_data
+2014-12-12 20:04:04,813 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:04:04,826 - INFO - 2
+2014-12-12 20:04:04,826 - INFO - 2
+2014-12-12 20:04:04,839 - INFO - Calling: add_dataset_group
+2014-12-12 20:04:04,839 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:08:35,164 - INFO - Calling: login
+2014-12-12 20:08:35,164 - INFO - Setting URL http://127.0.0.1:8080/json
+2014-12-12 20:08:35,211 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:08:35,555 - INFO - Session ID=c0d9f23553410db2b3f82a5b120d3c39
+2014-12-12 20:08:35,555 - INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\WATERM~1\plugins\IMPORT~1\plugin.xml).
+2014-12-12 20:08:35,555 - INFO - Plugin Input xsd: c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+2014-12-12 20:08:35,571 - INFO - Plugin XML OK
+2014-12-12 20:08:35,571 - INFO - Calling: bulk_insert_data
+2014-12-12 20:08:35,586 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:08:35,601 - INFO - 2
+2014-12-12 20:08:35,601 - INFO - 2
+2014-12-12 20:08:35,601 - INFO - Calling: add_dataset_group
+2014-12-12 20:08:35,601 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:08:51,946 - INFO - Calling: login
+2014-12-12 20:08:51,946 - INFO - Setting URL http://127.0.0.1:8080/json
+2014-12-12 20:08:51,993 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:08:52,321 - INFO - Session ID=3a3477e96aa4c0ea4393dd2b233eed8c
+2014-12-12 20:08:52,321 - INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\WATERM~1\plugins\IMPORT~1\plugin.xml).
+2014-12-12 20:08:52,336 - INFO - Plugin Input xsd: c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+2014-12-12 20:08:52,336 - INFO - Plugin XML OK
+2014-12-12 20:08:52,336 - INFO - Calling: bulk_insert_data
+2014-12-12 20:08:52,336 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:08:52,368 - INFO - 2
+2014-12-12 20:08:52,368 - INFO - 2
+2014-12-12 20:08:52,368 - INFO - Calling: add_dataset_group
+2014-12-12 20:08:52,368 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:09:59,476 - INFO - Calling: login
+2014-12-12 20:09:59,476 - INFO - Setting URL http://127.0.0.1:8080/json
+2014-12-12 20:09:59,523 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:09:59,868 - INFO - Session ID=684076d4ae69d4ba2da44769c12322ae
+2014-12-12 20:09:59,868 - INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\WATERM~1\plugins\IMPORT~1\plugin.xml).
+2014-12-12 20:09:59,884 - INFO - Plugin Input xsd: c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+2014-12-12 20:09:59,884 - INFO - Plugin XML OK
+2014-12-12 20:09:59,884 - INFO - Calling: bulk_insert_data
+2014-12-12 20:09:59,898 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:09:59,914 - INFO - 2
+2014-12-12 20:09:59,914 - INFO - 2
+2014-12-12 20:09:59,914 - INFO - Calling: add_dataset_group
+2014-12-12 20:09:59,930 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:10:19,493 - INFO - Calling: login
+2014-12-12 20:10:19,493 - INFO - Setting URL http://127.0.0.1:8080/json
+2014-12-12 20:10:19,523 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:10:19,868 - INFO - Session ID=e46b8d006942f61b28ee81ba2ac52a41
+2014-12-12 20:10:19,868 - INFO - Validating plugin xml file (c:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAP~1\WaterML\trunk\WATERM~1\plugins\IMPORT~1\plugin.xml).
+2014-12-12 20:10:19,868 - INFO - Plugin Input xsd: c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+2014-12-12 20:10:19,868 - INFO - Plugin XML OK
+2014-12-12 20:10:19,884 - INFO - Calling: bulk_insert_data
+2014-12-12 20:10:19,884 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:10:19,898 - INFO - 2
+2014-12-12 20:10:19,914 - INFO - 2
+2014-12-12 20:10:19,914 - INFO - Calling: add_dataset_group
+2014-12-12 20:10:19,914 - INFO - Starting new HTTP connection (1): 127.0.0.1
+2014-12-12 20:11:07,243 - INFO - Calling: login
+2014-12-12 20:11:07,243 - INFO - Setting URL http://127.0.0.1:8080/json
+2014-12-12 20:11:07,273 - INFO - Starting new HTTP connection (1): 127.0.0.1
