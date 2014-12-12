@@ -103,7 +103,7 @@ class ImportWML(object):
         elif os.path.isfile(target):
             data_import_name, all_dataset_ids = self.read_timeseries_file(target)
         else:
-            raise HydraPluginError("Unable to recognise file %s. Please check inputs", target)
+            raise HydraPluginError("Unable to recognise file %s. Please check inputs"%(target,))
 
         write_progress(2, 2)
         log.info(len(all_dataset_ids))
