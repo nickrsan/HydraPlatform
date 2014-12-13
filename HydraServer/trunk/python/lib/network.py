@@ -842,11 +842,14 @@ def update_network(network,**kwargs):
                 scen_i.created_by = user_id
                 net_i.scenarios.append(scen_i)
 
+            start_time = str(timestamp_to_ordinal(s.start_time)) if s.start_time else None
+            end_time   = str(timestamp_to_ordinal(s.end_time)) if s.end_time else None
+
             scen_i.scenario_name        = s.name
             scen_i.scenario_description = s.description
             scen_i.scenario_layout      = s.get_layout()
-            scen_i.start_time           = str(timestamp_to_ordinal(s.start_time)) if s.start_time else None
-            scen_i.end_time             = str(timestamp_to_ordinal(s.end_time)) if s.end_time else None
+            scen_i.start_time           = start_time 
+            scen_i.end_time             = end_time
             scen_i.time_step            = s.time_step
             scen_i.network_id           = net_i.network_id
 
@@ -855,12 +858,14 @@ def update_network(network,**kwargs):
                     if r_scen.resource_attr_id < 0:
                         r_scen.resource_attr_id = all_resource_attrs[r_scen.resource_attr_id].resource_attr_id
                     scenario._update_resourcescenario(scen_i, r_scen, user_id=user_id, source=kwargs.get('app_name'))
+                    DBSession.flush()
 
             if s.resourcegroupitems is not None:
                 for group_item in s.resourcegroupitems:
 
                     if group_item.id and group_item.id > 0:
-                        group_item_i = DBSession.query(ResourceGroupItem).filter(ResourceGroupItem.item_id==group_item.id).one()
+                        group_item_i = DBSession.query(ResourceGroupItem).filter(
+                                    ResourceGroupItem.item_id==group_item.id).one()
                     else:
                         group_item_i = ResourceGroupItem()
                         group_item_i.group_id = group_id_map[group_item.group_id].group_id
