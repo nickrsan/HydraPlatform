@@ -13,7 +13,7 @@
         <arg>
             <name>timeseriesfile</name>
             <switch>-t</switch>
-            <multiple>N</multiple>
+            <multiple>Y</multiple>
             <argtype>file</argtype>
             <allownew>N</allownew>
             <help>The XML file or folder of XML files containint Water ML timeseries data.</help>
