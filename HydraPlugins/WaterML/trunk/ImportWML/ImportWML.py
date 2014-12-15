@@ -80,7 +80,7 @@ class ImportWML(object):
         self.message = ''
         self.files = []
 
-    def read_timeseries_data(self, target, dataset_group_name):
+    def read_timeseries_data(self, targets, dataset_group_name):
         """
             Read Water ML timeseries data.
             @target
@@ -88,29 +88,38 @@ class ImportWML(object):
                 files or a single timeseries file.
         """
         write_progress(1, 2)
-        if os.path.isdir(target):
-            all_dataset_ids = []
-            for i, f in enumerate(os.listdir(target)):
+        
+        all_dataset_ids = []
+        for target in targets:
+            if os.path.isdir(target):
+                for i, f in enumerate(os.listdir(target)):
+                    try:
+                        write_output("Reading timeseries file %s"%f)
+                        data_import_name, file_dataset_ids = self.read_timeseries_file(os.path.join(target, f))
+                        all_dataset_ids.extend(file_dataset_ids)
+                    except Exception, e:
+                        log.critical(e)
+                        self.warnings.append("Unable to read timeseries data from file %s"%f)
+            
+                data_import_name = "timeseries from folder %s"%target
+
+            elif os.path.isfile(target):
                 try:
-                    write_output("Reading timeseries file %s"%f)
-                    data_import_name, file_dataset_ids = self.read_timeseries_file(f)
+                    write_output("Reading timeseries file %s"%target)
+                    data_import_name, file_dataset_ids = self.read_timeseries_file(target)
                     all_dataset_ids.extend(file_dataset_ids)
                 except Exception, e:
-                    self.warnings.append("Unable to read timeseries data from file %s"%f)
-            
-            data_import_name = "timeseries from folder %s"%target
-
-        elif os.path.isfile(target):
-            data_import_name, all_dataset_ids = self.read_timeseries_file(target)
-        else:
-            raise HydraPluginError("Unable to recognise file %s. Please check inputs"%(target,))
+                    raise HydraPluginError("Unable to read timeseries data from file %s. Invalid content. "
+                                       "Ensure the file contains the result of 'GetValues'."%target)
+            else:
+                raise HydraPluginError("Unable to recognise file %s. Please check inputs"%(target,))
 
         write_progress(2, 2)
         log.info(len(all_dataset_ids))
         log.info(len(set(all_dataset_ids)))
         if dataset_group_name is not None:
             data_import_name = dataset_group_name
-        self.create_dataset_group(data_import_name, all_dataset_ids)
+        self.create_dataset_group(data_import_name, list(set(all_dataset_ids)))
         write_output("Dataset %s created"%data_import_name)
         return data_import_name 
 
@@ -349,7 +358,7 @@ Written by Philipp Meier <philipp@diemeiers.ch>
 
         """, epilog="For more information visit www.hydra-network.com",
         formatter_class=ap.RawDescriptionHelpFormatter)
-    parser.add_argument('-t', '--timeseriesfile',
+    parser.add_argument('-t', '--timeseriesfile', nargs='+',
                         help='''The XML file containing a WaterML timeseries.''')
     parser.add_argument('-n', '--uploadname',
                         help='''The name of the dataset group into which all the timeseries will be put.''')
@@ -375,8 +384,9 @@ if __name__ == '__main__':
             importwml.login()
 
         validate_plugin_xml(os.path.join(__location__, 'plugin.xml'))
-
+        
         data_import_name = importwml.read_timeseries_data(args.timeseriesfile, args.uploadname)
+
         write_output("Saving data")
         importwml.message = 'Data import was successful. Timeseries imported into group named "%s"'%data_import_name
 
