@@ -48,6 +48,11 @@ def load_config():
     sysfiles = glob.glob('/etc/hydra/*.ini')
     repofiles = glob.glob(modulepath + '/../../../config/*.ini')
 
+    if os.name == 'nt':
+        import winpaths
+        userfiles = glob.glob(os.path.expanduser('~') + '/AppData/Local/hydra.ini')
+        sysfiles = glob.glob(winpaths.get_common_documents() + '/Hydra/*.ini')
+    
     config = ConfigParser.ConfigParser(allow_no_value=True)
 
     for ini_file in repofiles:

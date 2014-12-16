@@ -872,7 +872,7 @@ class Node(Resource):
         self.x = parent.node_x
         self.y = parent.node_y
         self.description = parent.node_description
-        if parent.node_layout is not None:
+        if parent.node_layout not in (None, ""):
             self.layout    = eval(parent.node_layout)
         else:
             self.layout = {}
@@ -910,7 +910,8 @@ class Link(Resource):
         self.node_1_id = parent.node_1_id
         self.node_2_id = parent.node_2_id
         self.description = parent.link_description
-        if parent.link_layout is not None:
+
+        if parent.link_layout not in (None, "") :
             self.layout    = eval(parent.link_layout)
         else:
             self.layout = {}
@@ -1015,7 +1016,7 @@ class Scenario(Resource):
         self.name = parent.scenario_name
         self.description = parent.scenario_description
 
-        if parent.scenario_layout is not None:
+        if parent.scenario_layout not in (None, ""):
             self.layout    = eval(parent.scenario_layout)
         else:
             self.layout = {}
@@ -1190,7 +1191,7 @@ class Network(Resource):
         self.description = parent.network_description
         self.created_by  = parent.created_by
         self.cr_date     = str(parent.cr_date)
-        if parent.network_layout is not None:
+        if parent.network_layout not in (None, ""):
             self.layout    = eval(parent.network_layout)
         else:
             self.layout = {}

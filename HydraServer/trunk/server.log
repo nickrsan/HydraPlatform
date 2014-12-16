@@ -455,3 +455,213 @@ INFO - Done bulk inserting data. 2 datasets
 INFO - Call took: 0:00:00.010000
 INFO - Received request: <function add_dataset_group at 0x000000000681E898>
 INFO - Call took: 0:00:00.003000
+INFO - Using logging config at C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Connecting to database: sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - Custom unit conversion file 'C:\Users\Public\Documents/Hydra Modeller/.config/hydra/unit_conversion.xml' does not exist, falling back to default file (C:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAS~1\trunk\dist\HYDRAS~1\HydraLib\static\user_units.xml).
+INFO - home_dir C:\Users\Public\Documents/Hydra Modeller
+INFO - hydra_base_dir C:\Users\steve/Documents/svn/HYDRA
+INFO - common_app_data_folder C:\ProgramData
+INFO - win_common_documents C:\Users\Public\Documents
+INFO - sqlite url sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - layout_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraServer/trunk/static/xml/resource_layout.xsd
+INFO - default_directory C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/
+INFO - result_file C:\Users\Public\Documents/Hydra Modeller/.hydra/plugin_result/
+INFO - plugin_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - log_config_path C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - listening to http://127.0.0.1:8080/soap
+INFO - wsdl is at: http://127.0.0.1:8080/soap/?wsdl
+INFO - Using logging config at C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Connecting to database: sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - Custom unit conversion file 'C:\Users\Public\Documents/Hydra Modeller/.config/hydra/unit_conversion.xml' does not exist, falling back to default file (C:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAS~1\trunk\dist\HYDRAS~1\HydraLib\static\user_units.xml).
+INFO - home_dir C:\Users\Public\Documents/Hydra Modeller
+INFO - hydra_base_dir C:\Users\steve/Documents/svn/HYDRA
+INFO - common_app_data_folder C:\ProgramData
+INFO - win_common_documents C:\Users\Public\Documents
+INFO - sqlite url sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - layout_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraServer/trunk/static/xml/resource_layout.xsd
+INFO - default_directory C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/
+INFO - result_file C:\Users\Public\Documents/Hydra Modeller/.hydra/plugin_result/
+INFO - plugin_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - log_config_path C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - listening to http://127.0.0.1:8080/soap
+INFO - wsdl is at: http://127.0.0.1:8080/soap/?wsdl
+INFO - Received request: <function login at 0x00000000063B99E8>
+INFO - Call took: 0:00:00.328000
+INFO - Received request: <function get_user_by_name at 0x0000000006931F28>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_user at 0x0000000006931C88>
+INFO - Call took: 0:00:00.312000
+INFO - Received request: <function get_role_by_code at 0x00000000069EBDD8>
+INFO - Call took: 0:00:00
+INFO - Received request: <function set_user_role at 0x00000000069EB4A8>
+INFO - Call took: 0:00:00.015000
+INFO - Received request: <function get_user_by_name at 0x0000000006931F28>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_user at 0x0000000006931C88>
+INFO - Call took: 0:00:00.328000
+INFO - Received request: <function get_role_by_code at 0x00000000069EBDD8>
+INFO - Call took: 0:00:00
+INFO - Received request: <function set_user_role at 0x00000000069EB4A8>
+INFO - Call took: 0:00:00.015000
+INFO - Received request: <function get_user_by_name at 0x0000000006931F28>
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function add_user at 0x0000000006931C88>
+INFO - Call took: 0:00:00.344000
+INFO - Received request: <function get_role_by_code at 0x00000000069EBDD8>
+INFO - Call took: 0:00:00.015000
+INFO - Received request: <function set_user_role at 0x00000000069EB4A8>
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_project_by_name at 0x00000000063B9BA8>
+CRITICAL - Project Unittest Project not found
+ERROR - Fault(HydraError 300: u'Project Unittest Project not found')
+Traceback (most recent call last):
+  File "C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\build\server\out00-PYZ.pyz\spyne.application", line 142, in process_request
+  File "<string>", line 171, in call_wrapper
+HydraServiceError: Fault(HydraError 300: u'Project Unittest Project not found')
+INFO - Received request: <function add_project at 0x00000000063CBC88>
+INFO - Call took: 0:00:00
+INFO - Received request: <function share_project at 0x0000000006B6FAC8>
+INFO - Call took: 0:00:00.031000
+INFO - Received request: <function get_project_by_name at 0x00000000063B9BA8>
+CRITICAL - Project test not found
+ERROR - Fault(HydraError 300: u'Project test not found')
+Traceback (most recent call last):
+  File "C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\build\server\out00-PYZ.pyz\spyne.application", line 142, in process_request
+  File "<string>", line 171, in call_wrapper
+HydraServiceError: Fault(HydraError 300: u'Project test not found')
+INFO - Received request: <function add_project at 0x00000000063CBC88>
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function share_project at 0x0000000006B6FAC8>
+INFO - Call took: 0:00:00.031000
+INFO - Received request: <function add_network at 0x00000000063B9978>
+INFO - Network attributes added in 0:00:00.016000
+INFO - Adding nodes to network
+INFO - Node insert took 0.0 secs
+INFO - 0 ResourceTypes inserted in 0.0150001049042 secs
+INFO - Resource attributes from types added in 0:00:00.015000
+WARNING - No attributes on any resource....
+INFO - Resource attributes insertion from types done in 0:00:00.015000
+INFO - retrieved 0 entries in 0:00:00.015000
+INFO - Processing Query results took 0:00:00.015000
+INFO - Resource attributes added in 0:00:00.015000
+INFO - Nodes added in 0:00:00.015000
+INFO - Adding links to network
+INFO - Links added in 0:00:00
+INFO - 0 ResourceTypes inserted in 0.0 secs
+INFO - Resource attributes from types added in 0:00:00
+WARNING - No attributes on any resource....
+INFO - Resource attributes insertion from types done in 0:00:00.016000
+INFO - retrieved 0 entries in 0:00:00.016000
+INFO - Processing Query results took 0:00:00.016000
+INFO - Resource attributes added in 0:00:00.016000
+INFO - Links added in 0:00:00.032000
+INFO - Scenarios added in 0:00:00
+INFO - Insertion of network took: 0:00:00.063000
+INFO - Call took: 0:00:00.094000
+INFO - Received request: <function get_template_by_name at 0x00000000069F94A8>
+INFO - Default Template is not a valid identifier for a template
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function get_attribute at 0x000000000683E208>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attribute at 0x00000000063D7DD8>
+INFO - New attr added
+INFO - Call took: 0:00:00.015000
+INFO - Received request: <function get_attribute at 0x000000000683E208>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attribute at 0x00000000063D7DD8>
+INFO - New attr added
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function get_attribute at 0x000000000683E208>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attribute at 0x00000000063D7DD8>
+INFO - New attr added
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_attribute at 0x000000000683E208>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attribute at 0x00000000063D7DD8>
+INFO - New attr added
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_attribute at 0x000000000683E208>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attribute at 0x00000000063D7DD8>
+INFO - New attr added
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_attribute at 0x000000000683E208>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attribute at 0x00000000063D7DD8>
+INFO - New attr added
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function get_attribute at 0x000000000683E208>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attribute at 0x00000000063D7DD8>
+INFO - New attr added
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_template at 0x00000000069EB7B8>
+INFO - Call took: 0:00:00.063000
+INFO - Received request: <function add_link at 0x00000000063CBC18>
+INFO - Call took: 0:00:00.047000
+INFO - Received request: <function get_network at 0x00000000063B9C18>
+INFO - Getting node attributes
+INFO - Getting link attributes
+INFO - Getting group attributes
+INFO - Attributes retrieved. Processing results...
+INFO - Attributes processed.
+INFO - Node attributes set
+INFO - Link attributes set
+INFO - Group attributes set
+INFO - Call took: 0:00:00.078000
+INFO - Received request: <function logout at 0x00000000063B9A58>
+INFO - Call took: 0:00:00
+INFO - Received request: <function login at 0x00000000063B99E8>
+INFO - Call took: 0:00:00.328000
+INFO - Received request: <function get_user_by_name at 0x0000000006931F28>
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_user_by_name at 0x0000000006931F28>
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function get_user_by_name at 0x0000000006931F28>
+INFO - Call took: 0:00:00.015000
+INFO - Received request: <function get_project_by_name at 0x00000000063B9BA8>
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function get_project_by_name at 0x00000000063B9BA8>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_network at 0x00000000063B9978>
+INFO - Network attributes added in 0:00:00
+INFO - Adding nodes to network
+INFO - Node insert took 0.0 secs
+INFO - 0 ResourceTypes inserted in 0.0150001049042 secs
+INFO - Resource attributes from types added in 0:00:00.015000
+WARNING - No attributes on any resource....
+INFO - Resource attributes insertion from types done in 0:00:00.015000
+INFO - retrieved 0 entries in 0:00:00.015000
+INFO - Processing Query results took 0:00:00.015000
+INFO - Resource attributes added in 0:00:00.015000
+INFO - Nodes added in 0:00:00.015000
+INFO - Adding links to network
+INFO - Links added in 0:00:00.016000
+INFO - 0 ResourceTypes inserted in 0.0 secs
+INFO - Resource attributes from types added in 0:00:00
+WARNING - No attributes on any resource....
+INFO - Resource attributes insertion from types done in 0:00:00.016000
+INFO - retrieved 0 entries in 0:00:00.016000
+INFO - Processing Query results took 0:00:00.016000
+INFO - Resource attributes added in 0:00:00.016000
+INFO - Links added in 0:00:00.032000
+INFO - Scenarios added in 0:00:00
+INFO - Insertion of network took: 0:00:00.047000
+INFO - Call took: 0:00:00.062000
+INFO - Received request: <function get_template_by_name at 0x00000000069F94A8>
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function add_link at 0x00000000063CBC18>
+INFO - Call took: 0:00:00.032000
+INFO - Received request: <function get_network at 0x00000000063B9C18>
+INFO - Getting node attributes
+INFO - Getting link attributes
+INFO - Getting group attributes
+INFO - Attributes retrieved. Processing results...
+INFO - Attributes processed.
+INFO - Node attributes set
+INFO - Link attributes set
+INFO - Group attributes set
+INFO - Call took: 0:00:00.078000
+INFO - Received request: <function logout at 0x00000000063B9A58>
+INFO - Call took: 0:00:00
