@@ -46,7 +46,7 @@ def load_config():
     localfiles = glob.glob(os.getcwd() + '/*.ini')
     userfiles = glob.glob(os.path.expanduser('~') + '/.config/hydra/*.ini')
     sysfiles = glob.glob('/etc/hydra/*.ini')
-    repofiles = glob.glob(modulepath + '/../../../config/*.ini')
+    repofiles = glob.glob(modulepath + '/../config/*.ini')
 
     if os.name == 'nt':
         import winpaths
