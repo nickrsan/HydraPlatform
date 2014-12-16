@@ -867,7 +867,7 @@ HydraLib: None -> <PkgModule 'HydraLib' C:\Users\steve\Documents\svn\HYDRA\Hydra
 HydraLib.PluginLib: None -> <PyModule 'HydraLib.PluginLib' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\PluginLib.pyc imports=[('suds.client', 0, 0, -1), ('requests', 0, 0, -1), ('lxml.objectify', 0, 0, -1), ('config', 0, 0, -1), ('HydraException.HydraPluginError', 0, 0, -1), ('lxml.etree', 0, 0, -1), ('suds.client.Client', 0, 0, -1), ('HydraException', 0, 0, -1), ('suds.plugin', 0, 0, -1), ('lxml', 0, 0, -1), ('logging', 0, 0, -1), ('json', 0, 0, -1), ('os', 0, 0, -1), ('suds.plugin.MessagePlugin', 0, 0, -1), ('lxml.etree.XMLParser', 0, 0, -1)] binaries=[] datas=[]>
 HydraLib.util: None -> <PyModule 'HydraLib.util' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\util.pyc imports=[('HydraException', 0, 0, -1), ('operator.mul', 0, 0, -1), ('pandas', 0, 0, -1), ('HydraException.HydraError', 0, 0, -1), ('decimal.Decimal', 0, 0, -1), ('operator', 0, 0, -1), ('logging', 0, 0, -1), ('dateutil', 0, 0, -1), ('numpy', 0, 0, -1), ('decimal', 0, 0, -1), ('dateutil.get_datetime', 0, 0, -1)] binaries=[] datas=[]>
 argparse: None -> <PyModule 'argparse' c:\Python27\lib\argparse.pyc imports=[('collections', 0, 0, -1), ('re', 0, 0, -1), ('sys', 0, 0, -1), ('copy', 0, 0, -1), ('os', 0, 0, -1), ('warnings', 1, 1, -1), ('gettext.gettext', 0, 0, -1), ('textwrap', 0, 0, -1), ('gettext', 0, 0, -1), ('warnings', 1, 0, -1)] binaries=[] datas=[]>
-HydraLib.config: None -> <PyModule 'HydraLib.config' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\config.pyc imports=[('os', 0, 0, -1), ('winpaths', 1, 0, -1), ('glob', 0, 0, -1), ('ConfigParser', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
+HydraLib.config: None -> <PyModule 'HydraLib.config' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\config.pyc imports=[('ConfigParser', 0, 0, -1), ('sys', 0, 0, -1), ('winpaths', 1, 1, -1), ('os', 0, 0, -1), ('winpaths', 1, 0, -1), ('glob', 0, 0, -1)] binaries=[] datas=[]>
 numpy: None -> <PkgModule 'numpy' c:\Python27\lib\site-packages\numpy\__init__.pyc imports=[('version.version', 0, 1, 1), ('__future__.print_function', 0, 0, 0), ('version.git_revision', 0, 1, 1), ('matrixlib.*', 0, 1, 1), ('__future__.absolute_import', 0, 0, 0), ('builtins.float', 0, 1, 0), ('version', 0, 1, 1), ('_import_tools', 0, 1, 1), ('__builtin__.bool', 0, 1, 0), ('', 0, 1, 1), ('core.round', 0, 1, 1), ('__builtin__.str', 0, 1, 0), ('builtins.str', 0, 1, 0), ('sys', 0, 1, 0), ('random', 0, 1, 1), ('sys', 0, 0, 0), ('linalg', 0, 1, 1), ('numpy.__config__.show', 0, 1, 0), ('builtins.object', 0, 1, 0), ('fft', 0, 1, 1), ('builtins.bool', 0, 1, 0), ('__builtin__.complex', 0, 1, 0), ('testing', 0, 1, 1), ('__builtin__.int', 0, 1, 0), ('testing.Tester', 0, 1, 1), ('__future__.division', 0, 0, 0), ('matrixlib', 0, 1, 1), ('__builtin__', 0, 1, 0), ('compat.long', 0, 1, 1), ('builtins.int', 0, 1, 0), ('_import_tools.PackageLoader', 0, 1, 1), ('__builtin__.unicode', 0, 1, 0), ('lib', 0, 1, 1), ('core.min', 0, 1, 1), ('ctypeslib', 0, 1, 1), ('core', 0, 1, 1), ('core.max', 0, 1, 1), ('__future__', 0, 0, 0), ('numpy.__config__', 0, 1, 0), ('builtins.complex', 0, 1, 0), ('add_newdocs', 0, 1, 1), ('builtins', 0, 1, 0), ('warnings', 0, 1, 0), ('__builtin__.object', 0, 1, 0), ('lib.*', 0, 1, 1), ('core.abs', 0, 1, 1), ('compat', 0, 1, 1), ('__builtin__.float', 0, 1, 0), ('ma', 0, 1, 1), ('core.*', 0, 1, 1), ('polynomial', 0, 1, 1)] binaries=[] datas=[]>
 numpy.reshape: None -> None
   DEL numpy.reshape
@@ -1002,11 +1002,11 @@ _dummy_threading: None -> None
   DEL _dummy_threading
 _dummy_threading: None -> None
   DEL _dummy_threading
+HydraLib.ConfigParser: None -> None
+HydraLib.sys: None -> None
 HydraLib.winpaths: None -> None
 winpaths: None -> <PyModule 'winpaths' c:\Python27\lib\site-packages\winpaths.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.wintypes', 0, 0, -1), ('ctypes.windll', 0, 0, -1)] binaries=[('shell32.dll', 'C:\\Windows\\system32\\shell32.dll', 'BINARY')] datas=[]>
 HydraLib.glob: None -> None
-HydraLib.ConfigParser: None -> None
-HydraLib.sys: None -> None
 ctypes.windll: None -> None
   DEL ctypes.windll
 HydraLib.suds: None -> None

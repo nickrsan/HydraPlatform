@@ -872,7 +872,7 @@ spyne.protocol.http: None -> <PyModule 'spyne.protocol.http' c:\Python27\lib\sit
 util: None -> <PkgModule 'util' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\util\__init__.pyc imports=[('logging', 0, 0, -1), ('decimal.Decimal', 0, 0, -1), ('decimal', 0, 0, -1), ('pandas', 0, 0, -1)] binaries=[] datas=[]>
 util.hdb: None -> <PyModule 'util.hdb' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\util\hdb.pyc imports=[('sqlalchemy.orm.exc', 0, 0, -1), ('db.model.Network', 0, 0, -1), ('db.model.ResourceAttr', 0, 0, -1), ('db.model.Scenario', 0, 0, -1), ('db.model', 0, 0, -1), ('HydraLib.HydraException', 0, 0, -1), ('db.model.RolePerm', 0, 0, -1), ('logging', 0, 0, -1), ('db.model.Role', 0, 0, -1), ('db.model.User', 0, 0, -1), ('db.model.ResourceType', 0, 0, -1), ('HydraLib.HydraException.HydraError', 0, 0, -1), ('bcrypt', 0, 0, -1), ('datetime', 0, 0, -1), ('db', 0, 0, -1), ('db.DBSession', 0, 0, -1), ('sqlalchemy.orm.exc.NoResultFound', 0, 0, -1), ('db.model.RoleUser', 0, 0, -1), ('db.model.Project', 0, 0, -1), ('transaction', 0, 0, -1), ('db.model.Perm', 0, 0, -1), ('random', 0, 0, -1)] binaries=[] datas=[]>
 HydraLib: None -> <PkgModule 'HydraLib' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\__init__.pyc imports=[('hydra_logging', 0, 0, -1), ('config', 0, 0, -1)] binaries=[] datas=[]>
-HydraLib.config: None -> <PyModule 'HydraLib.config' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\config.pyc imports=[('os', 0, 0, -1), ('winpaths', 1, 0, -1), ('glob', 0, 0, -1), ('ConfigParser', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
+HydraLib.config: None -> <PyModule 'HydraLib.config' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\config.pyc imports=[('ConfigParser', 0, 0, -1), ('sys', 0, 0, -1), ('winpaths', 1, 1, -1), ('os', 0, 0, -1), ('winpaths', 1, 0, -1), ('glob', 0, 0, -1)] binaries=[] datas=[]>
 HydraLib.HydraException: None -> <PyModule 'HydraLib.HydraException' C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\HydraException.pyc imports=[] binaries=[] datas=[]>
 soap_server: None -> <PkgModule 'soap_server' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\soap_server\__init__.pyc imports=[] binaries=[] datas=[]>
 soap_server.scenario: None -> <PyModule 'soap_server.scenario' C:\Users\steve\Documents\svn\HYDRA\HydraServer\trunk\python\soap_server\scenario.pyc imports=[('hydra_complexmodels.ScenarioDiff', 0, 0, -1), ('spyne.decorator.rpc', 0, 0, -1), ('spyne.model.complex.Array', 0, 0, -1), ('spyne.model.primitive.Unicode', 0, 0, -1), ('spyne.model.primitive', 0, 0, -1), ('spyne.model.complex', 0, 0, -1), ('hydra_base.HydraService', 0, 0, -1), ('spyne.model.primitive.Integer', 0, 0, -1), ('hydra_complexmodels.Scenario', 0, 0, -1), ('hydra_complexmodels.Dataset', 0, 0, -1), ('hydra_complexmodels.ResourceAttr', 0, 0, -1), ('logging', 0, 0, -1), ('hydra_complexmodels.ResourceScenario', 0, 0, -1), ('hydra_complexmodels', 0, 0, -1), ('hydra_complexmodels.AttributeData', 0, 0, -1), ('spyne.decorator', 0, 0, -1), ('spyne.model.primitive.Integer32', 0, 0, -1), ('lib', 0, 0, -1), ('lib.scenario', 0, 0, -1), ('hydra_base', 0, 0, -1)] binaries=[] datas=[]>
@@ -1610,11 +1610,11 @@ json.json: None -> None
 json.sys: None -> None
 json.struct: None -> None
 json.scanner: None -> <PyModule 'json.scanner' c:\Python27\lib\json\scanner.pyc imports=[('_json', 0, 0, -1), ('re', 0, 0, -1), ('_json.make_scanner', 0, 0, -1)] binaries=[] datas=[]>
+HydraLib.ConfigParser: None -> None
+HydraLib.sys: None -> None
 HydraLib.winpaths: None -> None
 winpaths: None -> <PyModule 'winpaths' c:\Python27\lib\site-packages\winpaths.pyc imports=[('ctypes', 0, 0, -1), ('ctypes.wintypes', 0, 0, -1), ('ctypes.windll', 0, 0, -1)] binaries=[('shell32.dll', 'C:\\Windows\\system32\\shell32.dll', 'BINARY')] datas=[]>
 HydraLib.glob: None -> None
-HydraLib.ConfigParser: None -> None
-HydraLib.sys: None -> None
 ctypes.windll: None -> None
   DEL ctypes.windll
 HydraLib.suds: None -> None

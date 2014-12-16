@@ -665,3 +665,180 @@ INFO - Group attributes set
 INFO - Call took: 0:00:00.078000
 INFO - Received request: <function logout at 0x00000000063B9A58>
 INFO - Call took: 0:00:00
+INFO - Using logging config at C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Connecting to database: sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - Custom unit conversion file 'C:\Users\Public\Documents/Hydra Modeller/.config/hydra/unit_conversion.xml' does not exist, falling back to default file (C:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAS~1\trunk\dist\HYDRAS~1\HydraLib\static\user_units.xml).
+INFO - home_dir C:\Users\Public\Documents/Hydra Modeller
+INFO - hydra_base_dir C:\Users\steve/Documents/svn/HYDRA
+INFO - common_app_data_folder C:\ProgramData
+INFO - win_common_documents C:\Users\Public\Documents
+INFO - sqlite url sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - layout_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraServer/trunk/static/xml/resource_layout.xsd
+INFO - default_directory C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/
+INFO - result_file C:\Users\Public\Documents/Hydra Modeller/.hydra/plugin_result/
+INFO - plugin_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - log_config_path C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - listening to http://127.0.0.1:8080/soap
+INFO - wsdl is at: http://127.0.0.1:8080/soap/?wsdl
+2014-12-16 15:23:51,256 - INFO - Connecting to database: None
+2014-12-16 15:24:35,694 - INFO - Connecting to database: None
+2014-12-16 15:27:58,683 - INFO - Connecting to database: None
+2014-12-16 15:28:03,572 - INFO - Connecting to database: None
+INFO - Using logging config at c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Connecting to database: sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - Custom unit conversion file 'C:\Users\Public\Documents/Hydra Modeller/.config/hydra/unit_conversion.xml' does not exist, falling back to default file (C:\Users\steve\Documents\svn\HYDRA\HydraLib\trunk\HydraLib\static\user_units.xml).
+INFO - home_dir C:\Users\Public\Documents/Hydra Modeller
+INFO - hydra_base_dir c:/Users/steve/Documents/svn/HYDRA
+INFO - common_app_data_folder C:\ProgramData
+INFO - win_common_documents C:\Users\Public\Documents
+INFO - sqlite url sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - layout_xsd_path c:/Users/steve/Documents/svn/HYDRA/HydraServer/trunk/static/xml/resource_layout.xsd
+INFO - default_directory c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/
+INFO - result_file C:\Users\Public\Documents/Hydra Modeller/.hydra/plugin_result/
+INFO - plugin_xsd_path c:/Users/steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - log_config_path c:/Users/steve/Documents/svn/HYDRA/config/logging.conf
+INFO - listening to http://127.0.0.1:8080/soap
+INFO - wsdl is at: http://127.0.0.1:8080/soap/?wsdl
+INFO - Using logging config at C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Connecting to database: sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - Custom unit conversion file 'C:\Users\Public\Documents/Hydra Modeller/.config/hydra/unit_conversion.xml' does not exist, falling back to default file (C:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAS~1\trunk\dist\HYDRAS~1\HydraLib\static\user_units.xml).
+INFO - home_dir C:\Users\Public\Documents/Hydra Modeller
+INFO - hydra_base_dir C:\Users\steve/Documents/svn/HYDRA
+INFO - common_app_data_folder C:\ProgramData
+INFO - win_common_documents C:\Users\Public\Documents
+INFO - sqlite url sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - layout_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraServer/trunk/static/xml/resource_layout.xsd
+INFO - default_directory C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/
+INFO - result_file C:\Users\Public\Documents/Hydra Modeller/.hydra/plugin_result/
+INFO - plugin_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - log_config_path C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - listening to http://127.0.0.1:8080/soap
+INFO - wsdl is at: http://127.0.0.1:8080/soap/?wsdl
+INFO - Using logging config at C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Connecting to database: sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra1.db
+INFO - Custom unit conversion file 'C:\Users\Public\Documents/Hydra Modeller/.config/hydra/unit_conversion.xml' does not exist, falling back to default file (C:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAS~1\trunk\dist\HYDRAS~1\HydraLib\static\user_units.xml).
+INFO - home_dir C:\Users\Public\Documents/Hydra Modeller
+INFO - hydra_base_dir C:\Users\steve/Documents/svn/HYDRA
+INFO - common_app_data_folder C:\ProgramData
+INFO - win_common_documents C:\Users\Public\Documents
+INFO - sqlite url sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra1.db
+INFO - layout_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraServer/trunk/static/xml/resource_layout.xsd
+INFO - default_directory C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/
+INFO - result_file C:\Users\Public\Documents/Hydra Modeller/.hydra/plugin_result/
+INFO - plugin_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - log_config_path C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - listening to http://127.0.0.1:8080/soap
+INFO - wsdl is at: http://127.0.0.1:8080/soap/?wsdl
+INFO - Using logging config at C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - Connecting to database: sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - Custom unit conversion file 'C:\Users\Public\Documents/Hydra Modeller/.config/hydra/unit_conversion.xml' does not exist, falling back to default file (C:\Users\steve\DOCUME~1\svn\HYDRA\HYDRAS~1\trunk\dist\HYDRAS~1\HydraLib\static\user_units.xml).
+INFO - home_dir C:\Users\Public\Documents/Hydra Modeller
+INFO - hydra_base_dir C:\Users\steve/Documents/svn/HYDRA
+INFO - common_app_data_folder C:\ProgramData
+INFO - win_common_documents C:\Users\Public\Documents
+INFO - sqlite url sqlite:///C:\Users\Public\Documents/Hydra Modeller/db/hydra.db
+INFO - layout_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraServer/trunk/static/xml/resource_layout.xsd
+INFO - default_directory C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/
+INFO - result_file C:\Users\Public\Documents/Hydra Modeller/.hydra/plugin_result/
+INFO - plugin_xsd_path C:\Users\steve/Documents/svn/HYDRA/HydraPlugins/xml/trunk/plugin_input.xsd
+INFO - log_config_path C:\Users\steve/Documents/svn/HYDRA/config/logging.conf
+INFO - listening to http://127.0.0.1:8080/soap
+INFO - wsdl is at: http://127.0.0.1:8080/soap/?wsdl
+INFO - Received request: <function login at 0x00000000063BF9E8>
+INFO - Call took: 0:00:00.328000
+INFO - Received request: <function add_project at 0x00000000063D1C88>
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00.015000
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_dimension at 0x0000000006A37A58>
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_dimension at 0x0000000006A37A58>
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_dimension at 0x0000000006A37A58>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00.016000
+INFO - Received request: <function get_dimension at 0x0000000006A37A58>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00.015000
+INFO - Received request: <function get_dimension at 0x0000000006A37A58>
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_dimension at 0x0000000006A37A58>
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_dimension at 0x0000000006A37A58>
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_dimension at 0x0000000006A37A58>
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_dimension at 0x0000000006A37A58>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00
+INFO - Received request: <function get_dimension at 0x0000000006A37A58>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_attributes at 0x00000000063DDF28>
+INFO - Call took: 0:00:00
+INFO - Received request: <function add_network at 0x00000000063BF978>
+INFO - Network attributes added in 0:00:00
+INFO - Adding nodes to network
+INFO - Node insert took 0.0 secs
+INFO - 0 ResourceTypes inserted in 0.0 secs
+INFO - Resource attributes from types added in 0:00:00
+INFO - ResourceAttr insert took 0.0150001049042 secs
+INFO - Resource attributes insertion from types done in 0:00:00.015000
+INFO - retrieved 80 entries in 0:00:00.015000
+INFO - Processing Query results took 0:00:00.015000
+INFO - Resource attributes added in 0:00:00.015000
+INFO - Nodes added in 0:00:00.015000
+INFO - Adding links to network
+INFO - Links added in 0:00:00.016000
+INFO - 0 ResourceTypes inserted in 0.0 secs
+INFO - Resource attributes from types added in 0:00:00
+INFO - ResourceAttr insert took 0.0149998664856 secs
+INFO - Resource attributes insertion from types done in 0:00:00.015000
+INFO - retrieved 112 entries in 0:00:00.015000
+INFO - Processing Query results took 0:00:00.015000
+INFO - Resource attributes added in 0:00:00.015000
+INFO - Links added in 0:00:00.031000
+INFO - Adding groups to network
+INFO - Resource Groups added in 0:00:00
+INFO - 0 ResourceTypes inserted in 0.0160000324249 secs
+INFO - Resource attributes from types added in 0:00:00.016000
+INFO - ResourceAttr insert took 0.0160000324249 secs
+INFO - Resource attributes insertion from types done in 0:00:00.016000
+INFO - retrieved 4 entries in 0:00:00.016000
+INFO - Processing Query results took 0:00:00.016000
+INFO - Resource attributes added in 0:00:00.016000
+INFO - Groups added in 0:00:00.016000
+INFO - Adding scenarios to network
+INFO - Incoming data processed in 0:00:00.188000
+INFO - Retrieved 57 datasets
+INFO - Existing data retrieved.
+INFO - Done bulk inserting data. 131 datasets
+INFO - Data bulk insert took 0:00:00.203000
+INFO - Resource scenarios added in  0:00:00
+INFO - Group items insert took 0:00:00.016000
+INFO - Scenarios added in 0:00:00.219000
+INFO - Insertion of network took: 0:00:00.328000
+INFO - Call took: 0:00:00.375000
+INFO - Received request: <function upload_template_xml at 0x0000000006881C18>
+INFO - Existing template found. name=Template for the GAMS hydro-econ model
+INFO - Call took: 0:00:00.204000
+INFO - Received request: <function assign_types_to_resources at 0x000000000697AC88>
+INFO - Retrieved all the appropriate template types
+INFO - Retrieved all the appropriate resources
+INFO - Call took: 0:00:00.094000
