@@ -1579,6 +1579,8 @@ if __name__ == '__main__':
 
             if args.template is not None:
                 try:
+                    if args.template == '':
+                        raise Exception("The template name is empty.")
                     csv.validate_template(args.template)
                 except Exception, e:
                     raise HydraPluginError("An error has occurred with the template. (%s)"%(e))
