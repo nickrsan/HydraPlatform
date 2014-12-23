@@ -1,4 +1,4 @@
 #!/bin/bash
-python ../../SamplePlugin/SamplePlugin.py -t 'Sample Network' -n hydro-econ_nodes.csv -l hydro-econ_links.csv
+python ../../SamplePlugin/SamplePlugin.py -t 'Sample Network' -n nodes.csv -l links.csv
 
 
