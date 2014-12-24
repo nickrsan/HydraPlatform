@@ -49,7 +49,7 @@ import os, sys
 import pytz
 
 from HydraLib import PluginLib
-from HydraLib.PluginLib import write_progress, write_output, validate_plugin_xml
+from HydraLib.PluginLib import JsonConnection, write_progress, write_output, validate_plugin_xml
 from HydraLib import config
 
 from HydraLib.HydraException import HydraPluginError
@@ -74,7 +74,12 @@ class ImportWML(object):
         self.timezone = pytz.utc
         self.basepath = ''
 
-        self.session_id=None
+        self.connection = JsonConnection(url)
+        if session_id is not None:
+            log.info("Using existing session %s", session_id)
+            self.connection.session_id=session_id
+        else:
+            self.connection.login()
 
         self.warnings = []
         self.message = ''
@@ -166,7 +171,7 @@ class ImportWML(object):
             datasets.append(self.create_timeseries(wml_timeseries))
             datasets.append(self.create_timeseries_meta(wml_timeseries))
 
-        new_dataset_ids = self.call('bulk_insert_data', {'bulk_data':datasets})
+        new_dataset_ids = self.connection.call('bulk_insert_data', {'bulk_data':datasets})
         data_import_name_base = "readings at site %s"
         params = [site]
         if start is not None and end is not None:
@@ -186,40 +191,17 @@ class ImportWML(object):
         passwd = config.get('hydra_client', 'password')
         login_params = {'username':user, 'password':passwd}
 
-        resp = self.call('login', login_params)
+        resp = self.connection.call('login', login_params)
         #set variables for use in request headers
         self.session_id = resp['session_id']
         log.info("Session ID=%s", self.session_id)
-
-    def call(self, func, args):
-        log.info("Calling: %s"%(func))
-        if self.url is None:
-            port = config.getint('hydra_server', 'port', 8080)
-            domain = config.get('hydra_server', 'domain', '127.0.0.1')
-            self.url = "http://%s:%s/json"%(domain, port)
-            log.info("Setting URL %s", self.url)
-        call = {func:args}
-        headers = {
-                    'Content-Type': 'application/json',       
-                    'session_id':self.session_id,
-                    'app_name' : 'Import WML'
-                  }
-        r = requests.post(self.url, data=json.dumps(call), headers=headers)
-        if not r.ok:
-            try:
-                resp = json.loads(r.content)
-                err = "%s:%s"%(resp['faultcode'], resp['faultstring'])
-            except:
-                err = r.content
-            raise HydraPluginError(err)
-        return json.loads(r.content) 
 
     def create_dataset_group(self, name, dataset_ids):
 
         new_group = {'group_name': name,
                         'dataset_ids' : dataset_ids}
 
-        self.call('add_dataset_group', {'group':new_group})
+        self.connection.call('add_dataset_group', {'group':new_group})
 
     def create_timeseries(self, wml_timeseries):
 
