@@ -3,7 +3,8 @@ a = Analysis(['ImportWML.py'],
              pathex=['C:\\Users\\steve\\Documents\\svn\\HYDRA\\HydraPlugins\\WMLplugin\\trunk\\ImportWML'],
              hiddenimports=[],
              hookspath=None,
-             runtime_hooks=None)
+             runtime_hooks=None,
+             excludes=['_tkinter'])
 pyz = PYZ(a.pure)
 exe = EXE(pyz,
           a.scripts,
