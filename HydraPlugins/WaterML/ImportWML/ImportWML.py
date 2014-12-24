@@ -85,7 +85,7 @@ class ImportWML(object):
         self.message = ''
         self.files = []
 
-    def read_timeseries_data(self, targets, dataset_group_name):
+    def read_timeseries_data(self, targets, dataset_collection_name):
         """
             Read Water ML timeseries data.
             @target
@@ -122,9 +122,9 @@ class ImportWML(object):
         write_progress(2, 2)
         log.info(len(all_dataset_ids))
         log.info(len(set(all_dataset_ids)))
-        if dataset_group_name is not None:
-            data_import_name = dataset_group_name
-        self.create_dataset_group(data_import_name, list(set(all_dataset_ids)))
+        if dataset_collection_name is not None:
+            data_import_name = dataset_collection_name
+        self.create_dataset_collection(data_import_name, list(set(all_dataset_ids)))
         write_output("Dataset %s created"%data_import_name)
         return data_import_name 
 
@@ -196,12 +196,12 @@ class ImportWML(object):
         self.session_id = resp['session_id']
         log.info("Session ID=%s", self.session_id)
 
-    def create_dataset_group(self, name, dataset_ids):
+    def create_dataset_collection(self, name, dataset_ids):
 
-        new_group = {'group_name': name,
+        new_collection = {'collection_name': name,
                         'dataset_ids' : dataset_ids}
 
-        self.connection.call('add_dataset_group', {'group':new_group})
+        self.connection.call('add_dataset_collection', {'collection':new_collection})
 
     def create_timeseries(self, wml_timeseries):
 
@@ -333,7 +333,7 @@ class ImportWML(object):
 
 def commandline_parser():
     parser = ap.ArgumentParser(
-        description="""Import a single WML or directory of WML timeseries files into hydra as datsets into a new datset group.
+        description="""Import a single WML or directory of WML timeseries files into hydra as datsets into a new datset collection.
 
 Written by Philipp Meier <philipp@diemeiers.ch>
 (c) Copyright 2013, University College London.
@@ -343,7 +343,7 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-t', '--timeseriesfile', nargs='+',
                         help='''The XML file containing a WaterML timeseries.''')
     parser.add_argument('-n', '--uploadname',
-                        help='''The name of the dataset group into which all the timeseries will be put.''')
+                        help='''The name of the dataset collection into which all the timeseries will be put.''')
     parser.add_argument('-u', '--server_url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
@@ -370,7 +370,7 @@ if __name__ == '__main__':
         data_import_name = importwml.read_timeseries_data(args.timeseriesfile, args.uploadname)
 
         write_output("Saving data")
-        importwml.message = 'Data import was successful. Timeseries imported into group named "%s"'%data_import_name
+        importwml.message = 'Data import was successful. Timeseries imported into collection named "%s"'%data_import_name
 
         errors = []
     except HydraPluginError as e:
