@@ -68,7 +68,7 @@ class ImportWML(object):
     """
 
     def __init__(self, url=None, session_id=None):
-
+        log.info("Using user-supplied session ID %s", session_id)
         self.url = url
 
         self.timezone = pytz.utc
