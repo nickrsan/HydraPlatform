@@ -1,5 +1,5 @@
 pyinstaller --upx-dir=../../../upx ImportWML.spec
-copy dist\ImportWML\* ..\WaterMLPlugin\plugins\ImportWML\
+xcopy dist\ImportWML\* ..\WaterMLPlugin\plugins\ImportWML\ /Y /s
 copy plugin.xml ..\WaterMLPlugin\plugins\ImportWML\plugin.xml
 rd /S /Q build
 PAUSE
