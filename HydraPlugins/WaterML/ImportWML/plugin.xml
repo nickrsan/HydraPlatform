@@ -7,8 +7,8 @@
         (c) Copyright 2014, University of Manchester
         For more information visit www.hydra-network.com
     </plugin_epilog>
-    <smallicon>wml.gif</smallicon>
-    <largeicon>wml.gif</largeicon>
+    <smallicon>wml16.gif</smallicon>
+    <largeicon>wml32.gif</largeicon>
     <mandatory_args>
         <arg>
             <name>timeseriesfile</name>
