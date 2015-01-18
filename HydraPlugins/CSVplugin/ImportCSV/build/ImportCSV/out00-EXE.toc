@@ -1,9 +1,0 @@
-('C:\\Users\\steve\\Documents\\svn\\HYDRA\\HydraPlugins\\CSVplugin\\trunk\\ImportCSV\\build\\ImportCSV\\ImportCSV.exe',
- True,
- False,
- None,
- None,
- [],
- None,
- True,
- 1418744422L)
