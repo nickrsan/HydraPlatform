@@ -1,3 +1,0 @@
-id,Type,Description,Model      , Name,Projection,Carbon shadow price
-Units,                 ,    ,,,,0.01 $ tonne^-1
-,WRSE EBSD,EBSD example dataset,EBSD, EBSD,WGS84,timeseries_carbon_shadow.csv

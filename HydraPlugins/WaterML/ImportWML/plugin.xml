@@ -1,0 +1,51 @@
+<plugin_info>
+    <plugin_name>Import Water ML Plugin</plugin_name>
+    <plugin_dir>ImportWML.exe</plugin_dir>
+    <plugin_description>Import timeseries from a water ML XML file</plugin_description>
+    <plugin_epilog>
+        Written by Stephen Knox stephen.knox@manchester.ac.uk
+        (c) Copyright 2014, University of Manchester
+        For more information visit www.hydra-network.com
+    </plugin_epilog>
+    <smallicon>wml16.gif</smallicon>
+    <largeicon>wml32.gif</largeicon>
+    <mandatory_args>
+        <arg>
+            <name>timeseriesfile</name>
+            <switch>-t</switch>
+            <multiple>Y</multiple>
+            <argtype>file</argtype>
+            <allownew>N</allownew>
+            <help>The XML file or folder of XML files containint Water ML timeseries data.</help>
+        </arg>
+    </mandatory_args>
+   <non_mandatory_args>
+       <arg>
+            <name>uploadname</name>
+            <switch>-n</switch>
+            <multiple>N</multiple>
+            <argtype>file</argtype>
+            <allownew>N</allownew>
+            <help>The name of the dataset group into which all the timeseries will be put</help>
+        </arg>
+        <arg>
+            <name>session_id</name>
+            <switch>-c</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <allownew>N</allownew>
+            <help>Specify the session ID for the connection. If not specified,
+            the plugin will try to connect based on the credentials it finds in config</help>
+        </arg>
+    </non_mandatory_args> 
+    <switches>
+        <arg>
+            <switch>-x</switch>
+            <name>expand-filenames</name>
+            <help>If the import function encounters something
+                        that looks like a filename, it tries to read the file.
+                        It also tries to guess if it contains a number, a
+                        descriptor, an array or a time series.</help>
+        </arg>
+    </switches>
+ </plugin_info>
