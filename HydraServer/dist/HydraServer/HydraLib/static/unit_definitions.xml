@@ -291,6 +291,9 @@
     </dimension>
     <dimension name="Unit price (mass)">
         <unit name="US Dollar per kilogram" abbr="USD kg^-1" lf="1.0" cf="0.0" info=""/>
+        <unit name="Pounds Sterling per kilogram" abbr="GBP kg^-1" lf="1.0" cf="0.66" info=""/>
+        <unit name="US Dollar per tonne" abbr="USD t^-1" lf="0.001" cf="0.0" info=""/>
+        <unit name="Pounds Sterling per tonne" abbr="GBP t^-1" lf="0.00066" cf="0.66" info=""/>
     </dimension>
     <dimension name="Specific cost (time)">
         <unit name="US Dollar per second" abbr="USD s^-1"    lf="1.0" cf="0.0" info=""/>

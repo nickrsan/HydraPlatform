@@ -18,13 +18,13 @@ Basic usage::
 Options
 ~~~~~~~
 
-================ ====== =========== ==============================================
-Option           Short  Parameter   Description
-================ ====== =========== ==============================================
-``--help``       ``-h``             show help message and exit.
-``--file``       ``-t`` Timeseries  File  XML file containing a WaterML timeseries
-``--uploadname`` ``-n`` Upload Name Name of the dataset grouping
-================ ====== =========== ==============================================
+========================= ====== ================== ==============================================
+Option                    Short  Parameter          Description
+========================= ====== ================== ==============================================
+``--help``                ``-h``                    show help message and exit.
+``--file``                ``-t`` Timeseries         File  XML file containing a WaterML timeseries
+``--datacollectionname``  ``-n`` Dataset Collection Name Name of the dataset grouping
+========================= ====== ================== ==============================================
 
 
 File structure
@@ -92,6 +92,9 @@ class ImportWML(object):
                 Can be either a directory containing multiple timeseries
                 files or a single timeseries file.
         """
+        if targets is None:
+            raise HydraPluginError("No data files specfied")
+
         write_progress(1, 2)
         
         all_dataset_ids = []
@@ -342,7 +345,7 @@ Written by Philipp Meier <philipp@diemeiers.ch>
         formatter_class=ap.RawDescriptionHelpFormatter)
     parser.add_argument('-t', '--timeseriesfile', nargs='+',
                         help='''The XML file containing a WaterML timeseries.''')
-    parser.add_argument('-n', '--uploadname',
+    parser.add_argument('-n', '--datacollectionname',
                         help='''The name of the dataset collection into which all the timeseries will be put.''')
     parser.add_argument('-u', '--server_url',
                         help='''Specify the URL of the server to which this
@@ -367,7 +370,7 @@ if __name__ == '__main__':
 
         validate_plugin_xml(os.path.join(__location__, 'plugin.xml'))
         
-        data_import_name = importwml.read_timeseries_data(args.timeseriesfile, args.uploadname)
+        data_import_name = importwml.read_timeseries_data(args.timeseriesfile, args.datacollectionname)
 
         write_output("Saving data")
         importwml.message = 'Data import was successful. Timeseries imported into collection named "%s"'%data_import_name
