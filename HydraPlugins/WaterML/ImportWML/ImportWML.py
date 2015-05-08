@@ -34,9 +34,8 @@ Building a windows executable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  - Use pyinstaller (pip install pyisntaller) to build a windows executable.
  - cd to the $PATH_TO_HYDRA/HydraPlugins/WaterMLPlugin/trunk
- - pyinstaller -F ImportWML.py
- or if you want more compression (a smaller exe), install upx
- - pyinstaller -F --upx-dir=/path/to/upx/dir ExportWML.py
+ - pyinstaller -F ImportWML.py :
+ - If you want more compression (a smaller exe), install upx and run: pyinstaller -F --upx-dir=/path/to/upx/dir ExportWML.py
  - An executable file will appear in the dist folder
 
 API docs
@@ -88,8 +87,7 @@ class ImportWML(object):
     def read_timeseries_data(self, targets, dataset_collection_name):
         """
             Read Water ML timeseries data.
-            @target
-                Can be either a directory containing multiple timeseries
+            @target Can be either a directory containing multiple timeseries\
                 files or a single timeseries file.
         """
         if targets is None:
