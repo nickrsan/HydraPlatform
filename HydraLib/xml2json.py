@@ -37,7 +37,6 @@ R. White, 2006 November 6
 import json
 import optparse
 import sys
-import logging
 import xml.etree.cElementTree as ET
 
 
