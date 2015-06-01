@@ -137,6 +137,25 @@ of that other member are needed::
     stor  , NODE  , node2
     stor  , LINK  , link1
 
+Metadata can also be included in separate files, which are **named the same
+as the node/link file, but with _metadata at the end.**
+
+For example:
+    nodes.csv becomes nodes_metadata.csv
+    network.csv becomes network_metadata.csv
+    my_urban_links.csv becomes my_urban_links_metadata.csv
+
+
+Metadata files are structured as follows:
+    
+ Name  , attribute_1             , attribute_2             , attribute_3
+ link1 , (key1:val1) (key2:val2) , (key3:val3) (key4:val4) , (key5:val5)
+
+In this case, key1 and key2 are metadata items for attribute 1 and so on.
+The deliminator for the key-val can be ';' or ':'. Note that all key-val
+pairs are contained within '(...)', with a space between each one. This way
+you can have several metadata items per attribute.
+
 Lines starting with the ``#`` character are ignored.
 
 .. note::
@@ -191,13 +210,12 @@ from datetime import datetime
 import pytz
 
 from HydraLib import PluginLib
-from HydraLib.PluginLib import JsonConnection, write_progress, write_output, validate_plugin_xml
+from HydraLib.PluginLib import JsonConnection, write_progress, write_output, validate_plugin_xml, RequestError
 from HydraLib import config, util, dateutil
 from HydraLib.units import validate_resource_attributes
 
 from HydraLib.HydraException import HydraPluginError,HydraError
 
-from suds import WebFault
 from numpy import array, reshape
 
 from lxml import etree
@@ -309,27 +327,30 @@ class ImportCSV(object):
             file_data = csv_file.read().split('\n')
             if len(file_data) == 0:
                 log.warn("File contains no data")
-        # Ignore comments
 
+        new_file_data = []
         bad_lines = []
         for i, line in enumerate(file_data):
+            line = line.strip()
+			
+			# Ignore comments            
+            if len(line) == 0 or line[0] == '#':
+                continue
             try:
                 line = ''.join([x if ord(x) < 128 else ' ' for x in line])
-                line.decode('ascii')
+                line.decode('utf-8')
+                new_file_data.append(line)
             except UnicodeDecodeError, e:
                 #If there are unknown characters in this line, save the line
                 #and the column in the line where the bad character has occurred.
                 bad_lines.append((i+1, e.start))
-
-            if len(line.strip()) > 0 and line.strip()[0] == '#':
-                file_data.pop(i)
 
         #Complain about the lines that the bad characters are on.
         if len(bad_lines) > 0:
             lines = [a[0] for a in bad_lines]
             raise HydraPluginError("Lines %s, in %s contain non ascii characters"%(lines, file))
 
-        return file_data
+        return new_file_data
 
     def check_header(self, file, header):
         """
@@ -367,7 +388,7 @@ class ImportCSV(object):
                     self.Project['networks'] = networks
                     log.info('Loading existing project (ID=%s)' % ID)
                     return
-                except WebFault:
+                except RequestError:
                     log.info('Project ID not found. Creating new project')
 
             except ValueError:
@@ -381,7 +402,7 @@ class ImportCSV(object):
                     self.Project = self.connection.call('get_network_project', {'network_id':network_id})
                     log.info('Loading existing project with network ID(ID=%s)' % network_id)
                     return
-                except WebFault:
+                except RequestError:
                     log.info('Project ID not found. Creating new project')
 
             except ValueError:
@@ -490,7 +511,7 @@ class ImportCSV(object):
                     # well, we create a new one.
                     self.Network['scenarios'] = []
                     self.Network['type'] = data[field_idx['type']].strip()
-                except WebFault:
+                except RequestError:
                     log.info('Network %s not found. Creating new network.', network_id)
                     self.warnings.append('Network %s not found. Creating new network.'%(network_id,))
                     network_id = None
@@ -548,7 +569,7 @@ class ImportCSV(object):
         metadata = self.get_file_data(filename)
         keys = metadata[0].split(',')
         self.check_header(filename, keys)
-        data = metadata[1:-1]
+        data = metadata[1:]
 
         metadata_dict = {}
         for line_num, data_line in enumerate(data):
@@ -577,7 +598,12 @@ class ImportCSV(object):
                         if attr_meta == '':
                             continue
                         attr_meta = attr_meta.replace('(', '')
-                        keyval = attr_meta.split(';')
+                        #Check if it's ';' or ':' that is the deliminator..
+                        if attr_meta.find(';') > 0:
+                            keyval = attr_meta.split(';')
+                        else:
+                            keyval = attr_meta.split(':')
+
                         key = keyval[0].strip()
                         if key.lower() in ('name', 'dataset_name', 'dataset name'):
                             key = 'name'
@@ -606,7 +632,7 @@ class ImportCSV(object):
         keys  = node_data[0].split(',')
         self.check_header(file, keys)
         units = node_data[1].split(',')
-        data = node_data[2:-1]
+        data = node_data[2:]
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -719,7 +745,7 @@ class ImportCSV(object):
         keys = link_data[0].split(',')
         self.check_header(file, keys)
         units = link_data[1].split(',')
-        data = link_data[2:-1]
+        data = link_data[2:]
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
@@ -749,7 +775,8 @@ class ImportCSV(object):
                 log.exception(e)
                 raise HydraPluginError("An error has occurred in file %s at line %s: %s"%(os.path.split(file)[-1], line_num+3, e))
 
-            self.Links.update({link['name']: link})
+            if link is not None:
+                self.Links.update({link['name']: link})
 
     def read_link_line(self, line, attrs, field_idx, metadata, units):
 
@@ -788,6 +815,7 @@ class ImportCSV(object):
                           ' No link created.') %
                          (linedata[field_idx['from']].strip(),
                           linedata[field_idx['to']].strip()))
+            return None
 
         if field_idx['type'] is not None:
             link_type = linedata[field_idx['type']].strip()
@@ -830,7 +858,7 @@ class ImportCSV(object):
         keys  = group_data[0].split(',')
         self.check_header(file, keys)
         units = group_data[1].split(',')
-        data  = group_data[2:-1]
+        data  = group_data[2:]
 
         for i, unit in enumerate(units):
             units[i] = unit.strip()
