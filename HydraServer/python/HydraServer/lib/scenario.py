@@ -281,7 +281,10 @@ def purge_scenario(scenario_id, **kwargs):
     return 'OK' 
 
 def clone_scenario(scenario_id,**kwargs):
+
     scen_i = _get_scenario(scenario_id)
+
+    log.info("cloning scenario %s", scen_i.scenario_name)
 
     cloned_name = "%s (clone)"%(scen_i.scenario_name)
 
@@ -294,6 +297,8 @@ def clone_scenario(scenario_id,**kwargs):
     if num_cloned_scenarios > 0:
         cloned_name = cloned_name + " %s"%(num_cloned_scenarios)
 
+    log.info("Cloned scenario name is %s", cloned_name)
+
     cloned_scen = Scenario()
     cloned_scen.network_id           = scen_i.network_id
     cloned_scen.scenario_name        = cloned_name 
@@ -303,6 +308,8 @@ def clone_scenario(scenario_id,**kwargs):
     cloned_scen.start_time           = scen_i.start_time
     cloned_scen.end_time             = scen_i.end_time
     cloned_scen.time_step            = scen_i.time_step
+
+    log.info("New scenario created")
 
     for rs in scen_i.resourcescenarios:
         new_rs = ResourceScenario()
@@ -316,6 +323,8 @@ def clone_scenario(scenario_id,**kwargs):
 
         cloned_scen.resourcescenarios.append(new_rs)
 
+    log.info("ResourceScenarios cloned")
+
     for resourcegroupitem_i in scen_i.resourcegroupitems:
         new_resourcegroupitem_i = ResourceGroupItem()
         new_resourcegroupitem_i.ref_key     = resourcegroupitem_i.ref_key
@@ -324,9 +333,12 @@ def clone_scenario(scenario_id,**kwargs):
         new_resourcegroupitem_i.subgroup_id      = resourcegroupitem_i.subgroup_id
         new_resourcegroupitem_i.group_id    = resourcegroupitem_i.group_id
         cloned_scen.resourcegroupitems.append(new_resourcegroupitem_i)
+    log.info("Resource group items cloned.")
 
     DBSession.add(cloned_scen)
     DBSession.flush()
+
+    log.info("Cloning finished.")
 
     return cloned_scen
 
@@ -559,6 +571,13 @@ def update_resourcedata(scenario_id, resource_scenarios,**kwargs):
         Update the data associated with a scenario.
         Data missing from the resource scenario will not be removed
         from the scenario. Use the remove_resourcedata for this task.
+
+        If the resource scenario does not exist, it will be created.
+        If the value of the resource scenario is specified as being None, the
+        resource scenario will be deleted.
+        If the value of the resource scenario does not exist, it will be created.
+        If the both the resource scenario and value already exist, the resource scenario
+        will be updated with the ID of the dataset.
     """
     user_id = kwargs.get('user_id')
     res = None
@@ -708,19 +727,25 @@ def assign_value(rs, data_type, val,
 
 def add_data_to_attribute(scenario_id, resource_attr_id, dataset,**kwargs):
     """
-            Add data to a resource scenario outside of a network update
+        Add data to a resource scenario outside of a network update
     """
     user_id = kwargs.get('user_id')
 
     _check_can_edit_scenario(scenario_id, user_id)
 
+    scenario_i = _get_scenario(scenario_id)
+
     try:
         r_scen_i = DBSession.query(ResourceScenario).filter(
                                 ResourceScenario.scenario_id==scenario_id,
                                 ResourceScenario.resource_attr_id==resource_attr_id).one()
+        log.info("Existing resource scenario found for %s in scenario %s", resource_attr_id, scenario_id)
     except NoResultFound:
-        raise ResourceNotFoundError("Resource Attr %s not found in scenario %s")\
-                                            %(scenario_id, resource_attr_id)
+        log.info("No existing resource scenarios found for %s in scenario %s. Adding a new one.", resource_attr_id, scenario_id)
+        r_scen_i = ResourceScenario()
+        r_scen_i.scenario_id      = scenario_id
+        r_scen_i.resource_attr_id = resource_attr_id
+        scenario_i.resourcescenarios.append(r_scen_i)
 
     data_type = dataset.type.lower()
 

@@ -50,7 +50,6 @@ class ScenarioTest(server.SoapServerTest):
 
         new_resource_scenario = self.client.service.add_data_to_attribute(scenario_id, resource_attr_id, dataset)
 
-
         assert new_resource_scenario.value.value.desc_val == 'I am an updated test!', "Value was not updated correctly!!"
 
     def test_add_scenario(self):
@@ -159,7 +158,8 @@ class ScenarioTest(server.SoapServerTest):
 
         assert dataset_scenarios.Scenario[0].id == scenario.id
         
-        new_scenario = self.client.service.clone_scenario(scenario.id)
+        clone = self.client.service.clone_scenario(scenario.id)
+        new_scenario = self.client.service.get_scenario(clone.id)
 
         dataset_scenarios = self.client.service.get_dataset_scenarios(dataset_id_to_check)
 
@@ -265,7 +265,8 @@ class ScenarioTest(server.SoapServerTest):
         """
         network1 = self.create_network_with_data()
         scenario1_to_update = network1.scenarios.Scenario[0] 
-        scenario2_to_update = self.client.service.clone_scenario(network1.scenarios.Scenario[0].id)
+        clone = self.client.service.clone_scenario(network1.scenarios.Scenario[0].id)
+        scenario2_to_update = self.client.service.get_scenario(clone.id)
 
         #Identify 2 nodes to play around with -- the first and last in the list.
         node1 = network1.nodes.Node[0]
@@ -368,7 +369,8 @@ class ScenarioTest(server.SoapServerTest):
         scenario = network.scenarios.Scenario[0]
         scenario_id = scenario.id
 
-        new_scenario = self.client.service.clone_scenario(scenario_id)
+        clone = self.client.service.clone_scenario(scenario_id)
+        new_scenario = self.client.service.get_scenario(clone.id)
 
 
         updated_network = self.client.service.get_network(new_scenario.network_id)
@@ -410,7 +412,8 @@ class ScenarioTest(server.SoapServerTest):
         scenario = network.scenarios.Scenario[0]
         scenario_id = scenario.id
 
-        new_scenario = self.client.service.clone_scenario(scenario_id)
+        clone = self.client.service.clone_scenario(scenario_id)
+        new_scenario = self.client.service.get_scenario(clone.id)
 
     #    self.create_constraint(network, constant=4)
 
@@ -521,7 +524,8 @@ class ScenarioTest(server.SoapServerTest):
         scenario_id = scenario_to_lock.id
         
         log.info('Cloning scenario %s'%scenario_id)
-        unlocked_scenario = self.client.service.clone_scenario(scenario_id)
+        clone = self.client.service.clone_scenario(scenario_id)
+        unlocked_scenario = self.client.service.get_scenario(clone.id)
         
         log.info("Locking scenario")
         self.client.service.lock_scenario(scenario_id)
@@ -670,7 +674,8 @@ class ScenarioTest(server.SoapServerTest):
         scenario = network.scenarios.Scenario[0]
         source_scenario_id = scenario.id
 
-        cloned_scenario = self.client.service.clone_scenario(source_scenario_id)
+        clone = self.client.service.clone_scenario(source_scenario_id)
+        cloned_scenario = self.client.service.get_scenario(clone.id)
 
         resource_scenario = cloned_scenario.resourcescenarios.ResourceScenario[0]
         resource_attr_id = resource_scenario.resource_attr_id
@@ -712,7 +717,8 @@ class ScenarioTest(server.SoapServerTest):
         scenario = network.scenarios.Scenario[0]
         source_scenario_id = scenario.id
 
-        cloned_scenario = self.client.service.clone_scenario(source_scenario_id)
+        clone = self.client.service.clone_scenario(source_scenario_id)
+        cloned_scenario = self.client.service.get_scenario(clone.id)
 
         resource_scenario = cloned_scenario.resourcescenarios.ResourceScenario[0]
         resource_attr_id = resource_scenario.resource_attr_id
@@ -740,6 +746,37 @@ class ScenarioTest(server.SoapServerTest):
             if rs.resource_attr_id == resource_attr_id:
                 assert rs.value.value.desc_val == 'I am an updated test!'
 
+    def test_add_data_to_attribute(self):
+
+        network =  self.create_network_with_data()
+       
+        empty_ra = network.links.Link[0].attributes.ResourceAttr[-1]
+
+        scenario = network.scenarios.Scenario[0]
+        scenario_id = scenario.id
+
+        resource_scenario = scenario.resourcescenarios.ResourceScenario[0]
+        resource_attr_id = resource_scenario.resource_attr_id
+
+        dataset = self.client.factory.create('ns1:Dataset')
+       
+        dataset = self.client.factory.create('ns1:Dataset')
+        dataset.type = 'descriptor'
+        dataset.name = 'Max Capacity'
+        dataset.unit = 'metres / second'
+        dataset.dimension = 'number of units per time unit'
+        
+        descriptor = self.client.factory.create('ns1:Descriptor')
+        descriptor.desc_val = 'I am an updated test!'
+
+        dataset.value = descriptor
+
+        updated_resource_scenario = self.client.service.add_data_to_attribute(scenario_id, resource_attr_id, dataset)
+
+        new_resource_scenario = self.client.service.add_data_to_attribute(scenario_id, empty_ra.id, dataset)
+
+        assert updated_resource_scenario.value.value.desc_val == 'I am an updated test!', "Value was not updated correctly!!"
+        assert new_resource_scenario.value.value.desc_val == 'I am an updated test!', "Value was not updated correctly!!"
 
 if __name__ == '__main__':
     server.run()

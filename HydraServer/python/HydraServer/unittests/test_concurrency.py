@@ -20,9 +20,7 @@ import logging
 
 from multiprocessing import Process
 import server
-
-global CLIENT
-CLIENT = None
+import util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.ERROR)
@@ -30,6 +28,10 @@ log.setLevel(logging.ERROR)
 url = "http://ec2-54-229-95-247.eu-west-1.compute.amazonaws.com/hydra-server/soap/?wsdl"
 
 class ConcurrencyTest(server.SoapServerTest):
+    """
+        Test for concurrency in Hydra
+    """
+
     def setUp(self):
         self.url = url
         super(ConcurrencyTest, self).setUp()
@@ -46,7 +48,7 @@ class ConcurrencyTest(server.SoapServerTest):
         p3.start()
         
     def do_work(self, user):
-        client = server.connect(url)
+        client = util.connect(url)
         login_response = client.service.login(user, 'password')
         #If connecting to the cookie-based server, the response is just "OK"
         token = self.client.factory.create('RequestHeader')
@@ -55,6 +57,8 @@ class ConcurrencyTest(server.SoapServerTest):
         token.app_name = "Unit Test"
 
         client.set_options(cache=None, soapheaders=token)
+        n = util.create_network_with_data(client, new_proj=True)
+        util.get_network(n.id)
 
         client.service.logout(user)
 
