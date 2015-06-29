@@ -114,7 +114,7 @@ from HydraLib import PluginLib
 from HydraLib.PluginLib import JsonConnection, write_progress, write_output, validate_plugin_xml
 
 from HydraLib.HydraException import HydraPluginError
-from HydraLib import config, util, dateutil
+from HydraLib import hydra_dateutil
 
 log = logging.getLogger(__name__)
 
@@ -525,7 +525,7 @@ class SamplePlugin(object):
 
     def is_timeseries(self, data):
         date = data[0].split(',')[0].strip()
-        timeformat = dateutil.guess_timefmt(date)
+        timeformat = hydra_dateutil.guess_timefmt(date)
         if timeformat is None:
             return False
         else:
@@ -547,7 +547,7 @@ class SamplePlugin(object):
             return None
 
         date = data[0].split(',', 1)[0].strip()
-        timeformat = dateutil.guess_timefmt(date)
+        timeformat = hydra_dateutil.guess_timefmt(date)
         seasonal = False
         if 'XXXX' in timeformat:
             seasonal = True
@@ -565,7 +565,7 @@ class SamplePlugin(object):
                 tstime = datetime.strptime(dataset[0].strip(), timeformat)
                 tstime = self.timezone.localize(tstime)
 
-                ts_time = dateutil.date_to_string(tstime, seasonal=seasonal)
+                ts_time = hydra_dateutil.date_to_string(tstime, seasonal=seasonal)
 
                 value_length = len(dataset[2:])
                 shape = dataset[1].strip()
@@ -610,7 +610,7 @@ class SamplePlugin(object):
         if is_eq_spaced:
             ts_type = 'eqtimeseries'
             timeseries = {'frequency': freq.total_seconds(),
-                          'start_time':dateutil.date_to_string(start_time, seasonal=seasonal),
+                          'start_time':hydra_dateutil.date_to_string(start_time, seasonal=seasonal),
                           'arr_data':str(eq_val)}
           #  self.validate_value(timeseries, restriction_dict)
         else:
