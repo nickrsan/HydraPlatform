@@ -115,6 +115,7 @@ class ImportWML(object):
                     data_import_name, file_dataset_ids = self.read_timeseries_file(target)
                     all_dataset_ids.extend(file_dataset_ids)
                 except Exception, e:
+                    log.exception(e)
                     raise HydraPluginError("Unable to read timeseries data from file %s. Invalid content. "
                                        "Ensure the file contains the result of 'GetValues'."%target)
             else:
@@ -199,7 +200,7 @@ class ImportWML(object):
 
     def create_dataset_collection(self, name, dataset_ids):
 
-        new_collection = {'collection_name': name,
+        new_collection = {'name': name,
                         'dataset_ids' : dataset_ids}
 
         self.connection.call('add_dataset_collection', {'collection':new_collection})
@@ -221,17 +222,18 @@ class ImportWML(object):
             else:
                 ts_dict[ts_time] = [ts_val]
 
-        timeseries_val = []
+        fmt = config.get('DEFAULT', 'datetime_format', '%Y-%m-%dT%H:%M:%S.%f000Z') 
+
+        timeseries_val = {}
         for ts_time, ts_val in ts_dict.items():
             if len(ts_val) == 1:
                 ts_val = ts_val[0]
-            timestep_val = {'ts_time' : str(ts_time), 'ts_value' : ts_val}
-            timeseries_val.append(timestep_val)
+            timeseries_val[ts_time.strftime(fmt)] = ts_val
 
-        metadata_list = []
+        metadata_list = {}
         if meta:
             for k, v in meta.items():
-                metadata_list.append(dict(name=k,value=v))
+                metadata_list[k] = v
 
         dataset = dict(
             id=None,
@@ -239,9 +241,9 @@ class ImportWML(object):
             unit=meta.get('unit_abbreviation'),
             dimension=meta.get('unit_unit_type'),
             name="%s %s %s"%(meta['data_type'],meta['variable_name'], meta['site_codes']),
-            value={'ts_values':timeseries_val},
+            value=json.dumps({"V0":timeseries_val}),
             hidden='N',
-            metadata=metadata_list,
+            metadata=json.dumps(metadata_list),
         )
 
         return dataset
@@ -288,9 +290,9 @@ class ImportWML(object):
             unit=None,
             dimension=None,
             name="%s %s %s metadata"%(meta['data_type'],meta['variable_name'], meta['site_codes']),
-            value={'ts_values':timestep_meta},
+            value=json.dumps({"V0":timestep_meta}),
             hidden='N',
-            metadata=[],
+            metadata=json.dumps({}),
         )
 
         return meta_dataset
@@ -309,6 +311,9 @@ class ImportWML(object):
                     continue
                 if str(type(v)).find('waterml') > 0:
                     obj_as_dict.update(todict(v, "%s_"%k if prefix is None else "%s%s_"%(prefix,k)))
+                elif k.lower() == 'categories':
+                    for i, cat in enumerate(v):
+                        obj_as_dict['category_%s'%i] = json.dumps({'data_value': cat.data_value, 'description': cat.description})
                 else:
                     if type(v) is list:
                         if type(v[0]) == str:
