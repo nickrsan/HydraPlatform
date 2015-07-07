@@ -21,12 +21,20 @@
     </mandatory_args>
    <non_mandatory_args>
        <arg>
-            <name>uploadname</name>
+            <name>datacollectionname</name>
             <switch>-n</switch>
             <multiple>N</multiple>
-            <argtype>file</argtype>
+            <argtype>string</argtype>
             <allownew>N</allownew>
             <help>The name of the dataset group into which all the timeseries will be put</help>
+        </arg>
+        <arg>
+            <name>server_url</name>
+            <switch>-u</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>Specify the URL of the server to which this
+                        plug-in connects.</help>
         </arg>
         <arg>
             <name>session_id</name>
@@ -39,13 +47,5 @@
         </arg>
     </non_mandatory_args> 
     <switches>
-        <arg>
-            <switch>-x</switch>
-            <name>expand-filenames</name>
-            <help>If the import function encounters something
-                        that looks like a filename, it tries to read the file.
-                        It also tries to guess if it contains a number, a
-                        descriptor, an array or a time series.</help>
-        </arg>
     </switches>
  </plugin_info>

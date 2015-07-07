@@ -210,15 +210,16 @@ from datetime import datetime
 import pytz
 
 from HydraLib import PluginLib
-from HydraLib.PluginLib import JsonConnection, write_progress, write_output, validate_plugin_xml, RequestError
-from HydraLib import config, util, dateutil
+from HydraLib.PluginLib import JsonConnection, write_progress, write_output, validate_plugin_xml, RequestError, validate_template
+from HydraLib import util, hydra_dateutil
+
 from HydraLib.units import validate_resource_attributes
 
 from HydraLib.HydraException import HydraPluginError,HydraError
 
 from numpy import array, reshape
 
-from lxml import etree
+import json
 
 log = logging.getLogger(__name__)
 
@@ -373,8 +374,8 @@ class ImportCSV(object):
             else:
                 dupe_headings.append(k)
         if len(dupe_headings) > 0:
-            raise HydraPluginError("Malformed Header: Duplicate columns: %s",
-                                   dupe_headings)
+            raise HydraPluginError("Malformed Header in file %s: Duplicate columns: %s"%
+                                   (file , dupe_headings))
 
 
     def create_project(self, ID=None, network_id=None):
@@ -450,12 +451,17 @@ class ImportCSV(object):
 
             keys = net_data[0].split(',')
             self.check_header(file, keys)
-            units = net_data[1].split(',')
+            if net_data[1].lower().startswith('unit'):
+                units = net_data[1].split(',')
+                data_idx = 2
+            else:
+                units = None
+                data_idx = 1
             # A network file should only have one line of data
-            data = net_data[2].split(',')
-
-            for i, unit in enumerate(units):
-                units[i] = unit.strip()
+            data = net_data[data_idx].split(',')
+            if units is not None:
+                for i, unit in enumerate(units):
+                    units[i] = unit.strip()
 
             # We assume a standard order of the network information (Name,
             # Description, attributes,...).
@@ -610,6 +616,8 @@ class ImportCSV(object):
                         val = keyval[1].strip()
                         metadata_dict[attr.strip()][key] = val
             except Exception, e:
+                log.critical(e)
+                log.critical("Make sure the CSV file is formatted correctly.")
                 raise Exception(attr)
 
         return metadata_dict
@@ -631,11 +639,19 @@ class ImportCSV(object):
 
         keys  = node_data[0].split(',')
         self.check_header(file, keys)
-        units = node_data[1].split(',')
-        data = node_data[2:]
 
-        for i, unit in enumerate(units):
-            units[i] = unit.strip()
+        #There may or may not be a units line, so we need to account for that.
+        if node_data[1].lower().startswith('unit'):
+            units = node_data[1].split(',')
+            for i, unit in enumerate(units):
+                units[i] = unit.strip()
+
+            data_idx = 2
+        else:
+            units = None
+            data_idx = 1
+        # Get all the lines after the units line. 
+        data = node_data[data_idx:]
 
         field_idx = {'name': 0,
                      'description': -1,
@@ -744,11 +760,20 @@ class ImportCSV(object):
 
         keys = link_data[0].split(',')
         self.check_header(file, keys)
-        units = link_data[1].split(',')
-        data = link_data[2:]
 
-        for i, unit in enumerate(units):
-            units[i] = unit.strip()
+        #There may or may not be a units line, so we need to account for that.
+        if link_data[1].lower().startswith('unit'):
+            units = link_data[1].split(',')
+            for i, unit in enumerate(units):
+                units[i] = unit.strip()
+
+            data_idx = 2
+        else:
+            units = None
+            data_idx = 1
+
+        # Get all the lines after the units line 
+        data = link_data[data_idx:]
 
         field_idx = {'name': 0,
                      'description': -1,
@@ -857,11 +882,20 @@ class ImportCSV(object):
 
         keys  = group_data[0].split(',')
         self.check_header(file, keys)
-        units = group_data[1].split(',')
-        data  = group_data[2:]
 
-        for i, unit in enumerate(units):
-            units[i] = unit.strip()
+        #There may or may not be a units line, so we need to account for that.
+        if group_data[1].lower().startswith('unit'):
+            units = group_data[1].split(',')
+            for i, unit in enumerate(units):
+                units[i] = unit.strip()
+
+            data_idx = 2
+        else:
+            units = None
+            data_idx = 1
+
+        # Get all the lines after the units line
+        data = group_data[data_idx:]
 
         #Indicates what the mandatory columns are and where
         #we expect to see them.
@@ -954,7 +988,19 @@ class ImportCSV(object):
 
         keys  = member_data[0].split(',')
         self.check_header(file, keys)
-        data  = member_data[2:-1]
+        #There may or may not be a units line, so we need to account for that.
+        if member_data[1].lower().startswith('unit'):
+            units = member_data[1].split(',')
+            for i, unit in enumerate(units):
+                units[i] = unit.strip()
+
+            data_idx = 2
+        else:
+            units = None
+            data_idx = 1
+
+        # Get all the lines after the units line 
+        data = member_data[data_idx:]
 
         field_idx = {}
         for i, k in enumerate(keys):
@@ -1039,9 +1085,7 @@ class ImportCSV(object):
                 #Unit added to attribute definition for validation only. Not saved in DB
                 attribute['unit'] = unit.strip()
                 #Dimension is saved in DB.
-                if unit.strip() == '-' or unit.strip() == '':
-                    attribute['dimen'] = 'Dimensionless'
-                else:
+                if unit.strip() not in ('-' ,''):
                     basic_unit, factor = self.parse_unit(unit.strip())
                     attribute['dimen'] = self.units.get(basic_unit)
 
@@ -1086,7 +1130,9 @@ class ImportCSV(object):
         # Add all attributes. If they exist already, we retrieve the real id.
         # Also, we add the attributes only once (that's why we use the
         # add_attrs flag).
+
         if self.add_attrs:
+            log.info(attributes)
             attributes = self.connection.call('add_attributes', {'attrs':attributes})
             self.add_attrs = False
             for attr in attributes:
@@ -1124,8 +1170,10 @@ class ImportCSV(object):
                         dataset_metadata = {}
 
                     if units is not None:
-                        if units[i] is not None and len(units[i].strip()) > 0:
-                            dimension = attr['dimen']
+                        if units[i] is not None and len(units[i].strip()) > 0 and units[i].strip() != '-':
+                            dimension = attr.get('dimen')
+                            if dimension is None:
+                                log.debug("Dimension for unit %s is null. ", units[i])
                         else:
                             dimension = None
 
@@ -1279,6 +1327,8 @@ class ImportCSV(object):
             scal = self.create_scalar(value, restriction_dict)
             dataset['value'] = scal
         except ValueError:
+            #Check if it's an array or timeseries by first seeing if the value points
+            #to a valid file.
             value = value.replace('\\', '/')
             try:
                 filedata = []
@@ -1293,18 +1343,30 @@ class ImportCSV(object):
                             self.file_dict[full_file_path] = filedata
                     else:
                         filedata = self.file_dict[full_file_path]
-
-                    value_header = filedata[0].lower().replace(' ', '')
+                    
+                    #Look for column descriptors on the first line of the array and timeseries files
+                    value_header = filedata[0].replace(' ', '')
                     if value_header.startswith('arraydescription,') or value_header.startswith(','):
-                        arr_struct = filedata[0].strip()
+
+                        arr_struct = filedata[0].strip().replace(' ', '').replace(',,', '')
+                        
                         arr_struct = arr_struct.split(',')
-                        arr_struct = "|".join(arr_struct[2:])
+                        arr_struct = "|".join(arr_struct)
+                        #Set the value header back to its original format (with spaces)
+                        value_header = filedata[0]
                         filedata = filedata[1:]
                     elif value_header.startswith('timeseriesdescription') or value_header.startswith(','):
-                        arr_struct = filedata[0].strip()
+      
+                        arr_struct = filedata[0].strip().replace(' ', '').replace(',,', '')
+
                         arr_struct = arr_struct.split(',')
                         arr_struct = "|".join(arr_struct[3:])
+                        #Set the value header back to its original format (with spaces)
+                        value_header = filedata[0]
                         filedata = filedata[1:]
+                    else:
+                        value_header = None
+
 
                     #The name of the resource is how to identify the data for it.
                     #Once this the correct line(s) has been identified, remove the
@@ -1323,8 +1385,8 @@ class ImportCSV(object):
                         return None
                     else:
                         if self.is_timeseries(data):
-                            ts_type, ts = self.create_timeseries(data, restriction_dict, value)
-                            dataset['type'] = ts_type
+                            ts = self.create_timeseries(data, restriction_dict, header=value_header, filename=value)
+                            dataset['type'] = 'timeseries' 
                             dataset['value'] = ts
                         else:
                             dataset['type'] = 'array'
@@ -1332,6 +1394,7 @@ class ImportCSV(object):
                                 try:
                                     dataset['value'] = self.create_array(data[0], restriction_dict)
                                 except Exception, e:
+                                    log.exception(e)
                                     raise HydraPluginError("There is a value "
                                                            "error in %s. "
                                                            "Please check value"
@@ -1340,28 +1403,29 @@ class ImportCSV(object):
                                 dataset['value'] = None
                 else:
                     raise IOError
-            except IOError:
+            except IOError, e:
                 dataset['type'] = 'descriptor'
                 desc = self.create_descriptor(value, restriction_dict)
                 dataset['value'] = desc
-
-        dataset['unit'] = unit
+        
         if unit is not None:
+            dataset['unit'] = unit
+        if dimension is not None:
             dataset['dimension'] = dimension
 
         dataset['name'] = self.Scenario['name']
 
         resourcescenario['value'] = dataset
 
-        m = []
-        if arr_struct:
-            m.append(dict(name='data_struct',value=arr_struct))
-        if metadata:
-            for k, v in metadata.items():
-                if k == 'data_struct' and arr_struct:
-                    continue
-                m.append(dict(name=k,value=v))
+        m = {}
 
+        if metadata:
+            m = metadata
+        
+        if arr_struct:
+            m['data_struct'] = arr_struct
+
+        m = json.dumps(m)
 
         dataset['metadata'] = m
 
@@ -1369,29 +1433,33 @@ class ImportCSV(object):
 
     def create_scalar(self, value, restriction_dict={}):
         self.validate_value(value, restriction_dict)
-        scalar = dict(
-            param_value = str(value)
-        )
+        scalar = str(value)
         return scalar
 
     def create_descriptor(self, value, restriction_dict={}):
         self.validate_value(value, restriction_dict)
-        descriptor = dict(
-            desc_val = value
-        )
+        descriptor = value
         return descriptor
 
-    def create_timeseries(self, data, restriction_dict={}, filename=""):
+    def create_timeseries(self, data, restriction_dict={}, header=None, filename=""):
         if len(data) == 0:
             return None
+        
+        if header is not None:
+            header = header.strip(',')
+            col_headings = header.split(',')
+        else:
+            col_headings = range(len(data[0].split(',')[2:]))
 
         date = data[0].split(',', 1)[0].strip()
-        timeformat = dateutil.guess_timefmt(date)
+        timeformat = hydra_dateutil.guess_timefmt(date)
         seasonal = False
         if 'XXXX' in timeformat:
             seasonal = True
-
-        ts_values = []
+        
+        ts_values = {}
+        for col in col_headings:
+            ts_values[col] = {}
         ts_times = [] # to check for duplicae timestamps in a timeseries.
         start_time = None
         freq       = None
@@ -1405,7 +1473,7 @@ class ImportCSV(object):
                 tstime = datetime.strptime(dataset[0].strip(), timeformat)
                 tstime = self.timezone.localize(tstime)
 
-                ts_time = dateutil.date_to_string(tstime, seasonal=seasonal)
+                ts_time = hydra_dateutil.date_to_string(tstime, seasonal=seasonal)
 
                 if ts_time in ts_times:
                     raise HydraPluginError("A duplicate time %s has been found "
@@ -1423,17 +1491,17 @@ class ImportCSV(object):
                 else:
                     array_shape = (value_length,)
 
-                if array_shape == (1,):
-                    ts_value = dataset[2].strip()
-                else:
-                    ts_val_1d = []
-                    for i in range(value_length):
-                        ts_val_1d.append(str(dataset[i + 2].strip()))
+                ts_val_1d = []
+                for i in range(value_length):
+                    ts_val_1d.append(str(dataset[i + 2].strip()))
 
+                try:
                     ts_arr = array(ts_val_1d)
                     ts_arr = reshape(ts_arr, array_shape)
+                except:
+                    raise HydraPluginError("Error converting %s in file %s to an array"%(ts_val_1d, filename))
 
-                    ts_value = ts_arr.tolist()
+                ts_value = ts_arr.tolist()
 
                 #Check for whether timeseries is equally spaced.
                 if is_eq_spaced:
@@ -1450,28 +1518,16 @@ class ImportCSV(object):
                             if (tstime - prev_time) != freq:
                                 is_eq_spaced = False
                     prev_time = tstime
+               
+                for i, ts_val in enumerate(ts_value):
+                    idx = col_headings[i]
+                    ts_values[idx][ts_time] = ts_val
 
-                ts_values.append({'ts_time': ts_time,
-                                  'ts_value': ts_value
-                                  })
+        self.validate_value(ts_values, restriction_dict)
+        
+        timeseries = json.dumps(ts_values)
 
-        if is_eq_spaced:
-            ts_type = 'eqtimeseries'
-            timeseries = {'frequency': freq.total_seconds(),
-                          'start_time':dateutil.date_to_string(start_time, seasonal=seasonal),
-                          'arr_data':str(eq_val)}
-            self.validate_value(timeseries, restriction_dict)
-        else:
-            ts_type = 'timeseries'
-            timeseries = {'ts_values': ts_values}
-            self.validate_value(timeseries, restriction_dict)
-
-            #After validating the data, turn it into the format the server wants.
-            for ts in timeseries['ts_values']:
-                ts['ts_value'] = PluginLib.create_dict(ts['ts_value'])
-
-
-        return ts_type, timeseries
+        return timeseries
 
     def create_array(self, data, restriction_dict={}):
         #Split the line into a list
@@ -1505,16 +1561,14 @@ class ImportCSV(object):
 
         self.validate_value(arr.tolist(), restriction_dict)
 
-        arr = dict(
-            arr_data = PluginLib.create_dict(arr.tolist())
-        )
+        arr = json.dumps(arr.tolist())
 
         return arr
 
     def is_timeseries(self, data):
         try:
             date = data[0].split(',')[0].strip()
-            timeformat = dateutil.guess_timefmt(date)
+            timeformat = hydra_dateutil.guess_timefmt(date)
             if timeformat is None:
                 return False
             else:
@@ -1556,81 +1610,6 @@ class ImportCSV(object):
                                                      scen_ids)
 
         print xml_response
-
-    def validate_template(self, template_file):
-
-        log.info('Validating template file (%s).' % template_file)
-
-        with open(template_file) as f:
-            xml_template = f.read()
-
-        template_xsd_path = os.path.expanduser(config.get('templates', 'template_xsd_path'))
-        log.info("Template xsd: %s",template_xsd_path)
-        xmlschema_doc = etree.parse(template_xsd_path)
-        xmlschema = etree.XMLSchema(xmlschema_doc)
-        xml_tree = etree.fromstring(xml_template)
-
-        try:
-            xmlschema.assertValid(xml_tree)
-        except etree.DocumentInvalid as e:
-            raise HydraPluginError('Template validation failed: ' + e.message)
-
-        template_dict = {'name':xml_tree.find('template_name').text,
-                         'resources' : {}
-                        }
-
-        attributes = []
-
-        for r in xml_tree.find('resources'):
-            resource_dict = {}
-            resource_name = r.find('name').text
-            resource_type = r.find('type').text
-            resource_dict['type'] = resource_type
-            resource_dict['name'] = resource_name
-            resource_dict['attributes'] = {}
-            for attr in r.findall("attribute"):
-                attr_dict = {}
-                attr_name = attr.find('name').text
-                attr_dict['name'] = attr_name
-                if attr.find('dimension') is not None:
-                    attr_dict['dimension'] = attr.find('dimension').text
-                if attr.find('unit') is not None:
-                    attr_dict['unit'] = attr.find('unit').text
-                if attr.find('is_var') is not None:
-                    attr_dict['is_var'] = attr.find('is_var').text
-                if attr.find('data_type') is not None:
-                    attr_dict['data_type'] = attr.find('data_type').text
-
-                attributes.append({'name': attr_name, 'dimen': attr_dict['dimension']})
-
-                restction_xml = attr.find("restrictions")
-                attr_dict['restrictions'] = util.get_restriction_as_dict(restction_xml)
-                resource_dict['attributes'][attr_name] = attr_dict
-
-            if template_dict['resources'].get(resource_type):
-                template_dict['resources'][resource_type][resource_name] = resource_dict
-            else:
-                template_dict['resources'][resource_type] = {resource_name : resource_dict}
-
-        stored_attrs = self.connection.call('get_attributes', {'attrs':attributes})
-        attr_dict = {}
-        for a in stored_attrs:
-            if a:
-                attr_dict[(a['name'], a.get('dimen'))] = a['id']
-
-        log.info("Template attributes retrieved!")
-
-        for rt in template_dict['resources'].values():
-            for t in rt.values():
-                for a in t['attributes'].values():
-                    a['id'] = attr_dict.get((a['name'], a.get('dimension')))
-
-        log.info("Template attributes updated with IDS")
- 
-        self.Templates = template_dict
-
-        log.info("Template OK")
-
 
 def commandline_parser():
     parser = ap.ArgumentParser(
@@ -1726,7 +1705,7 @@ if __name__ == '__main__':
                 try:
                     if args.template == '':
                         raise Exception("The template name is empty.")
-                    csv.validate_template(args.template)
+                    csv.Template = validate_template(args.template, csv.connection)
                 except Exception, e:
                     log.exception(e)
                     raise HydraPluginError("An error has occurred with the template. (%s)"%(e))
