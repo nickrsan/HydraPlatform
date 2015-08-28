@@ -1,0 +1,2 @@
+import ImportWML
+ImportWML.run()
