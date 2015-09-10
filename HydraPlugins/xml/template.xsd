@@ -86,6 +86,20 @@
                                                             </xs:restriction>
                                                         </xs:simpleType>
                                                     </xs:element>
+                                                    <xs:element name="properties" minOccurs="0">
+                                                    <xs:complexType>
+                                                         <xs:sequence>
+                                                            <xs:element name="item" maxOccurs="unbounded">
+                                                                <xs:complexType>
+                                                                    <xs:sequence>
+                                                                        <xs:element name="name"  type="xs:string"/>
+                                                                        <xs:element name="value" type="xs:anyType"/>
+                                                                    </xs:sequence>
+                                                                </xs:complexType>
+                                                            </xs:element>
+                                                         </xs:sequence>
+                                                     </xs:complexType>
+                                                    </xs:element>
                                                     <xs:element name="restrictions" minOccurs="0" maxOccurs="1">
                                                         <xs:complexType>
                                                             <xs:sequence>
