@@ -19,7 +19,15 @@
                                             <xs:element name="switch" type="xs:string"/>
                                             <xs:element name="multiple" type="xs:string"/>
                                             <xs:element name="allownew" type="xs:string"/>
-                                            <xs:element name="argtype" type="xs:string"/>
+                                            <xs:element name="argtype">
+                                                <xs:complexType>
+                                                    <xs:simpleContent>
+                                                        <xs:extension base="xs:string">
+                                                            <xs:attribute name="filter" type="xs:string" use="optional"/>
+                                                        </xs:extension>
+                                                    </xs:simpleContent>
+                                                </xs:complexType>
+                                            </xs:element>
                                             <xs:element name="defaultval" type="xs:string"/>
                                             <xs:element name="help" type="xs:string"/>
                                         </xs:choice>
@@ -40,7 +48,15 @@
                                             <xs:element name="switch" type="xs:string"/>
                                             <xs:element name="multiple" type="xs:string"/>
                                             <xs:element name="allownew" type="xs:string"/>
-                                            <xs:element name="argtype" type="xs:string"/>
+                                            <xs:element name="argtype">
+                                                <xs:complexType>
+                                                    <xs:simpleContent>
+                                                        <xs:extension base="xs:string">
+                                                            <xs:attribute name="filter" type="xs:string" use="optional"/>
+                                                        </xs:extension>
+                                                    </xs:simpleContent>
+                                                </xs:complexType> 
+                                            </xs:element>
                                             <xs:element name="defaultval" type="xs:string"/>
                                             <xs:element name="help" type="xs:string"/>
                                         </xs:choice>
