@@ -1,43 +1,5 @@
  <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xs:complexType name="arg">
-        <xs:sequence>
-            <xs:choice maxOccurs="unbounded">
-                <xs:element name="name" type="xs:string"/>
-                <xs:element name="switch" type="xs:string"/>
-                <xs:element name="multiple" type="xs:string"/>
-                <xs:element name="allownew" type="xs:string"/>
-                <xs:element name="argtype" type="xs:string"/>
-                <xs:element name="default" type="xs:string"/>
-                <xs:element name="help" type="xs:string"/>
-            </xs:choice>
-        </xs:sequence>
-    </xs:complexType>
-    <xs:complexType name="args">
-        <xs:choice>
-            <!-- This is for when there are two mandatory variables, which can be
-                 interchanged -->
-            <xs:sequence>
-                <xs:choice maxOccurs="unbounded">
-                    <xs:element type="arg" name="arg"/>
-                    <xs:element name="choices">
-                        <xs:complexType>
-                            <xs:sequence>
-                                <xs:element name="choice" maxOccurs="unbounded">
-                                    <xs:complexType>
-                                        <xs:sequence>
-                                            <xs:element type="arg" name="arg" maxOccurs="unbounded"/>
-                                        </xs:sequence>
-
-                                    </xs:complexType>
-                                </xs:element>
-                            </xs:sequence>
-                        </xs:complexType>
-                    </xs:element>
-                </xs:choice>
-            </xs:sequence>
-        </xs:choice>
-    </xs:complexType>
-<xs:element name="plugin_info">
+     <xs:element name="plugin_info">
          <xs:complexType>
              <xs:sequence>
                 <xs:element name="plugin_name" type="xs:string"/>
@@ -46,8 +8,48 @@
                 <xs:element name="plugin_epilog" type="xs:string"/>
                 <xs:element name="smallicon" type="xs:string"/>
                 <xs:element name="largeicon" type="xs:string"/>
-                <xs:element name="mandatory_args" type="args"/>
-                <xs:element name="non_mandatory_args" type="args"/>
+                <xs:element name="mandatory_args">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="arg" minOccurs="0" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:choice maxOccurs="unbounded">
+                                            <xs:element name="name" type="xs:string"/>
+                                            <xs:element name="switch" type="xs:string"/>
+                                            <xs:element name="multiple" type="xs:string"/>
+                                            <xs:element name="allownew" type="xs:string"/>
+                                            <xs:element name="argtype" type="xs:string"/>
+                                            <xs:element name="defaultval" type="xs:string"/>
+                                            <xs:element name="help" type="xs:string"/>
+                                        </xs:choice>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+               <xs:element name="non_mandatory_args">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="arg" minOccurs="0" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:choice maxOccurs="unbounded">
+                                            <xs:element name="name" type="xs:string"/>
+                                            <xs:element name="switch" type="xs:string"/>
+                                            <xs:element name="multiple" type="xs:string"/>
+                                            <xs:element name="allownew" type="xs:string"/>
+                                            <xs:element name="argtype" type="xs:string"/>
+                                            <xs:element name="defaultval" type="xs:string"/>
+                                            <xs:element name="help" type="xs:string"/>
+                                        </xs:choice>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element> 
                 <xs:element name="switches">
                     <xs:complexType>
                         <xs:sequence>
