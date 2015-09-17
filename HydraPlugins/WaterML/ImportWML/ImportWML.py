@@ -1,45 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """A Hydra plug-in for importing WML timeseries files.
-
-Basics
-~~~~~~
-This app allows one or multiple WaterML timeseries files to be imported into Hydra.
-
-The app assumes that you have downloaded timeseries files
-from the cuahsi web service. A single file can be passed to the app or a directory.
-If a directory is passed, the app will find the appropriate timeseries files and import
-all the data it can. 
-
-Basic usage::
-
-       ImportWML.py [-h] [-f Timeseries file]
-
-Options
-~~~~~~~
-
-========================= ====== ================== ==============================================
-Option                    Short  Parameter          Description
-========================= ====== ================== ==============================================
-``--help``                ``-h``                    show help message and exit.
-``--file``                ``-t`` Timeseries         File  XML file containing a WaterML timeseries
-``--datacollectionname``  ``-n`` Dataset Collection Name Name of the dataset grouping
-========================= ====== ================== ==============================================
-
-
-File structure
-~~~~~~~~~~~~~~
-
-Building a windows executable
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- - Use pyinstaller (pip install pyisntaller) to build a windows executable.
- - cd to the $PATH_TO_HYDRA/HydraPlugins/WaterMLPlugin/trunk
- - pyinstaller -F ImportWML.py :
- - If you want more compression (a smaller exe), install upx and run: pyinstaller -F --upx-dir=/path/to/upx/dir ExportWML.py
- - An executable file will appear in the dist folder
-
-API docs
-~~~~~~~~
 """
 
 import argparse as ap
@@ -360,6 +321,9 @@ Written by Philipp Meier <philipp@diemeiers.ch>
 
 
 if __name__ == '__main__':
+    run()
+
+def run():
     parser = commandline_parser()
     args = parser.parse_args()
     importwml = ImportWML(url=args.server_url, session_id=args.session_id)
