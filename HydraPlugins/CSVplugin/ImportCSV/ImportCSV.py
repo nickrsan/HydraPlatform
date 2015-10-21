@@ -33,7 +33,7 @@ from HydraLib.units import validate_resource_attributes
 
 from HydraLib.HydraException import HydraPluginError
 
-from csv_util import get_file_data, check_header, parse_unit
+from csv_util import get_file_data, check_header, parse_unit, get_scenario_times
 from rules import RuleReader
 
 from data import create_dataset
@@ -88,6 +88,10 @@ class ImportCSV(object):
         self.linktype_dict = dict()
         self.grouptype_dict = dict()
         self.networktype = ''
+
+        self.start_time = None
+        self.end_time   = None
+        self.timestep   = None
 
         self.connection = JsonConnection(url)
         if session_id is not None:
@@ -176,6 +180,9 @@ class ImportCSV(object):
             'Default scenario created by the CSV import plug-in.'
         self.Scenario['id'] = -1
         self.Scenario['resourcescenarios'] = []
+        self.Scenario['start_time'] = self.start_time
+        self.Scenario['end_time']   = self.end_time
+        self.Scenario['time_step']   = self.timestep
 
     def create_network(self, file=None, network_id=None):
 
@@ -198,7 +205,7 @@ class ImportCSV(object):
             keys = [k.strip() for k in net_data[0].split(',')]
             #Make a list of all the keys in lowercase so we can perform
             #checks later on for certain headings.
-            lower_keys = [k.lower() for k in keys]
+            lower_keys = [k.lower().replace(" ", "") for k in keys]
 
             check_header(file, keys)
             if net_data[1].lower().startswith('unit'):
@@ -224,6 +231,9 @@ class ImportCSV(object):
                          'links':4,
                          'groups':5,
                          'rules':6,
+                         'starttime':None,
+                         'endtime':None,
+                         'timestep':None
                          }
             # If the file does not follow the standard, we can at least try to
             # guess what is stored where.
@@ -242,7 +252,16 @@ class ImportCSV(object):
             if 'groups' in lower_keys:
                 self.group_args = data[field_idx['groups']].strip().strip(';').split(';')
             if 'rules' in lower_keys:
-                self.rule_args  = data[field_idx['rules']].strip().strip(';').split(';')
+                rules  = data[field_idx['rules']].strip().strip(';')
+                if rules != "":
+                    self.rule_args = [os.path.join(self.basepath, f) for f in rules.split(';')]
+
+            if 'starttime' in lower_keys:
+                self.Scenario['start_time'] = data[field_idx['starttime']].strip()
+            if 'endtime' in lower_keys:
+                self.Scenario['end_time'] = data[field_idx['endtime']].strip()
+            if 'timestep' in lower_keys:
+                self.Scenario['time_step'] = data[field_idx['timestep']].strip()
 
             if network_id is not None:
                 # Check if network exists on the server.
@@ -313,6 +332,8 @@ class ImportCSV(object):
             for i, key in enumerate(keys):
                 if i not in field_idx.values():
                     attrs.update({i: key.strip()})
+
+            log.info("Adding data to network.")
 
             if len(attrs.keys()) > 0:
                 self.Network = self.add_data(self.Network, attrs, data, metadata, units=units)
@@ -901,7 +922,7 @@ class ImportCSV(object):
                     attribute = self.create_attribute(attrs[i], units[i])
                 else:
                     attribute = self.create_attribute(attrs[i])
-                self.Attributes.update({attrs[i]: attribute})
+                self.Attributes[attrs[i]] =  attribute
             attributes.append(attribute)
 
         # Add all attributes. If they exist already, we retrieve the real id.
@@ -973,8 +994,20 @@ class ImportCSV(object):
                                                   self.Scenario['name'],
                                                   self.timezone
                                                 )
+                        #Extrapolate the scenario start time, end time and time step from the first
+                        #timeseries we find
+                        if dataset['value']['type'] == 'timeseries' and self.Scenario.get('start_time') is None:
+                            start_time, end_time, time_step = get_scenario_times(dataset)
+                            self.Scenario['start_time'] = start_time
+                            self.Scenario['end_time']   = end_time
+                            self.Scenario['time_step']   = time_step
+
+                        #This is not saved in the DB. It's used for validation in validate_resource_attributes.
+                        res_attr['data_type'] = dataset['value']['type']
+
                         if dataset is not None:
                             self.Scenario['resourcescenarios'].append(dataset)
+
                     except HydraPluginError, e:
                         log.warn(e)
                         self.warnings.extend(e)
@@ -1229,7 +1262,7 @@ def run():
         else:
             log.warn("No group member files specified.")
             csv.warnings.append("No group member files specified.")
-
+        
         write_progress(7,csv.num_steps)
         write_output("Saving network")
         csv.commit()
@@ -1243,8 +1276,7 @@ def run():
                 if s.name == csv.Scenario['name']:
                     scenario_id = s.id
                     break
-            #Update all the nodes, links and groups with their newly
-            #created IDs.
+
             rule_reader = RuleReader(csv.connection, scenario_id, csv.NetworkSummary, csv.rule_args)
 
             rule_reader.read_rules()

@@ -166,7 +166,7 @@ class ExportCSV(object):
         elif not os.path.exists(output_folder):
             raise HydraPluginError("%s does not exist"%output_folder)
 
-        network_dir = os.path.join(output_folder, "network_%s"%(network.id))
+        network_dir = os.path.join(output_folder, "network_%s"%(network.name).replace(" ", "_"))
 
         if not os.path.exists(network_dir):
             os.mkdir(network_dir)
@@ -222,14 +222,14 @@ class ExportCSV(object):
         if len(network_attributes) > 0:
             network_attributes_string = ',%s'%(','.join(network_attributes.values()))
 
-        network_heading   = "ID, Name, Nodes, Links, Groups, Rules, Type,  %s, Description\n" % (network_attributes_string)
+        network_heading   = "ID, Name, Type, Nodes, Links, Groups, Rules%s, Description\n" % (network_attributes_string)
         metadata_heading   = "Name %s\n"%(network_attributes_string)
 
         network_attr_units = []
         for attr_id in network_attributes.keys():
             network_attr_units.append(self.get_attr_unit(scenario, attr_id))
 
-        network_units_heading  = "Units,,,,,,,,%s\n"%(','.join(network_attr_units))
+        network_units_heading  = "Units,,,,,,,,,,,%s\n"%(','.join(network_attr_units))
 
         values = ["" for attr_id in network_attributes.keys()]
         metadata_placeholder = ["" for attr_id in network_attributes.keys()]
@@ -289,10 +289,21 @@ class ExportCSV(object):
         rules = self.export_rules(scenario, node_map, link_map, group_map)
         if len(rules) > 0:
             network_data['rules'] = "rules.csv"
+        
+        network_entry = "%(id)s,%(name)s,%(type)s,%(nodes)s,%(links)s,%(groups)s,%(rules)s%(values)s,%(description)s\n"%network_data
+
+        if scenario.get('start_time') is not None and \
+            scenario.get('end_time') is not None and\
+            scenario.get('time_step') is not None:
+            network_heading   = "ID, Name, Type, Nodes, Links, Groups, Rules, start time, end time, time step %s, Description\n" % (network_attributes_string)
+            network_data['starttime'] = scenario.start_time
+            network_data['endtime']   = scenario.end_time
+            network_data['timestep'] = scenario.time_step
+            network_entry = "%(id)s,%(name)s,%(type)s,%(nodes)s,%(links)s,%(groups)s,%(rules)s,%(starttime)s,%(endtime)s,%(timestep)s%(values)s,%(description)s\n"%network_data
+
 
         log.info("Network export complete")
 
-        network_entry = "%(id)s,%(name)s,%(type)s,%(nodes)s,%(links)s,%(groups)s,%(rules)s,%(values)s,%(description)s\n"%network_data
 
         if metadata_placeholder.count("") != len(metadata_placeholder):
             self.write_metadata(scenario, 'network', metadata_heading, (network.name, metadata_placeholder))
@@ -461,7 +472,7 @@ class ExportCSV(object):
         for attr_id in group_attributes.keys():
             group_attr_units.append(self.get_attr_unit(scenario, attr_id))
 
-        group_heading   = "Name, Type, Members, %s, description\n" % (group_attributes_string)
+        group_heading   = "Name, Type, Members %s, description\n" % (group_attributes_string)
         group_units_heading  = "Units,,,%s\n"%(','.join(group_attr_units) if group_attr_units else ',')
         metadata_heading   = "Name %s\n"%(group_attributes_string)
 
@@ -485,9 +496,10 @@ class ExportCSV(object):
             else:
                 group_type = ""
 
-            group_entry = "%(name)s,%(type)s,%(values)s,%(description)s\n"%{
+            group_entry = "%(name)s,%(type)s,%(members)s,%(values)s,%(description)s\n"%{
                 "name"        : group.name,
                 "type"        : group_type,
+                "members"     : "group_members.csv",
                 "values"      : "%s"%(",".join(values)) if len(values) > 0 else "",
                 "description" : group.description,
             }
