@@ -133,7 +133,7 @@ class ExportCSV(object):
         for attr in all_attributes:
             self.attributes[attr.id] = attr.name
 
-        self.num_steps = 6
+        self.num_steps = 7
 
     def call(self, func, args={}):
         return self.connection.call(func, args)
@@ -164,9 +164,9 @@ class ExportCSV(object):
             log.info("No output folder specified. Defaulting to desktop.")
             output_folder = os.path.expanduser("~/Desktop")
         elif not os.path.exists(output_folder):
-            raise HydraPluginError("%s does not exist"%output_folder)
+            raise HydraPluginError("Output folder %s does not exist"%output_folder)
 
-        network_dir = os.path.join(output_folder, "network_%s"%(network.id))
+        network_dir = os.path.join(output_folder, "network_%s"%(network.name).replace(" ", "_"))
 
         if not os.path.exists(network_dir):
             os.mkdir(network_dir)
@@ -186,6 +186,7 @@ class ExportCSV(object):
             raise HydraPluginError("Network %s has no scenarios!"%(network))
 
         if scenario_id is not None:
+            write_progress(3, self.num_steps) 
             for scenario in network.scenarios:
                 if int(scenario.id) == int(scenario_id):
                     log.info("Exporting Scenario %s"%(scenario.name))
@@ -207,7 +208,6 @@ class ExportCSV(object):
         """
 
         write_output("Exporting network")
-        write_progress(3, self.num_steps) 
         log.info("\n************NETWORK****************")
         scenario.target_dir = os.path.join(network.network_dir, scenario.name.replace(' ', '_'))
 
@@ -222,14 +222,14 @@ class ExportCSV(object):
         if len(network_attributes) > 0:
             network_attributes_string = ',%s'%(','.join(network_attributes.values()))
 
-        network_heading   = "ID, Description, Type, Name %s\n" % (network_attributes_string)
+        network_heading   = "ID, Name, Type, Nodes, Links, Groups, Rules%s, Description\n" % (network_attributes_string)
         metadata_heading   = "Name %s\n"%(network_attributes_string)
 
         network_attr_units = []
-        for attr_id in network_attributes.keys():
-            network_attr_units.append(self.get_attr_unit(scenario, attr_id))
+        for attr_id, attr_name in network_attributes.items():
+            network_attr_units.append(self.get_attr_unit(scenario, attr_id, attr_name))
 
-        network_units_heading  = "Units,,,,%s\n"%(','.join(network_attr_units))
+        network_units_heading  = "Units,,,,,,,,,,,%s\n"%(','.join(network_attr_units))
 
         values = ["" for attr_id in network_attributes.keys()]
         metadata_placeholder = ["" for attr_id in network_attributes.keys()]
@@ -238,53 +238,88 @@ class ExportCSV(object):
             for r_attr in network.attributes:
                 attr_name = network_attributes[r_attr.attr_id]
                 value, metadata = self.get_attr_value(scenario, r_attr, attr_name, network.name)
-                values[network_attributes.keys().index(r_attr.attr_id)] = value
-                metadata_placeholder[network_attributes.keys().index(r_attr.attr_id)] = metadata
+                idx = network_attributes.keys().index(r_attr.attr_id)
+                values[idx] = value
+                metadata_placeholder[idx] = metadata
 
         if network.types is not None and len(network.types) > 0:
             net_type = network.types[0]['name']
         else:
             net_type = ""
 
-        network_entry = "%(id)s,%(description)s,%(type)s,%(name)s,%(values)s\n"%{
+        #Leave the links, groups and rules blank for now, as there may not be
+        #any links, groups or rules.
+        network_data = {
             "id"          : network.id,
-            "description" : network.description,
-            "type"        : net_type,
             "name"        : network.name,
+            "type"        : net_type,
+            "nodes"       : "",
+            "links"       : "",
+            "groups"      : "",
+            "rules"       : "",
             "values"      : ",%s"%(",".join(values)) if len(values) > 0 else "",
+            "description" : network.description,
+
         }
 
+        write_progress(4, self.num_steps) 
+        node_map = dict()
+        if network.nodes:
+            node_map = self.export_nodes(scenario, network.nodes)
+            network_data['nodes'] = "nodes.csv"
+        else:
+            log.warning("Network has no nodes!")
+
+        write_progress(5, self.num_steps) 
+        link_map = dict()
+        if network.links:
+            link_map = self.export_links(scenario, network.links, node_map)
+            network_data['links'] = "links.csv"
+        else:
+            log.warning("Network has no links!")
+        
+        write_progress(6, self.num_steps) 
+        group_map = dict()
+        if network.resourcegroups:
+            group_map = self.export_resourcegroups(scenario, network.resourcegroups, node_map, link_map)
+            network_data['groups'] = "groups.csv"
+        else:
+            log.warning("Network has no resourcegroups.")
+        
+        write_progress(7, self.num_steps) 
+        rules = self.export_rules(scenario, node_map, link_map, group_map)
+        if len(rules) > 0:
+            network_data['rules'] = "rules.csv"
+        
+        network_entry = "%(id)s,%(name)s,%(type)s,%(nodes)s,%(links)s,%(groups)s,%(rules)s%(values)s,%(description)s\n"%network_data
+
+        if scenario.get('start_time') is not None and \
+            scenario.get('end_time') is not None and\
+            scenario.get('time_step') is not None:
+            network_heading   = "ID, Name, Type, Nodes, Links, Groups, Rules, starttime, endtime, timestep %s, Description\n" % (network_attributes_string)
+            network_data['starttime'] = scenario.start_time
+            network_data['endtime']   = scenario.end_time
+            network_data['timestep'] = scenario.time_step
+            network_entry = "%(id)s,%(name)s,%(type)s,%(nodes)s,%(links)s,%(groups)s,%(rules)s,%(starttime)s,%(endtime)s,%(timestep)s%(values)s,%(description)s\n"%network_data
+
+
+        log.info("Exporting network metadata")
         if metadata_placeholder.count("") != len(metadata_placeholder):
-            self.write_metadata(scenario, 'network', metadata_heading, (network.name, metadata_placeholder))
+            warnings = self.write_metadata(os.path.join(scenario.target_dir, 'network_metadata.csv'),
+                                metadata_heading,
+                                [(network.name, metadata_placeholder)])
+            self.warnings.extend(warnings)
 
         network_file.write(network_heading)
         network_file.write(network_units_heading)
         network_file.write(network_entry)
-        log.info("networks written to file: %s", network_file.name)
-
-        node_map = dict()
-
-        if network.nodes:
-            node_map = self.export_nodes(scenario, network.nodes)
-        else:
-            log.warning("Network has no nodes!")
-
-        link_map = dict()
-        if network.links:
-            link_map = self.export_links(scenario, network.links, node_map)
-        else:
-            log.warning("Network has no links!")
-
-        if network.resourcegroups:
-            self.export_resourcegroups(scenario, network.resourcegroups, node_map, link_map)
-        else:
-            log.warning("Network has no resourcegroups.")
-
+        
         log.info("Network export complete")
+        
+        log.info("networks written to file: %s", network_file.name)
 
     def export_nodes(self, scenario, nodes):
         write_output("Exporting nodes.")
-        write_progress(4, self.num_steps) 
         log.info("\n************NODES****************")
 
         #return this so that the link export can easily access
@@ -305,8 +340,8 @@ class ExportCSV(object):
         metadata_heading   = "Name %s\n"%(node_attributes_string)
 
         node_attr_units = []
-        for attr_id in node_attributes.keys():
-            node_attr_units.append(self.get_attr_unit(scenario, attr_id))
+        for attr_id, attr_name in node_attributes.items():
+            node_attr_units.append(self.get_attr_unit(scenario, attr_id, attr_name))
 
         node_units_heading  = "Units,,,,%s\n"%(','.join(node_attr_units) if node_attr_units else ',')
 
@@ -343,7 +378,10 @@ class ExportCSV(object):
             if metadata_placeholder.count("") != len(metadata_placeholder):
                 metadata_entries.append((node.name, metadata_placeholder))
 
-        self.write_metadata(scenario, 'nodes', metadata_heading, metadata_entries)
+        warnings = self.write_metadata(os.path.join(scenario.target_dir, 'nodes_metadata.csv'),
+                            metadata_heading,
+                            metadata_entries)
+        self.warnings.extend(warnings)
 
         node_file.write(node_heading)
         node_file.write(node_units_heading)
@@ -355,7 +393,6 @@ class ExportCSV(object):
 
     def export_links(self, scenario, links, node_map):
         write_output("Exporting links.")
-        write_progress(5, self.num_steps) 
         log.info("\n************LINKS****************")
 
         #return this so that the group export can easily access
@@ -377,8 +414,8 @@ class ExportCSV(object):
 
 
         link_attr_units = []
-        for attr_id in link_attributes.keys():
-            link_attr_units.append(self.get_attr_unit(scenario, attr_id))
+        for attr_id, attr_name in link_attributes.items():
+            link_attr_units.append(self.get_attr_unit(scenario, attr_id, attr_name))
 
         link_units_heading  = "Units,,,,%s\n"%(','.join(link_attr_units) if link_attr_units else ',')
 
@@ -388,8 +425,8 @@ class ExportCSV(object):
 
             id_name_map[link.id] = link.name
 
-            values = ["" for attr_id in link_attributes.keys()]
-            metadata_placeholder = ["" for attr_id in link_attributes.keys()]
+            values = ["" for attr_id in link_attributes]
+            metadata_placeholder = ["" for attr_id in link_attributes]
             if link.attributes is not None:
                 for r_attr in link.attributes:
                     attr_name = link_attributes[r_attr.attr_id]
@@ -415,7 +452,10 @@ class ExportCSV(object):
             if metadata_placeholder.count("") != len(metadata_placeholder):
                 metadata_entries.append((link.name, metadata_placeholder))
 
-        self.write_metadata(scenario, 'links', metadata_heading, metadata_entries)
+        warnings = self.write_metadata(os.path.join(scenario.target_dir, 'links_metadata.csv'),
+                            metadata_heading,
+                            metadata_entries)
+        self.warnings.extend(warnings)
 
         link_file.write(link_heading)
         link_file.write(link_units_heading)
@@ -431,7 +471,6 @@ class ExportCSV(object):
         """
         log.info("\n************RESOURCE GROUPS****************")
         write_output("Exporting groups.")
-        write_progress(6, self.num_steps) 
 
         group_file = open(os.path.join(scenario.target_dir, "groups.csv"), 'w')
         group_attributes = self.get_resource_attributes(resourcegroups)
@@ -441,11 +480,11 @@ class ExportCSV(object):
             group_attributes_string = ',%s'%(','.join(group_attributes.values()))
 
         group_attr_units = []
-        for attr_id in group_attributes.keys():
-            group_attr_units.append(self.get_attr_unit(scenario, attr_id))
+        for attr_id, attr_name in group_attributes.items():
+            group_attr_units.append(self.get_attr_unit(scenario, attr_id, attr_name))
 
-        group_heading   = "Name, Type, %s, description\n" % (group_attributes_string)
-        group_units_heading  = "Units,,%s\n"%(','.join(group_attr_units) if group_attr_units else ',')
+        group_heading   = "Name, Type, Members %s, description\n" % (group_attributes_string)
+        group_units_heading  = "Units,,,%s\n"%(','.join(group_attr_units) if group_attr_units else ',')
         metadata_heading   = "Name %s\n"%(group_attributes_string)
 
         group_entries = []
@@ -468,9 +507,10 @@ class ExportCSV(object):
             else:
                 group_type = ""
 
-            group_entry = "%(name)s,%(type)s,%(values)s,%(description)s\n"%{
+            group_entry = "%(name)s,%(type)s,%(members)s,%(values)s,%(description)s\n"%{
                 "name"        : group.name,
                 "type"        : group_type,
+                "members"     : "group_members.csv",
                 "values"      : "%s"%(",".join(values)) if len(values) > 0 else "",
                 "description" : group.description,
             }
@@ -478,7 +518,11 @@ class ExportCSV(object):
             if metadata_placeholder.count("") != len(metadata_placeholder):
                 metadata_entries.append((group.name, metadata_placeholder))
 
-        self.write_metadata(scenario, 'groups', metadata_heading, metadata_entries)
+        warnings = self.write_metadata(os.path.join(scenario.target_dir, 'groups_metadata.csv'),
+                            metadata_heading,
+                            metadata_entries)
+
+        self.warnings.extend(warnings)
 
         group_file.write(group_heading)
         group_file.write(group_units_heading)
@@ -487,34 +531,92 @@ class ExportCSV(object):
 
         self.export_resourcegroupitems(scenario, id_name_map, node_map, link_map)
 
-    def write_metadata(self, scenario, resource_type, header, data):
+        return id_name_map
+
+    def export_rules(self, scenario, node_map, link_map, group_map):
+        """
+            Export rules, which are chunks of text associated with resources and a scenario.
+            :param scenario object to retrive the ID
+            :param node map to get the name of a node from its id
+            :param link map to get the name of a link from its id
+            :param group map to get the name of a group from its id.
+        """
+
+        write_output("Exporting rules.")
+        log.info("\n************RULES****************")
+
+        rules = self.call('get_rules', {'scenario_id':scenario.id})
+
+        if rules in (None, '') or len(rules) == 0:
+            return []
+
+        rule_entries = []
+        #For simplicity, export to a single node & link file.
+        #We assume here that fewer files is simpler.
+        rule_file = open(os.path.join(scenario.target_dir, "rules.csv"), 'w')
+
+        rule_heading       = "Name, Type, Resource, Text, Description\n"
+
+        for rule in rules:
+            if rule.ref_key == 'NODE':
+                resource = node_map[rule.ref_id]
+            elif rule.ref_key == 'LINK':
+                resource = link_map[rule.ref_id]
+            elif rule.ref_key == 'GROUP':
+                resource = group_map[rule.ref_id]
+
+            rule_entry = "%(name)s, %(type)s, %(resource)s, %(text)s, %(description)s\n"%{
+                    "name"        : rule.name,
+                    "type"        : rule.ref_key,
+                    "resource"    : resource,
+                    "text"        : rule.text,
+                    "description" : rule.description,
+            }
+
+            rule_entries.append(rule_entry)
+
+        rule_file.write(rule_heading)
+        rule_file.writelines(rule_entries)
+
+        log.info("Rules written to file: %s", rule_file.name)
+
+        return rule_entries
+
+    def write_metadata(self, target_file, header, data):
+
+        warnings = []
         if len(data) == 0:
             return
 
         metadata_entries = []
         for m in data:
-            metadata = m[1]
-            metadata_vals = []
-            for metadata_dict in metadata:
-                if metadata_dict == '':
-                    metadata_vals.append("")
-                else:
-                    metadata_text = []
-                    for k, v in metadata_dict.items():
-                        metadata_text.append("(%s;%s)"%(k,v))
-                    metadata_vals.append("".join(metadata_text))
-            metadata_entry = "%(name)s,%(metadata)s\n"%{
-                "name"        : m[0],
-                "metadata"    : "%s"%(",".join(metadata_vals)),
-            }
-            metadata_entries.append(metadata_entry)
+            try:
+                metadata = m[1]
+                metadata_vals = []
+                for metadata_dict in metadata:
+                    if metadata_dict == '':
+                        metadata_vals.append("")
+                    else:
+                        metadata_text = []
+                        for k, v in metadata_dict.items():
+                            metadata_text.append("(%s;%s)"%(k,v))
+                        metadata_vals.append("".join(metadata_text))
+                metadata_entry = "%(name)s,%(metadata)s\n"%{
+                    "name"        : m[0],
+                    "metadata"    : "%s"%(",".join(metadata_vals)),
+                }
+                metadata_entries.append(metadata_entry)
 
+            except Exception, e:
+                log.exception(e)
+                warnings.append("Unable to export metadata %s"%m)
 
         if len(metadata_entries) > 0:
-            metadata_file = open(os.path.join(scenario.target_dir,\
-                                              "%s_metadata.csv"%resource_type), 'w')
+            metadata_file = open(target_file, 'w')
             metadata_file.write(header)
             metadata_file.writelines(metadata_entries)
+        
+        return warnings
 
     def export_resourcegroupitems(self, scenario, group_map, node_map, link_map):
         """
@@ -558,7 +660,7 @@ class ExportCSV(object):
                         attributes[r_attr.attr_id] = attr_name
         return attributes
 
-    def get_attr_unit(self, scenario, attr_id):
+    def get_attr_unit(self, scenario, attr_id, attr_name=None):
         """
             Returns the unit of a given resource attribute within a scenario
         """
@@ -568,7 +670,8 @@ class ExportCSV(object):
                 if rs.value.unit is not None:
                     return rs.value.unit
 
-        log.warning("Unit not found in scenario %s for attr: %s"%(scenario.id, attr_id))
+        log.warning("Unit not found in scenario '%s' for attr: %s", scenario.name, attr_name)
+
         return ''
 
     def get_attr_value(self, scenario, resource_attr, attr_name, resource_name):
