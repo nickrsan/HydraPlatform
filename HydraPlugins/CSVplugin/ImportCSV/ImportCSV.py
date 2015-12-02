@@ -1,20 +1,20 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# (c) Copyright 2013, 2014, 2015 University of Manchester\
-#\
-# ImportCSV is free software: you can redistribute it and/or modify\
-# it under the terms of the GNU General Public License as published by\
-# the Free Software Foundation, either version 3 of the License, or\
-# (at your option) any later version.\
-#\
-# ImportCSV is distributed in the hope that it will be useful,\
-# but WITHOUT ANY WARRANTY; without even the implied warranty of\
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\
-# GNU General Public License for more details.\
-# \
-# You should have received a copy of the GNU General Public License\
-# along with ImportCSV.  If not, see <http://www.gnu.org/licenses/>\
+# (c) Copyright 2013, 2014,2015 University of Manchester
 #
+# ImportCSV is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ImportCSV is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with ImportCSV.  If not, see <http://www.gnu.org/licenses/>
+#
+
+
 
 """A Hydra plug-in for importing CSV files.
 
@@ -221,17 +221,20 @@ class ImportCSV(object):
                 for i, unit in enumerate(units):
                     units[i] = unit.strip()
 
+            #A projection may not be specified, so we need to account for this
+            projection = None
+
             # We assume a standard order of the network information (Name,
             # Description, attributes,...).
             field_idx = {'id': 0,
                          'name': 1,
                          'description': -1,
-                         'projection':3,
                          'type': 2,
                          'nodes':3,
                          'links':4,
                          'groups':5,
                          'rules':6,
+                         'projection':None,
                          'starttime':None,
                          'endtime':None,
                          'timestep':None
@@ -258,6 +261,9 @@ class ImportCSV(object):
                 if rules != "":
                     self.rule_args = [os.path.join(self.basepath, f) for f in rules.split(';')]
 
+            if 'projection' in lower_keys:
+                projection = data[field_idx['projection']].strip()
+
             if 'starttime' in lower_keys:
                 self.Scenario['start_time'] = data[field_idx['starttime']].strip()
             if 'endtime' in lower_keys:
@@ -272,14 +278,13 @@ class ImportCSV(object):
                             self.connection.call('get_network', {'network_id':int(network_id), 'include_data':'N', 'summary':'N'})
 
                     if self.Scenario['name'] in [s['name'] for s in self.Network['scenarios']]:
-                        raise HydraPluginError("Network already has a scenario called %s. Chooses another scenario name for this network."%(self.Scenario['name'],))
+                        raise HydraPluginError("Network already has a scenario called %s. Choose another scenario name for this network."%(self.Scenario['name'],))
 
                     # Assign name and description in case anything has changed
                     self.Network['name'] = data[field_idx['name']].strip()
                     self.Network['description'] = \
                         data[field_idx['description']].strip()
-                    self.Network['projection'] = \
-                        data[field_idx['projection']].strip()
+                    self.Network['projection'] = projection 
                     self.update_network_flag = True
                     log.info('Loading existing network (ID=%s)' % network_id)
                     # load existing nodes
@@ -319,7 +324,7 @@ class ImportCSV(object):
                     name = network_name,
                     description = \
                     data[field_idx['description']].strip(),
-                    projection = data[field_idx['projection']].strip(),
+                    projection = projection,
                     nodes = [],
                     links = [],
                     scenarios = [],
