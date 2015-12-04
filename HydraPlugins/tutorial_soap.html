@@ -8,7 +8,7 @@
     
     <title>Developing a app using SOAP &mdash; HYDRA  documentation</title>
     
-    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -26,73 +26,18 @@
     <link rel="top" title="HYDRA  documentation" href="../index.html" />
     <link rel="up" title="Hydra Apps" href="index.html" />
     <link rel="next" title="App XML" href="tutorial_xml.html" />
-    <link rel="prev" title="Developing a app using JSON" href="tutorial_json.html" /> 
-  </head>
-  <body>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="tutorial_xml.html" title="App XML"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="tutorial_json.html" title="Developing a app using JSON"
-             accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">HYDRA  documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Hydra Apps</a> &raquo;</li> 
-      </ul>
-    </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Developing a app using SOAP</a><ul>
-<li><a class="reference internal" href="#creating-a-client">Creating a client</a></li>
-<li><a class="reference internal" href="#connect-to-the-server">Connect to the server</a></li>
-<li><a class="reference internal" href="#creating-a-network-instance">Creating a network instance</a></li>
-<li><a class="reference internal" href="#attributes">Attributes</a></li>
-<li><a class="reference internal" href="#scenarios-and-data">Scenarios and Data</a></li>
-</ul>
-</li>
-</ul>
+    <link rel="prev" title="Developing a app using JSON" href="tutorial_json.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="tutorial_json.html"
-                        title="previous chapter">Developing a app using JSON</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="tutorial_xml.html"
-                        title="next chapter">App XML</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../_sources/HydraPlugins/tutorial_soap.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
-  <h3>Quick search</h3>
-    <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
-      </div>
+  </head>
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="developing-a-app-using-soap">
 <span id="soap-app-example"></span><h1>Developing a app using SOAP<a class="headerlink" href="#developing-a-app-using-soap" title="Permalink to this headline">¶</a></h1>
@@ -104,19 +49,19 @@ may not be the library to use, however.</p>
 <div class="section" id="creating-a-client">
 <h2>Creating a client<a class="headerlink" href="#creating-a-client" title="Permalink to this headline">¶</a></h2>
 <p>First, the WSDL must be identified and connected to the library.
-By default, the hydra server is hosted on port 8080: <tt class="docutils literal"><span class="pre">http://localhost:8080</span></tt></p>
+By default, the hydra server is hosted on port 8080: <code class="docutils literal"><span class="pre">http://localhost:8080</span></code></p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">url</span> <span class="o">=</span> <span class="s">&quot;http://localhost:8080/soap?wsdl&quot;</span>
 <span class="n">cli</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Using the <tt class="docutils literal"><span class="pre">cli.service</span></tt> attribute, server functions can be called. The first one we must
-use is <tt class="docutils literal"><span class="pre">login</span></tt>.</p>
+<p>Using the <code class="docutils literal"><span class="pre">cli.service</span></code> attribute, server functions can be called. The first one we must
+use is <code class="docutils literal"><span class="pre">login</span></code>.</p>
 </div>
 <div class="section" id="connect-to-the-server">
 <h2>Connect to the server<a class="headerlink" href="#connect-to-the-server" title="Permalink to this headline">¶</a></h2>
 <p>As the app connects to a remote server, a login is required so that data is protected.
 For local use with one user, this can simply be read from a config file.
-Once login is performed, the <tt class="docutils literal"><span class="pre">session_id</span></tt> must be stored and added to the request
+Once login is performed, the <code class="docutils literal"><span class="pre">session_id</span></code> must be stored and added to the request
 header for all subsequent requests</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">login_response</span> <span class="o">=</span> <span class="n">cli</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s">&#39;myuser&#39;</span><span class="p">,</span> <span class="s">&#39;Pa55w0rD&#39;</span><span class="p">)</span>
 <span class="n">token</span> <span class="o">=</span> <span class="n">cli</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s">&#39;RequestHeader&#39;</span><span class="p">)</span>
@@ -231,10 +176,10 @@ Going back to the network creation example, a node is defined as follows</p>
 <span class="n">node2</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="mi">20</span>
 </pre></div>
 </div>
-<p>An attribute is added to this node using a <tt class="docutils literal"><span class="pre">ResourceAttr</span></tt> object.
-A <tt class="docutils literal"><span class="pre">ResourceAttr</span></tt> links a resource (a network, node or link) to a network. Each has
+<p>An attribute is added to this node using a <code class="docutils literal"><span class="pre">ResourceAttr</span></code> object.
+A <code class="docutils literal"><span class="pre">ResourceAttr</span></code> links a resource (a network, node or link) to a network. Each has
 its own id and ref_key, which indicates whether it refers to a node, link or network.
-In this example, the node <tt class="docutils literal"><span class="pre">Node</span> <span class="pre">2</span></tt> is being given attribute <tt class="docutils literal"><span class="pre">Capacity</span></tt></p>
+In this example, the node <code class="docutils literal"><span class="pre">Node</span> <span class="pre">2</span></code> is being given attribute <code class="docutils literal"><span class="pre">Capacity</span></code></p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">res_attr</span> <span class="o">=</span> <span class="n">cli</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s">&#39;hyd:ResourceAttr&#39;</span><span class="p">)</span>
 <span class="n">res_attr</span><span class="o">.</span><span class="n">ref_key</span> <span class="o">=</span> <span class="s">&#39;NODE&#39;</span>
 <span class="n">res_attr</span><span class="o">.</span><span class="n">attr_id</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">id</span>
@@ -252,8 +197,8 @@ positive, ID.</p>
 <p>Node and link attributes are not particularly useful by themselves without them
 having a value. Using scenarios, attributes can have multiple values for different
 purposes. For example, a network represenging a river network might have two
-scenarios: <tt class="docutils literal"><span class="pre">Dry</span> <span class="pre">Year</span></tt> and <tt class="docutils literal"><span class="pre">Wet</span> <span class="pre">Year</span></tt>. While the topology of the network will
-not change, the attributes of many of the nodes might change. <tt class="docutils literal"><span class="pre">Daily</span> <span class="pre">Throughput</span></tt> of
+scenarios: <code class="docutils literal"><span class="pre">Dry</span> <span class="pre">Year</span></code> and <code class="docutils literal"><span class="pre">Wet</span> <span class="pre">Year</span></code>. While the topology of the network will
+not change, the attributes of many of the nodes might change. <code class="docutils literal"><span class="pre">Daily</span> <span class="pre">Throughput</span></code> of
 our water treatment work will be less in a dry year compared to a wet year, for example.</p>
 <p>In order to assign data to specific attributes, a scenario is used</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">scenario</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s">&#39;hyd:Scenario&#39;</span><span class="p">)</span>
@@ -286,30 +231,68 @@ our water treatment work will be less in a dry year compared to a wet year, for 
           </div>
         </div>
       </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Developing a app using SOAP</a><ul>
+<li><a class="reference internal" href="#creating-a-client">Creating a client</a></li>
+<li><a class="reference internal" href="#connect-to-the-server">Connect to the server</a></li>
+<li><a class="reference internal" href="#creating-a-network-instance">Creating a network instance</a></li>
+<li><a class="reference internal" href="#attributes">Attributes</a></li>
+<li><a class="reference internal" href="#scenarios-and-data">Scenarios and Data</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Hydra Apps</a><ul>
+      <li>Previous: <a href="tutorial_json.html" title="previous chapter">Developing a app using JSON</a></li>
+      <li>Next: <a href="tutorial_xml.html" title="next chapter">App XML</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/HydraPlugins/tutorial_soap.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="tutorial_xml.html" title="App XML"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="tutorial_json.html" title="Developing a app using JSON"
-             >previous</a> |</li>
-        <li><a href="../index.html">HYDRA  documentation</a> &raquo;</li>
-          <li><a href="index.html" >Hydra Apps</a> &raquo;</li> 
-      </ul>
-    </div>
     <div class="footer">
-        &copy; Copyright 2013, Halcrow and University College London.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      &copy;2015, Halcrow and University College London.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="../_sources/HydraPlugins/tutorial_soap.txt"
+          rel="nofollow">Page source</a>
     </div>
+
+    
+
+    
   </body>
 </html>

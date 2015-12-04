@@ -8,7 +8,7 @@
     
     <title>App XML &mdash; HYDRA  documentation</title>
     
-    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -26,61 +26,18 @@
     <link rel="top" title="HYDRA  documentation" href="../index.html" />
     <link rel="up" title="Hydra Apps" href="index.html" />
     <link rel="next" title="Working with projects" href="projects.html" />
-    <link rel="prev" title="Developing a app using SOAP" href="tutorial_soap.html" /> 
+    <link rel="prev" title="Developing a app using SOAP" href="tutorial_soap.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
   </head>
-  <body>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="projects.html" title="Working with projects"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="tutorial_soap.html" title="Developing a app using SOAP"
-             accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">HYDRA  documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Hydra Apps</a> &raquo;</li> 
-      </ul>
-    </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="tutorial_soap.html"
-                        title="previous chapter">Developing a app using SOAP</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="projects.html"
-                        title="next chapter">Working with projects</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../_sources/HydraPlugins/tutorial_xml.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
-  <h3>Quick search</h3>
-    <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
-      </div>
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="app-xml">
 <span id="xml-example"></span><h1>App XML<a class="headerlink" href="#app-xml" title="Permalink to this headline">¶</a></h1>
@@ -88,7 +45,7 @@
 its inputs. This XML file can be used by a UI or another plugin to help format
 inputs.</p>
 <p>The &lt;plugin_info&gt; tag is the base.
-Next, <tt class="docutils literal"><span class="pre">&lt;plugin_name&gt;</span></tt>, <tt class="docutils literal"><span class="pre">&lt;plugin_description&gt;</span></tt> and <tt class="docutils literal"><span class="pre">&lt;plugin_dir&gt;</span></tt> describe the name
+Next, <code class="docutils literal"><span class="pre">&lt;plugin_name&gt;</span></code>, <code class="docutils literal"><span class="pre">&lt;plugin_description&gt;</span></code> and <code class="docutils literal"><span class="pre">&lt;plugin_dir&gt;</span></code> describe the name
 of the plugin to display, a description of what it does, and the location of the
 actual executable file, if necessary.
 For example</p>
@@ -105,7 +62,7 @@ For example</p>
 </pre></div>
 </div>
 <p>Immediately after this, the app&#8217;s inputs are defined.</p>
-<p>There are three category of input: <tt class="docutils literal"><span class="pre">&lt;mandatory_args&gt;</span></tt>, <tt class="docutils literal"><span class="pre">&lt;non_mandatory_args&gt;</span></tt> and <tt class="docutils literal"><span class="pre">&lt;switches&gt;</span></tt></p>
+<p>There are three category of input: <code class="docutils literal"><span class="pre">&lt;mandatory_args&gt;</span></code>, <code class="docutils literal"><span class="pre">&lt;non_mandatory_args&gt;</span></code> and <code class="docutils literal"><span class="pre">&lt;switches&gt;</span></code></p>
 <div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;mandatory_args&gt;</span>
     <span class="nt">&lt;arg&gt;</span>
         <span class="nt">&lt;name&gt;</span>network_name<span class="nt">&lt;/name&gt;</span>
@@ -140,7 +97,7 @@ For example</p>
 <span class="nt">&lt;/switches&gt;</span>
 </pre></div>
 </div>
-<p>Within each category there is an <tt class="docutils literal"><span class="pre">&lt;arg&gt;</span></tt>, inside which is defined a <tt class="docutils literal"><span class="pre">&lt;name&gt;</span></tt>, command line <tt class="docutils literal"><span class="pre">&lt;switch&gt;</span></tt>, whether <tt class="docutils literal"><span class="pre">&lt;multiple&gt;</span></tt> inputs
+<p>Within each category there is an <code class="docutils literal"><span class="pre">&lt;arg&gt;</span></code>, inside which is defined a <code class="docutils literal"><span class="pre">&lt;name&gt;</span></code>, command line <code class="docutils literal"><span class="pre">&lt;switch&gt;</span></code>, whether <code class="docutils literal"><span class="pre">&lt;multiple&gt;</span></code> inputs
 can be expected, what type input can be expected and a help string to describe
 what it is.</p>
 </div>
@@ -149,30 +106,56 @@ what it is.</p>
           </div>
         </div>
       </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Hydra Apps</a><ul>
+      <li>Previous: <a href="tutorial_soap.html" title="previous chapter">Developing a app using SOAP</a></li>
+      <li>Next: <a href="projects.html" title="next chapter">Working with projects</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/HydraPlugins/tutorial_xml.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="projects.html" title="Working with projects"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="tutorial_soap.html" title="Developing a app using SOAP"
-             >previous</a> |</li>
-        <li><a href="../index.html">HYDRA  documentation</a> &raquo;</li>
-          <li><a href="index.html" >Hydra Apps</a> &raquo;</li> 
-      </ul>
-    </div>
     <div class="footer">
-        &copy; Copyright 2013, Halcrow and University College London.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      &copy;2015, Halcrow and University College London.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="../_sources/HydraPlugins/tutorial_xml.txt"
+          rel="nofollow">Page source</a>
     </div>
+
+    
+
+    
   </body>
 </html>
