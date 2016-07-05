@@ -1,89 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# (c) Copyright 2013, 2014, 2015 University of Manchester\
-#\
-# ExportCSV is free software: you can redistribute it and/or modify\
-# it under the terms of the GNU General Public License as published by\
-# the Free Software Foundation, either version 3 of the License, or\
-# (at your option) any later version.\
-#\
-# ExportCSV is distributed in the hope that it will be useful,\
-# but WITHOUT ANY WARRANTY; without even the implied warranty of\
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\
-# GNU General Public License for more details.\
-# \
-# You should have received a copy of the GNU General Public License\
-# along with ExportCSV.  If not, see <http://www.gnu.org/licenses/>\
+# (c) Copyright 2013, 2014,2015 University of Manchester
+#
+# ExportCSV is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ExportCSV is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with ExportCSV.  If not, see <http://www.gnu.org/licenses/>
 #
 
+
+
 """A Hydra plug-in for exporting a hydra network to CSV files.
-
-Basics
-~~~~~~
-
-The plug-in for exporting CSV files exports a network to a collection of CSV files,
-one file per node / link type, one file for network, one file for scenario.
-Time series and array values will each have its own file also.
-
-Basic usage::
-
-       ExportCSV.py [-h] [-t NETWORK] [-z TIMEZONE]
-
-Options
-~~~~~~~
-
-====================== ====== ============ =============================================
-Option                 Short  Parameter    Description
-====================== ====== ============ =============================================
-``--help``             ``-h``              show help message and exit.
-``--network_id``       ``-t`` NETWORK      Specify the file containing network
-                                           information. If no file is specified, a
-                                           new network will be created using
-                                           default values.
-``--scenario_id``      ``-s`` SCENARIO     The scenario to be exported. If not specified
-                                           all the scenarios in the network will be
-                                           exported.
-``--output_folder``    ``-o`` OUTPUT       The folder where the exported network
-                                           is to be put. Defaults to Desktop.
-``--timezone``         ``-z`` TIMEZONE     Specify a timezone as a string
-                                           following the Area/Loctation pattern
-                                           (e.g.  Europe/London). This timezone
-                                           will be used for all timeseries data
-                                           that is exported. If you don't specify
-                                           a timezone, it defaults to UTC.
-``--server-url``       ``-u`` SERVER-URL   Url of the server the plugin will
-                                           connect to.
-                                           Defaults to localhost.
-``--session-id``       ``-c`` SESSION-ID   Session ID used by the callig software.
-                                           If left empty, the plugin will attempt
-                                           to log in itself.
-====================== ====== ============ =============================================
-
-
-File structure
-~~~~~~~~~~~~~~
-
-For nodes, the following is an example of what will be exported::
-
-    Name , x, y, attribute_1, attribute_2, ..., attribute_n, description
-    Units,  ,  ,           m,    m^3 s^-1, ...,           -,
-    node1, 2, 1,         4.0,      3421.9, ...,  Crop: corn, Irrigation node 1
-    node2, 2, 3,         2.4,       988.4, ...,  Crop: rice, Irrigation node 2
-
-For links, the following will be and example of what will be exported::
-
-    Name ,       from,       to, attribute_1, ..., attribute_n, description
-    Units,           ,         ,           m, ...,    m^2 s^-1,
-    link1,      node1,    node2,         453, ...,        0.34, Water transfer
-
-The following network file will be exported:
-
-    ID, Name            , attribute_1, ..., Description
-    1 , My first network, test       ,    , A network create from CSV files
-
-.. note::
-
-    Add any other information here...
 
 """
 
@@ -228,8 +163,9 @@ class ExportCSV(object):
         network_attr_units = []
         for attr_id, attr_name in network_attributes.items():
             network_attr_units.append(self.get_attr_unit(scenario, attr_id, attr_name))
+        
 
-        network_units_heading  = "Units,,,,,,,,,,,%s\n"%(','.join(network_attr_units))
+        network_units_heading  = "Units,,,,,,,,,,%s\n"%(','.join(network_attr_units))
 
         values = ["" for attr_id in network_attributes.keys()]
         metadata_placeholder = ["" for attr_id in network_attributes.keys()]
@@ -586,7 +522,7 @@ class ExportCSV(object):
 
         warnings = []
         if len(data) == 0:
-            return
+            return warnings
 
         metadata_entries = []
         for m in data:
@@ -682,8 +618,8 @@ class ExportCSV(object):
         r_attr_id = resource_attr.id
         metadata = ()
 
-        if resource_attr.attr_is_var == 'Y':
-            return 'NULL', ''
+        #if resource_attr.attr_is_var == 'Y':
+        #    return 'NULL', ''
 
         for rs in scenario.resourcescenarios:
             if rs.resource_attr_id == r_attr_id:
@@ -729,6 +665,11 @@ class ExportCSV(object):
 
                 elif rs.value.type == 'timeseries':
                     value = json.loads(rs.value.value)
+
+                    if value is None or value == {}:
+                        log.debug("Not exporting %s from resource %s as it is empty", attr_name, resource_name)
+                        continue
+
                     col_names = value.keys()
                     file_name = "timeseries_%s_%s.csv"%(resource_attr.ref_key, attr_name)
                     file_loc = os.path.join(scenario.target_dir, file_name)
@@ -738,7 +679,11 @@ class ExportCSV(object):
                         ts_file      = open(file_loc, 'w')
 
                         ts_file.write(",,,%s\n"%','.join(col_names))
-
+                    if not value:
+                        log.critical(attr_name)
+                        log.critical(resource_name)
+                        log.critical(resource_attr)
+                        log.critical(value)
                     timestamps = value[col_names[0]].keys()
                     ts_dict = {}
                     for t in timestamps:
