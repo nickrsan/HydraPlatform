@@ -1,0 +1,83 @@
+<plugin_info>
+  <plugin_name>Import from Excel</plugin_name>
+  <plugin_dir>ExcelImporter.exe</plugin_dir>
+  <plugin_description>Import a network saved in an Excel book into Hydra.</plugin_description>
+  <plugin_epilog>
+    Written by K Mohamed (khaled.mohamed@manchester.ac.uk)
+    (c) Copyright 2015, The University of Manchester
+    For more information visit Hydra website
+  </plugin_epilog>
+  <smallicon>icon16.jpg</smallicon>
+  <largeicon>icon32.jpg</largeicon>
+  <mandatory_args>
+    <arg>
+      <name>input</name>
+      <switch>-i</switch>
+      <multiple>N</multiple>
+      <allownew>N</allownew>
+      <argtype filter="Excel files (*.xlsx,*.xls)|*.xlsx,*.xls">file</argtype>
+      <help>Filename of the input file.</help>
+    </arg>
+    <arg>
+      <name>template</name>
+      <switch>-m</switch>
+      <multiple>N</multiple>
+      <allownew>N</allownew>
+      <argtype>templatefile</argtype>
+      <help>XML file defining the types for the network.</help>
+    </arg>
+  </mandatory_args>
+  <non_mandatory_args>
+    <arg>
+      <name>server_url</name>
+      <switch>-u</switch>
+      <multiple>N</multiple>
+      <allownew>N</allownew>
+      <argtype>string</argtype>
+      <help>
+        Specify the URL of the server to which this
+        plug-in connects.
+      </help>
+    </arg>
+    <arg>
+      <name>session_id</name>
+      <switch>-c</switch>
+      <multiple>N</multiple>
+      <allownew>N</allownew>
+      <argtype>string</argtype>
+      <help>
+        Specify the session ID for the connection. If not specified,
+        the plugin will try to connect based on the credentials it finds in config
+      </help>
+    </arg>   
+    <arg>
+      <name>project</name>
+      <switch>-p</switch>
+      <multiple>N</multiple>
+      <allownew>N</allownew>
+      <argtype>project</argtype>
+      <help>The Id of the project, if is not provided a new project  will be created</help>
+    </arg>
+    <arg>
+      <name>scenario</name>
+      <switch>-s</switch>
+      <multiple>N</multiple>
+      <argtype>string</argtype>
+      <help>
+        Specify the name of the scenario created by the
+        import function. Every import creates a new scenario.
+        If no name is provided a default name will be assigned.
+      </help>
+    </arg>
+    <arg>
+      <name>network</name>
+      <switch>-t</switch>
+      <multiple>N</multiple>
+      <allownew>N</allownew>
+      <argtype>network</argtype>
+      <help>The ID of the network which will be updated. If not provided, a new network will becreated</help>
+    </arg>
+  </non_mandatory_args>
+  <switches>
+  </switches>
+</plugin_info>

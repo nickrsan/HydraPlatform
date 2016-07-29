@@ -1,0 +1,227 @@
+{
+  "parameters": {
+    "max_flow_ref": "81.0"
+  }, 
+  "solver": {
+    "name": "glpk"
+  }, 
+  "recorders": [
+    {
+      "node": "catchment1", 
+      "type": "numpyarraynode"
+    }, 
+    {
+      "node": "waste", 
+      "type": "numpyarraynode"
+    }, 
+    {
+      "node": "reservoir1", 
+      "type": "numpyarraystorage"
+    }, 
+    {
+      "node": "river1", 
+      "type": "totalflowrecorder"
+    }, 
+    {
+      "node": "compensation1", 
+      "type": "totalflowrecorder"
+    }, 
+    {
+      "agg_func": "sum", 
+      "recorders": [
+        "totalflowrecorder.river1", 
+        "myrecorder"
+      ], 
+      "type": "aggregatedrecorder"
+    }
+  ], 
+  "timestepper": {
+    "timestep": "1", 
+    "end": "1999-12-31", 
+    "start": "1990-01-01"
+  }, 
+  "edges": [
+    [
+      "catchment1", 
+      "reservoir1", 
+      null, 
+      "0"
+    ], 
+    [
+      "compensation1", 
+      "waste"
+    ], 
+    [
+      "reservoir1", 
+      "compensation1", 
+      "0", 
+      null
+    ], 
+    [
+      "reservoir1", 
+      "demand1", 
+      "0", 
+      null
+    ], 
+    [
+      "reservoir1", 
+      "demand2", 
+      "0", 
+      null
+    ], 
+    [
+      "reservoir1", 
+      "river1", 
+      "0", 
+      null
+    ], 
+    [
+      "river1", 
+      "waste"
+    ]
+  ], 
+  "domains": [
+    {
+      "color": "#000000", 
+      "name": "default"
+    }
+  ], 
+  "nodes": [
+    {
+      "flow": {
+        "url": "catchment1_flow.csv", 
+        "column": "flow", 
+        "type": "arrayindexed"
+      }, 
+      "cost": "-999", 
+      "type": "Catchment", 
+      "name": "catchment1", 
+      "position": {
+        "geographic": [
+          -1.509445, 
+          51.30284
+        ], 
+        "schematic": [
+          "5.0000000000", 
+          "-20.0000000000"
+        ]
+      }
+    }, 
+    {
+      "position": {
+        "geographic": [], 
+        "schematic": [
+          "74.0000000000", 
+          "5.0000000000"
+        ]
+      }, 
+      "cost": "-10000", 
+      "type": "Link", 
+      "name": "compensation1", 
+      "max_flow": {
+        "values": [
+          0, 
+          1, 
+          2, 
+          3, 
+          4, 
+          5, 
+          6, 
+          7, 
+          8, 
+          9, 
+          10, 
+          11
+        ], 
+        "type": "monthlyprofile"
+      }
+    }, 
+    {
+      "position": {
+        "geographic": [], 
+        "schematic": [
+          "66.0000000000", 
+          "96.0000000000"
+        ]
+      }, 
+      "cost": {
+        "values": [
+          -500, 
+          -500, 
+          -500, 
+          -500, 
+          -500, 
+          -500, 
+          -500, 
+          -500, 
+          -500, 
+          -500, 
+          -500, 
+          -500
+        ], 
+        "type": "monthlyprofile"
+      }, 
+      "type": "Output", 
+      "name": "demand1", 
+      "max_flow": "max_flow_ref"
+    }, 
+    {
+      "position": {
+        "geographic": [], 
+        "schematic": [
+          "66.0000000000", 
+          "79.0000000000"
+        ]
+      }, 
+      "cost": "-100", 
+      "type": "Output", 
+      "name": "demand2", 
+      "max_flow": "max_flow_ref"
+    }, 
+    {
+      "inputs": "1", 
+      "name": "reservoir1", 
+      "outputs": "1", 
+      "min_volume": "3000", 
+      "cost": "0", 
+      "initial_volume": "16000", 
+      "position": {
+        "geographic": [], 
+        "schematic": [
+          "67.0000000000", 
+          "1.0000000000"
+        ]
+      }, 
+      "type": "Reservoir", 
+      "max_volume": "20000"
+    }, 
+    {
+      "position": {
+        "geographic": [], 
+        "schematic": [
+          "14.0000000000", 
+          "13.0000000000"
+        ]
+      }, 
+      "type": "Link", 
+      "name": "river1"
+    }, 
+    {
+      "position": {
+        "geographic": [], 
+        "schematic": [
+          "86.0000000000", 
+          "92.0000000000"
+        ]
+      }, 
+      "cost": "1", 
+      "type": "Output", 
+      "name": "waste"
+    }
+  ], 
+  "metadata": {
+    "title": "Example", 
+    "description": "An example JSON document", 
+    "author": "Joshua Arnott"
+  }
+}

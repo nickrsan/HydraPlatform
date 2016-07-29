@@ -75,10 +75,8 @@ def create_dataset(value,
         hidden='N',
         metadata=None,
     )
-
     resourcescenario['attr_id'] = resource_attr['attr_id']
     resourcescenario['resource_attr_id'] = resource_attr['id']
-
     value = value
     if unit is not None:
         unit = unit
