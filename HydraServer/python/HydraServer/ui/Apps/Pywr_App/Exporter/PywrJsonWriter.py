@@ -8,27 +8,202 @@ from datetime import timedelta
 import datetime
 import inspect
 
+nodes_parameters = {}
+
+parameters = {}
+
+class Aggregated (object):
+    def __init__(self, attr, res, metadata, single_parameters):
+        to_be_deleted=[]
+        self.type = 'aggregated'
+        self.agg_func=metadata['agg_func']
+        self.parameters=json.loads(res.value.value)
+        for item in self.parameters:
+            if(item in single_parameters.keys()):
+                to_be_deleted.append(item)
+
+        for item in to_be_deleted:
+            parameters[item]=single_parameters[item]
+            del single_parameters[item]
+
+class Controlcurveindex(object):
+    def __init__(self,attr, res, metadata, single_parameters):
+        to_be_deleted = []
+        self.type="controlcurveindex"
+        self.comment = metadata['comment']
+        self.storage_node = metadata['storage_node']
+        self.control_curves=json.loads(res.value.value)
+
+        for item in self.control_curves:
+            if (item in single_parameters.keys()):
+                to_be_deleted.append(item)
+
+        for item in to_be_deleted:
+            parameters[item] = single_parameters[item]
+            del single_parameters[item]
+
+
+class Indexedarray(object):
+    def __init__(self, attr, res, metadata, single_parameters):
+        to_be_deleted = []
+        self.type = 'indexedarray'
+        self.comment = metadata['comment']
+        self.index_parameter = metadata['index_parameter']
+        self.params=json.loads(res.value.value)
+        if (self.index_parameter in single_parameters.keys()):
+            to_be_deleted.append(self.index_parameter)
+
+        for item in self.params:
+            if (item in single_parameters.keys()):
+                to_be_deleted.append(item)
+
+        for item in to_be_deleted:
+            parameters[item] = single_parameters[item]
+            del single_parameters[item]
+
+class Monthlyprofilecontrolcurve (object):
+    def __init__(self, attr, res, metadata, single_parameters):
+        to_be_deleted = []
+        self.type='monthlyprofilecontrolcurve'
+        self.storage_node = metadata['storage_node']
+        self.scale = float(metadata['scale'])
+        pars=json.loads(res.value.value)
+        self.profile =pars[0]
+        self.control_curve=pars[1]
+        self.values=pars[2]
+
+        if (self.profile in single_parameters.keys()):
+            to_be_deleted.append(self.profile)
+
+        if (self.control_curve in single_parameters.keys()):
+            to_be_deleted.append(self.control_curve)
+
+
+        if (self.values in single_parameters.keys()):
+            to_be_deleted.append(self.values )
+
+        for item in to_be_deleted:
+            parameters[item] = single_parameters[item]
+            del single_parameters[item]
+
+
+
+class ControlCurveInterpolated (object):
+    def __init__(self, attr, res, metadata, single_parameters):
+        self.type='ControlCurveInterpolated'
+        self.control_curve=json.loads(res.value.value)[0]
+
+        if (self.control_curve in single_parameters.keys()):
+            parameters[self.control_curve] = single_parameters[self.control_curve]
+            del single_parameters[self.control_curve]
+
+def adjuest_parameters(complex_attrinbtes):
+    to_be_deleted=[]
+    for attr_name in complex_attrinbtes.keys():
+        attr=complex_attrinbtes[attr_name]
+
+        if (attr.type == 'controlcurveindex'):
+            for item in attr.control_curves:
+                if (item in complex_attrinbtes.keys()):
+                    to_be_deleted.append(item)
+        elif (attr.type == 'indexedarray'):
+            if (attr.index_parameter in complex_attrinbtes.keys()):
+                to_be_deleted.append(attr.index_parameter)
+
+            for item in attr.params:
+                if (item in complex_attrinbtes.keys()):
+                    to_be_deleted.append(item)
+
+        elif (attr.type == 'aggregated'):
+            for item in attr.parameters:
+                if (item in complex_attrinbtes.keys()):
+                    to_be_deleted.append(item)
+
+        elif (attr.type == 'ControlCurveInterpolated'):
+            if (attr.control_curve in complex_attrinbtes.keys()):
+                to_be_deleted.add(attr.control_curve)
+        elif (attr.type == 'monthlyprofilecontrolcurve'):
+            if (attr.profile in complex_attrinbtes.keys()):
+                to_be_deleted.append(attr.profile)
+
+            if (attr.control_curve in complex_attrinbtes.keys()):
+                to_be_deleted.append(attr.control_curve)
+
+            if (attr.values in complex_attrinbtes.keys()):
+                to_be_deleted.append(attr.values)
+
+    for item in to_be_deleted:
+        parameters[item] = complex_attrinbtes[item]
+        del complex_attrinbtes[item]
+
 
 class Node(dict):
-    def __init__(self, node_, attributes_ids, resourcescenarios_ids, nodes_parameters):
+    def __init__(self, node_, attributes_ids, resourcescenarios_ids):
         self.name=node_.name
+        single_parameters={}
         attributes={}
+        aggregated_attributes=[]
         geographic=None
         for attr_ in node_.attributes:
             attr=attributes_ids[attr_.attr_id]
-            #This needs to be checked !!!!!!!!!!!!!!!
             res=resourcescenarios_ids[attr_.id]
+            metadata = json.loads(res.value.metadata)
+            if(metadata ['single']=='no'):
+                aggregated_attributes.append(attr_)
+                continue
             if(attr.name=='node_type'):
                 self.type=res.value.value
             elif attr.name == 'geographic':
                 geographic = json.loads(res.value.value)
-            elif res.value.type == 'descriptor' or res.value.type=='scalar':
-                self.__dict__[attr.name]=res.value.value
-                attributes[attr.name] = self.__dict__[attr.name]
-            elif res.value.type == 'timeseries':
-                self.__dict__[attr.name] = get_timesreies_values(res.value.value, attr.name)
-                attributes[attr.name]=self.__dict__[attr.name]
 
+            elif res.value.type == 'descriptor':
+                single_parameters[attr.name] = res.value.value
+
+            elif res.value.type == 'scalar' and metadata['single'] == 'yes':
+                single_parameters[attr.name] =float(res.value.value)
+
+            elif res.value.type == 'timeseries' and metadata['single']== 'yes':
+                single_parameters[attr.name]=get_timesreies_values(res.value.value, attr.name, json.loads(res.value.metadata))
+
+            elif res.value.type == 'array' and metadata['single'] == 'yes':
+                single_parameters[attr.name] =json.loads (res.value.value)
+        complex_attributes={}
+        for attr_ in aggregated_attributes:
+            attr = attributes_ids[attr_.attr_id]
+            res = resourcescenarios_ids[attr_.id]
+            metadata = json.loads(res.value.metadata)
+            if(metadata['type']=='controlcurveindex'):
+                complex_attributes[attr.name] =Controlcurveindex(attr, res, metadata, single_parameters)
+                #self.__dict__[attr.name] =Controlcurveindex(attr, res, metadata, single_parameters)
+                #attributes[attr.name] = self.__dict__[attr.name]
+            elif (metadata['type']=='indexedarray'):
+                complex_attributes[attr.name] =Indexedarray(attr, res, metadata, single_parameters)
+                #self.__dict__[attr.name] =Indexedarray(attr, res, metadata, single_parameters)
+                #attributes[attr.name] = self.__dict__[attr.name]
+            elif (metadata['type'] == 'aggregated'):
+                complex_attributes[attr.name] =Aggregated(attr, res, metadata, single_parameters)
+                #self.__dict__[attr.name] =Aggregated(attr, res, metadata, single_parameters)
+                #attributes[attr.name] = self.__dict__[attr.name]
+            elif (metadata['type'] == 'ControlCurveInterpolated'):
+                complex_attributes[attr.name] =ControlCurveInterpolated(attr, res, metadata, single_parameters)
+                #self.__dict__[attr.name] =ControlCurveInterpolated(attr, res, metadata, single_parameters)
+                #attributes[attr.name] = self.__dict__[attr.name]
+            elif (metadata['type'] == 'monthlyprofilecontrolcurve'):
+                complex_attributes[attr.name] =Monthlyprofilecontrolcurve(attr, res, metadata, single_parameters)
+                #self.__dict__[attr.name] =Monthlyprofilecontrolcurve(attr, res, metadata, single_parameters)
+                #attributes[attr.name] = self.__dict__[attr.name]
+
+        adjuest_parameters(complex_attributes)
+
+        for item in complex_attributes.keys():
+            self.__dict__[attr.name] =complex_attributes[item]
+            attributes[attr.name] = self.__dict__[attr.name]
+
+
+
+        for item in single_parameters.keys():
+            self.__dict__[item] = single_parameters[item]
+            attributes[item] = self.__dict__[item]
 
         self.position = {}
 
@@ -37,31 +212,44 @@ class Node(dict):
             self.position['geographic'] = []
         else:
             self.position['geographic'] = geographic
-
         nodes_parameters[self.name]=attributes
 
-def get_timesreies_values(value, column):
+def get_timesreies_values(value, column, metadata):
+    if('type' in metadata.keys()):
+        type_ = metadata['type']
+    else:
+        type_ = 'default'
+
     values={}
     vv = json.loads(value)
     contents=[]
-    contents.append('Date, '+column+'\n')
+    if(type_ == 'dailyprofile'):
+        contents.append('Index, ' + column + '\n')
+    else:
+        contents.append('Date, '+column+'\n')
+    day=1
     for key in vv.keys():
         for date in sorted(vv[key].keys()):
-            if(date.startswith('9999')):
-                if(len(vv[key])==12):
-                    values['type'] = 'monthlyprofile'
-                elif (len(vv[key])==365):
-                    values['type'] = 'dailyyprofile'
-                else:
-                    values['type'] = 'default'
-                values['values'] = ger_arrayvalues(vv[key])
-                return  values
-            contents.append(date+','+str(vv[key][date])+'\n')
-    values['type'] = 'arrayindexed'
+            if(date.startswith('9999') ):
+                if(type_ == "monthlyprofile"):
+                    values['type'] = type_
+                    values['values'] = ger_arrayvalues(vv[key])
+                    return values
+                elif type_ == "dailyprofile":
+                    contents.append(str(day) + ',' + str(vv[key][date]) + '\n')
+                    day+=1
+            else:
+                contents.append(date+','+str(vv[key][date])+'\n')
+    if ('parse_dates' in metadata.keys()):
+        if(metadata['parse_dates'].lower() == 'true'):
+            values['parse_dates'] = True
+        else:
+            values['parse_dates']=False
+
+    values['type'] = type_
     values['url']=contents
     values['column']=column
     return values
-
 
 def write_time_series_tofile(contents, filename):
     file = open(filename, "w")
@@ -111,7 +299,6 @@ class Value(object):
 
 class Recorder(object):
     def __init__(self, value):
-
         if(len(value)==2):
             self.node=value[1]
             self.type=value[0]
@@ -137,18 +324,15 @@ def get_recotds(network, attributes_ids, resourcescenarios_ids):
                 recorders.append(Recorder(value))
     return recorders
 
-
 class Domain(object):
     def __init__(self, name, color):
         self.name = name
         self.color = color
 
-
 class Solver(object):
-    def __init__(self, link_, attributes_ids, resourcescenarios_ids):
-        for attr_ in link_.attributes:
+    def __init__(self, network, attributes_ids, resourcescenarios_ids):
+        for attr_ in network.attributes:
             attr = attributes_ids[attr_.attr_id]
-            # This needs to be checked !!!!!!!!!!!!!!!
             res = resourcescenarios_ids[attr_.id]
             if (attr.name == 'solver'):
                 self.name=res.value.value
@@ -163,7 +347,7 @@ class Timestepper(object):
             elif (attr.name == 'end_time'):
                 self.end = res.value.value
             elif (attr.name == 'timestep'):
-                self.timestep = res.value.value
+                self.timestep = int(res.value.value)
 
 class Metadata (object):
     def __init__(self, network, resourcescenarios_ids, attributes_ids):
@@ -199,18 +383,33 @@ def get_dict(obj):
     return result
 
 class PywrNetwork (object):
-    def __init__(self, metadata, timestepper, solver, nodes, edges, domains, parameters, recorders):
-        self.parameters=parameters
-        self.recorders=recorders
-        self.domains=domains
+    def __init__(self, metadata, timestepper, solver, nodes, edges, domains, parameters,  recorders):
+        self.metadata=metadata
+        self.timestepper=timestepper
+        self.solver=solver
         self.nodes=nodes
         self.edges=edges
-        self.solver=solver
-        self.timestepper=timestepper
-        self.metadata=metadata
+        self.domains=domains
+        self.parameters=parameters
+        self.recorders=recorders
+    def get_json(self):
+        json_string='{\n\"metadata\": '+json.dumps(get_dict(self.metadata), indent=4)+',\n'
+        json_string=json_string+'\"timestepper\": '+json.dumps(get_dict(self.timestepper), indent=4)+',\n'
+        json_string = json_string + '\"nodes\": '+json.dumps(get_dict(self.nodes), indent=4)+',\n'
+        json_string = json_string + '\"edges\": ' + json.dumps(get_dict(self.edges), indent=4) + ',\n'
+        if(len(self.domains)>0):
+            json_string = json_string + '\"domains\": ' + json.dumps(get_dict(self.domains), indent=4) + ',\n'
+        json_string = json_string + '\"parameters\": ' +json.dumps(get_dict((parameters)), default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-def get_parameters_refs(nodes, nodes_parameters):
-    parameters = {}
+        if len(self.recorders)>0:
+            json_string = json_string + ',\n\"recorders\": ' + json.dumps(get_dict(self.recorders), indent=4)+'\n}'
+        else:
+            json_string = json_string + '\n}'
+
+        return  json_string
+
+
+def get_parameters_refs(nodes):
     for i in range(0, len(nodes)):
         node = nodes[i]
         for j in range(i+1, len(nodes)):
@@ -220,7 +419,7 @@ def get_parameters_refs(nodes, nodes_parameters):
             for attr in attrs.keys():
                 for attr_ in attrs_.keys():
                     if(attr==attr_):
-                        if hasattr(attrs[attr], "type"):
+                        if hasattr(attrs[attr], "type") and hasattr(attrs_[attr_],'type'):
                             if attrs[attr] ['type']== attrs_[attr_]['type']:
                                 if(attrs[attr] ['type']=='arrayindexed'):
                                     if attrs[attr]['url'] == attrs_[attr_]['url']:
@@ -239,7 +438,6 @@ def get_parameters_refs(nodes, nodes_parameters):
                                 if(not attr+'_ref' in parameters ):
                                     parameters[attr+'_ref' ]=attrs[attr]
 
-
     for node in nodes:
         for key in node.__dict__.keys():
             for attr in parameters.keys():
@@ -249,12 +447,10 @@ def get_parameters_refs(nodes, nodes_parameters):
 
     return  parameters
 
-
 def pywrwriter (network, attrlist, output_file):
     #print network
     nodes=[]
     edges=[]
-    nodes_parameters={}
     parameters=[]
     domains=[]
     attributes_ids={}
@@ -267,20 +463,20 @@ def pywrwriter (network, attrlist, output_file):
     domains=[]
     for attr_ in network.attributes:
         attr = attributes_ids[attr_.attr_id]
-        # This needs to be checked !!!!!!!!!!!!!!!
         res = resourcescenarios_ids[attr_.id]
         if (attr.name == 'domains'):
             val = json.loads(res.value.value)
-            name = val[0][0]
-            color = val[0][1]
-            domains.append(Domain(name, color))
+            if(len(val)==2):
+                name = val[0][0]
+                color = val[0][1]
+                domains.append(Domain(name, color))
     solver = Solver(network, attributes_ids, resourcescenarios_ids)
     nodes_id_name={}
     for node_ in network.nodes:
-        node=Node(node_, attributes_ids, resourcescenarios_ids, nodes_parameters)
+        node=Node(node_, attributes_ids, resourcescenarios_ids)
         nodes_id_name[node_.id]=node_.name
         nodes.append(node)
-    parameters=get_parameters_refs(nodes, nodes_parameters)
+    parameters=get_parameters_refs(nodes,)
 
     for link_ in network.links:
         edge=Edge(link_, attributes_ids, resourcescenarios_ids, nodes_id_name)
@@ -291,15 +487,25 @@ def pywrwriter (network, attrlist, output_file):
             if (k.lower() != 'name' and k.lower() != 'type' and k.lower() != 'position'):
                 value=node.__dict__.values()[i]
                 if type(value) is dict:
-                    if value['type'] == 'arrayindexed':
+                    if value['type'] == 'arrayindexed' or value['type'] == 'dailyprofile':
                         file_name=node.name+"_"+k+'.csv'
                         write_time_series_tofile(value['url'], file_name)
                         value['url']=file_name
+    for k in parameters:
+        value=parameters[k]
 
-    pywrNetwork=PywrNetwork(metadata, timestepper, solver, nodes, edges, domains, parameters, recorders)
+        if type(value) is dict and 'type' in value.keys():
+            if value['type'] == 'arrayindexed' or value['type'] == 'dailyprofile':
+                file_name = node.name + "_" + k + '.csv'
+                write_time_series_tofile(value['url'], file_name)
+                value['url'] = file_name
 
+
+    pywrNetwork=PywrNetwork(metadata, timestepper, solver, nodes, edges, domains, parameters,  recorders)
     with open(output_file, "w") as text_file:
-        text_file.write(json.dumps(get_dict(pywrNetwork), indent=2))
+        text_file.write(pywrNetwork.get_json())
+
+        #text_file.write(json.dumps(get_dict(pywrNetwork), indent=4))
 
 
 
