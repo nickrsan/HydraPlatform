@@ -1,0 +1,550 @@
+=1
+=0IBM ILOG CPLEX   24.7.1 r56632 Released Mar 14, 2016 WEI x86 64bit/MS Windows 
+=1
+
+IBM ILOG CPLEX   24.7.1 r56632 Released Mar 14, 2016 WEI x86 64bit/MS Windows 
+=2
+=1
+--- GAMS/Cplex Link licensed for continuous and discrete problems.
+=2
+=1
+Cplex 12.6.3.0
+
+=2
+ 
+ 
+--------------------------------------------------------------
+CONTROL FILE STATISTICS
+--------------------------------------------------------------
+Rows : 81485, columns : 93745, nonzeroes : 1519677
+Free Rows          : 0
+Iteration limit    : 2000000000
+Resource  limit    : 9.999000e+004
+Objective variable : 0
+Objective sense    : minimize
+Advanced basis     : no
+Binary variables   : 3360
+Integer variables  : 0
+SOS1 variables     : 0
+SOS2 variables     : 0
+SemiCont variables : 0
+SemiInt variables  : 0
+OPTCA : 0.000000e+000 , OPTCR : 0.000000e+000
+Priorities         : no
+Cheat              : n.a.
+Cutoff             : n.a.
+Node limit         : 0
+ 
+ 
+=1
+Reading parameter(s) from "F:\work\HydraPlatform\HydraServer\python\HydraServer\ui\data\Models\cplex.opt"
+=2
+=1
+>>  solnpool solnpool.gdx
+=2
+=1
+>>  solnpoolintensity 4
+=2
+=1
+>>  solnpoolpop 2
+=2
+=1
+>>  solnpoolgap 0.02
+=2
+=1
+Finished reading from "F:\work\HydraPlatform\HydraServer\python\HydraServer\ui\data\Models\cplex.opt"
+=2
+
+
+Option Values:
+----------------------------------------------------
+usebasis              0
+cutoff                0
+tryint                0
+domlim                0
+advind                0
+aggcutlim             3
+aggfill               10
+aggind                -1
+auxrootthreads        0
+baralg                0
+barcolnz              0
+barcrossalg           0
+bardisplay            1
+barepcomp             1e-008
+bargrowth             1e+012
+baritlim              2100000000
+barmaxcor             -1
+barobjrng             1e+020
+barorder              0
+barqcpepcomp          1e-007
+barstartalg           1
+bbinterval            7
+bndstrenind           -1
+bqpcuts               0
+brdir                 0
+bttol                 0.9999
+calcqcpduals          1
+cliques               0
+clocktype             0
+clonelog              0
+coeredind             -1
+computeserver        
+covers                0
+cpumask               auto
+craind                1
+crossoveralg          default
+cutlo                 -1e+075
+cutpass               0
+cuts                  0
+cutsfactor            -1
+cutup                 1e+075
+depind                -1
+dettilim              1e+075
+disjcuts              0
+divetype              0
+divfltup              1e+299
+divfltlo              -1e+299
+.divflt               0
+dpriind               0
+dtprefix              bnd
+dtterm                1
+dumpcuts              0
+dumptree              0
+dumplp                0
+eachcutlim            2100000000
+epagap                0
+epgap                 0
+epint                 1e-005
+epmrk                 0.01
+epopt                 1e-006
+epper                 1e-006
+eprelax               1e-006
+eprhs                 1e-006
+feasopt               0
+feasoptmode           0
+.feaspref             1
+fixoptfile            
+flowcovers            0
+flowpaths             0
+flushfiles            0
+fpheur                0
+fraccand              200
+fraccuts              0
+fracpass              0
+freegamsmodel         0
+gubcovers             0
+heurfreq              0
+iafile                
+iatriggerfile         
+iatriggertime         60
+iis                   0
+implbd                0
+interactive           0
+intsollim             2100000000
+itlim                 2000000000
+lbheur                0
+liftprojcuts          0
+lpalg                 default
+lpmethod              0
+ltol                  0
+mcfcuts               0
+memoryemphasis        0
+localimplied          0
+mipdisplay            4
+mipemphasis           0
+mipkappastats         -1
+mipinterval           0
+mipordind             1
+mipordtype            0
+mipsearch             0
+mipstart              0
+miptrace              
+miptracenode          100
+miptracetime          1
+miqcpstrat            0
+mircuts               0
+mpslongnum            1
+mtol                  0
+names                 1
+netdisplay            2
+netepopt              1e-006
+neteprhs              1e-006
+netfind               2
+netitlim              2100000000
+netppriind            0
+nodefileind           1
+nodelim               2100000000
+nodesel               1
+numericalemphasis     0
+objdif                0
+objllim               -1e+075
+objrng               
+objulim               1e+075
+parallelmode          1
+perind                0
+perlim                0
+polishtime            0
+polishafterepagap     0
+polishafterepgap      0
+polishafternode       2100000000
+polishafterintsol     2100000000
+polishaftertime       1e+075
+polishafterdettime    1e+075
+populatelim           20
+ppriind               0
+predual               0
+preind                1
+prelinear             1
+prepass               -1
+preslvnd              0
+pricelim              0
+printoptions          0
+probe                 0
+probetime             1e+075
+probedettime          1e+075
+probread              
+qpmakepsdind          1
+qpmethod              0
+qtolin                -1
+quality               0
+rampupdettimelimit    1e+075
+rampupduration        0
+rampuptimelimit       1e+075
+randomseed            0
+readflt               
+readparams            
+reduce                3
+reinv                 0
+relaxfixedinfeas      0
+relaxpreind           -1
+relobjdif             0
+repairtries           0
+repeatpresolve        -1
+rerun                 yes
+rhsrng               
+rinsheur              0
+rngrestart            
+scaind                0
+secret               
+siftalg               0
+siftdisplay           1
+siftitlim             2100000000
+simdisplay            1
+singlim               10
+solnpool              solnpool.gdx
+solnpoolmerge         
+solnpoolnumsym        10
+solnpoolagap          1e+075
+solnpoolcapacity      2100000000
+solnpoolgap           0.02
+solnpoolintensity     4
+solnpoolpop           2
+solnpoolpopdel        
+solnpoolpoprepeat     
+solnpoolprefix        soln
+solnpoolreplace       0
+solutiontype          0
+optimalitytarget      0
+solvefinal            1
+startalg              0
+strongcandlim         10
+strongitlim           0
+subalg                0
+submipnodelim         500
+symmetry              -1
+threads               1
+tilim                 99990
+trelim                1e+075
+tuning                
+tuningdisplay         1
+tuningmeasure         1
+tuningrepeat          1
+tuningtilim           19998
+tuningdettilim        1e+007
+usercutcall           
+usercutfirst          10
+usercutfreq           10
+usercutinterval       100
+usercutmult           2
+usercutnewint         1
+usergdxin             bchin.gdx
+usergdxsol            bchsol.gdx
+usergdxname           bchout.gdx
+usergdxnameinc        bchout_i.gdx
+usergdxprefix         
+userheurcall          
+userheurfirst         10
+userheurfreq          10
+userheurinterval      100
+userheurmult          2
+userheurnewint        1
+userheurobjfirst      0
+userincbcall          
+userincbicall         
+userjobid             
+userkeep              0
+usercgmaxcols         2147483647
+usercgadvind          1
+usercgsolopt          0
+usercgdumplp          bchcgdump.lp
+userpricingcall       
+usersolvenodelp       
+varsel                0
+waitforenter          0
+workdir               F:\work\HydraPlatform\HydraServer\python\HydraServer\ui\data\Models\225as\
+workmem               128
+writebas              
+writeflt              
+writelp               
+writemps              
+writemst              
+writeord              
+writeparam            
+writepre              
+writesav              
+zerohalfcuts          0
+----------------------------------------------------
+
+=1
+Space for names approximately 11.29 Mb
+Use option 'names no' to turn use of names off
+=2
+
+Populate: phase I 
+Tried aggregator 2 times.
+MIP Presolve eliminated 19264 rows and 8012 columns.
+MIP Presolve modified 27338 coefficients.
+Aggregator did 11976 substitutions.
+Reduced MIP has 50311 rows, 73757 columns, and 1450849 nonzeros.
+Reduced MIP has 2779 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.74 sec. (354.05 ticks)
+Probing fixed 0 vars, tightened 68 bounds.
+Probing time = 0.47 sec. (103.88 ticks)
+Tried aggregator 1 time.
+Reduced MIP has 50311 rows, 73757 columns, and 1450849 nonzeros.
+Reduced MIP has 2779 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.25 sec. (131.99 ticks)
+Probing time = 0.08 sec. (24.89 ticks)
+Clique table members: 38801.
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: none, using 1 thread.
+Initializing dual steep norms . . .
+
+Iteration log . . .
+Iteration:     1   Dual objective     =       -164726.729165
+Perturbation started.
+Iteration:   909   Dual objective     =         29939.473030
+Iteration:  1626   Dual objective     =         33199.789826
+Iteration:  2291   Dual objective     =         44610.034206
+Iteration:  3546   Dual objective     =         46030.639434
+Iteration:  4865   Dual objective     =         47338.661946
+Iteration:  5708   Dual objective     =         47744.707580
+Iteration:  6859   Dual objective     =         47914.766819
+Iteration:  8199   Dual objective     =         48121.525576
+Removing perturbation.
+Root relaxation solution time = 0.61 sec. (329.02 ticks)
+
+        Nodes                                         Cuts/
+   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+
+      0     0    48121.7224    97                  48121.7224     8430         
+*     0+    0                       116521.7791    48121.7224            58.70%
+Found incumbent of value 116521.779057 after 3.25 sec. (1313.53 ticks)
+      0     0    65850.4853    75   116521.7791     Cuts: 986    10305   43.49%
+*     0+    0                       104949.3942    65850.4853            37.26%
+Found incumbent of value 104949.394180 after 5.17 sec. (2274.58 ticks)
+      0     0    66957.7551    69   104949.3942     Cuts: 200    11760   36.20%
+      0     0    71415.3534    77   104949.3942      Cuts: 35    12507   31.95%
+*     0+    0                        72164.1547    71415.3534             1.04%
+Found incumbent of value 72164.154725 after 7.08 sec. (3263.16 ticks)
+*     0+    0                        71946.7986    71415.3534             0.74%
+Found incumbent of value 71946.798606 after 7.38 sec. (3392.32 ticks)
+      0     0    71480.2292    58    71946.7986      Cuts: 33    12712    0.65%
+      0     0    71570.0675    66    71946.7986      Cuts: 17    12943    0.52%
+*     0+    0                        71860.8218    71570.0675             0.40%
+Found incumbent of value 71860.821784 after 8.73 sec. (4159.58 ticks)
+      0     0    71635.1908    26    71860.8218      Cuts: 10    13060    0.31%
+*     0+    0                        71749.4797    71635.1908             0.16%
+Found incumbent of value 71749.479675 after 9.47 sec. (4528.54 ticks)
+*     0+    0                        71734.9387    71635.1908             0.14%
+Found incumbent of value 71734.938680 after 9.67 sec. (4624.86 ticks)
+*     0+    0                        71732.7570    71635.1908             0.14%
+Found incumbent of value 71732.757026 after 9.77 sec. (4673.09 ticks)
+      0     0    71643.7780    22    71732.7570       Cuts: 7    13110    0.12%
+*     0+    0                        71690.1856    71643.7780             0.06%
+Found incumbent of value 71690.185600 after 10.53 sec. (5089.17 ticks)
+      0     0    71651.6337    50    71690.1856       Cuts: 3    13167    0.05%
+      0     0    71651.8238    13    71690.1856       Cuts: 9    13175    0.05%
+*     0     0      integral     0    71653.0306       Cuts: 2    13181    0.00%
+Found incumbent of value 71653.030591 after 11.97 sec. (5919.22 ticks)
+
+GUB cover cuts applied:  31
+Cover cuts applied:  40
+Implied bound cuts applied:  88
+Flow cuts applied:  226
+Mixed integer rounding cuts applied:  405
+Zero-half cuts applied:  6
+Lift and project cuts applied:  30
+Gomory fractional cuts applied:  36
+
+Root node processing (before b&c):
+  Real time             =   12.00 sec. (5927.40 ticks)
+Sequential b&c:
+  Real time             =    0.00 sec. (0.00 ticks)
+                          ------------
+Total (root+branch&cut) =   12.00 sec. (5927.40 ticks)
+
+Populate: phase II 
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: none, using 1 thread.
+
+        Nodes                                         Cuts/
+   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+
+      0     2    71653.0306     1    71653.0306    71653.0306    13181    0.00%
+Elapsed time = 13.05 sec. (6428.82 ticks, tree = 0.01 MB, solutions = 8)
+      1     3    74229.3864    49    71653.0306    71653.0306    13282    0.00%
+      2     4    71653.0306     1    71653.0306    71653.0306    13282    0.00%
+      3     5    74015.5096    49    71653.0306    71653.0306    13376    0.00%
+      4     6    71653.0306     1    71653.0306    71653.0306    13376    0.00%
+      5     7    73810.8429    49    71653.0306    71653.0306    13438    0.00%
+      6     8    71653.0306     1    71653.0306    71653.0306    13438    0.00%
+      7     9    73614.9896    49    71653.0306    71653.0306    13532    0.00%
+      8    10    71653.0306     1    71653.0306    71653.0306    13532    0.00%
+      9    11    73427.5701    49    71653.0306    71653.0306    13620    0.00%
+     10    12    71653.0306     1    71653.0306    71653.0306    13620    0.00%
+Elapsed time = 15.36 sec. (8027.56 ticks, tree = 2.59 MB, solutions = 8)
+     36    38    71717.3260    32    71653.0306    71653.0306    14960    0.00%
+     37    39   403909.2992    20    71653.0306    71653.0306    15574    0.00%
+     38    40    72331.8392    15    71653.0306    71653.0306    15656    0.00%
+     39    41    72428.8300     5    71653.0306    71653.0306    15676    0.00%
+     40    42    72432.0080     5    71653.0306    71653.0306    15685    0.00%
+     41    43    72434.0969     2    71653.0306    71653.0306    15713    0.00%
+     42    44    72434.3267     2    71653.0306    71653.0306    15714    0.00%
+     43    45    72435.3050     3    71653.0306    71653.0306    15739    0.00%
+     44    46    72435.9842     2    71653.0306    71653.0306    15747    0.00%
+     45    47    72436.3381     2    71653.0306    71653.0306    15748    0.00%
+Elapsed time = 19.05 sec. (10344.38 ticks, tree = 9.29 MB, solutions = 8)
+     67    69   404461.5975    20    71653.0306    71653.0306    19111    0.00%
+     68    70    72185.2350     3    71653.0306    71653.0306    19112    0.00%
+     69    71    72185.4928     3    71653.0306    71653.0306    19118    0.00%
+     70    72    72186.4210     3    71653.0306    71653.0306    19153    0.00%
+     71    73    72186.8894     2    71653.0306    71653.0306    19169    0.00%
+     72    74    72187.5046     2    71653.0306    71653.0306    19171    0.00%
+     73    75    72187.6271    14    71653.0306    71653.0306    19183    0.00%
+     74    76    72188.8605     2    71653.0306    71653.0306    19189    0.00%
+     75    77    72205.2746     6    71653.0306    71653.0306    19207    0.00%
+     76    78    72189.8931    14    71653.0306    71653.0306    19261    0.00%
+Elapsed time = 21.81 sec. (11945.30 ticks, tree = 11.21 MB, solutions = 11)
+     91    93    72321.6349    23    71653.0306    71653.0306    20438    0.00%
+     92    94    72346.1121    25    71653.0306    71653.0306    20703    0.00%
+     93    95    72354.5879     7    71653.0306    71653.0306    20724    0.00%
+     94    96    72375.1888     6    71653.0306    71653.0306    20737    0.00%
+     95    97    72431.9743     7    71653.0306    71653.0306    20749    0.00%
+     96    98    72451.9505    13    71653.0306    71653.0306    20760    0.00%
+     97    99    72471.0603    13    71653.0306    71653.0306    20767    0.00%
+     98   100    72477.7063     7    71653.0306    71653.0306    21004    0.00%
+     99   101    72487.7060    13    71653.0306    71653.0306    21045    0.00%
+    100   101    74823.2304     3    71653.0306    71653.0306    21049    0.00%
+Elapsed time = 24.36 sec. (14212.08 ticks, tree = 11.79 MB, solutions = 12)
+    112   112    72774.2401    45    71653.0306    71653.0306    22923    0.00%
+    113   113    72229.0286    21    71653.0306    71653.0306    23016    0.00%
+    114   114    72235.0835    16    71653.0306    71653.0306    23022    0.00%
+    115   115    72272.4148    19    71653.0306    71653.0306    23077    0.00%
+    116   116    72239.8607     5    71653.0306    71653.0306    23089    0.00%
+    117   117    72242.5792    11    71653.0306    71653.0306    23121    0.00%
+    118   118    72244.0332     5    71653.0306    71653.0306    23127    0.00%
+    119   119    72254.4966    13    71653.0306    71653.0306    23177    0.00%
+    120   120    72257.6371     7    71653.0306    71653.0306    23180    0.00%
+    121   121    72268.8797     7    71653.0306    71653.0306    23227    0.00%
+Elapsed time = 26.38 sec. (15880.48 ticks, tree = 11.67 MB, solutions = 13)
+    140   140    72378.4802     9    71653.0306    71653.0306    25830    0.00%
+    141   141    72379.3389     7    71653.0306    71653.0306    25844    0.00%
+    142   142    72382.5813    50    71653.0306    71653.0306    25871    0.00%
+    143   143    72382.9687    28    71653.0306    71653.0306    25880    0.00%
+    144   144    72383.3877    17    71653.0306    71653.0306    25896    0.00%
+    145   145    72383.4592     1    71653.0306    71653.0306    25900    0.00%
+    146   146   404639.7279    20    71653.0306    71653.0306    26777    0.00%
+    147   147    72249.1845     7    71653.0306    71653.0306    26796    0.00%
+    148   148    72272.8432    10    71653.0306    71653.0306    26830    0.00%
+    149   149    72359.6396     4    71653.0306    71653.0306    26887    0.00%
+Elapsed time = 28.52 sec. (17250.87 ticks, tree = 12.35 MB, solutions = 16)
+    167   167    72550.5205    11    71653.0306    71653.0306    28401    0.00%
+    168   168    72559.6231    11    71653.0306    71653.0306    28407    0.00%
+    169   169    72595.2966    11    71653.0306    71653.0306    28414    0.00%
+    170   170    72713.4991     8    71653.0306    71653.0306    28425    0.00%
+    171   171    72791.6694     8    71653.0306    71653.0306    28654    0.00%
+    172   172    72831.9406     7    71653.0306    71653.0306    28697    0.00%
+    173   172    76331.5401    11    71653.0306    71653.0306    28707    0.00%
+    174   173    72384.8506     1    71653.0306    71653.0306    28707    0.00%
+    175   174   388574.7673    20    71653.0306    71653.0306    29512    0.00%
+    176   175    72384.8506     1    71653.0306    71653.0306    29512    0.00%
+Elapsed time = 31.66 sec. (19013.63 ticks, tree = 12.98 MB, solutions = 17)
+    196   193    72646.1978    13    71653.0306    71653.0306    33716    0.00%
+    197   194    72676.0157    16    71653.0306    71653.0306    33796    0.00%
+    198   195    72690.6134    10    71653.0306    71653.0306    33839    0.00%
+    199   196    72697.5289    14    71653.0306    71653.0306    33874    0.00%
+    200   197    72716.2289    57    71653.0306    71653.0306    33921    0.00%
+    201   198    72716.8983    14    71653.0306    71653.0306    34016    0.00%
+    202   199    72717.1930     8    71653.0306    71653.0306    34018    0.00%
+    203   200    72717.6718    15    71653.0306    71653.0306    34066    0.00%
+    204   201    72720.1804    18    71653.0306    71653.0306    34123    0.00%
+    205   202    72720.1983     1    71653.0306    71653.0306    34126    0.00%
+Elapsed time = 34.42 sec. (20379.76 ticks, tree = 13.64 MB, solutions = 20)
+
+GUB cover cuts applied:  31
+Cover cuts applied:  40
+Implied bound cuts applied:  88
+Flow cuts applied:  226
+Mixed integer rounding cuts applied:  405
+Zero-half cuts applied:  6
+Lift and project cuts applied:  30
+Gomory fractional cuts applied:  36
+
+Root node processing (before b&c):
+  Real time             =    1.08 sec. (506.95 ticks)
+Sequential b&c:
+  Real time             =   21.39 sec. (13982.37 ticks)
+                          ------------
+Total (root+branch&cut) =   22.47 sec. (14489.32 ticks)
+=1
+Dumping 20 solutions from the solution pool...
+=2
+=1
+Time dumping 20 GDX point files:       0.64 seconds.
+=2
+=1
+Fixing integer variables, and solving final LP...
+=2
+Tried aggregator 1 time.
+LP Presolve eliminated 81485 rows and 93745 columns.
+All rows and columns eliminated.
+Presolve time = 0.19 sec. (83.33 ticks)
+=1
+Fixed MIP status(1): optimal
+Cplex Time: 0.36sec (det. 157.20 ticks)
+=2
+=1
+Solution Pool population limit reached.
+=2
+=1
+
+MIP Solution:        71653.030591    (34126 iterations, 206 nodes)
+=2
+=1
+Final Solve:         71653.030591    (0 iterations)
+
+=2
+=1
+Best possible:       71653.030591
+=2
+=1
+Absolute gap:            0.000000
+=2
+=1
+Relative gap:           -0.000000
+
+=2
